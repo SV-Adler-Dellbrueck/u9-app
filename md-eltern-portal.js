@@ -448,7 +448,7 @@ function elternPortalDashboard(root){
     <div id="ep-kopf" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;padding:12px 12px 12px;margin-bottom:12px;background:var(--blue);color:#fff;border-radius:18px;box-shadow:0 2px 8px rgba(26,86,219,.25)">
       <div style="display:flex;align-items:center;gap:10px;min-width:0"><img src="logo.png" alt="" width="40" height="40" style="flex:none;border-radius:50%;background:#fff"><div style="min-width:0"><div style="font-size:var(--s-teil);font-weight:800;line-height:1.15">Eltern-Bereich</div><div id="ep-gruss" style="font-size:var(--s-klein);opacity:.95">SV Adler Dellbrück · U9</div><div id="ep-gruss2" style="font-size:var(--s-klein);opacity:.95"></div></div></div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
-        <button type="button" id="rufe-kopf" onclick="rufeEinstieg()" title="Adler-Rufe – der Team-Chat" aria-label="Adler-Rufe öffnen" class="btn btn-kopf" style="position:relative">💬<span class="rufe-badge" style="display:none;position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font-size:var(--s-klein);font-weight:800;align-items:center;justify-content:center;border:2px solid #fff;box-sizing:border-box"></span></button>
+        <button type="button" id="rufe-kopf" onclick="rufeEinstieg()" title="Adler-Rufe – Nachrichten im Team" aria-label="Adler-Rufe öffnen – Nachrichten im Team" class="btn btn-kopf" style="position:relative">💬<span class="rufe-badge" style="display:none;position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font-size:var(--s-klein);font-weight:800;align-items:center;justify-content:center;border:2px solid #fff;box-sizing:border-box"></span></button>
         <button type="button" id="ep-menue-knopf" onclick="elternMenueUmschalten()" aria-expanded="false" aria-controls="ep-menue" aria-label="Mehr: Schriftgröße, Dunkelmodus, Hilfe, Mein Konto" title="Mehr" class="btn btn-kopf" style="font-size:var(--s-teil)">⋯</button>
       </div>
       <div id="ep-menue" style="display:none;flex-basis:100%;flex-wrap:wrap;justify-content:space-around;gap:8px;padding-top:10px;margin-top:2px;border-top:1px solid rgba(255,255,255,.35)">
@@ -718,14 +718,14 @@ async function elternNewsLoad(kids){
   if(!seen){ try{localStorage.setItem("adler_news_seen",JSON.stringify(cur));}catch(e){} seen=cur; } // Erstbesuch = Baseline
   const kidName=sid=>{const k=(kids||[]).find(x=>x.spieler_id===sid);return (k&&k.kader&&k.kader.name)||"Dein Kind";};
   const items=[];
-  if(cur.nest&&cur.nest>(seen.nest||"")) items.push({emo:"📰",txt:"Das Adler Nest ist frisch erschienen.",act:"elternCatClose();if(typeof nestOpen==='function')nestOpen()"});
+  if(cur.nest&&cur.nest>(seen.nest||"")) items.push({emo:"📰",txt:"Das Adler Nest ist frisch erschienen.",sub:kanalUnter("nest"),act:"elternCatClose();if(typeof nestOpen==='function')nestOpen()"});
   if(cur.boerse&&cur.boerse>(seen.boerse||"")) items.push({emo:"🛍️",txt:"Neues in der Adler-Börse.",act:"elternCatClose();boerseOpen()"});
   if(cur.fund&&cur.fund>(seen.fund||"")) items.push({emo:"🧦",txt:"Neues im Fundbüro.",act:"elternCatClose();fundbueroOpen()"});
   if(cur.skill&&cur.skill.slice(0,4)!=="1970"&&cur.skill>(seen.skill||"")) items.push({emo:"🏅",txt:"Neuer Skill der Woche / neue Challenge.",act:"elternCatOpen('mehr')"});
   (data.lob||[]).forEach(l=>{ if(l.at>(seen["lob_"+l.sid]||"")) items.push({emo:"🎧",txt:`Neues vom Trainerteam für ${esc(kidName(l.sid))} (Lob oder Nachricht).`,act:`elternCatClose();lobListeOpen(${l.sid},'${String(kidName(l.sid)).replace(/['\\<>&"]/g,"")}')`});   /* v803: auch Spieltag-Nachrichten, deshalb die Liste statt „jüngstes Lob abspielen“ */ });
   (kids||[]).forEach(k=>{ const lv=cur["level_"+k.spieler_id]; const sv=seen["level_"+k.spieler_id]; if(lv&&sv!=null&&lv!==sv) items.push({emo:"🎉",txt:`${esc(kidName(k.spieler_id))} hat ein neues Level erreicht: ${esc(lv)}!`,act:`elternCatClose();elternCardOpen(${k.spieler_id})`}); });
   if(cur.ms&&cur.ms>(seen.ms||"")) ms.filter(m=>m.erreicht_am>(seen.ms||"")).slice(0,3).forEach(m=>items.push({emo:"🏆",txt:`Team-Meilenstein: ${esc(m.label)}`,act:""})); // H7 · v824: reine Mitteilung – ein Tipp schließt nichts mehr
-  if(cur.kpost&&cur.kpost>(seen.kpost||"")) items.push({emo:"📬",txt:"Neue Adler-Post für dein Kind – Kompliment oder Gruß in der Kabine!",act:"elternCatClose();elternKabineStart()"}); // I-A
+  if(cur.kpost&&cur.kpost>(seen.kpost||"")) items.push({emo:"📬",txt:"Neue Adler-Post in der Kabine",sub:kanalUnter("post"),act:"elternCatClose();elternKabineStart()"}); // I-A
   if(cur.tr&&cur.tr>(seen.tr||"")){ // J4: Gesprächsfutter für den Abendbrottisch
     const rb=rueckblick[0], heuteStr=isoLokal();
     const themen=(rb.themen||[]).slice(0,3).map(esc).join(", ");
@@ -736,10 +736,18 @@ async function elternNewsLoad(kids){
     if(themen)items.push({emo:"📖",txt:`${rb.datum===heuteStr?"Heute":"Zuletzt"} im Training geübt: ${themen}${(rb.themen||[]).length>3?" …":""} – tippen zum Nachlesen.`,act:"rueckblickOpen()"});
   }
   if(cur.wn&&cur.wn>(seen.wn||"")){ // L2 → v717: ganz oben
-    const neuSeit=schmiede.filter(e=>String(e.datum)+"-"+String(e.id).padStart(6,"0")>(seen.wn||"")).length;
-    items.unshift(schmiede.length
-      ?{emo:"🛠️",txt:`Aus der Adlerschmiede: ${neuSeit===1?"eine Neuerung":(neuSeit||schmiede.length)+" Neuerungen"} in eurer App – tippen!`,act:"schmiedeOpen()"}
-      :{emo:"🆕",txt:`${esc(ELTERN_WHATSNEW.titel)} – tippen für die Highlights!`,act:"whatsNewOpen()"});
+    /* v896 (Beschluss 19.11.): Die Neuerungen der Adlerschmiede laufen als Zeilen in den Adler News mit –
+       je neuer Eintrag „🛠️ Neu in der App: <Kurztitel>“ (Form der Tabelle: „Kurztitel: Erklärung“), statt
+       eines eigenen Sammel-Eintrags. Ab vier neuen Einträgen stehen zwei da und eine Zeile „noch n weitere“.
+       Jede Zeile öffnet die ganze Liste (schmiedeOpen). Schlüssel und Baseline bleiben wie seit v717 (wn). */
+    const neu=schmiede.filter(e=>String(e.datum)+"-"+String(e.id).padStart(6,"0")>(seen.wn||""));
+    const kurz=e=>{ const t=String(e.text||"").trim(), i=t.indexOf(":"); const k=(i>0?t.slice(0,i):t).trim(); return k.length>60?k.slice(0,57).trim()+" …":k; };
+    const liste=neu.length?neu:schmiede.slice(0,1);
+    const zeilen=liste.length>3?liste.slice(0,2):liste;
+    const schmiedeZeilen=zeilen.map(e=>({emo:"🛠️",txt:`Neu in der App: ${esc(kurz(e))}`,act:"schmiedeOpen()",schmiede:true}));
+    if(liste.length>3)schmiedeZeilen.push({emo:"🛠️",txt:`Neu in der App: noch ${liste.length-2} weitere Neuerungen`,act:"schmiedeOpen()",schmiede:true});
+    items.unshift(...(schmiede.length?schmiedeZeilen
+      :[{emo:"🆕",txt:`${esc(ELTERN_WHATSNEW.titel)} – tippen für die Highlights!`,act:"whatsNewOpen()"}]));
   }
   if(location.hash==="#adlerschmiede"&&schmiede.length){ try{history.replaceState(null,"",location.pathname+location.search);}catch(e){} setTimeout(schmiedeOpen,300); }
   const badge=document.getElementById("eltern-news-badge");
@@ -749,8 +757,8 @@ async function elternNewsLoad(kids){
   if(nbtn)nbtn.style.display=items.length?"flex":"none";
   panel.innerHTML = items.length
     ? items.map(i=>i.act
-        ?`<button class="btn btn-zeile" onclick="${i.act}" style="margin-bottom:8px"><span style="font-size:var(--s-teil);line-height:1">${i.emo}</span><span style="flex:1;font-size:var(--s-text);color:#334155;line-height:1.4">${i.txt}</span><span style="font-size:var(--s-karte);color:var(--text3)">›</span></button>`
-        :`<div class="news-mitteilung" style="display:flex;gap:10px;align-items:center;min-height:48px;background:#fff;border:1px solid var(--rand-bedien);border-radius:12px;padding:12px;margin-bottom:8px"><span style="font-size:var(--s-teil);line-height:1">${i.emo}</span><span style="flex:1;font-size:var(--s-text);color:#334155;line-height:1.4">${i.txt}</span></div>`).join("")
+        ?`<button class="btn btn-zeile${i.schmiede?" news-schmiede":""}" onclick="${i.act}" style="margin-bottom:8px"><span style="font-size:var(--s-teil);line-height:1">${i.emo}</span><span style="flex:1;min-width:0;font-size:var(--s-text);color:#334155;line-height:1.4">${i.txt}${i.sub||""}</span><span style="font-size:var(--s-karte);color:var(--text3)">›</span></button>`
+        :`<div class="news-mitteilung" style="display:flex;gap:10px;align-items:center;min-height:48px;background:#fff;border:1px solid var(--rand-bedien);border-radius:12px;padding:12px;margin-bottom:8px"><span style="font-size:var(--s-teil);line-height:1">${i.emo}</span><span style="flex:1;min-width:0;font-size:var(--s-text);color:#334155;line-height:1.4">${i.txt}${i.sub||""}</span></div>`).join("")
     : '<div style="background:#fff;border-radius:14px;padding:24px;text-align:center;color:var(--text3);font-size:var(--s-text)">Aktuell nichts Neues 🦅</div>';
 }
 /* v824: Trainings-Rückblick zum Nachlesen – was in den letzten Trainings geübt wurde (RPC training_rueckblick, bis zu
@@ -870,7 +878,7 @@ function schmiedeOpen(){
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10050;display:flex;align-items:center;justify-content:center;padding:16px";
   m.onclick=e=>{if(e.target===m)m.remove();};
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:18px;max-width:460px;width:100%;max-height:86vh;overflow-y:auto">
-    ${mdlHead("wn-modal","🛠️","Aus der Adlerschmiede",woche?"Neu in eurer App in den letzten sieben Tagen":"Die letzten Neuerungen in eurer App","#0284c7")}
+    ${mdlHead("wn-modal","🛠️","Aus der Adlerschmiede",ADLER_KANAELE.schmiede+" · "+(woche?"die letzten sieben Tage":"die letzten Einträge"),"#0284c7")}
     ${liste.map(e=>`<div class="schmiede-eintrag" style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--rand-bedien);font-size:var(--s-text);line-height:1.5"><span aria-hidden="true" style="flex:none">${esc(e.emoji||"🛠️")}</span><span><span style="display:block;font-size:var(--s-klein);color:var(--text2)">${esc(dat(e.datum))}</span>${esc(e.text)}</span></div>`).join("")}
     <div style="font-size:var(--s-klein);color:var(--text2);margin-top:10px">Jeden Sonntag um 18 Uhr kommt eine Benachrichtigung, wenn es Neues gibt. Abschalten unter „Mein Konto“ (oben ⋯) → Benachrichtigungen.</div>
     <button onclick="document.getElementById('wn-modal').remove()" class="btn" style="width:100%;justify-content:center;margin-top:14px">Super, danke!</button>
@@ -1165,7 +1173,7 @@ async function elternDashLoad(){
      starten, elternNewsLoad blendet ihn nur bei ungelesenen Punkten ein. */
   html+=`<button id="eltern-news-btn" class="btn btn-zeile" onclick="elternCatOpen('news')" style="display:none;margin-bottom:10px">
     <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("📣")}</span>
-    <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Adler News</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Neues aus dem Team &amp; von deinem Kind</span></span>
+    <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Adler News</span>${kanalUnter("news")}</span>
     <span id="eltern-news-badge" style="display:none;background:#ef4444;color:#fff;font-weight:800;font-size:var(--s-text);border-radius:12px;padding:2px 9px">0</span>
     <span style="font-size:var(--s-teil);color:#64748b">›</span>
   </button>`;
@@ -1287,7 +1295,7 @@ async function elternDashLoad(){
   //    Inhalte liegen (versteckt) im Overlay, damit die Async-Loader ihre Slots weiter füllen. ──
   // Einheitliche Aktions-Zeile für die Panel-Inhalte (Icon + Titel + Beschreibung + ›, farbiger
   // Akzent links in Tönen der Kategorie-Farbe). noClose=true lässt das Fenster offen (z. B. Export).
-  const elRow=(emo,label,d,onclick,col,noClose)=>`<button onclick="${noClose?"":"elternCatClose();"}${onclick}" class="btn btn-zeile" style="margin-bottom:8px"><span style="font-size:var(--s-teil);line-height:1">${emo}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-text);font-weight:700">${label}</span><span style="display:block;font-size:var(--s-klein);color:var(--text2);font-weight:400;margin-top:1px">${d}</span></span><span style="font-size:var(--s-karte);color:var(--text3)">›</span></button>`;
+  const elRow=(emo,label,d,onclick,col,noClose)=>`<button onclick="${noClose?"":"elternCatClose();"}${onclick}" class="btn btn-zeile" style="margin-bottom:8px"><span style="font-size:var(--s-teil);line-height:1">${emo}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-text);font-weight:700">${label}</span>${/^<span class="kanal-unter"/.test(d)?d:`<span style="display:block;font-size:var(--s-klein);color:var(--text2);font-weight:400;margin-top:1px">${d}</span>`}</span><span style="font-size:var(--s-karte);color:var(--text3)">›</span></button>`;   // v896: Adler-Kanäle bringen ihre Unterzeile fertig mit (kanalUnter)
   const catBtn=(id,emoji,title,desc,grad)=>`<button onclick="elternCatOpen('${id}')" class="btn btn-zeile" style="margin-bottom:8px"><span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon(emoji)}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">${title}</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">${desc}</span></span><span style="font-size:var(--s-teil);color:#64748b">›</span></button>`;
   /* v862 (Charles 18.11., 3.15): oben „Fürs Team“ (Trainerteam, Termine, Kasse), dann „Für die Kinder“, dann „Mehr“.
      Vorher stand „Für die Kinder“ vor dem Weg zum Trainerteam. */
@@ -1353,7 +1361,7 @@ async function elternDashLoad(){
   html+=grp("Lesen");
   html+=elRow("📣","Nachlesen","Ansagen des Trainerteams und Neues in der App – auch was schon gelesen ist","elternNachlesenOpen()","#1e3a8a");   // v859 (3.7)
   /* v733: Das Adler Nest erscheint nach jedem Spieltag als eigene Ausgabe – zum Lesen und Hören, nur hier im Login. */
-  html+=elRow("🪺","Adler Nest","Nach jedem Spieltag: Bericht, Fotos, Porträt – zum Lesen und Hören","if(typeof nestOpen==='function')nestOpen()","#0044AA");
+  html+=elRow("🪺","Adler Nest",kanalUnter("nest","nach jedem Spieltag, zum Lesen und Hören"),"if(typeof nestOpen==='function')nestOpen()","#0044AA");
   html+=elRow("📖","Unsere Saison (Chronik)","Alle Spiele, Feste &amp; Meilensteine als Zeitstrahl – wächst jede Woche","chronikOpen()","#1d4ed8",true);
   html+=grp("Fotos");
   html+=elRow("📸","Spieltagsgalerie","Fotos von allen Spieltagen – ansehen, groß wischen, selbst hochladen","spieltagGalerieOpen()","#7c3aed");   // v730

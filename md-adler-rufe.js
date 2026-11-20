@@ -670,7 +670,7 @@ async function rufeBadgeLoad(){
     if(n){ const l=await _rfGet(`rufe_nachricht?archiviert_am=is.null${neuRaum!=null?"&raum_id=eq."+encodeURIComponent(neuRaum):""}&select=autor_name,text,autor&order=created_at.desc&limit=5`); letzter=l.find(x=>x.autor!==_rfUid())||null; }
     hinweis.innerHTML=n?`<button type="button" class="btn btn-zeile" onclick="rufeEinstieg()" style="margin-bottom:10px">
       <span aria-hidden="true" style="font-size:var(--s-teil)">💬</span>
-      <span style="flex:1;min-width:0"><b style="display:block;font-size:var(--s-text)">${n===1?"1 neuer Adler-Ruf":n+" neue Adler-Rufe"}${alle?" · an alle":""}</b>
+      <span style="flex:1;min-width:0"><b style="display:block;font-size:var(--s-text)">${n===1?"1 neuer Adler-Ruf":n+" neue Adler-Rufe"}${alle?" · an alle":""}</b>${typeof kanalUnter==="function"?kanalUnter("rufe"):""}
         ${letzter?`<span style="display:block;font-size:var(--s-klein);color:var(--text2);font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(letzter.autor_name||"")}: ${esc(letzter.text||"")}</span>`:""}</span>
       <span aria-hidden="true">›</span></button>`:"";
   }
