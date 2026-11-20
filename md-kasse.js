@@ -636,7 +636,8 @@ async function grillBefreitWeg(kindId){
    „jetzt sofort“. still: keine Meldung, wenn nichts zu tun war. */
 async function ghAutoEinteilen(opt){
   opt=opt||{};
-  const st=(await ghTrainerDaten())||{}, vorherD=st.dienste||[];
+  /* Ist das Fenster offen, sind die Daten gerade geladen – kein zweiter Umlauf vor dem Einteilen */
+  const st=(document.getElementById("gh-tr-inhalt")&&_ghTr)?_ghTr:((await ghTrainerDaten())||{}), vorherD=st.dienste||[];
   const vorher=new Set(vorherD.map(d=>d.termin_id+"_"+d.kind_id));
   /* Nichts offen → nichts schreiben (der tägliche Lauf fragt sonst bei jedem Öffnen die Datenbank an) */
   const P0=st.plaetze||2, offen=(st.termine||[]).some(t=>vorherD.filter(d=>d.termin_id===t.id).length<(Number(t.grill_plaetze)||P0));
