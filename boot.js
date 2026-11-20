@@ -491,23 +491,26 @@ function _tfKarte(x){
 }
 // Übung aus der Datenbank in den nächsten freien, passenden Slot des Trainingsplans legen.
 // Passend = ein Slot, dessen (typ-gefiltertes) Auswahl-Select diese Übung überhaupt anbietet.
-function tfInPlan(i){
+async function tfInPlan(i){
+  /* v914: statt fest 900 ms warten, bis das Öffnen fertig ist. go("planung") startet tpPlanRestore (über
+     terminSelectFill, also nach dem Netz), und der Lauf leert ALLE Felder, bevor er sie neu setzt – eine
+     vorher gesetzte Wahl wäre still weg. Das Signal ist der Lauf-Zähler: ein neuer Lauf hat begonnen
+     (_tpRestoreLauf > vorher) und ist fertig (_tpRestoring false). Beginnt binnen 1,2 s keiner (Plan schon
+     offen, nichts zu laden), geht es ohne ihn weiter; länger als 8 s wird nie gewartet (kein Netz). */
+  const vorher=_tpRestoreLauf;
   go("planung");
-  /* v884: Das Feld kommt aus Modell und Zustand (_tpWahlFeldFuer), gewählt wird über tpWahlWaehlen.
-     Die 900 ms bleiben: go("planung") startet tpPlanRestore, das nach dem Laden aus der Datenbank
-     ALLE Felder leert und neu setzt – eine sofort gesetzte Wahl wäre danach still weg (und während
-     des Öffnens gälte sie nicht als Griff von Hand).
-     v887 (Schritt 7): bleibt bewusst. go("planung") startet tpPlanRestore erst im onReady von
-     terminSelectFill (Netz) und gibt kein Versprechen zurück – auf „Öffnen fertig“ zu warten bräuchte
-     ein neues Signal; das ist kein unsichtbarer Umbau mehr. */
-  setTimeout(()=>{
-    const ziel=_tpWahlFeldFuer(i,true);
-    if(!ziel){toast("Kein freier passender Slot – erst einen Block hinzufügen","err");return;}
-    try{tpWahlWaehlen(ziel,Number(i));}catch(e){}
-    const el=document.getElementById(ziel);
-    (el&&(el.closest(".tp-station")||el.closest(".tp-slot")))?.scrollIntoView({behavior:"smooth",block:"center"});
-    toast("Übung im Plan ✓");
-  },900);
+  for(let t=50;;t+=50){                 // gezählt, nicht Date.now – die Uhr kann gestellt sein
+    await new Promise(r=>setTimeout(r,50));
+    if(_tpRestoreLauf>vorher&&!_tpRestoring)break;
+    if(_tpRestoreLauf===vorher&&t>=1200)break;
+    if(t>=8000)break;
+  }
+  const ziel=_tpWahlFeldFuer(i,true);
+  if(!ziel){toast("Kein freier passender Slot – erst einen Block hinzufügen","err");return;}
+  try{tpWahlWaehlen(ziel,Number(i));}catch(e){}
+  const el=document.getElementById(ziel);
+  (el&&(el.closest(".tp-station")||el.closest(".tp-slot")))?.scrollIntoView({behavior:"smooth",block:"center"});
+  toast("Übung im Plan ✓");
 }
 
 /* PRINT: printView() ist weiter oben (bei renderProfil) vollständig definiert –
