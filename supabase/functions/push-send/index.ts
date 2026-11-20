@@ -1,6 +1,7 @@
 /* Edge Function push-send — Trainer schickt eine Mitteilung an Eltern oder Trainer.
    v705 (Version 7): beachtet die Ruhezeit je Empfänger (verteilen).
    v728 (Version 8): art „ticker_helfer“ – Mitteilung an ein freigeschaltetes Elternkonto.
+   v910 (Version 9): art „grill_dienst“ – die für einen Heimtermin eingeteilten Familien.
 
    v643: Die VAPID-Schlüssel standen bis dahin als Konstante im Code dieser Funktion. Jetzt
    liegen sie im Supabase Vault (adler_vapid_public / adler_vapid_private) und werden über
@@ -156,6 +157,37 @@ Deno.serve(async (req) => {
       const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth,user_id").in("user_id", ids);
       const v = await verteilen(admin, subs || [], payload);
       return json({ ok: true, familien, offen: offen.length, sent: v.sent, wartet: v.wartet });
+    }
+
+    /* v910 (Version 9): Grillhütten-Dienst. PO 20.11.: „Die Eltern, die es betrifft, sollten direkt informiert werden per
+       Push.“ Nur das Trainerteam; Empfänger sind die Familien, die für DIESEN Heimtermin in dienst_einteilung stehen
+       (eingeteilt oder übernommen) – auf Wunsch nur die übergebenen Kinder (frisch eingeteilt oder umgebucht). Fester
+       Text, keine freie Mitteilung. Ruhezeit wie überall (verteilen). */
+    if (body.art === "grill_dienst") {
+      if (!prof || prof.role !== "trainer") return json({ error: "nur Trainer duerfen benachrichtigen" }, 403);
+      const tid = Number(body.termin_id);
+      if (!Number.isFinite(tid) || tid <= 0) return json({ error: "Termin fehlt" }, 400);
+      const { data: t } = await admin.from("termine").select("id,typ,titel,gegner,datum,uhrzeit").eq("id", tid).maybeSingle();
+      if (!t) return json({ error: "Termin nicht gefunden" }, 404);
+      const { data: ds } = await admin.from("dienst_einteilung").select("kind_id,status,uebernommen_kind").eq("termin_id", tid).eq("dienst", "grillhuette");
+      let kinder = (ds || []).map((d: any) => d.status === "uebernommen" && d.uebernommen_kind != null ? d.uebernommen_kind : d.kind_id).filter((x: any) => x != null);
+      const nur = Array.isArray(body.kind_ids) ? body.kind_ids.map(Number).filter(Number.isFinite) : null;
+      if (nur) kinder = kinder.filter((k: number) => nur.includes(Number(k)));
+      kinder = [...new Set(kinder)];
+      if (!kinder.length) return json({ ok: true, familien: 0, sent: 0 });
+      const { data: ek } = await admin.from("eltern_kinder").select("email,spieler_id").in("spieler_id", kinder);
+      const mails = [...new Set((ek || []).map((x: any) => String(x.email || "").toLowerCase()).filter(Boolean))];
+      const familien = new Set((ek || []).map((x: any) => x.spieler_id)).size;
+      const { data: profs } = mails.length ? await admin.from("profiles").select("id").in("email", mails) : { data: [] };
+      const ids = (profs || []).map((p: any) => p.id);
+      if (!ids.length) return json({ ok: true, familien, sent: 0, ohne_konto: kinder.length });
+      await vapid(admin);
+      const dat = new Date(t.datum + "T00:00:00").toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" });
+      const was = t.typ === "turnier" ? (t.titel || "Turnier") : ("Heimspiel" + (t.gegner ? " gegen " + t.gegner : ""));
+      const payload = { title: "🔥 Grillhütte", body: `Ihr seid am ${dat} dran (${was}). Könnt ihr nicht? Im Eltern-Bereich „Ersatz suchen“.`, url: "./eltern/?portal", tag: "adler-grill-" + tid };
+      const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth,user_id").in("user_id", ids);
+      const v = await verteilen(admin, subs || [], payload);
+      return json({ ok: true, familien, sent: v.sent, wartet: v.wartet });
     }
 
     /* v728 (Version 8): Ticker-Helfer freigeschaltet. Nur das Trainerteam, nur an das Konto, das für

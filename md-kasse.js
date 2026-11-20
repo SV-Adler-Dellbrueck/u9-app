@@ -541,9 +541,11 @@ async function buedchenTrainerFill(t){
   const slot=document.getElementById("bd-tm-"+t.id); if(!slot)return;
   if(!_ghTr)await ghTrainerDaten();
   const ds=(_ghTr.dienste||[]).filter(x=>x.termin_id===t.id);
-  slot.innerHTML=`🔥 Grillhütte: <b style="color:var(--text)">${ds.length?ds.map(_ghTrZeile).join(" · "):_ghTrZeile(null)}</b> ${ghChip(ds.length?(ds.some(x=>x.status==="freigegeben")?"freigegeben":ds[0].status):"offen")}`;
+  /* v910 PO 20.11.: „Die Grillhütte ist für morgen noch nicht eingeteilt. Wo mache ich das?“ – die Zeile im Termin
+     öffnet die Einteilung direkt an diesem Termin. */
+  slot.innerHTML=`<button type="button" class="btn btn-zeile gh-zeile" onclick="event.stopPropagation();grillTrainerOpen(${Number(t.id)})" style="width:100%;text-align:left;font-size:inherit">🔥 Grillhütte: <b style="color:var(--text)">${ds.length?ds.map(_ghTrZeile).join(" · "):_ghTrZeile(null)}</b> ${ghChip(ds.length?(ds.some(x=>x.status==="freigegeben")?"freigegeben":ds[0].status):"offen")} <span style="color:var(--blue);font-weight:700;white-space:nowrap">${ds.length?"Ändern ›":"Einteilen ›"}</span></button>`;
 }
-async function grillTrainerOpen(){
+async function grillTrainerOpen(terminId){
   document.getElementById("gh-tr-modal")?.remove();
   const m=document.createElement("div"); m.id="gh-tr-modal";
   m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Grillhütte");
@@ -556,6 +558,8 @@ async function grillTrainerOpen(){
   if(typeof loadKader==="function"&&(typeof KADER==="undefined"||!KADER.length))await loadKader();
   await ghTrainerDaten();
   grillTrainerRender();
+  /* v910: aus dem Termin geöffnet – zu diesem Termin springen und ihn kurz hervorheben */
+  if(terminId){ const z=document.getElementById("gh-t-"+Number(terminId)); if(z){ z.scrollIntoView({block:"center"}); z.classList.add("gh-ziel"); } }
 }
 function grillTrainerRender(){
   const box=document.getElementById("gh-tr-inhalt"); if(!box||!_ghTr)return;
@@ -570,11 +574,13 @@ function grillTrainerRender(){
     <div style="font-size:var(--s-klein);color:var(--text2);margin:6px 0 12px">${P} Familien je Heimtermin. Wer in dieser Saison am seltensten dran war, kommt zuerst; gesperrte Tage werden übersprungen. Bestehendes bleibt stehen.</div>
     ${_ghTr.termine.length?_ghTr.termine.map(t=>{ const ds=jeTermin(t);
       const sp=(_ghTr.sperren||[]).filter(x=>x.datum===t.datum);
-      return `<div class="gh-termin" style="border-top:1px solid var(--surface2);padding:8px 0">
+      const fam=ds.filter(x=>x.kind_id!=null);
+      return `<div class="gh-termin" id="gh-t-${Number(t.id)}" style="border-top:1px solid var(--surface2);padding:8px 0">
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>${esc(ghTag(t.datum,t.uhrzeit))}</b><span style="color:var(--text2)">${esc(t.gegner||t.titel||"")}</span></div>
         ${Array.from({length:P},(_,i)=>{ const d=ds.find(x=>Number(x.platz||1)===i+1);
           return `<div style="margin:4px 0 2px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="min-width:4.5em;color:var(--text2)">Familie ${i+1}</span><span>${_ghTrZeile(d)}</span>${ghChip(d?d.status:"offen")}</div>
           <label style="font-size:var(--s-klein);color:var(--text2)">Umbuchen auf<select onchange="grillUmbuchen(${Number(t.id)},this.value,${i+1})" style="${sel}">${famOpt}</select></label>`; }).join("")}
+        ${fam.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn btn-sm gh-push" onclick="grillPush(${Number(t.id)})"><i class="ti ti-bell"></i>Erinnern (Push)</button><button class="btn btn-sm gh-ruf" onclick="grillRufOpen(${Number(t.id)})"><i class="ti ti-message"></i>Nachricht an die Familien</button></div>`:""}
         <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">${sp.length?`Kann an dem Tag nicht: ${sp.map(x=>`${esc(_ghKindName(x.kind_id)||"Kind")}s Familie <button class="btn btn-sm" onclick="grillSperreWeg(${Number(x.id)})" aria-label="Sperre für ${esc(_ghKindName(x.kind_id)||"Kind")}s Familie aufheben">aufheben</button>`).join(" ")}`:""}</div>
         <label style="font-size:var(--s-klein);color:var(--text2)">Familie kann an dem Tag nicht<select onchange="grillSperren(${JSON.stringify(String(t.datum)).replace(/"/g,"&quot;")},this.value)" style="${sel}">${famOpt}</select></label>
       </div>`; }).join(""):'<div style="color:var(--text2)">Keine künftigen Heimtermine im Kalender.</div>'}
@@ -622,8 +628,67 @@ async function grillEinteilen(){
     if(!r.ok){ toast(`Nicht eingeteilt – Server antwortet ${r.status}`,"err"); if(k)k.disabled=false; return; }
     n=Number(await r.json())||0;
   }catch(e){ toast("Kein Netz – nicht eingeteilt","err"); if(k)k.disabled=false; return; }
-  toast(n?`${n} Heimtermin${n===1?"":"e"} eingeteilt`:"Alles ist schon eingeteilt");
+  const vorher=new Set(((_ghTr&&_ghTr.dienste)||[]).map(d=>d.termin_id+"_"+d.kind_id));
   await ghTrainerDaten(); grillTrainerRender();
+  /* v910: Die frisch eingeteilten Familien bekommen sofort einen Push – je Termin nur die neuen. */
+  const neu={}; (_ghTr.dienste||[]).forEach(d=>{ if(d.kind_id!=null&&!vorher.has(d.termin_id+"_"+d.kind_id))(neu[d.termin_id]=neu[d.termin_id]||[]).push(d.kind_id); });
+  let fam=0; for(const tid of Object.keys(neu)){ const e=await _ghPushSenden(Number(tid),neu[tid]); fam+=e?e.familien||0:0; }
+  toast(n?`${n} Heimtermin${n===1?"":"e"} eingeteilt${fam?` · ${fam} Familie${fam===1?"":"n"} per Push informiert`:""}`:"Alles ist schon eingeteilt");
+}
+/* v910: Push an die eingeteilten Familien eines Termins (Edge Function push-send, Art grill_dienst – Empfänger und
+   Text bestimmt der Server). kindIds: nur diese Familien (frisch eingeteilt/umgebucht), sonst alle des Termins. */
+async function _ghPushSenden(terminId,kindIds){
+  try{
+    const r=await fetch(`${SB_URL}/functions/v1/push-send`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({art:"grill_dienst",termin_id:terminId,kind_ids:kindIds||null})});
+    if(!r.ok)return null;
+    return await r.json();
+  }catch(e){ return null; }
+}
+async function grillPush(terminId){
+  const e=await _ghPushSenden(terminId,null);
+  if(!e){ toast("Push nicht gesendet – bitte gleich noch einmal","err"); return; }
+  toast(e.familien?`🔔 ${e.familien} Familie${e.familien===1?"":"n"} erinnert${e.wartet?` (${e.wartet} erst nach der Ruhezeit)`:""}`:"Keine eingeteilte Familie mit Eltern-Zugang");
+}
+/* v910 PO 20.11.: „… und eine Nachricht auch parallel direkt anstoßbar sein, die dann in die Adler-Rufe geht.“
+   Ein Text (vorbelegt, änderbar) in den privaten Raum jeder eingeteilten Familie (rufe_privat_raum führt jedes Kind auf
+   den Raum seiner Familie zurück). Die Adler-Rufe schicken dazu ihren eigenen Push (rufe-push, alle 5 Minuten). */
+function _ghRufText(t){
+  const was=t.typ==="turnier"?(t.titel||"Turnier"):("Heimspiel"+(t.gegner?" gegen "+t.gegner:""));
+  return `Hallo! Ihr seid am ${ghTag(t.datum,t.uhrzeit)} (${was}) für die Grillhütte eingeteilt – danke, dass ihr mithelft! Könnt ihr nicht, tippt bitte im Eltern-Bereich auf „Ersatz suchen“.`;
+}
+function grillRufOpen(terminId){
+  const t=((_ghTr&&_ghTr.termine)||[]).find(x=>x.id===terminId); if(!t)return;
+  const fam=(_ghTr.dienste||[]).filter(d=>d.termin_id===terminId&&d.kind_id!=null);
+  document.getElementById("gh-ruf-modal")?.remove();
+  const m=document.createElement("div"); m.id="gh-ruf-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Nachricht an die Familien");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.style.zIndex=(typeof zOben==="function")?zOben(10004):10004;
+  m.onclick=e=>{ if(e.target===m)m.remove(); };
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:520px;width:100%;margin:auto">
+    ${mdlHead("gh-ruf-modal","✉️","Nachricht an die Familien",`${fam.map(d=>esc(_ghKindName(d.kind_id)||"Kind")+"s Familie").join(" · ")} · in ihren privaten Adler-Rufe-Raum`,"var(--amber)")}
+    <label for="gh-ruf-text" style="font-size:var(--s-klein);color:var(--text2)">Text (änderbar)</label>
+    <textarea id="gh-ruf-text" rows="5" style="width:100%;margin-top:4px;border:1px solid var(--rand-bedien);border-radius:10px;padding:10px;font:inherit;background:var(--surface2);color:var(--text);resize:vertical">${esc(_ghRufText(t))}</textarea>
+    <button class="btn btn-p" id="gh-ruf-senden" style="width:100%;margin-top:10px;min-height:48px" onclick="grillRufSenden(${Number(terminId)})"><i class="ti ti-send"></i>An ${fam.length} Familie${fam.length===1?"":"n"} senden</button>
+  </div>`;
+  document.body.appendChild(m);
+}
+async function grillRufSenden(terminId){
+  const text=(document.getElementById("gh-ruf-text")?.value||"").trim(); if(!text)return;
+  const k=document.getElementById("gh-ruf-senden"); if(k)k.disabled=true;
+  const fam=(_ghTr.dienste||[]).filter(d=>d.termin_id===terminId&&d.kind_id!=null);
+  let ok=0, ohne=0;
+  for(const d of fam){
+    try{
+      const r=await fetch(`${SB_URL}/rest/v1/rpc/rufe_privat_raum`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_kind:Number(d.kind_id)})});
+      if(!r.ok){ ohne++; continue; }
+      const raum=await r.json();
+      const w=await fetch(`${SB_URL}/rest/v1/rufe_nachricht`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify({raum_id:raum,text})});
+      if(w.ok)ok++; else ohne++;
+    }catch(e){ ohne++; }
+  }
+  document.getElementById("gh-ruf-modal")?.remove();
+  toast(ok?`✉️ An ${ok} Familie${ok===1?"":"n"} geschickt${ohne?` · ${ohne} ohne Eltern-Zugang`:""}`:"Nicht gesendet – keine Familie mit Eltern-Zugang",ok?undefined:"err");
 }
 /* Kriterium 7: Tausch außerhalb der App nachtragen – die gewählte Familie ist eingeteilt. */
 async function grillUmbuchen(terminId,kindId,platz){
@@ -639,8 +704,9 @@ async function grillUmbuchen(terminId,kindId,platz){
     if(sbCheck401(r))return;
     if(!r.ok){ toast(`Nicht umgebucht – Server antwortet ${r.status}`,"err"); return; }
   }catch(e){ toast("Kein Netz – nicht umgebucht","err"); return; }
-  toast("Umgebucht");
   await ghTrainerDaten(); grillTrainerRender();
+  const e=await _ghPushSenden(terminId,[Number(kindId)]);   // v910: die neu eingeteilte Familie erfährt es sofort
+  toast(e&&e.familien?"Umgebucht · Familie per Push informiert":"Umgebucht");
 }
 /* v668: Sperrtage – an diesen Tagen teilt „Grillhütte einteilen“ die Familie nicht ein
    (PO 29.09.: ein Vater ist nur an bestimmten Wochenenden verfügbar). Eine schon stehende
