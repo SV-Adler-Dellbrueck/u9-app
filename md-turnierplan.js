@@ -4026,7 +4026,7 @@ function _fstPublicRender(wrap,row){
       <div style="font-size:var(--s-text);font-weight:800;margin-bottom:4px">🙌 Am Spielfeldrand</div>
       <div style="font-size:var(--s-text);line-height:1.55;color:#334155">${esc(fstZonenSatz(felder))}</div>
       <div style="font-size:var(--s-text);line-height:1.55;color:#334155;margin-top:4px">${esc(FST_FAN_SATZ)}</div>
-      <button class="btn" onclick="fstCodexOpen()" style="width:100%;min-height:44px;margin-top:8px;justify-content:center;font-size:var(--s-text)">Alles lesen – und gern an eure Eltern weiterleiten</button>
+      <button class="btn" onclick="fstCodexOpen()" style="width:100%;min-height:44px;margin-top:8px;justify-content:center;font-size:var(--s-text)">Alles lesen: unsere Bitte an alle am Spielfeldrand</button>
     </div>`:""}
 
     <div id="fst-uhr"></div>

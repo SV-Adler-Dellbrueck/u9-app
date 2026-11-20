@@ -1251,6 +1251,7 @@ async function elternDashLoad(){
       ${(termin.typ==="spiel"||termin.typ==="turnier")?`<div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px">Deine Rückmeldung ist ein Hinweis – die Aufstellung entscheidet das Trainerteam.</div>`:""}<!-- v718: „Aktiven Status nochmal tippen = entfernen“ steht in der Hilfe -->
       ${(termin.typ==="training"&&!faelltAus)?'<div id="betreuung-card"></div>':""}
       ${(termin.typ==="event"&&termin.eltern_turnier&&!faelltAus)?'<div id="mitspieler-card"></div>':""}<!-- v825: Kinder-Eltern-Turnier -->
+      ${(termin.heim===true&&(termin.typ==="spiel"||termin.typ==="turnier")&&!faelltAus)?'<div id="ht-spielplan-karte"></div>':""}<!-- v920: Spielplan-Knopf des Heimturniers -->
       <div id="helfer-card"></div><!-- PO: Hilfe wird kurzfristig entschieden, nicht im Voraus -->
 
       ${termin.typ==="turnier"?'<div id="turnierplan-card"></div>':""}
@@ -1421,6 +1422,7 @@ async function elternDashLoad(){
   if(termin&&termin.datum)wetterInto("wetter-eltern",termin.datum,termin.ort,termin.uhrzeit); // Wetter am Termin-Ort + Uhrzeit
   if(termin&&termin.typ==="training")elternBetreuungLoad(termin.id,kids); // wer bleibt vor Ort
   if(termin)elternHelferKachelLoad(termin);                               // Helfer-Aufgaben kompakt
+  if(termin&&document.getElementById("ht-spielplan-karte"))tdSpielplanLoad(termin,"ht-spielplan-karte");   // v920
   if(termin&&termin.typ==="turnier")elternTurnierplanLoad(termin);        // Begegnungen, Turnierbaum, Aushang
   if(termin&&(termin.typ==="spiel"||termin.typ==="turnier"))elternPauseLoad(termin,kids);
   if(!window._eTourChecked){window._eTourChecked=true;setTimeout(elternTourMaybe,700);} // Eltern-Tour einmalig
@@ -2015,14 +2017,17 @@ async function terminDetailOpen(id){
 }
 /* v901: Spielplan im Termin. Der Block selbst kommt aus md-turnierplan.js (htTerminBlockHtml, Welle 2 – geprüft).
    heimturnier ist öffentlich lesbar; gezeigt wird nur, wenn der Trainer „Spielplan im Termin“ eingeschaltet hat. */
-async function tdSpielplanLoad(t){
-  const box=document.getElementById("td-spielplan"); if(!box||!t||!t.datum)return;
+/* v920 (Charles 20.11., Bild der Startseite): der Knopf stand nur im Termin-Fenster – in der Karte „Nächster
+   Termin“, wo Eltern am Spieltag zuerst hinsehen, fehlte er. Ein Lader für beide Stellen, Ziel per id. */
+async function tdSpielplanLoad(t,zielId){
+  zielId=zielId||"td-spielplan";
+  const box=document.getElementById(zielId); if(!box||!t||!t.datum)return;
   let row=null;
   try{ const r=await fetch(`${SB_URL}/rest/v1/heimturnier?datum=eq.${encodeURIComponent(t.datum)}&select=slug,name,datum,config,teams,plan&limit=1`,{headers:sbAuthHeaders()});
     if(r.ok)row=((await r.json())||[])[0]||null; }catch(e){}
   if(!row||!(row.config||{}).imTermin)return;
   for(let i=0;i<30&&typeof htTerminBlockHtml!=="function";i++)await new Promise(x=>setTimeout(x,100));   // Welle 2 kommt evtl. später
-  if(!document.getElementById("td-spielplan"))return;
+  if(!document.getElementById(zielId))return;
   box.innerHTML=(typeof htTerminBlockHtml==="function")?htTerminBlockHtml(row):"";
 }
 /* Mitbringliste im Termin-Detail: gleiche Liste wie im Zu-erledigen-Fenster, aber IMMER
