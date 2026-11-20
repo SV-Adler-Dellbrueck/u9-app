@@ -25,6 +25,8 @@ module.exports = async function (h) {
     out.b = { ry: box.style.getPropertyValue("--ry"), rx: box.style.getPropertyValue("--rx"), mx: box.style.getPropertyValue("--mx"), my: box.style.getPropertyValue("--my"), ho: box.style.getPropertyValue("--ho"),
       glanz: +getComputedStyle(box.querySelector(".kab-holo-glanz")).opacity };
     ev("pointerleave", .9, .1); await w(250);
+    /* v912: Der Übergang dauert 0,2 s – unter Last (volle Reihe) braucht er länger; bis 1 s auf das Ausblenden warten */
+    for (let i = 0; i < 15 && +getComputedStyle(box.querySelector(".kab-holo-glanz")).opacity >= .1; i++) await w(50);
     out.b.aus = box.style.getPropertyValue("--ho") === "0" && +getComputedStyle(box.querySelector(".kab-holo-glanz")).opacity < .1;
     ev("pointermove", .2, .8); box.click(); await w(50);
     out.b.bleibt = !!document.getElementById("kab-zoom");

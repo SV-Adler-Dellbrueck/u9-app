@@ -514,7 +514,7 @@ let _ghTr=null;
 async function ghTrainerDaten(){
   const heute=isoLokal();
   let termine=[], dienste=[], profile=[];
-  try{const r=await fetch(`${SB_URL}/rest/v1/termine?heim=is.true&typ=in.(spiel,turnier)&datum=gte.${heute}&select=id,datum,uhrzeit,gegner,titel,typ&order=datum.asc`,{headers:sbAuthHeaders()});if(r.ok)termine=await r.json();}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/termine?heim=is.true&typ=in.(spiel,turnier)&datum=gte.${heute}&select=id,datum,uhrzeit,gegner,titel,typ,grill_plaetze&order=datum.asc`,{headers:sbAuthHeaders()});if(r.ok)termine=await r.json();}catch(e){}
   try{const r=await fetch(`${SB_URL}/rest/v1/dienst_einteilung?dienst=eq.grillhuette&select=id,termin_id,kind_id,status,uebernommen_von,uebernommen_kind,platz&order=platz.asc`,{headers:sbAuthHeaders()});if(r.ok)dienste=await r.json();}catch(e){}
   let plaetze=2, sperren=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/team_config?id=eq.1&select=dienst_plaetze`,{headers:sbAuthHeaders()});if(r.ok){const x=(await r.json())[0];if(x&&Number(x.dienst_plaetze))plaetze=Number(x.dienst_plaetze);}}catch(e){}
@@ -543,13 +543,22 @@ async function buedchenTrainerFill(t){
   const ds=(_ghTr.dienste||[]).filter(x=>x.termin_id===t.id);
   /* v910 PO 20.11.: „Die Grillhütte ist für morgen noch nicht eingeteilt. Wo mache ich das?“ – die Zeile im Termin
      öffnet die Einteilung direkt an diesem Termin. */
-  slot.innerHTML=`<button type="button" class="btn btn-zeile gh-zeile" onclick="event.stopPropagation();grillTrainerOpen(${Number(t.id)})" style="width:100%;text-align:left;font-size:inherit">🔥 Grillhütte: <b style="color:var(--text)">${ds.length?ds.map(_ghTrZeile).join(" · "):_ghTrZeile(null)}</b> ${ghChip(ds.length?(ds.some(x=>x.status==="freigegeben")?"freigegeben":ds[0].status):"offen")} <span style="color:var(--blue);font-weight:700;white-space:nowrap">${ds.length?"Ändern ›":"Einteilen ›"}</span></button>`;
+  /* v912 (Bild Charles 20.11.): „noch nicht eingeteilt“ stand doppelt (Text und Marke) und brach in schmale Spalten um.
+     Jetzt eine Zeile Text, die Marke nur, wenn sie etwas anderes sagt als der Text. */
+  const tt=((_ghTr&&_ghTr.termine)||[]).find(x=>x.id===t.id)||t;
+  const P=Number(tt.grill_plaetze)||(_ghTr&&_ghTr.plaetze)||2;
+  const was=ds.length?ds.map(_ghTrZeile).join(" · ")+(ds.length<P?` · noch ${P-ds.length} offen`:""):"noch niemand eingeteilt";
+  const chip=ds.some(x=>x.status==="freigegeben")?ghChip("freigegeben"):"";
+  slot.innerHTML=`<button type="button" class="btn btn-zeile gh-zeile" onclick="event.stopPropagation();grillTrainerOpen(${Number(t.id)})" style="width:100%;text-align:left;font-size:inherit;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <span style="flex:1 1 12em;min-width:0">🔥 <b>Grillhütte:</b> <span style="color:var(--text)">${was}</span> ${chip}</span>
+    <span style="color:var(--blue);font-weight:700;white-space:nowrap;margin-left:auto">${ds.length>=P?"Ändern ›":"Einteilen ›"}</span></button>`;
 }
 async function grillTrainerOpen(terminId){
   document.getElementById("gh-tr-modal")?.remove();
   const m=document.createElement("div"); m.id="gh-tr-modal";
   m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Grillhütte");
-  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.style.zIndex=(typeof zOben==="function")?zOben(10002):10002;   // v912: aus dem Termin geöffnet lag es sonst darunter
   m.onclick=e=>{ if(e.target===m)m.remove(); };
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:560px;width:100%;margin:auto">
     ${mdlHead("gh-tr-modal","🔥","Grillhütte","Einteilen reihum · umbuchen, wenn Familien außerhalb der App tauschen","#b45309")}
@@ -565,20 +574,21 @@ function grillTrainerRender(){
   const box=document.getElementById("gh-tr-inhalt"); if(!box||!_ghTr)return;
   const kids=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.aktiv!==false);
   const kid=k=>(typeof kaderId==="function")?kaderId(k):k.id;
-  const P=_ghTr.plaetze||2;
+  const P0=_ghTr.plaetze||2, Pt=t=>Number(t.grill_plaetze)||P0;   // v912: je Termin einstellbar
   const jeTermin=t=>_ghTr.dienste.filter(x=>x.termin_id===t.id);
-  const ohne=_ghTr.termine.reduce((a,t)=>a+Math.max(0,P-jeTermin(t).length),0);
+  const ohne=_ghTr.termine.reduce((a,t)=>a+Math.max(0,Pt(t)-jeTermin(t).length),0);
   const famOpt=`<option value="">– Familie wählen –</option>`+kids.map(k=>`<option value="${esc(String(kid(k)))}">${esc(k.name)}s Familie</option>`).join("");
   const sel="width:100%;min-height:44px;margin-top:2px;border:1px solid var(--rand-bedien);border-radius:8px;font:inherit;background:var(--surface2);color:var(--text)";
   box.innerHTML=`<button class="btn" id="gh-einteilen" style="width:100%" onclick="grillEinteilen()" ${ohne?"":"disabled"}>Grillhütte einteilen${ohne?` (${ohne} ${ohne===1?"Platz":"Plätze"} offen)`:""}</button>
-    <div style="font-size:var(--s-klein);color:var(--text2);margin:6px 0 12px">${P} Familien je Heimtermin. Wer in dieser Saison am seltensten dran war, kommt zuerst; gesperrte Tage werden übersprungen. Bestehendes bleibt stehen.</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin:6px 0 12px">Die App teilt neue Heimtermine von selbst ein – reihum, wer in dieser Saison am seltensten dran war, zuerst; gesperrte Tage werden übersprungen, Bestehendes bleibt stehen. Je Termin 1 oder 2 Familien.</div>
     ${_ghTr.termine.length?_ghTr.termine.map(t=>{ const ds=jeTermin(t);
       const sp=(_ghTr.sperren||[]).filter(x=>x.datum===t.datum);
       const fam=ds.filter(x=>x.kind_id!=null);
       return `<div class="gh-termin" id="gh-t-${Number(t.id)}" style="border-top:1px solid var(--surface2);padding:8px 0">
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>${esc(ghTag(t.datum,t.uhrzeit))}</b><span style="color:var(--text2)">${esc(t.gegner||t.titel||"")}</span></div>
-        ${Array.from({length:P},(_,i)=>{ const d=ds.find(x=>Number(x.platz||1)===i+1);
-          return `<div style="margin:4px 0 2px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="min-width:4.5em;color:var(--text2)">Familie ${i+1}</span><span>${_ghTrZeile(d)}</span>${ghChip(d?d.status:"offen")}</div>
+        <div class="gh-anzahl" role="group" aria-label="Familien an diesem Termin" style="display:flex;gap:6px;align-items:center;margin:6px 0 2px"><span style="color:var(--text2);font-size:var(--s-klein)">Familien:</span>${[1,2].map(n=>`<button type="button" class="btn btn-sm" aria-pressed="${Pt(t)===n}" onclick="grillPlaetzeSetzen(${Number(t.id)},${n})" style="min-width:48px;justify-content:center">${n}</button>`).join("")}</div>
+        ${Array.from({length:Pt(t)},(_,i)=>{ const d=ds.find(x=>Number(x.platz||1)===i+1);
+          return `<div style="margin:4px 0 2px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="min-width:4.5em;color:var(--text2)">Familie ${i+1}</span>${d?`<span>${_ghTrZeile(d)}</span>${ghChip(d.status)}`:ghChip("offen")}</div>
           <label style="font-size:var(--s-klein);color:var(--text2)">Umbuchen auf<select onchange="grillUmbuchen(${Number(t.id)},this.value,${i+1})" style="${sel}">${famOpt}</select></label>`; }).join("")}
         ${fam.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn btn-sm gh-push" onclick="grillPush(${Number(t.id)})"><i class="ti ti-bell"></i>Erinnern (Push)</button><button class="btn btn-sm gh-ruf" onclick="grillRufOpen(${Number(t.id)})"><i class="ti ti-message"></i>Nachricht an die Familien</button></div>`:""}
         <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">${sp.length?`Kann an dem Tag nicht: ${sp.map(x=>`${esc(_ghKindName(x.kind_id)||"Kind")}s Familie <button class="btn btn-sm" onclick="grillSperreWeg(${Number(x.id)})" aria-label="Sperre für ${esc(_ghKindName(x.kind_id)||"Kind")}s Familie aufheben">aufheben</button>`).join(" ")}`:""}</div>
@@ -619,21 +629,62 @@ async function grillBefreitWeg(kindId){
   toast("Befreiung aufgehoben");
   await ghTrainerDaten(); grillTrainerRender();
 }
-async function grillEinteilen(){
-  const k=document.getElementById("gh-einteilen"); if(k)k.disabled=true;
+/* v912 PO 20.11.: „Die Einteilung der Eltern soll automatisch erfolgen, so dass jedes [Familie] mal dran kommt.“
+   ghAutoEinteilen füllt alle offenen Plätze künftiger Heimtermine (dienst_einteilen: reihum je Familie, wer in der Saison
+   am seltensten dran war, zuerst) und schickt den frisch eingeteilten Familien sofort einen Push. Läuft nach dem Speichern
+   eines Heimtermins, einmal am Tag beim Öffnen der Trainer-App und beim Ändern der Familienzahl; der Knopf bleibt für
+   „jetzt sofort“. still: keine Meldung, wenn nichts zu tun war. */
+async function ghAutoEinteilen(opt){
+  opt=opt||{};
+  /* Ist das Fenster offen, sind die Daten gerade geladen – kein zweiter Umlauf vor dem Einteilen */
+  const st=(document.getElementById("gh-tr-inhalt")&&_ghTr)?_ghTr:((await ghTrainerDaten())||{}), vorherD=st.dienste||[];
+  const vorher=new Set(vorherD.map(d=>d.termin_id+"_"+d.kind_id));
+  /* Nichts offen → nichts schreiben (der tägliche Lauf fragt sonst bei jedem Öffnen die Datenbank an) */
+  const P0=st.plaetze||2, offen=(st.termine||[]).some(t=>vorherD.filter(d=>d.termin_id===t.id).length<(Number(t.grill_plaetze)||P0));
+  if(!offen){ if(!opt.still)toast("Grillhütte: alles ist schon eingeteilt"); return {n:0,fam:0}; }
   let n=0;
   try{
     const r=await fetch(`${SB_URL}/rest/v1/rpc/dienst_einteilen`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"});
-    if(sbCheck401(r))return;
-    if(!r.ok){ toast(`Nicht eingeteilt – Server antwortet ${r.status}`,"err"); if(k)k.disabled=false; return; }
+    if(typeof sbCheck401==="function"&&sbCheck401(r))return null;
+    if(!r.ok){ if(!opt.still)toast(`Nicht eingeteilt – Server antwortet ${r.status}`,"err"); return null; }
     n=Number(await r.json())||0;
-  }catch(e){ toast("Kein Netz – nicht eingeteilt","err"); if(k)k.disabled=false; return; }
-  const vorher=new Set(((_ghTr&&_ghTr.dienste)||[]).map(d=>d.termin_id+"_"+d.kind_id));
-  await ghTrainerDaten(); grillTrainerRender();
-  /* v910: Die frisch eingeteilten Familien bekommen sofort einen Push – je Termin nur die neuen. */
+  }catch(e){ if(!opt.still)toast("Kein Netz – nicht eingeteilt","err"); return null; }
+  await ghTrainerDaten();
   const neu={}; (_ghTr.dienste||[]).forEach(d=>{ if(d.kind_id!=null&&!vorher.has(d.termin_id+"_"+d.kind_id))(neu[d.termin_id]=neu[d.termin_id]||[]).push(d.kind_id); });
   let fam=0; for(const tid of Object.keys(neu)){ const e=await _ghPushSenden(Number(tid),neu[tid]); fam+=e?e.familien||0:0; }
-  toast(n?`${n} Heimtermin${n===1?"":"e"} eingeteilt${fam?` · ${fam} Familie${fam===1?"":"n"} per Push informiert`:""}`:"Alles ist schon eingeteilt");
+  if(n||!opt.still)toast(n?`🔥 Grillhütte: ${n} Platz${n===1?"":"e"} eingeteilt${fam?` · ${fam} Familie${fam===1?"":"n"} per Push informiert`:""}`:"Grillhütte: alles ist schon eingeteilt");
+  if(document.getElementById("gh-tr-inhalt"))grillTrainerRender();
+  return {n,fam};
+}
+async function grillEinteilen(){
+  const k=document.getElementById("gh-einteilen"); if(k)k.disabled=true;
+  const e=await ghAutoEinteilen({});
+  if(!e&&k)k.disabled=false;
+}
+/* v912: 1 oder 2 Familien je Heimtermin (termine.grill_plaetze). Weniger Plätze: eine schon eingeteilte Familie auf dem
+   wegfallenden Platz wird nach Rückfrage ausgetragen; mehr Plätze: gleich automatisch einteilen. */
+async function grillPlaetzeSetzen(terminId,n){
+  const t=(_ghTr.termine||[]).find(x=>x.id===terminId); if(!t)return;
+  const zuviel=(_ghTr.dienste||[]).filter(d=>d.termin_id===terminId&&Number(d.platz||1)>n);
+  if(zuviel.length&&!await frageJaNein({emoji:"🔥",titel:"Familie austragen?",text:`An diesem Termin ist auf Platz ${zuviel.map(d=>d.platz).join(", ")} schon ${zuviel.map(d=>(_ghKindName(d.kind_id)||"eine")+"s Familie").join(" und ")} eingeteilt. Bei ${n} Familie${n===1?"":"n"} wird sie ausgetragen – sagt ihr Bescheid?`,ja:"Austragen",nein:"Abbrechen"}))return;
+  try{
+    for(const d of zuviel){ const r=await fetch(`${SB_URL}/rest/v1/dienst_einteilung?id=eq.${Number(d.id)}`,{method:"DELETE",headers:sbAuthHeaders({'Prefer':'return=minimal'})}); if(!r.ok){ toast(`Nicht ausgetragen – Server antwortet ${r.status}`,"err"); return; } }
+    const r=await fetch(`${SB_URL}/rest/v1/termine?id=eq.${Number(terminId)}`,{method:"PATCH",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify({grill_plaetze:n})});
+    if(typeof sbCheck401==="function"&&sbCheck401(r))return;
+    if(!r.ok){ toast(`Nicht gespeichert – Server antwortet ${r.status}`,"err"); return; }
+  }catch(e){ toast("Kein Netz – nicht gespeichert","err"); return; }
+  t.grill_plaetze=n;
+  toast(`${n} Familie${n===1?"":"n"} an diesem Termin`);
+  await ghAutoEinteilen({still:true});
+  await ghTrainerDaten(); grillTrainerRender();
+}
+/* v912: einmal am Tag beim Öffnen der Trainer-App (boot.js ruft es geprüft auf) */
+async function ghAutoEinteilenTaeglich(){
+  const heute=isoLokal(); let zuletzt=null;
+  try{ zuletzt=localStorage.getItem("adler_grill_auto"); }catch(e){}
+  if(zuletzt===heute)return;
+  try{ localStorage.setItem("adler_grill_auto",heute); }catch(e){}
+  await ghAutoEinteilen({still:true});
 }
 /* v910: Push an die eingeteilten Familien eines Termins (Edge Function push-send, Art grill_dienst – Empfänger und
    Text bestimmt der Server). kindIds: nur diese Familien (frisch eingeteilt/umgebucht), sonst alle des Termins. */

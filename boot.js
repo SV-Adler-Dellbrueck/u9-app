@@ -555,6 +555,14 @@ if(typeof _kindGeraet==="function"&&_kindGeraet()){
   if(n>40)return;                                  // ~20 s ohne Sitzung oder ohne Modul: nichts tun
   setTimeout(()=>bibWarte(n+1),500);
 })(0);
+/* v912: Grillhütte einmal am Tag automatisch einteilen – wartet wie oben auf md-kasse.js (Welle 2) und eine
+   Sitzung; nur in der Trainer-App (die Datenbank lässt ohnehin nur das Trainerteam einteilen). */
+(function grillWarte(n){
+  if(!/\/trainer\//.test(location.pathname))return;
+  if(typeof ghAutoEinteilenTaeglich==="function"&&typeof sbToken==="function"&&sbToken()){ setTimeout(()=>{ try{ ghAutoEinteilenTaeglich(); }catch(e){} },4000); return; }
+  if(n>40)return;
+  setTimeout(()=>grillWarte(n+1),500);
+})(0);
 openTab("home"); // Start auf dem Trainer-Dashboard + Sub-Tab-Leiste initial rendern
 /* loadTeamConfig lebt in md-quests.js = Welle 2. Seit dem Zwei-Wellen-Laden ist es hier
    (Welle 1, boot.js-Top-Level) noch NICHT definiert -> ReferenceError killte den ganzen
