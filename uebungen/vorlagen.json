@@ -1,6 +1,6 @@
 {
   "schema": "adler-vorlagen/1",
-  "stand": "2026-11-19-1",
+  "stand": "2026-11-20-1",
   "vorlagen": [
     {
       "name": "L1-1 Ball behalten – Duell um zwei Tore",
@@ -1279,7 +1279,7 @@
       "name": "L5-4 3+1 – Raute ohne Aufpasser: wo stehe ich?",
       "leitfrage": "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",
       "ziel_kinder": "Heute weißt du im 3+1, wo dein Platz ist: Flitzer außen, Jäger vorn.",
-      "folge_nr": 7,
+      "folge_nr": 8,
       "tags": [
         "halle"
       ],
@@ -1486,7 +1486,7 @@
       "name": "L5-5 FUNiño – links, Mitte, rechts",
       "leitfrage": "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",
       "ziel_kinder": "Heute steht jeder auf seiner Seite: links, Mitte oder rechts.",
-      "folge_nr": 6,
+      "folge_nr": 7,
       "tags": [
         "halle"
       ],
@@ -1624,7 +1624,7 @@
       "name": "L5-6 3+1 gegen FUNiño – große und kleine Tore",
       "leitfrage": "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",
       "ziel_kinder": "Heute spielen wir auf große und kleine Tore und wechseln schnell die Aufstellung.",
-      "folge_nr": 8,
+      "folge_nr": 9,
       "tags": [
         "halle"
       ],
@@ -2360,6 +2360,71 @@
         {
           "typ": "abschluss",
           "label": "Abschlussturnier – wer bietet sich an, bevor der Ball kommt?",
+          "dauer": 18
+        }
+      ],
+      "ordnung": "1 gegen 1"
+    },
+    {
+      "name": "L5-9 Anbieten und Verlagern – Joker-Duell und Zwei-Seiten-Spiel",
+      "leitfrage": "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",
+      "ziel_kinder": "Heute schaust du, bevor der Ball kommt, bietest dich an und suchst die Seite, auf der viel Platz ist.",
+      "folge_nr": 6,
+      "tags": [
+        "halle"
+      ],
+      "dauer_min": 75,
+      "netto_spielform_min": 34,
+      "skalierung": {
+        "6": "Nacheinander, alle zusammen: Hauptteil 1 Joker-Duell mit zwei Bahnen, ein Kind holt Bälle und rückt ein; Hauptteil 2 Zwei-Seiten-Spiel 3 gegen 3 auf 20 x 24 m",
+        "8": "Nacheinander, alle zusammen: Hauptteil 1 Joker-Duell mit zwei Bahnen und je eigenem Joker (4 Kinder je Bahn); Hauptteil 2 Zwei-Seiten-Spiel 4 gegen 4 auf 30 x 22 m",
+        "10": "2 Stationen: Joker-Duell mit einer Bahn (4 Kinder: Joker, zwei Angreifer im Wechsel, ein Verteidiger) und Zwei-Seiten-Spiel 3 gegen 3 (6 Kinder), Gruppen wechseln nach 17 Min",
+        "12": "2 Stationen: Joker-Duell mit zwei Bahnen (6 Kinder, der sechste holt Bälle und rückt ein) und Zwei-Seiten-Spiel 3 gegen 3 (6 Kinder), Gruppen wechseln nach 17 Min",
+        "14": "2 Stationen: Joker-Duell mit zwei Bahnen (7 Kinder, zwei holen Bälle und rücken ein) und Zwei-Seiten-Spiel 3 gegen 3 mit einem Wechsler (7 Kinder), Gruppen wechseln nach 17 Min",
+        "16": "2 Stationen: Joker-Duell mit zwei Bahnen und je eigenem Joker (8 Kinder) und Zwei-Seiten-Spiel 4 gegen 4 auf 20 x 24 m (8 Kinder), Gruppen wechseln nach 17 Min"
+      },
+      "beobachtung": "Wer hat sich wie ein Flitzer vom Verteidiger gelöst, bevor der Ball kam – und wer hat als Aufpasser den Ball auf die freie Seite verteilt, wo schon ein Flitzer wartete?",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 1 – Stationen: Joker-Duell (frei, eng, offen) | Zwei-Seiten-Spiel (frei, eng, offen)",
+          "dauer": 17,
+          "stationen": [
+            {
+              "uebung_name": "Joker-Duell – anbieten und freilaufen"
+            },
+            {
+              "uebung_name": "Zwei-Seiten-Spiel – Platz suchen, Seite wechseln"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
+          "dauer": 17,
+          "stationen": [
+            {
+              "uebung_name": "Joker-Duell – anbieten und freilaufen"
+            },
+            {
+              "uebung_name": "Zwei-Seiten-Spiel – Platz suchen, Seite wechseln"
+            }
+          ]
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier – wer sucht die freie Seite, bevor der Ball kommt?",
           "dauer": 18
         }
       ],

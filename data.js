@@ -4831,6 +4831,7 @@ const UEBUNG_ART_VORSCHLAG={
   /* v832 – C-Lizenz Aufgabe 3.1 (Gruppenarbeit): Zwei-Seiten-Spiel 4 gegen 4, Thema Spielverlagerung. Übungsart
      „Spielform“ wie beim Basis-Coach-Paket beschlossen; der Schlüssel heißt im Code `spiel`. */
   "Lehrgang – Zwei-Seiten-Spiel":"spiel",
+  "Zwei-Seiten-Spiel – Platz suchen, Seite wechseln":"spiel",   // v902: U9-Fassung, 3 gegen 3 / 4 gegen 4 auf vier Minitore
   /* v833 – Technik-Parcours (Training 16.11., Auftrag doku/auftrag-uebung-technik-parcours): acht Stationen, der Ablauf
      je Station ist vorgegeben – Übungsform, wie im Paket beschlossen. */
   "Technik-Parcours – acht Stationen, freie Wahl, Laufzettel":"uebung",
@@ -5014,6 +5015,7 @@ const UEBUNG_BETREUUNG_VORSCHLAG={
   "Lehrgang Erwachsene (Ü32) – 4 gegen 4 + Torhüter: Umschalten nach Ballgewinn":"fuehrt",
   /* v832: C-Lizenz 3.1 – der Trainer an der Mittellinie entscheidet, ob vor dem Tor ein Seitenwechsel per Pass war */
   "Lehrgang – Zwei-Seiten-Spiel":"fuehrt",
+  "Zwei-Seiten-Spiel – Platz suchen, Seite wechseln":"fuehrt",   // v902: Trainer an der Längslinie beurteilt den Seitenwechsel, friert ein und fragt
   /* v833: feste Stationsregeln, die Kinder zählen selbst auf dem Laufzettel – der Trainer wandert und fragt */
   "Technik-Parcours – acht Stationen, freie Wahl, Laufzettel":"allein",
   /* v723: Doppelpass und Stangentausch laufen nach dem Zeigen allein; beim Abschlussspiel zählt

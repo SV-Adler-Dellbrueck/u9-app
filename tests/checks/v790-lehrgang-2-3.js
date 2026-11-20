@@ -35,8 +35,11 @@ module.exports = async function (h) {
       if (!(ab.length < soll.ablauf.length) || !["STUFE 1 – FREI", "STUFE 2 – ENG", "STUFE 3 – OFFEN"].every(x => ab.includes(x))) probleme.push(`a) „${s.name}“: Ablauf nicht gekürzt oder ohne die drei Stufen`);
       soll.ablauf = ab;
     }
+    /* v902 (Charles 19.11., Datenbank seit dem 19.11., Datei seit v902): Joker-Duell wird mit fünf Kindern gespielt (5-7), Schau-Tore 5-6. */
+    const SPIELER_V902 = { "Joker-Duell – anbieten und freilaufen": "5-7", "Schau-Tore – vor dem Ball schauen, dann ins gezeigte Tor": "5-6" };
+    if (SPIELER_V902[s.name]) soll.spieler = SPIELER_V902[s.name];
     if (t.length !== 1) probleme.push(`a) „${s.name}“ ${t.length}× in der Bibliothek`);
-    else if (!gleich(t[0], soll)) probleme.push(`a) „${s.name}“ weicht von der Nachtragsdatei ab (erlaubt: kat und der gekürzte Ablauf)`);
+    else if (!gleich(t[0], soll)) probleme.push(`a) „${s.name}“ weicht von der Nachtragsdatei ab (erlaubt: kat, der gekürzte Ablauf und die Spielerzahl seit v902)`);
     return t[0] || soll;
   });
   const sollV = JSON.parse(JSON.stringify(nachV.vorlagen[0])); sollV.ordnung = "1 gegen 1";

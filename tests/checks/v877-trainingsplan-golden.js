@@ -111,7 +111,17 @@ function ersteAbweichung(a, b) {
 
 /* ── Gemeinsamer Aufbau einer Seite (Übungen und Vorlagen aus der geprüften Fassung, REPO) ── */
 let REPO = path.resolve(__dirname, "..", "..");
-const BIB = () => JSON.parse(fs.readFileSync(path.join(REPO, "uebungen/bibliothek.json"), "utf8"));
+/* v902: nur die Übungen, mit denen die Sollwerte aufgenommen wurden (tests/golden/trainingsplan/uebungen-namen.json). Eine neue
+   Übung der Bibliothek verschob sonst die Auswahl mit festem Zufall (G2 tauscht unter allen passenden Übungen) – Inhalt, kein Code.
+   Geänderte Felder bestehender Übungen gehen weiter ein; fehlt ein Name in der Bibliothek, wird die Prüfung rot. */
+const GOLD_NAMEN = () => JSON.parse(fs.readFileSync(path.join(__dirname, "..", "golden", "trainingsplan", "uebungen-namen.json"), "utf8")).namen;
+const BIB = () => {
+  const d = JSON.parse(fs.readFileSync(path.join(REPO, "uebungen/bibliothek.json"), "utf8")), namen = GOLD_NAMEN();
+  const fehlt = namen.filter(n => !(d.uebungen || []).some(u => u.name === n));
+  if (fehlt.length) throw new Error("Golden-Master: Übung fehlt in der Bibliothek: " + fehlt.join(", "));
+  d.uebungen = namen.map(n => d.uebungen.find(u => u.name === n));
+  return d;
+};
 const VOR = () => JSON.parse(fs.readFileSync(path.join(REPO, "uebungen/vorlagen.json"), "utf8"));
 
 function testVorlagen() {

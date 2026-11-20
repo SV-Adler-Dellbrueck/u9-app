@@ -100,7 +100,7 @@ module.exports = async function (h) {
      offene Stufe ohne Zusatzregel: L6-5 Hauptteil 3 und Turnier ohne neue Regel, L5-6 Hauptteil 3 mit „keine Zusatzregel“,
      L4-8 Hauptteil 3 offen statt dritter Stationsdurchgang (dazu seine vier Skalierungszeilen). Die geänderten Blöcke
      prüft v882 a); hier wird der Rest weiter byte-genau gegen den Nachtrag gehalten. */
-  const FOLGE_V883 = { "L4-6": 4, "L5-4": 7, "L6-3": 4, "L4-7": 3, "L5-5": 6, "L6-4": 3, "L5-6": 8, "L6-5": 5, "L4-8": 5 };
+  const FOLGE_V883 = { "L4-6": 4, "L5-4": 8, "L6-3": 4, "L4-7": 3, "L5-5": 7, "L6-4": 3, "L5-6": 9, "L6-5": 5, "L4-8": 5 };   // v902: L5-9 auf 6, L5-5/L5-4/L5-6 rücken auf 7/8/9
   const seitV883 = (v, ist) => {
     if (!v || !ist) return v;
     const k = String(v.name).split(" ")[0], n = JSON.parse(JSON.stringify(v));

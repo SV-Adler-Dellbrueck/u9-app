@@ -125,8 +125,8 @@ module.exports = async function (h) {
   // v667: sechs Einheiten des Saisonformats dazu (PO 29.09.: „Saisonformat ok, bau v667“) – 36 Karten, L1 mit 6
   // v700: dazu L5-7 „Endzone und Fähnchen“ – 37 Karten
   // v790: dazu L5-8 „Anbieten – Joker-Duell und Schau-Tore“ – 38 Karten
-  // v833: dazu „Sonder – Technik-Parcours mit Laufzettel“ – 39 Karten, im Fenster eine siebte Gruppe „Ohne Leitfrage – Sondereinheit Technik“
-  if (r.kartenAlle !== 39) probleme.push(`${r.kartenAlle} Karten statt 39`);
+  // v902: dazu L5-9 – 40 Karten · v833: dazu „Sonder – Technik-Parcours mit Laufzettel“ – 39 Karten, im Fenster eine siebte Gruppe „Ohne Leitfrage – Sondereinheit Technik“
+  if (r.kartenAlle !== 40) probleme.push(`${r.kartenAlle} Karten statt 40`);
   if (r.gruppenKoepfe < 5) probleme.push(`${r.gruppenKoepfe} Gruppenüberschriften – die Liste ist nicht nach Leitfrage gruppiert`);
   if (r.frageInKarte) probleme.push(`Die Leitfrage steht noch in ${r.frageInKarte} Karten, obwohl sie über der Gruppe steht`);
   // a)
