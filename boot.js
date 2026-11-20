@@ -4769,6 +4769,11 @@ async function _tpPlanRestoreIntern(datum,lauf){
     /* v884: Struktur und Zuordnung über den Zustand (tpZustandLaden), VOR dem Zeichnen – denn das
        Zeichnen liest tpCoaches und rechnet daraus die Felder. Alte `durchgaenge` werden dabei zur
        Kette (bisher ein setTimeout aus dem Zeichnen, der während des Ladens unten lief). */
+    /* v906: Beim Wechsel des Termins gehört auch die Auswahl samt Vorlagen-Marken (station/alle) zum neuen Termin.
+       Bisher wurden nur die Übungen geleert, die Marken gleichnamiger Felder blieben vom vorigen Termin stehen und
+       gingen bei der nächsten Speicherung als `station` mit. Die eigenen Marken kommen aus dem gespeicherten Plan.
+       Derselbe Termin erneut geöffnet behält den Stand, an dem gerade geplant wird (wie v892). */
+    if(_tpStrukturDatum!==datum)Object.keys(TP_ZUSTAND.wahl).forEach(k=>delete TP_ZUSTAND.wahl[k]);
     const info=tpZustandLaden(slots);   // v886: samt Torwart-Haken und Einzelkind
     _tpStrukturDatum=datum;
     tpRenderTimeline();
