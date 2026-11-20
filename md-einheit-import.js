@@ -1077,6 +1077,8 @@ function _vaSteckbrief(v){
     <div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px">Einsetzen kannst du sie im Trainingsplan über „Vorlage übernehmen" – dort steht der Termin.</div>
   </div>`;
 }
+/* v904 (Charles 20.11.): keine vorangestellte Folgenummer mehr („6. L5-9 …“). Seit der Neuordnung vom 19.11. passen
+   Nummer und Kürzel nicht mehr zusammen; die Liste steht in der beschlossenen Folge, angezeigt wird nur der Name mit Kürzel. */
 function vorlagenAnsichtRender(){
   const box=document.getElementById("va-inhalt"); if(!box)return;
   const alle=(typeof VORLAGEN!=="undefined"?VORLAGEN:[]);
@@ -1103,7 +1105,7 @@ function vorlagenAnsichtRender(){
     const auf=String(_vaOffen)===String(v.id);
     return `<div style="border:var(--border-s);border-radius:12px;margin-bottom:8px;background:var(--surface)">
       <button onclick="vaToggle('${String(v.id).replace(/'/g,"")}')" aria-expanded="${auf}" style="width:100%;min-height:48px;text-align:left;border:none;background:transparent;color:var(--text);font-family:inherit;cursor:pointer;padding:10px 12px">
-        <span style="display:block;font-size:var(--s-text);font-weight:800">${v.folge_nr?`${Number(v.folge_nr)}. `:""}${esc(v.name)}</span>
+        <span style="display:block;font-size:var(--s-text);font-weight:800">${esc(v.name)}</span>
         <span style="display:block;font-size:var(--s-klein);color:var(--text3);margin-top:3px">${bl.length} ${bl.length===1?"Block":"Blöcke"} · ${summe} Min.${v.netto_spielform_min?` · ${Number(v.netto_spielform_min)} Min. Spielform`:""}${v.ordnung?" · "+esc(v.ordnung):""}${(Array.isArray(v.tags)&&v.tags.length)?" · "+v.tags.map(esc).join(", "):""}</span>
         <span style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:3px">${auf?"▾ zugeklappt anzeigen":"▸ Blöcke anzeigen"}</span>
       </button>

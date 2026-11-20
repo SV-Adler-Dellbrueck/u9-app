@@ -105,7 +105,7 @@ module.exports = async function (h) {
     const erwartet = ["Wie behalte ich den Ball?", "Wie komme ich zum Abschluss?"];
     if (String(r.gruppen) !== String(erwartet))
       probleme.push(`Gruppen: ${JSON.stringify(r.gruppen)} statt ${JSON.stringify(erwartet)}`);
-    else if (!/^1\. L4-1/.test(r.karten[0]) || !/^2\. L4-2/.test(r.karten[1]))
+    else if (!/^L4-1/.test(r.karten[0]) || !/^L4-2/.test(r.karten[1]) || /^\d+\. /.test(r.karten[0]))   // v904: ohne vorangestellte Zahl
       probleme.push(`Folge-Nr nicht sortiert: ${JSON.stringify(r.karten.slice(0, 2))}`);
     else zeilen.push(`Gruppen: ${r.gruppen.join(" · ")} · ${r.karten.length} Karten, nach Folge sortiert`);
 
