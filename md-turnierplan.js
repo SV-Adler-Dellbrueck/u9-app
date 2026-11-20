@@ -2656,6 +2656,43 @@ function fstErgSchalterHtml(){
   const an=htErgebnisseAn(_HT);
   return `<button type="button" id="fst-erg-schalter" class="btn btn-zeile" role="switch" aria-checked="${an}" onclick="fstErgebnisseSetzen(${!an})" style="display:block;width:100%;margin:0 0 10px">⚽ Ergebnisse eintragen: <b>${an?"an":"aus"}</b><span style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:2px">${an?"Tore werden eingetragen und auf dem Spielplan-Link gezeigt – weiter ohne Tabelle.":"Wir zählen keine Ergebnisse – wie im DFB-Kinderfußball. Antippen, um Tore einzutragen."}</span></button>`;
 }
+/* v901 PO 20.11.: „Beim Heimspiel sollte es noch einen Schieberegler geben, der den Spielplan direkt in den Termin in der
+   Eltern-App integriert, damit die Eltern diesen auch direkt sehen und anklicken können."
+   config.imTermin: aus, bis der Trainer es einschaltet – erst dann steht im Termin (Heimspiel oder Turnier am selben Tag)
+   der Block „Spielplan“ mit den Spielen unserer Teams und dem Knopf zur ganzen Turnierseite. Kein Kindername: der Plan
+   kennt nur Teamnamen. */
+function fstImTerminSchalterHtml(){
+  const an=!!(_HT&&_HT.config&&_HT.config.imTermin);
+  return `<button type="button" id="fst-termin-schalter" class="btn btn-zeile" role="switch" aria-checked="${an}" onclick="fstImTerminSetzen(${!an})" style="display:block;width:100%;margin:8px 0 4px">📅 Spielplan im Termin der Eltern-App: <b>${an?"an":"aus"}</b><span style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:2px">${an?"Unsere Eltern sehen im Termin die Spiele unserer Teams und öffnen mit einem Tipp den ganzen Spielplan.":"Antippen, damit unsere Eltern den Spielplan direkt im Termin sehen."}</span></button>`;
+}
+async function fstImTerminSetzen(an){
+  const cfg={...(_HT&&_HT.config||{}),imTermin:!!an};
+  if(await htPatch({config:cfg})){ toast(an?"📅 Spielplan steht im Termin":"Spielplan nicht mehr im Termin"); fstRender(); }
+}
+/* Der Block im Termin-Fenster der Eltern. row = heimturnier-Zeile (öffentlich lesbar). Leer, solange der Schalter aus ist
+   oder es noch keinen Plan gibt. */
+function htTerminBlockHtml(row){
+  const cfg=(row&&row.config)||{}, plan=(row&&row.plan)||[];
+  if(!row||!cfg.imTermin||!plan.length||!row.slug)return "";
+  const url=(typeof _htUrl==="function")?_htUrl(row.slug):("?turnier="+encodeURIComponent(row.slug));
+  let spiele="";
+  if(fstIst(row)){
+    const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
+    const je=fstAdlerSpiele(row), teams=Object.keys(je);
+    spiele=teams.map(k=>{
+      const liste=je[k]||[]; if(!liste.length)return "";
+      return `<div class="td-sp-team" style="margin-top:8px"><div style="font-size:var(--s-text);font-weight:800">${teams.length>1?"Adler "+esc(k):"Unser Team"}</div>
+        ${liste.map(x=>`<div class="td-sp-zeile" style="display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:8px;align-items:center;font-size:var(--s-text);padding:3px 0">
+          <b>${esc(fstZeitIst(x.zeit,cfg))}</b><span style="font-size:var(--s-klein);font-weight:800;color:#fff;background:${_fstF((plan[x.idx]||{}).form).farbe};border-radius:6px;padding:2px 6px;white-space:nowrap">${esc(fstFeldName(felder,(x.feld||1)-1))}</span>
+          <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">gegen ${esc(x.gegner||"")}</span></div>`).join("")}</div>`;
+    }).join("");
+  }
+  return `<div class="td-spielplan" style="border-top:var(--border);margin-top:12px;padding-top:10px">
+    <div style="font-weight:700;font-size:var(--s-text)">🏆 Spielplan${row.name?" · "+esc(row.name):""}</div>
+    ${spiele||'<div style="font-size:var(--s-text);color:var(--text2);margin-top:4px">Alle Spiele, Felder und Zeiten stehen auf der Turnierseite.</div>'}
+    <a class="btn" href="${esc(url)}" style="width:100%;justify-content:center;margin-top:10px;min-height:48px;text-decoration:none">📅 Ganzen Spielplan ansehen</a>
+  </div>`;
+}
 async function fstErgebnisseSetzen(an){
   const cfg={...(_HT&&_HT.config||{}),ergebnisse:!!an};
   if(await htPatch({config:cfg})){ toast(an?"⚽ Ergebnisse an":"🦅 Ohne Ergebnisse"); fstRender(); }
@@ -3617,6 +3654,7 @@ function fstRender(){
       <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:6px">${_fstTauschWahl?"Tauschen: jetzt das zweite Team antippen":"Teams antippen zum Tauschen"+(htErgebnisseAn(_HT)?" · Ergebnis rechts antippen":"")}</div>
       ${fstPlanHtml(plan,_HT.teams||[],felder,true,cfg)}
       <button class="btn" onclick="htShare()" style="width:100%;min-height:48px;margin-top:8px"><i class="ti ti-share"></i>Spielplan-Link teilen</button>
+      ${fstImTerminSchalterHtml()}
       <div style="font-size:var(--s-klein);color:var(--text3);margin:4px 0 6px">Zum Weitergeben an alle: Gast-Trainer, Gast-Eltern und unsere Eltern. Nur zum Ansehen.</div>
       ${_HT.edit_code&&htErgebnisseAn(_HT)?`<button class="btn btn-sm" onclick="htShareErgebnis()" style="width:100%;margin-top:2px"><i class="ti ti-pencil"></i>Ergebnis-Link (Anzeigetisch)</button>
       <div style="font-size:var(--s-klein);color:var(--text3);margin:4px 0 6px">Trägt den Schreib-Code: wer ihn hat, darf Ergebnisse eintragen – sonst nichts. Nur an den Anzeigetisch und die Gast-Trainer, nicht in die Eltern-Gruppe.</div>`:""}`:""}
