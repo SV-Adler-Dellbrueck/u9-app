@@ -38,22 +38,30 @@ module.exports = async function (h) {
   }, { K });
   if (r.fehlt) { await s.schliessen(); return h.ergebnis("Positionen tauschen", false, [`${r.fehlt} fehlt`]); }
   // 5) Ziehen mit dem Finger: Chip A auf Chip B
-  const boxen = await s.page.evaluate(() => {
+  /* v890: gemessen wird erst, wenn die Ansicht stillsteht (zweimal im Abstand von 100 ms dieselben Werte, Obergrenze 5 s) –
+     verschiebt ein Nachzügler das Feld nach der Messung, trifft der Zeiger daneben. */
+  const stillMessen = fn => s.page.evaluate(async src => {
+    const mess = new Function("return (" + src + ")()");
+    let alt = mess();
+    for (let i = 0; i < 50; i++) { await new Promise(x => setTimeout(x, 100)); const neu = mess(); if (JSON.stringify(neu) === JSON.stringify(alt)) break; alt = neu; }
+    return alt;
+  }, fn.toString());
+  const boxen = await stillMessen(() => {
     const auf = document.getElementById("auf-panel");
     auf.scrollIntoView({ block: "center" });   // v681: mit „Vor dem Spiel“ steht der Teams-Block darüber offen
-    const feld = [...auf.querySelectorAll(".rot-feld, [data-rot-name]")].filter(x => x.closest("[data-rot-bank]") === null);
     const b = n => { const el = auf.querySelector(`[data-rot-name="${n}"]`); const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
     return { vorher: rotField.slice(), a: b(rotField[0]), b: b(rotField[1]), bank: (() => { const r = auf.querySelector("[data-rot-bank]").getBoundingClientRect(); return { x: r.left + 20, y: r.top + r.height / 2 }; })(), feldSpieler: rotField.slice() };
   });
   await s.page.mouse.move(boxen.a.x, boxen.a.y); await s.page.mouse.down();
   await s.page.mouse.move(boxen.a.x + 20, boxen.a.y + 10, { steps: 4 });
   await s.page.mouse.move(boxen.b.x, boxen.b.y, { steps: 6 }); await s.page.mouse.up();
-  await s.page.waitForTimeout(150);
+  // auf den Tausch und das Verschwinden des Zieh-Geists warten statt fester 150 ms (Obergrenze 3 s)
+  await s.page.waitForFunction(v => rotField[0] === v[1] && rotField[1] === v[0] && !document.querySelector("body > button[data-rot-name]"), boxen.vorher, { timeout: 3000 }).catch(() => {});
   const zug = await s.page.evaluate(() => ({ feld: rotField.slice(), sel: rotSel, geist: document.querySelectorAll("body > button[data-rot-name]").length }));
   // 6) Ziehen auf die Bank
-  const b2 = await s.page.evaluate(() => { const auf = document.getElementById("auf-panel"); auf.scrollIntoView({ block: "center" });   /* v632: Inhalt darüber (Hinweiskarte) darf die Bank nicht aus dem Bild schieben */ const el = auf.querySelector(`[data-rot-name="${rotField[0]}"]`); const r = el.getBoundingClientRect(); const bk = auf.querySelector("[data-rot-bank]").getBoundingClientRect(); return { n: rotField[0], x: r.left + r.width / 2, y: r.top + r.height / 2, bx: bk.right - 14, by: bk.top + bk.height / 2, feld: rotField.length }; });
+  const b2 = await stillMessen(() => { const auf = document.getElementById("auf-panel"); auf.scrollIntoView({ block: "center" });   /* v632: Inhalt darüber (Hinweiskarte) darf die Bank nicht aus dem Bild schieben */ const el = auf.querySelector(`[data-rot-name="${rotField[0]}"]`); const r = el.getBoundingClientRect(); const bk = auf.querySelector("[data-rot-bank]").getBoundingClientRect(); return { n: rotField[0], x: r.left + r.width / 2, y: r.top + r.height / 2, bx: bk.right - 14, by: bk.top + bk.height / 2, feld: rotField.length }; });
   await s.page.mouse.move(b2.x, b2.y); await s.page.mouse.down(); await s.page.mouse.move(b2.x + 15, b2.y + 15, { steps: 3 }); await s.page.mouse.move(b2.bx, b2.by, { steps: 8 }); await s.page.mouse.up();
-  await s.page.waitForTimeout(150);
+  await s.page.waitForFunction(n => rotBench.includes(n), b2.n, { timeout: 3000 }).catch(() => {});
   const zugBank = await s.page.evaluate(({ n }) => ({ aufBank: rotBench.includes(n), feld: rotField.length, sel: rotSel }), { n: b2.n });
   const fehler = s.fehler(); await s.schliessen();
   if (r.rollen.funino.join("|") !== "Aufpasser|Flitzer L|Flitzer R") probleme.push(`FUNiño-Rollen: ${r.rollen.funino.join(", ")}`);

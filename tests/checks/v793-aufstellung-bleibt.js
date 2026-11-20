@@ -31,6 +31,10 @@ module.exports = async function (h) {
     const lokal = () => { try { return JSON.parse(localStorage.getItem("adler_spieltag_auf") || "{}"); } catch (e) { return {}; } };
     const stand = () => ({ tw: rotTW, feld: rotField.slice(), bank: rotBench.slice() });
     const out = {};
+    /* v890: nach jeder Umstellung mindestens wie bisher warten, dann bis die Aufstellung 300 ms lang unverändert ist (Obergrenze
+       6 s); wo der erwartete Stand feststeht (vom Server geladen), auf genau ihn (Obergrenze 8 s) */
+    const still = async () => { let alt = JSON.stringify(stand()), gleich = 0; for (let i = 0; i < 60 && gleich < 3; i++) { await w(100); const neu = JSON.stringify(stand()); gleich = neu === alt ? gleich + 1 : 0; alt = neu; } };
+    const bis = async f => { for (let i = 0; i < 160 && !f(); i++) await w(50); };
     // Team 1, 4+1
     spieltagTeam = 1; tbFormation = "4+1"; const key1 = spieltagKey(); out.key1 = key1;
     nomApplyToTools(); await w(120);
@@ -44,17 +48,18 @@ module.exports = async function (h) {
     // nur der Server hat sie noch
     try { localStorage.removeItem("adler_spieltag_auf"); } catch (e) {}
     rotTW = null; rotField = []; rotBench = []; nomApplyToTools(); await w(400);
+    await bis(() => JSON.stringify(stand()) === JSON.stringify(out.geaendert)); await still();
     out.nurServer = stand();
     // c) Nominierung ändert sich: K[2] raus, K[8] dazu
     nom = [K[1], K[3], K[4], K[5], K[6], K[8]];
-    nomApplyToTools(); await w(400);
+    nomApplyToTools(); await w(400); await bis(() => rotTW === K[5]); await still();
     out.nomNeu = stand();
     // d) Team 2
     spieltagTeam = 2; const key2 = spieltagKey(); out.key2 = key2;
-    nom = K.slice(1, 7); nomApplyToTools(); await w(400);
+    nom = K.slice(1, 7); nomApplyToTools(); await w(400); await still();
     out.team2 = stand();
     rotSetTW(K[6]); await w(900);
-    spieltagTeam = 1; nom = K.slice(1, 7); nomApplyToTools(); await w(400);
+    spieltagTeam = 1; nom = K.slice(1, 7); nomApplyToTools(); await w(400); await still();
     out.zurueck1 = stand();
     // e) schließen
     const vor = window.__postsAnzahl || 0;

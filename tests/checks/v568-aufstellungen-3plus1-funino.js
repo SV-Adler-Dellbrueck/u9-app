@@ -269,8 +269,20 @@ module.exports = async function (h) {
       _tgCache = { datum: null, tg: null, geladen: false };
       await tgSync(); await warte(150);
       _vuAuswahl = idVon(pfx);
+      /* v890: Unter Last lief der Abgleich der Bibliothek noch, die Übungen der Vorlage fehlten – vorlageUebernehmenSetzen
+         meldete „gibt es nicht mehr – nichts geändert“, und gelesen wurde der alte Plan. Erst weiter, wenn kein Abgleich läuft
+         und alle Übungen der Vorlage da sind (Obergrenze 10 s; sonst bleibt der alte Plan stehen und die Prüfung wird rot). */
+      for (let i = 0; i < 200; i++) {
+        const v = VORLAGEN.find(x => String(x.id) === String(_vuAuswahl));
+        if (!(typeof _bibLaeuft !== "undefined" && _bibLaeuft) && v && !(vuPlanAusVorlage(v) || {}).fehlend) break;
+        await warte(50);
+      }
       await vorlageUebernehmenSetzen();
+      /* v890: mindestens 500 ms wie bisher, dann so lange, bis der gelesene Plan 300 ms lang unverändert ist (Obergrenze 8 s) –
+         unter Last stand nach 500 ms noch der Plan der vorigen Vorlage da. */
       await warte(500);
+      { let alt = JSON.stringify(lesen()), gleich = 0;
+        for (let i = 0; i < 80 && gleich < 3; i++) { await warte(100); const neu = JSON.stringify(lesen()); gleich = neu === alt ? gleich + 1 : 0; alt = neu; } }
       return { trainer: tpGetCheckedTrainers().slice(), gruppen: (((tgFor() || {}).gruppen) || []).map(g => g.name), slots: lesen() };
     };
     out.l46zwei = await uebernehmen(zwei, "L4-6");

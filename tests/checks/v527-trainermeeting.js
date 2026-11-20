@@ -99,7 +99,7 @@ module.exports = async function (h) {
 
     // g) Abhaken fragt nach dem Beschluss
     const haken = [...card.querySelectorAll("button")].find(b => /tpollThemaToggle\(71,true\)/.test(b.getAttribute("onclick") || ""));
-    if (haken) { haken.click(); await new Promise(r => setTimeout(r, 600)); }
+    if (haken) { haken.click(); for (let i = 0; i < 160 && !document.getElementById("frage-text-modal"); i++) await new Promise(r => setTimeout(r, 50)); }   // v890: auf die Rückfrage warten statt fester 600 ms
     out.beschlussFrage = !!document.getElementById("frage-text-modal");
     const feld = document.getElementById("frage-text-feld");
     out.beschlussFeldHoehe = feld ? Math.round(parseFloat(getComputedStyle(feld).minHeight) || 0) : 0;
@@ -107,7 +107,7 @@ module.exports = async function (h) {
     return out;
   }, { bald });
 
-  await s.page.waitForTimeout(200);
+  await Promise.all([s.page.waitForTimeout(200), s.supabaseRuhig()]);   // v890: mindestens wie bisher, dazu bis die Attrappe ruhig ist
   const gepatcht = s.gesendet.filter(g => /trainer_poll_thema/.test(g.pfad || "") && g.methode === "PATCH");
   const fehler = s.fehler(); await s.schliessen();
 

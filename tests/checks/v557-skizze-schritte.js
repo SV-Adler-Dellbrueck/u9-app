@@ -202,14 +202,16 @@ module.exports = async function (h) {
   else {
     Object.assign(d, await schritt(async () => {
       const warte = ms => new Promise(x => setTimeout(x, ms));
-      tpShowExercise(__T.ohne); await warte(150);
+      // Warten auf den Zustand statt fester Zeit: das Detailfenster mit gezeichneter Skizze steht (Obergrenze 5 s)
+      tpShowExercise(__T.ohne); for (let i = 0; i < 100 && !(document.getElementById("uebung-skizze") || {}).innerHTML; i++) await warte(50);
       const keine = document.querySelectorAll("#skz-detail-bilder button").length;
       document.getElementById("uebung-modal")?.remove();
       return { keine };
     }));
     Object.assign(d, await schritt(async () => {
       const warte = ms => new Promise(x => setTimeout(x, ms));
-      tpShowExercise(__T.mit); await warte(180);
+      tpShowExercise(__T.mit);
+      for (let i = 0; i < 100 && !((document.getElementById("uebung-skizze") || {}).innerHTML && document.querySelectorAll("#skz-detail-bilder button").length >= 2); i++) await warte(50);
       const k = [...document.querySelectorAll("#skz-detail-bilder button")];
       return {
         knoepfe: k.length,
@@ -221,7 +223,10 @@ module.exports = async function (h) {
     Object.assign(d, await schritt(async () => {
       const warte = ms => new Promise(x => setTimeout(x, ms));
       const k = [...document.querySelectorAll("#skz-detail-bilder button")];
-      k[2] && k[2].click(); await warte(150);
+      const vor = (document.getElementById("uebung-skizze") || {}).innerHTML || "";
+      k[2] && k[2].click();
+      for (let i = 0; i < 100 && !(((document.getElementById("uebung-skizze") || {}).innerHTML || "") !== vor
+        && [...document.querySelectorAll("#skz-detail-bilder button")].findIndex(b => b.getAttribute("aria-pressed") === "true") === 2); i++) await warte(50);
       const r = {
         nachher: (document.getElementById("uebung-skizze") || {}).innerHTML || "",
         aktivNachher: [...document.querySelectorAll("#skz-detail-bilder button")].findIndex(b => b.getAttribute("aria-pressed") === "true")
@@ -231,7 +236,7 @@ module.exports = async function (h) {
     }));
     Object.assign(d, await schritt(async () => {
       const warte = ms => new Promise(x => setTimeout(x, ms));
-      skzGrossOpen(__T.mit); await warte(200);
+      skzGrossOpen(__T.mit); for (let i = 0; i < 100 && document.querySelectorAll("#skz-gross-bilder button").length < 2; i++) await warte(50);
       return { bildKnoepfe: document.querySelectorAll("#skz-gross-bilder button").length };
     }));
     Object.assign(d, await schritt(async () => {
@@ -239,7 +244,8 @@ module.exports = async function (h) {
       const b = document.getElementById("skz-gross-buehne");
       const pe = (typ, x) => b.dispatchEvent(new PointerEvent(typ, { pointerId: 9, clientX: x, clientY: 300, bubbles: true, cancelable: true }));
       const bildVor = _skzGr.bild;
-      pe("pointerdown", 260); pe("pointermove", 120); pe("pointerup", 120); await warte(150);
+      pe("pointerdown", 260); pe("pointermove", 120); pe("pointerup", 120);
+      for (let i = 0; i < 100 && _skzGr.bild !== bildVor + 1; i++) await warte(50);
       const r = { bildVor, bildNach: _skzGr.bild };
       skzGrossClose();
       return r;

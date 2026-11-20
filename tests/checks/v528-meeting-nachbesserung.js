@@ -66,8 +66,8 @@ module.exports = async function (h) {
     // b) Öffnen legt die Abstimmung an, Themen sind sofort da
     if (typeof TM_TERMINE !== "undefined") TM_TERMINE.length = 0;
     await tmMeetingOeffnen(91);
-    for (let i = 0; i < 60 && !document.getElementById("tm-meet-card"); i++) await new Promise(r => setTimeout(r, 50));
-    await new Promise(r => setTimeout(r, 500));
+    /* v890: statt fester 500 ms auf das Themenfeld warten (die Abstimmung wird erst angelegt, dann gezeichnet); Obergrenze 8 s */
+    for (let i = 0; i < 160 && !(document.getElementById("tm-meet-card") && document.querySelector('[id^="tpoll-thema-"]')); i++) await new Promise(r => setTimeout(r, 50));
     const card = document.getElementById("tm-meet-card");
     out.fensterDa = !!card;
     out.pollText = card ? card.textContent.replace(/\s+/g, " ").trim() : "";
@@ -75,7 +75,7 @@ module.exports = async function (h) {
     return out;
   });
 
-  await s.page.waitForTimeout(300);
+  await Promise.all([s.page.waitForTimeout(300), s.supabaseRuhig()]);   // v890: mindestens wie bisher, dazu bis die Attrappe ruhig ist
   const pollPosts = s.gesendet.filter(g => /trainer_poll$/.test((g.pfad || "").replace(/\?.*$/, "")) && g.methode === "POST");
   const slotPosts = s.gesendet.filter(g => /trainer_poll_slot/.test(g.pfad || "") && g.methode === "POST");
 
@@ -97,7 +97,7 @@ module.exports = async function (h) {
     return { ok: true };
   }, { tagB });
 
-  await s.page.waitForTimeout(200);
+  await Promise.all([s.page.waitForTimeout(200), s.supabaseRuhig()]);   // v890: mindestens wie bisher, dazu bis die Attrappe ruhig ist
   const terminPatch = s.gesendet.filter(g => /termine\?id=eq\.91/.test((g.pfad || "") + (g.suche || "")) && g.methode === "PATCH");
   const fehler = s.fehler(); await s.schliessen();
 

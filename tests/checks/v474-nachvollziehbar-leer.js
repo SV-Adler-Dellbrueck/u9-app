@@ -21,7 +21,10 @@ module.exports = async function (h) {
     const warte = ms => new Promise(r => setTimeout(r, ms));
     const sichtbar = el => !!el && getComputedStyle(el).display !== "none";
     // 1) Diese Woche: Quellenzeile + Rot nur beim nahen Termin
-    go("home"); await warte(900);
+    /* v890: statt fester Zeiten nach go() auf das jeweils Gemessene warten (Obergrenze je 8 s; kommt es nie, wird es rot) */
+    const bis = async f => { for (let i = 0; i < 160 && !f(); i++) await warte(50); };
+    go("home"); await bis(() => document.querySelector("#home-woche .woche-quelle") && document.querySelectorAll("#home-woche .woche-zeile").length >= 2
+      && /kein Trainer/.test(document.querySelector("#home-woche .woche-zeile")?.textContent || ""));
     const quelle = document.querySelector("#home-woche .woche-quelle")?.textContent.trim() || "";
     const zeilenEl = [...document.querySelectorAll("#home-woche .woche-zeile")];
     const chipRot = z => [...z.querySelectorAll("span")].filter(c => /zugesagt| dabei/.test(c.textContent)).map(c => /--red-bg/.test(c.getAttribute("style") || "") ? "rot" : "nicht rot");
@@ -32,10 +35,10 @@ module.exports = async function (h) {
     const neuBtn = !!neu && neu.classList.contains("btn");
     const neuH = neu ? parseInt(getComputedStyle(neu).minHeight) : 0;
     // 3) Trainingsplan: „Kinder erwartet" nennt die Quelle
-    go("planung"); await warte(900);
+    go("planung"); await bis(() => /\d+ (dabei|zugesagt|im Kader)/.test(document.getElementById("tp-prognose")?.textContent || ""));
     const prog = document.getElementById("tp-prognose")?.textContent.replace(/\s+/g, " ").trim() || "";
     // 4) Analyse: kein einziges Blitz-Rating → ein Satz + Aktion, keine Nullbalken
-    go("analyse"); await warte(900);
+    go("analyse"); await bis(() => { const t = (document.getElementById("an-fairness")?.textContent || "").trim(); return t && !/Lade/.test(t); });
     const fair = document.getElementById("an-fairness");
     const fairText = fair?.textContent.replace(/\s+/g, " ").trim() || "";
     const fairNull = (fairText.match(/0 Spiele/g) || []).length;

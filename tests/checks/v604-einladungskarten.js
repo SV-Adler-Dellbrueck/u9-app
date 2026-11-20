@@ -52,7 +52,7 @@ module.exports = async function (h) {
       await s.page.fill("#einl-pw", "adler-2026");
       await s.page.fill("#einl-pw2", "adler-2026");
       await s.page.click("#einl-ok");
-      await s.page.waitForTimeout(1200);
+      await Promise.all([s.page.waitForTimeout(1200), s.supabaseRuhig()]);   // v890: mindestens wie bisher, dazu bis die Attrappe ruhig ist
     }
     const fn = s.gesendet.filter(x => x.pfad.endsWith("/functions/v1/eltern-einladung"));
     const einl = fn.find(x => x.body && x.body.aktion === "einloesen");
@@ -113,7 +113,7 @@ module.exports = async function (h) {
       await s.page.fill("#ep-email", "eltern@example.org");
       await s.page.fill("#ep-pw", "adler-2026");
       await s.page.click("#ep-login");
-      await s.page.waitForTimeout(800);
+      await Promise.all([s.page.waitForTimeout(800), s.supabaseRuhig()]);   // v890: mindestens wie bisher, dazu bis die Attrappe ruhig ist
     }
     const token = s.gesendet.find(x => x.pfad.endsWith("/auth/v1/token"));
     if (!r.pw) probleme.push("c) die Anmeldeseite zeigt kein Passwortfeld");

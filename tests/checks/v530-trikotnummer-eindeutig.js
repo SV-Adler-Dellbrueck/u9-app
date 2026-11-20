@@ -47,7 +47,7 @@ module.exports = async function (h) {
       await new Promise(r => setTimeout(r, 300));
       return { toasts: window.__toast.slice() };
     }, zeilenDaten);
-    await s.page.waitForTimeout(150);
+    await Promise.all([s.page.waitForTimeout(150), s.supabaseRuhig()]);   // v890: mindestens wie bisher, dazu bis die Attrappe ruhig ist
     const posts = s.gesendet.filter(g => /kader/.test(g.pfad || "") && g.methode === "POST");
     await s.schliessen();
     return { ...r, posts };

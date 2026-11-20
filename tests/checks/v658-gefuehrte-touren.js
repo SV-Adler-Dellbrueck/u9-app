@@ -22,7 +22,14 @@ const DURCHLAUF = `async (opt) => {
   for (let i = 0; i < 40; i++) {
     let ov = null;
     for (let k = 0; k < 40 && !(ov = document.getElementById("fg-ov")); k++) await w(100);
+    /* v890: statt fester 250 ms warten, bis der Schritt steht – neuer Text, und Zeiger, Text und Lage der Blase 300 ms lang
+       unverändert (Obergrenze 6 s). Unter Last öffnete der Schritt seinen Bereich erst nach der Messung, der Zeiger fehlte. */
     await w(250);
+    { const stand = () => { const o = document.getElementById("fg-ov"); if (!o) return "–"; const b = o.querySelector(".fg-blase"), r = b ? b.getBoundingClientRect() : {};
+        return [(o.querySelector("#fg-t") || {}).textContent, !!o.querySelector(".fg-loch"), Math.round(r.top), Math.round(r.left)].join("|"); };
+      let alt = stand(), gleich = 0;
+      for (let k = 0; k < 60 && (gleich < 3 || alt.split("|")[0] === (out.schritte.length ? out.schritte[out.schritte.length - 1].t : null)); k++) { await w(100); const neu = stand(); gleich = neu === alt ? gleich + 1 : 0; alt = neu; }
+      ov = document.getElementById("fg-ov"); }
     if (!ov) break;
     const blase = ov.querySelector(".fg-blase"), r = blase.getBoundingClientRect();
     const knoepfe = [...blase.querySelectorAll("button")].map(b => Math.round(b.getBoundingClientRect().height));

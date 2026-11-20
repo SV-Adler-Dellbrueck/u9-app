@@ -1,6 +1,6 @@
 {
  "szenario": "Übung tauschen: Picker, Tausch außerhalb des Typfilters, Dauer, Speichern",
- "haelt_fest": "Fehlerbild 4 – eine getauschte Übung außerhalb des Blocktyps verschwindet beim nächsten Neuzeichnen (tpSetDauer) und fehlt dann im gespeicherten Plan. Behebung in Schritt 9.",
+ "haelt_fest": "Fehlerbild 4 – behoben in v893: eine getauschte Übung außerhalb des Blocktyps bleibt beim nächsten Neuzeichnen (tpSetDauer) erhalten und steht im gespeicherten Plan (vorher verschwand sie). Seit v895 (Fehlerbild 7) speichert tpSetDauer außerdem verzögert von selbst.",
  "schritte": [
   {
    "schritt": "Training füllen",
@@ -514,6 +514,170 @@
         "feld": 0
        },
        {
+        "formIdx": 62,
+        "formName": "Fang-Stern",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 1",
+        "key": "62-Finn",
+        "block": 2,
+        "feld": 1
+       },
+       {
+        "formIdx": 138,
+        "formName": "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor",
+        "trainer": "Kenneth",
+        "slotLabel": "Hauptteil 1",
+        "key": "138-Kenneth",
+        "block": 2,
+        "feld": 2
+       },
+       {
+        "formIdx": 132,
+        "formName": "FUNiño 2 gegen 2 – einer drängt, einer schützt",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 2",
+        "key": "132-Finn",
+        "block": 3,
+        "feld": 0
+       },
+       {
+        "formIdx": 39,
+        "formName": "Pressing-Welle 2gg2",
+        "trainer": "Kenneth",
+        "slotLabel": "Hauptteil 2",
+        "key": "39-Kenneth",
+        "block": 3,
+        "feld": 1
+       },
+       {
+        "formIdx": 138,
+        "formName": "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 2",
+        "key": "138-Charles",
+        "block": 3,
+        "feld": 2
+       },
+       {
+        "formIdx": 132,
+        "formName": "FUNiño 2 gegen 2 – einer drängt, einer schützt",
+        "trainer": "Kenneth",
+        "slotLabel": "Hauptteil 3",
+        "key": "132-Kenneth",
+        "block": 4,
+        "feld": 0
+       },
+       {
+        "formIdx": 39,
+        "formName": "Pressing-Welle 2gg2",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 3",
+        "key": "39-Charles",
+        "block": 4,
+        "feld": 1
+       },
+       {
+        "formIdx": 138,
+        "formName": "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 3",
+        "key": "138-Finn",
+        "block": 4,
+        "feld": 2
+       }
+      ],
+      "slots": [
+       {
+        "label": "Straßenfußball-Fenster",
+        "dauer": 10,
+        "farbe": "#059669",
+        "typ": "warmup"
+       },
+       {
+        "label": "Aufwärmen",
+        "dauer": 8,
+        "farbe": "#059669",
+        "typ": "warmup"
+       },
+       {
+        "label": "Hauptteil 1",
+        "dauer": 15,
+        "farbe": "#1a56db",
+        "typ": "main",
+        "coaches": [
+         "Charles",
+         "Finn",
+         "Kenneth"
+        ]
+       },
+       {
+        "label": "Hauptteil 2",
+        "dauer": 11,
+        "farbe": "#7c3aed",
+        "typ": "main",
+        "regel": "Lobpflicht nach Tor",
+        "coaches": [
+         "Finn",
+         "Kenneth",
+         "Charles"
+        ]
+       },
+       {
+        "label": "Hauptteil 3",
+        "dauer": 11,
+        "farbe": "#0e7490",
+        "typ": "main",
+        "coaches": [
+         "Kenneth",
+         "Charles",
+         "Finn"
+        ]
+       },
+       {
+        "label": "Abschlussspiel",
+        "dauer": 18,
+        "farbe": "#c2410c",
+        "typ": "abschluss"
+       }
+      ],
+      "gespeichert_von": "<gespeichert_von>",
+      "updated_at": "<updated_at>"
+     }
+    },
+    {
+     "methode": "POST",
+     "suche": "?on_conflict=datum",
+     "body": {
+      "datum": "2030-03-05",
+      "plan": [
+       {
+        "formIdx": 107,
+        "formName": "Warm up Adler",
+        "trainer": "Alle",
+        "slotLabel": "Aufwärmen",
+        "key": "107-Alle",
+        "block": 1,
+        "feld": 0
+       },
+       {
+        "formIdx": 2,
+        "formName": "Rauten-Staffel",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 1",
+        "key": "2-Charles",
+        "block": 2,
+        "feld": 0
+       },
+       {
+        "formIdx": 62,
+        "formName": "Fang-Stern",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 1",
+        "key": "62-Finn",
+        "block": 2,
+        "feld": 1
+       },
+       {
         "formIdx": 138,
         "formName": "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor",
         "trainer": "Kenneth",
@@ -637,7 +801,7 @@
     }
    ],
    "dom": {
-    "feldNachNeuzeichnen": ""
+    "feldNachNeuzeichnen": "62"
    }
   }
  ]

@@ -30,35 +30,43 @@ module.exports = async function (h) {
   await s.page.waitForLoadState("networkidle"); await s.page.waitForTimeout(1500);
   await s.page.evaluate(t => { localStorage.setItem("adler_sb_auth_eltern", JSON.stringify({ access_token: t, refresh_token: "r", expires_at: Math.floor(Date.now() / 1000) + 3600 })); }, TOKEN);
   await s.page.reload({ waitUntil: "networkidle" }); await s.page.waitForTimeout(3500);
+  await s.page.waitForFunction(() => typeof tdRsvp === "function" && typeof rsvpPflichtGrund === "function" && typeof elternRsvp === "function", null, { timeout: 10000 }).catch(() => {});
   const ev = (fn, arg) => s.page.evaluate(fn, arg);
   const dlg = () => ev(() => { const o = document.getElementById("rg-ov"); if (!o) return null; const ok = o.querySelector("#rg-ok"), sk = o.querySelector("#rg-skip");
     return { text: o.textContent.replace(/\s+/g, " ").trim(), ohneGrund: /Ohne Grund/.test(o.querySelector("#rg-skip").textContent), skip: sk.textContent.trim(), ok: ok.textContent.trim(), gesperrt: ok.getAttribute("aria-disabled") }; });
   const fehlt = await ev(() => typeof tdRsvp !== "function" || typeof rsvpPflichtGrund !== "function");
   if (fehlt) { await s.schliessen(); return h.ergebnis("v774 Pflicht-Grund", false, ["tdRsvp oder rsvpPflichtGrund fehlt"]); }
   const r = {};
+  /* v890: Warten auf den Zustand statt fester Zeit (Fenster da, Schreibvorgang angekommen). Obergrenze je 5–8 s; tritt der
+     Zustand nie ein, bleibt die Prüfung danach rot. Fest bleiben nur die Wartezeiten, die prüfen, dass NICHTS gespeichert wird. */
+  const bis = async (f, n) => { for (let i = 0; i < (n || 160) && !f(); i++) await new Promise(x => setTimeout(x, 50)); return f(); };
+  const fenster = p => p.waitForSelector("#rg-ov", { timeout: 5000 }).catch(() => {});
+  const fensterZu = p => p.waitForSelector("#rg-ov", { state: "detached", timeout: 5000 }).catch(() => {});
   // a) Termin-Fenster, in 3 Std.
-  ev(() => { tdRsvp(100, 3, "abgesagt"); }); await s.page.waitForTimeout(700);
+  ev(() => { tdRsvp(100, 3, "abgesagt"); }); await fenster(s.page);
   r.a1 = await dlg();
-  await ev(() => document.getElementById("rg-ok")?.click()); await s.page.waitForTimeout(200);
+  await ev(() => document.getElementById("rg-ok")?.click()); await s.page.waitForTimeout(200);   // bewusst fest: leer darf NICHTS speichern
   r.a2 = { nochOffen: !!(await dlg()), posts: posts.length };
-  await ev(() => document.getElementById("rg-skip")?.click()); await s.page.waitForTimeout(500);
+  await ev(() => document.getElementById("rg-skip")?.click()); await fensterZu(s.page); await s.page.waitForTimeout(300);   // bewusst fest: Abbrechen darf NICHTS speichern
   r.a3 = { zu: !(await dlg()), posts: posts.length };
-  ev(() => { tdRsvp(100, 3, "abgesagt"); }); await s.page.waitForTimeout(700);
-  await ev(() => { const t = document.getElementById("rg-txt"); t.value = "Schule"; t.dispatchEvent(new Event("input")); }); await s.page.waitForTimeout(100);
+  ev(() => { tdRsvp(100, 3, "abgesagt"); }); await fenster(s.page);
+  await ev(() => { const t = document.getElementById("rg-txt"); t.value = "Schule"; t.dispatchEvent(new Event("input")); });
+  await s.page.waitForFunction(() => document.getElementById("rg-ok")?.getAttribute("aria-disabled") === "false", null, { timeout: 3000 }).catch(() => {});
   r.a4gesperrt = (await dlg()).gesperrt;
-  await ev(() => document.getElementById("rg-ok")?.click()); await s.page.waitForTimeout(1500);
+  await ev(() => document.getElementById("rg-ok")?.click()); await bis(() => posts.some(p => p.status === "abgesagt" && p.termin_id === 100 && p.kommentar === "Schule"));
   r.a4 = posts.filter(p => p.status === "abgesagt" && p.termin_id === 100 && p.kommentar === "Schule").length;
   // b) in 5 Tagen: kein Fenster
   const vorher = posts.length;
-  ev(() => { tdRsvp(101, 3, "abgesagt"); }); await s.page.waitForTimeout(1200);
+  ev(() => { tdRsvp(101, 3, "abgesagt"); }); await bis(() => posts.slice(vorher).some(p => p.termin_id === 101 && p.status === "abgesagt"));
   r.b = { fenster: !!(await dlg()), gespeichert: posts.slice(vorher).filter(p => p.termin_id === 101 && p.status === "abgesagt").length };
   // c) Liste
   posts.length = 0;
-  ev(() => { elternRsvp(100, 3, "abgesagt"); }); await s.page.waitForTimeout(700);
+  ev(() => { elternRsvp(100, 3, "abgesagt"); }); await fenster(s.page);
   r.c1 = await dlg();
-  await ev(() => document.querySelector("#rg-chips button")?.click()); await s.page.waitForTimeout(150);
+  await ev(() => document.querySelector("#rg-chips button")?.click());
+  await s.page.waitForFunction(() => (document.getElementById("rg-txt") || {}).value, null, { timeout: 3000 }).catch(() => {});
   r.c2 = await ev(() => ({ txt: document.getElementById("rg-txt").value, gesperrt: document.getElementById("rg-ok").getAttribute("aria-disabled") }));
-  await ev(() => document.getElementById("rg-ok")?.click()); await s.page.waitForTimeout(1500);
+  await ev(() => document.getElementById("rg-ok")?.click()); await bis(() => posts.some(p => p.status === "abgesagt" && p.termin_id === 100 && p.kommentar));
   r.c3 = posts.filter(p => p.status === "abgesagt" && p.termin_id === 100 && p.kommentar).length;
   const fe = s.fehler(); await s.schliessen();
 
@@ -76,13 +84,13 @@ module.exports = async function (h) {
   await tev(termine => { window.TM_TERMINE = termine.map(x => ({ ...x })); }, termine);
   tev(() => { platzAmpelSet(100, "abgesagt"); }); await t.page.waitForSelector("#rg-ov", { timeout: 5000 }).catch(() => {});   // v880: auf das Fenster warten statt fester 700 ms
   r.d1 = await tev(() => { const o = document.getElementById("rg-ov"); return o ? { ohneGrund: /Ohne Grund/.test(o.querySelector("#rg-skip").textContent), titel: o.textContent.replace(/\s+/g, " ").trim().slice(0, 60) } : null; });
-  await tev(() => document.getElementById("rg-skip")?.click()); await t.page.waitForTimeout(400);
+  await tev(() => document.getElementById("rg-skip")?.click()); await fensterZu(t.page); await t.page.waitForTimeout(300);   // bewusst fest: ohne Grund darf NICHTS gespeichert werden
   r.d2 = { patches: patches.length };
   tev(() => { platzAmpelSet(100, "abgesagt"); }); await t.page.waitForSelector("#rg-ov", { timeout: 5000 }).catch(() => {});   // v880: auf das Fenster warten statt fester 700 ms
   await tev(() => { const x = document.getElementById("rg-txt"); x.value = "Platz gesperrt"; x.dispatchEvent(new Event("input")); });
-  await tev(() => document.getElementById("rg-ok")?.click()); await t.page.waitForTimeout(800);
+  await tev(() => document.getElementById("rg-ok")?.click()); await bis(() => patches.some(p => /id=eq\.100/.test(p.url) && p.body.platz_status_note === "Platz gesperrt"));
   r.d3 = patches.filter(p => /id=eq\.100/.test(p.url) && p.body.platz_status === "abgesagt" && p.body.platz_status_note === "Platz gesperrt").length;
-  tev(() => { platzAmpelSet(101, "abgesagt"); }); await t.page.waitForTimeout(800);
+  tev(() => { platzAmpelSet(101, "abgesagt"); }); await bis(() => patches.some(p => /id=eq\.101/.test(p.url)));
   r.d4 = { fenster: await tev(() => !!document.getElementById("rg-ov")), gespeichert: patches.filter(p => /id=eq\.101/.test(p.url) && p.body.platz_status === "abgesagt").length };
   const fe2 = t.fehler(); await t.schliessen();
 

@@ -148,6 +148,7 @@ module.exports = async function (h) {
 
     // 1) Blitzturnier: Team umbenennen (frageText, einzeilig)
     blitzOpen(); await w(1600);   // blitzOpen speichert selbst einmal (gebündelt nach 1,2 s) – das ist die Grundlinie
+    for (let i = 0; i < 160 && zaehl("POST", "trainingsturnier") < 1; i++) await w(50);   // v890: unter Last kommt dieser Schreibvorgang später – auf ihn warten (Obergrenze 8 s)
     out.blz = {};
     const basis = zaehl("POST", "trainingsturnier");
     const team = BLZ.teams[0], alt = team.name;
@@ -195,6 +196,7 @@ module.exports = async function (h) {
     out.sit.vorDemNamen = zaehl("POST", "taktik_templates");   // es darf erst nach dem Namen gespeichert werden
     if (fs1) { fs1.querySelector("#frage-text-feld").value = "Prüf-Situation"; fs1.querySelector("#frage-text-ok").click(); }
     await p; await w(200);
+    for (let i = 0; i < 100 && !log.some(([m, u]) => m === "POST" && /\/rest\/v1\/taktik_templates/.test(u)); i++) await w(50);   // v890: auf den Schreibvorgang warten (Obergrenze 5 s)
     const posts = log.filter(([m, u]) => m === "POST" && /\/rest\/v1\/taktik_templates/.test(u));
     out.sit.posts = posts.length;
     try { out.sit.name = JSON.parse(posts[0][2]).name; } catch (e) { out.sit.name = "?" + e; }

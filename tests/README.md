@@ -44,6 +44,7 @@ die aus einem echten Fehler entstanden ist — die Versionsnummer im Namen sagt,
 | `h.supabaseAttrappe({rpc: {name: antwort \| (url, request) => antwort}})` | Antworten je RPC (`/rest/v1/rpc/<name>`); ohne Eintrag `[]` |
 | `h.supabaseAttrappe({auth: {signup: antwort}})` | Antworten der Anmeldung (`/auth/v1/<name>`); ohne Eintrag `{}` |
 | `s.gesendet` | Nicht-GET-Anfragen: `{pfad, suche, methode, body}` – `suche` traegt z. B. `on_conflict=…` |
+| `s.supabaseRuhig(ruhe, max)` | warten, bis keine Anfrage an die Attrappe offen ist und seit `ruhe` ms (250) keine neue kam; Obergrenze `max` (8000) |
 | `h.KINDER`, `h.kaderZeilen({inaktiv})` | 15 neutrale Kinder, als DB-Zeilen |
 | `h.terminSetzen(page, datum)` | Terminauswahl des Trainingsplans stellen |
 | `h.sichtbarMachen(page, "#id")` | `display:none`-Vorfahren lösen (PIN-Gate) — sonst misst alles 0 |
@@ -125,3 +126,26 @@ hängende Prüfung wird als rot gemeldet, statt den Lauf aufzuhalten.
 Was dabei gefunden wurde: (1) v589 ersetzt `console.log`, während es exportiert, und schluckte so die Zeile einer gleichzeitig fertigen Prüfung – der Lauf schreibt deshalb über die beim Start
 gesicherte Funktion. (2) v553 wartete mit festen 120 ms auf die Überblendung der Ansicht und wurde unter Last rot – es wartet jetzt, bis die Ansicht 150 ms stillsteht. Wird eine Prüfung nur im
 Parallel-Lauf rot, hat sie vermutlich eine feste Wartezeit: erst mit `PARALLEL=1 node tests/run.js <Name>` gegenprüfen, dann die Wartezeit durch Warten auf den Zustand ersetzen – nicht die Prüfung lockern.
+
+## Warten auf Zustand statt fester Zeit (seit v890)
+
+Eine feste Pause vor einer Prüfung (`await w(300)`, `page.waitForTimeout(…)`, `setTimeout` im `evaluate`) misst nur, ob der Rechner
+gerade schnell genug war. Unter Doppellast (zwei Prüfreihen gleichzeitig) wurden so Dutzende Fälle rot, die einzeln grün waren.
+Gewartet wird deshalb auf **genau den erwarteten Zustand**, mit Obergrenze – tritt er nie ein, läuft die Prüfung danach weiter und
+wird rot wie vorher:
+
+```js
+const bis = async (f, n) => { for (let i = 0; i < (n || 100) && !f(); i++) await new Promise(x => setTimeout(x, 50)); return f(); };
+await bis(() => s.gesendet.some(x => /rufe_senden/.test(x.pfad)));                     // im Prüfprozess
+await s.page.waitForFunction(() => !!document.getElementById("frage-modal"), null, { timeout: 5000 }).catch(() => {});
+await s.supabaseRuhig();   // bis keine Anfrage an die Attrappe mehr offen ist und 250 ms keine neue kam
+```
+
+- **Nach einem Tipp, der speichert:** auf den Schreibvorgang in `s.gesendet` warten, nicht auf die Zeit. Ein gebündeltes Speichern
+  (Zeitgeber in der App) sieht `s.supabaseRuhig()` erst, wenn die Anfrage unterwegs ist – dort auf genau diesen Schreibvorgang warten.
+- **Nach Laden, Datei-Upload, Neuzeichnen:** auf das Element oder den Text, den die Prüfung danach liest. Wird neu gezeichnet, vorher
+  das alte Element markieren und warten, bis es ersetzt ist.
+- **Vor dem Messen von Koordinaten (Ziehen mit der Maus):** messen, bis zwei Messungen im Abstand von 100 ms gleich sind.
+- **Fest bleiben** nur Pausen, die prüfen, dass **nichts** passiert („Abbrechen schreibt nichts“) – sie tragen den Kommentar
+  `bewusst fest` – und die großzügigen Startpausen der Eltern-Seite nach `reload` (3,5–5 s, unter Doppellast nie rot).
+- Gegenprobe: `node tests/run.js` zweimal gleichzeitig starten (die Prüfungen schreiben keine Dateien). Beide Läufe müssen grün sein.

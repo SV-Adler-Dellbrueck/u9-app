@@ -136,12 +136,13 @@ module.exports = async function (h) {
       const fremd2 = angebot(h1).find(i => i !== neu && i !== marke && i !== fremd && name(i));
       sel().value = String(fremd2); sel().dispatchEvent(new Event("change"));
       out.brueckeSpeichern = tpPlanEntries().some(e => e.block === h1 && e.feld === 0 && e.formIdx === fremd2) && tpWahlIdx(id) === fremd2 && !tpZustandPruefen().length;
-      /* 5) Nicht im Angebot des Blocks: fällt beim Zeichnen still weg (wie bisher) */
+      /* 5) Nicht im Angebot des Blocks: fiel bis v892 beim Zeichnen still weg; seit v893 (Fehlerbild 4
+         behoben) bleibt sie mit eigener Option (data-fremd) und Hinweis am Feld */
       const tw = alle.findIndex(f => f && f.kat === "torwart");
       out.zulaessig = { main: tpWahlZulaessig(h1, fremd2), tw: tpWahlZulaessig(h1, tw) };
       tpWahlSetzen(id, tw);
       tpRenderTimeline();
-      out.verworfen = { idx: tpWahlIdx(id), feld: sel().value, pruefen: tpZustandPruefen() };
+      out.verworfen = { idx: tpWahlIdx(id), feld: sel().value, tw, fremd: !!sel().querySelector(`option[value="${tw}"][data-fremd]`), hinweis: !!document.getElementById(id + "-fremd"), pruefen: tpZustandPruefen() };
       return out;
     });
     const l = b.lesen;
@@ -153,8 +154,8 @@ module.exports = async function (h) {
     pruef(b.hand.marken === 0 && b.hand.zustand === 0 && b.hand.zweites && !b.hand.pruefen.length, `hand: alle Vorlagen-Marken weg, Seite und Zustand (${JSON.stringify(b.hand)})`);
     pruef(b.bruecke.meldet && b.bruecke.planOhne && b.bruecke.zustand && b.bruecke.feld && !b.bruecke.pruefen.length && b.brueckeSpeichern,
       `v888 ohne Brücke: sel.value= ohne Ereignis gemeldet, nicht gespeichert, beim Zeichnen zurückgesetzt; mit change übernommen (${JSON.stringify(b.bruecke)}, mit Ereignis ${b.brueckeSpeichern})`);
-    pruef(b.zulaessig.main && !b.zulaessig.tw && b.verworfen.idx === null && b.verworfen.feld === "" && !b.verworfen.pruefen.length,
-      `Torwart-Übung im Hauptteil: nicht zulässig, beim Zeichnen still verworfen (${JSON.stringify(b.verworfen)})`);
+    pruef(b.zulaessig.main && !b.zulaessig.tw && b.verworfen.idx === b.verworfen.tw && b.verworfen.feld === String(b.verworfen.tw) && b.verworfen.fremd && b.verworfen.hinweis && !b.verworfen.pruefen.length,
+      `Torwart-Übung im Hauptteil: nicht im Angebot, bleibt seit v893 beim Zeichnen mit eigener Option und Hinweis (${JSON.stringify(b.verworfen)})`);
     const fe = s.fehler();
     pruef(!fe.length, `B: keine Fehler in der Konsole${fe.length ? " · " + fe[0] : ""}`);
   } catch (e) {

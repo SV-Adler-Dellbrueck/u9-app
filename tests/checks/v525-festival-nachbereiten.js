@@ -70,7 +70,7 @@ module.exports = async function (h) {
              kinderKnopf: /Kind [A-O]/.test(txt) };
   });
 
-  await s.page.waitForTimeout(200);
+  await Promise.all([s.page.waitForTimeout(200), s.supabaseRuhig()]);   // v890: mindestens wie bisher, dazu bis die Attrappe ruhig ist
   const gesendet = s.gesendet.filter(g => /event_bewertung/.test(g.pfad || ""));
   const fehler = s.fehler();
   await s.schliessen();

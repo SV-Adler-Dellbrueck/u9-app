@@ -45,7 +45,7 @@ module.exports = async function (h) {
     document.getElementById("et-beitrag").value = "40 € pro Saison";
     await elternTeamEditSave(document.getElementById("et-save"));
   });
-  await s.page.waitForTimeout(300);
+  await Promise.all([s.page.waitForTimeout(300), s.supabaseRuhig()]);   // v890: mindestens wie bisher, dazu bis die Attrappe ruhig ist
   const post = s.gesendet.find(x => /team_config/.test(x.pfad));
   const zu = await s.page.evaluate(() => !document.getElementById("et-modal"));
   const f = s.fehler(); await s.schliessen();
