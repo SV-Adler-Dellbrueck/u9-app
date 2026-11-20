@@ -130,6 +130,7 @@ function _euForm(u){
     name:String(u.name||"").slice(0,120),
     kat:u.kat||"technik",
     ablauf:u.ablauf||"",
+    ablauf_lang:u.ablauf_lang||"",   // v917: ganze Beschreibung, im Übungsdetail aufklappbar
     varianten:u.varianten||"",
     coaching:u.coaching||"",
     spieler:u.spieler||"", feld:u.feld||"", dauer:u.dauer!=null?String(u.dauer):"",
@@ -236,7 +237,7 @@ function _euKanon(v){
   if(v&&typeof v==="object")return Object.keys(v).sort().reduce((o,k)=>{ o[k]=_euKanon(v[k]); return o; },{});
   return v;
 }
-const EU_VERGLEICH=["kat","ablauf","varianten","coaching","spieler","feld","dauer","diff","kurz","skizze"];
+const EU_VERGLEICH=["kat","ablauf","ablauf_lang","varianten","coaching","spieler","feld","dauer","diff","kurz","skizze"];
 function _euGleich(form,zeile){
   return EU_VERGLEICH.every(k=>JSON.stringify(_euKanon(form[k]==null?null:form[k]))===JSON.stringify(_euKanon(zeile[k]==null?null:zeile[k])));
 }
