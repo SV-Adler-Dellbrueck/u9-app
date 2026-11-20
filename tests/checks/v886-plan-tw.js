@@ -9,9 +9,10 @@
       dann Neuzeichnen und Speichern: gespeicherter Körper = Sollwert G6 „Plan speichern“;
       tpZustandPruefen({fremd:true}) leer nach jedem Schritt; keine Brücken-Übernahme.
       Danach Einzelblock löschen und Rückgängig: das Kind kommt zurück (wie bisher).
-   C) G10 nachgespielt mit Ereignissen: Körper nach Rückgängig = Sollwert G10 – Fehlerbild 2 bleibt
-      bewusst (die abgewählten Haken kommen NICHT zurück, tw [1,2]); hier stehen zwei Torhüter im
-      Körper, die Reihenfolge (tpTwAngebot) zählt.
+   C) G10 nachgespielt mit Ereignissen: Körper nach Rückgängig = Sollwert G10. Bis v889 hielt das
+      Fehlerbild 2 bewusst fest (die abgewählten Haken kamen NICHT zurück, tw [1,2]); seit v890 ist
+      es behoben: die Haken kommen wie vor dem Löschen zurück (nur Kind A). Die Reihenfolge
+      (tpTwAngebot) zählt.
    D) Die zehn Golden-Abläufe (ohne Sollwerte): tpZustandPruefen() leer nach jedem Schritt, die
       Brücke der Übungswahl 0×, die Brücke für Haken/Kind genau an den fremden Eingriffen der
       Abläufe selbst (G6: Haken und Auswahl ohne Ereignis, G10: Haken ohne Ereignis).
@@ -169,7 +170,7 @@ module.exports = async function (h) {
     await r.s.schliessen();
   }
 
-  /* ── C: G10 mit Ereignissen (Fehlerbild 2 bleibt) ── */
+  /* ── C: G10 mit Ereignissen (v890: Fehlerbild 2 behoben – Haken wie vor dem Löschen) ── */
   {
     const r = await nachspielen(h, [
       ["Training füllen, Torwart-Block, Kind B per Ereignis ab, Trainer, speichern", async p => {
@@ -182,7 +183,7 @@ module.exports = async function (h) {
       ["Rückgängig", p => p.evaluate(() => {
         const k = [...document.querySelectorAll("#undo-toast button")].find(x => /Rückgängig/.test(x.textContent)); if (k) k.click();
         const tw = tpSlots.findIndex(s => s.typ === "tw");
-        return JSON.stringify(tpTwAn(tw)) === '["Kind A","Kind B"]' && TP_ZUSTAND.tw[tw] === undefined ? null : { fehler: "Haken nach Rückgängig " + JSON.stringify(tpTwAn(tw)) };
+        return JSON.stringify(tpTwAn(tw)) === '["Kind A"]' ? null : { fehler: "Haken nach Rückgängig " + JSON.stringify(tpTwAn(tw)) };
       })],
       ["Plan speichern", p => p.evaluate(async () => { await tpPlanSave(true); })]
     ]);
@@ -190,7 +191,7 @@ module.exports = async function (h) {
     const soll = sollKoerper("G10-loeschen-rueckgaengig", "Plan speichern");
     const ist1 = r.posts[0] ? koerper(r.posts[0].body) : "", ist = r.posts.length ? koerper(r.posts[r.posts.length - 1].body) : "";
     pruef(!!soll1 && r.posts.some(x => koerper(x.body) === soll1), `G10 mit Ereignissen: erster gespeicherter Körper (Kind B abgewählt) = Sollwert${soll1 && !r.posts.some(x => koerper(x.body) === soll1) ? abweichung(ist1, soll1) : ""}`);
-    pruef(!!soll && ist === soll, `G10 mit Ereignissen: Körper nach Rückgängig = Sollwert (Fehlerbild 2 bleibt: beide Haken wieder an)${soll && ist !== soll ? abweichung(ist, soll) : ""}`);
+    pruef(!!soll && ist === soll, `G10 mit Ereignissen: Körper nach Rückgängig = Sollwert (v890: Haken wie vor dem Löschen – nur Kind A)${soll && ist !== soll ? abweichung(ist, soll) : ""}`);
     pruef(!r.zeilen.length && r.bw === 0 && r.btw === 0, `G10 mit Ereignissen: Seite = Zustand nach jedem Schritt, Brücke entfernt${r.bw ? " · noch da" : ""}${r.zeilen.length ? " · " + r.zeilen.slice(0, 3).join(" | ") : ""}`);
     const fe = r.s.fehler(); pruef(!fe.length, `C: keine Fehler in der Konsole${fe.length ? " · " + fe[0] : ""}`);
     await r.s.schliessen();

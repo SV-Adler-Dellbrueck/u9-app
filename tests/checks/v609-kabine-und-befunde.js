@@ -66,7 +66,9 @@ module.exports = async function (h) {
     // nach Neuladen: Sperre bleibt, wenn das Flag gesetzt ist
     await s.page.evaluate(() => localStorage.setItem("adler_kabine_gesperrt", "1"));
     await s.page.evaluate((tk) => { try { localStorage.setItem("adler_sb_auth_eltern", JSON.stringify({ access_token: tk, refresh_token: "r", expires_at: Math.floor(Date.now() / 1000) + 3600 })); } catch (e) {} }, TOKEN609);
-    await s.page.reload({ waitUntil: "networkidle" }); await s.page.waitForTimeout(1800);
+    await s.page.reload({ waitUntil: "networkidle" });
+    // v890: statt fester 1,8 s auf die Sperre warten (Obergrenze 8 s – kommt sie nie, wird a) rot)
+    await s.page.waitForSelector("#kabine-sperre", { state: "attached", timeout: 8000 }).catch(() => {});
     const nachReload = await s.page.evaluate(() => !!document.getElementById("kabine-sperre"));
     const f = s.fehler().filter(x => !/youtube/i.test(x));
     await s.schliessen();

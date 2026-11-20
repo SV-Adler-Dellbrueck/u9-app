@@ -44,7 +44,7 @@ module.exports = async function (h) {
     let gesendet = [];
     if (!ohneErgebnis && r.abhaken) {
       await s.page.evaluate(() => { todoOhneErgebnis(77); });
-      await s.page.waitForTimeout(400);
+      await Promise.all([s.page.waitForTimeout(400), s.supabaseRuhig()]);   // v890: mindestens wie bisher, dazu bis die Attrappe ruhig ist
       gesendet = s.gesendet.filter(g => /termine/.test(g.pfad || "") && g.methode === "PATCH");
     }
     const fehler = s.fehler(); await s.schliessen();
@@ -69,7 +69,7 @@ module.exports = async function (h) {
     if (typeof blitzIdx !== "undefined") blitzIdx = 0;
     if (typeof blitzRate === "function") await blitzRate();
   }, K);
-  await b.page.waitForTimeout(400);
+  await Promise.all([b.page.waitForTimeout(400), b.supabaseRuhig()]);   // v890: mindestens wie bisher, dazu bis die Attrappe ruhig ist
   const bp = b.gesendet.filter(g => /blitz_ratings/.test(g.pfad || ""));
   const fehlerB = b.fehler(); await b.schliessen();
   if (!bp.length) probleme.push("keine Blitz-Bewertung gesendet");

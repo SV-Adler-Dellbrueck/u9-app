@@ -1,6 +1,6 @@
 {
  "szenario": "Mittleres von drei Feldern weglassen",
- "haelt_fest": "Fehlerbild 1 – beim Weglassen des mittleren Feldes rücken die Trainer nach, die Übungen nicht: Trainer und Übung passen danach nicht mehr zusammen. Behebung in Schritt 9.",
+ "haelt_fest": "Fehlerbild 1 – behoben in v889: beim Weglassen des mittleren Feldes rücken Trainer und Übungen gemeinsam nach (vorher nur die Trainer, Trainer und Übung passten danach nicht mehr zusammen).",
  "schritte": [
   {
    "schritt": "Training füllen",
@@ -367,11 +367,11 @@
         "feld": 0
        },
        {
-        "formIdx": 39,
-        "formName": "Pressing-Welle 2gg2",
+        "formIdx": 138,
+        "formName": "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor",
         "trainer": "Kenneth",
         "slotLabel": "Hauptteil 1",
-        "key": "39-Kenneth",
+        "key": "138-Kenneth",
         "block": 2,
         "feld": 1
        },
@@ -500,7 +500,7 @@
     {
      "feld": 1,
      "trainer": "Kenneth",
-     "uebung": "Pressing-Welle 2gg2"
+     "uebung": "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor"
     },
     {
      "feld": 2,

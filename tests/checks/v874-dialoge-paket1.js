@@ -56,6 +56,10 @@ module.exports = async function (h) {
     window.__zaehl = (m, t) => log.filter(([mm, uu]) => mm === m && new RegExp("/rest/v1/" + t + "(\\?|$)").test(uu)).length;
     await loadKader();
     const fenster = id => document.getElementById(id);
+    /* v890: statt fester 200 ms auf das Fenster warten, nach „Bestätigen“ auf den Schreibvorgang (Obergrenze je 5 s). Fest bleiben
+       die Pausen nach „Abbrechen“ – dort wird geprüft, dass NICHTS geschrieben wird. */
+    const bis = async (f, n) => { for (let i = 0; i < (n || 100) && !f(); i++) await w(50); return f(); };
+    const da = id => bis(() => fenster(id));
     const art = el => el ? { dialog: el.getAttribute("role") === "dialog", modal: el.getAttribute("aria-modal") === "true",
       text: el.textContent.replace(/\s+/g, " ").slice(0, 160),
       klein: [...el.querySelectorAll("button")].filter(b => b.getBoundingClientRect().height > 0 && b.getBoundingClientRect().height < 43.5).length } : null;
@@ -64,17 +68,17 @@ module.exports = async function (h) {
     const feld = document.getElementById("tp-date");
     if (feld) { if (feld.tagName === "SELECT" && ![...feld.options].some(o => o.value === d1)) feld.add(new Option(d1, d1)); feld.value = d1; }
     out.tp = {};
-    let p = tpMaterialEigen(); await w(200);
+    let p = tpMaterialEigen(); await da("frage-text-modal");
     out.tp.ab = art(fenster("frage-text-modal"));
-    fenster("frage-text-modal")?.querySelector("#frage-text-ab").click(); await p; await w(150);
+    fenster("frage-text-modal")?.querySelector("#frage-text-ab").click(); await p; await w(150);   // bewusst fest: Abbrechen darf NICHTS schreiben
     out.tp.nachAb = window.__zaehl("PATCH", "trainingsplan");
-    p = tpMaterialEigen(); await w(200);
+    p = tpMaterialEigen(); await da("frage-text-modal");
     const ft = fenster("frage-text-modal");
     if (ft) { ft.querySelector("#frage-text-feld").value = "Prüf-Material"; ft.querySelector("#frage-text-ok").click(); }
-    await p; await w(300);
+    await p; await bis(() => window.__zaehl("PATCH", "trainingsplan") >= 1);
     out.tp.nachOk = window.__zaehl("PATCH", "trainingsplan");
     // 1b) Esc löst frageText auf
-    p = tpRichtwertAendern(); await w(200);
+    p = tpRichtwertAendern(); await da("frage-text-modal");
     out.esc = { offen: !!fenster("frage-text-modal"), einzeilig: (fenster("frage-text-modal")?.querySelector("#frage-text-feld") || {}).tagName };
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     out.esc.fertig = await Promise.race([p.then(() => true), w(1500).then(() => false)]);
@@ -82,34 +86,34 @@ module.exports = async function (h) {
     // 2) Spieltag: Ticker-Eintrag löschen
     go("spieltag"); await w(900);
     out.tk = {};
-    p = tickerDelete(7, "Tor durch Kind A"); await w(200);
+    p = tickerDelete(7, "Tor durch Kind A"); await da("frage-modal");
     out.tk.ab = art(fenster("frage-modal"));
-    fenster("frage-modal")?.querySelector("#frage-nein").click(); await p; await w(150);
+    fenster("frage-modal")?.querySelector("#frage-nein").click(); await p; await w(150);   // bewusst fest: Abbrechen darf NICHTS schreiben
     out.tk.nachAb = window.__zaehl("DELETE", "ticker_events");
-    p = tickerDelete(7, "Tor durch Kind A"); await w(200);
+    p = tickerDelete(7, "Tor durch Kind A"); await da("frage-modal");
     out.tk.ja = (fenster("frage-modal")?.querySelector("#frage-ja") || {}).textContent;
-    fenster("frage-modal")?.querySelector("#frage-ja").click(); await p; await w(200);
+    fenster("frage-modal")?.querySelector("#frage-ja").click(); await p; await bis(() => window.__zaehl("DELETE", "ticker_events") >= 1);
     out.tk.nachOk = window.__zaehl("DELETE", "ticker_events");
     // 3) Spieltag: Wechsel-Timer zurücksetzen
     out.rot = {};
     if (rotTimerId) { clearInterval(rotTimerId); rotTimerId = null; }
     rotFieldSec["Kind A"] = 120;
-    p = rotReset(); await w(200);
+    p = rotReset(); await da("frage-modal");
     out.rot.ab = art(fenster("frage-modal"));
-    fenster("frage-modal")?.querySelector("#frage-nein").click(); await p; await w(100);
+    fenster("frage-modal")?.querySelector("#frage-nein").click(); await p; await w(100);   // bewusst fest: Abbrechen darf NICHTS ändern
     out.rot.nachAb = rotFieldSec["Kind A"];
-    p = rotReset(); await w(200);
-    fenster("frage-modal")?.querySelector("#frage-ja").click(); await p; await w(200);
+    p = rotReset(); await da("frage-modal");
+    fenster("frage-modal")?.querySelector("#frage-ja").click(); await p; await bis(() => rotFieldSec["Kind A"] === 0);
     out.rot.nachOk = rotFieldSec["Kind A"];
     // 4) Termine: Termin löschen
     go("termine"); await w(700);
     out.tm = {};
-    p = tmDelete(5); await w(200);
+    p = tmDelete(5); await da("frage-modal");
     out.tm.ab = art(fenster("frage-modal"));
-    fenster("frage-modal")?.querySelector("#frage-nein").click(); await p; await w(150);
+    fenster("frage-modal")?.querySelector("#frage-nein").click(); await p; await w(150);   // bewusst fest: Abbrechen darf NICHTS schreiben
     out.tm.nachAb = window.__zaehl("DELETE", "termine");
-    p = tmDelete(5); await w(200);
-    fenster("frage-modal")?.querySelector("#frage-ja").click(); await p; await w(200);
+    p = tmDelete(5); await da("frage-modal");
+    fenster("frage-modal")?.querySelector("#frage-ja").click(); await p; await bis(() => window.__zaehl("DELETE", "termine") >= 1);
     out.tm.nachOk = window.__zaehl("DELETE", "termine");
     return out;
   }, { d1 }).catch(e => ({ fehler: String(e) }));

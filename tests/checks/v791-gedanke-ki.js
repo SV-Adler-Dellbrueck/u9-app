@@ -27,14 +27,16 @@ module.exports = async function (h) {
     window.trainerMe = async () => "Charles";
     if (typeof sbToken !== "function" || !sbToken()) window.sbToken = () => "t";
     const out = {};
-    tagebuchGedanke(); await w(40);
+    tagebuchGedanke(); for (let i = 0; i < 100 && !document.getElementById("tb-gedanke-ki"); i++) await w(50);
     const ki = document.getElementById("tb-gedanke-ki");
     out.knopf = ki ? Math.round(ki.getBoundingClientRect().height) : 0;
     out.beide = !!document.getElementById("tb-gedanke-los");
     document.getElementById("tb-gedanke-text").value = "kurz";
     await tagebuchGedankeSortieren(); out.zuKurz = document.getElementById("tb-gedanke-meldung").textContent;
     document.getElementById("tb-gedanke-text").value = text;
-    await tagebuchGedankeSortieren(); await w(300);
+    /* v890: die Prüfkarte öffnet nach dem Speichern nachgelagert – auf sie warten statt fester 300 ms (Obergrenze 8 s) */
+    await tagebuchGedankeSortieren();
+    for (let i = 0; i < 160 && !(!document.getElementById("tb-gedanke") && /Passt so/.test(document.body.textContent)); i++) await w(50);
     out.dialogZu = !document.getElementById("tb-gedanke");
     out.karte = document.body.textContent.replace(/\s+/g, " ");
     return out;

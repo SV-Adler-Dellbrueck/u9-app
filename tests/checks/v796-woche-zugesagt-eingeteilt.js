@@ -15,11 +15,15 @@ module.exports = async function (h) {
       nominierungen: u => (u.searchParams.get("datum") || "").includes(spiel + "__nom") ? [{ datum: spiel + "__nom", data: nomDaten }] : [],
       rueckmeldungen: rm, trainingsplan: [], trainingsgruppen: [] }) });
     await h.sichtbarMachen(s.page, "#home-content");
-    const z = await s.page.evaluate(async () => {
-      const w = ms => new Promise(x => setTimeout(x, ms));
-      await loadKader(); document.getElementById("pin-gate")?.remove(); go("home"); await w(900);
-      return [...document.querySelectorAll("#home-woche .woche-zeile")].map(x => x.textContent.replace(/\s+/g, " ")).find(x => /Kinderfestival|Turnier/.test(x)) || "";
-    });
+    /* v890: statt fester 900 ms auf die Zeile mit „9 dabei“ warten (bei 12 Zusagen auch auf den zweiten Chip), danach auf
+       500 ms ohne Anfrage – erst dann ist sicher, dass kein Chip mehr nachkommt. Obergrenze je 8 s. */
+    let zuletzt = Date.now(); s.page.on("request", () => { zuletzt = Date.now(); });
+    const zeile = () => s.page.evaluate(() => [...document.querySelectorAll("#home-woche .woche-zeile")].map(x => x.textContent.replace(/\s+/g, " ")).find(x => /Kinderfestival|Turnier/.test(x)) || "");
+    await s.page.evaluate(async () => { await loadKader(); document.getElementById("pin-gate")?.remove(); go("home"); });
+    const erwartet = zusagen > 9 ? (x => /9 dabei/.test(x) && /zugesagt/.test(x)) : (x => /9 dabei/.test(x));
+    for (let i = 0; i < 160 && !erwartet(await zeile()); i++) await new Promise(x => setTimeout(x, 50));
+    for (let i = 0; i < 160 && Date.now() - zuletzt < 500; i++) await new Promise(x => setTimeout(x, 50));
+    const z = await zeile();
     const fe = s.fehler(); await s.schliessen();
     return { z, fe };
   }

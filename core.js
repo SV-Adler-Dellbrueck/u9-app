@@ -1212,6 +1212,21 @@ async function pushRenderInto(elId, rolle){
   if(on)ruhezeitRender(elId+"-ruhe",rolle);
   if(on&&rolle!=="trainer"){ const box=document.getElementById(elId+"-ruhe"); if(box){ const d=document.createElement("div"); d.id=elId+"-schmiede"; box.insertAdjacentElement("afterend",d); schmiedePushRender(d.id); } }
 }
+/* v896 (Beschluss Charles 19.11., Bestandsaufnahme 4.2): Die sechs „Adler“-Kanäle behalten ihre Namen.
+   Wo Eltern oder Trainer einen davon als Eintrag, Kachel oder Knopf sehen, steht darunter in
+   Elternsprache, was er ist – überall derselbe Satz aus dieser Liste (kanalUnter), damit es
+   einheitlich bleibt. Ein Zusatz darf nach „ · “ folgen, der Satz selbst steht immer vorn. */
+const ADLER_KANAELE={
+  rufe:"Nachrichten im Team",
+  nest:"Unser Vereinsheft",
+  post:"Grüße und Komplimente für dein Kind",
+  news:"Neues seit deinem letzten Besuch",
+  schmiede:"Neue Funktionen in der App",
+  radio:"Spielbericht vorlesen lassen"
+};
+function kanalUnter(k,zusatz){
+  return `<span class="kanal-unter" data-kanal="${k}" style="display:block;font-size:var(--s-klein);color:var(--text2);font-weight:400;line-height:1.35;margin-top:1px">${ADLER_KANAELE[k]||""}${zusatz?" · "+zusatz:""}</span>`;
+}
 /* v717: „Aus der Adlerschmiede“ (sonntags 18 Uhr, nur wenn es Neues gibt) – je Konto abschaltbar
    (Tabelle adlerschmiede_push_aus, wie rufe_push_aus). */
 async function schmiedePushRender(slotId){
@@ -1219,7 +1234,7 @@ async function schmiedePushRender(slotId){
   const uid=typeof sbUid==="function"?sbUid():null; if(!uid){el.innerHTML="";return;}
   let aus=false;
   try{const r=await fetch(`${SB_URL}/rest/v1/adlerschmiede_push_aus?user_id=eq.${uid}&select=user_id`,{headers:sbAuthHeaders()});aus=r.ok&&((await r.json())||[]).length>0;}catch(e){}
-  el.innerHTML=`<button type="button" class="schmiede-schalter btn btn-zeile" role="switch" aria-checked="${!aus}" onclick="schmiedePushSetzen('${slotId}',${!aus})" style="display:block;margin-top:10px">🛠️ Aus der Adlerschmiede – sonntags 18 Uhr: <b>${aus?"aus":"an"}</b><span style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:2px">Neue Funktionen der Woche, nur wenn es welche gibt</span></button>`;
+  el.innerHTML=`<button type="button" class="schmiede-schalter btn btn-zeile" role="switch" aria-checked="${!aus}" onclick="schmiedePushSetzen('${slotId}',${!aus})" style="display:block;margin-top:10px">🛠️ Aus der Adlerschmiede – sonntags 18 Uhr: <b>${aus?"aus":"an"}</b>${kanalUnter("schmiede","nur wenn es welche gibt")}</button>`;
 }
 async function schmiedePushSetzen(slotId,aus){
   const uid=typeof sbUid==="function"?sbUid():null; if(!uid)return;

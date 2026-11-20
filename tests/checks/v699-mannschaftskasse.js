@@ -17,6 +17,8 @@
 const fs = require("fs"), path = require("path");
 const b64 = o => Buffer.from(JSON.stringify(o)).toString("base64").replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
 module.exports = async function (h) {
+  /* Warten auf einen Zustand mit Obergrenze n × 50 ms – tritt er nie ein, wird die Prüfung danach rot */
+  const bis = async (f, n) => { for (let i = 0; i < (n || 100) && !f(); i++) await new Promise(x => setTimeout(x, 50)); return f(); };
   const probleme = [], zeilen = [];
   const TOKEN = b64({ alg: "none" }) + "." + b64({ email: "eltern@example.org", sub: "u1", exp: Math.floor(Date.now() / 1000) + 3600 }) + ".x";
   const summary = { saldo: 152.5, umlagen: [{ id: 7, titel: "Saisonbeitrag", betrag: 40, faellig: "2026-10-31", paypal_link: "https://paypal.me/beispiel" }],
@@ -71,11 +73,18 @@ module.exports = async function (h) {
   await s2.page.selectOption("#k-typ", "-1"); await s2.page.fill("#k-betrag", "12.50"); await s2.page.fill("#k-datum", "2026-09-25");
   await s2.page.selectOption("#k-kat", "ausruestung"); await s2.page.fill("#k-zweck", "Hütchen");
   await s2.page.setInputFiles("#k-beleg", { name: "quittung.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\n%Test\n") });
-  await s2.page.click("#k-speichern"); await s2.page.waitForTimeout(800);
+  await s2.page.evaluate(() => { const k = document.getElementById("k-speichern"); if (k) k._alt = true; });
+  await s2.page.click("#k-speichern");
+  /* Warten auf den Zustand statt fester 800 ms: die Buchung ist an teamkasse gegangen und die Kasse neu gezeichnet (#k-speichern
+     ersetzt) – sonst überschreibt das Neuzeichnen das gleich gefüllte Bearbeiten-Formular. Obergrenze je 8 s; sonst wird c) rot. */
+  await bis(() => schreib.some(x => x.m === "POST" && /teamkasse/.test(x.url)), 160);
+  await s2.page.waitForFunction(() => { const k = document.getElementById("k-speichern"); return !!k && !k._alt; }, null, { timeout: 8000 }).catch(() => {});
   const nachNeu = schreib.slice();
-  await s2.page.evaluate(() => kasseBuchungBearbeiten(2)); await s2.page.waitForTimeout(200);
+  await s2.page.evaluate(() => kasseBuchungBearbeiten(2));
+  await s2.page.waitForFunction(() => /Änderung speichern/.test(document.getElementById("k-speichern")?.textContent || "") && document.getElementById("k-betrag").value === "27.50", null, { timeout: 5000 }).catch(() => {});
   const form = await s2.page.evaluate(() => ({ betrag: document.getElementById("k-betrag").value, kat: document.getElementById("k-kat").value, typ: document.getElementById("k-typ").value, knopf: document.getElementById("k-speichern").textContent }));
-  await s2.page.fill("#k-zweck", "Eis nach dem Turnier (korrigiert)"); await s2.page.click("#k-speichern"); await s2.page.waitForTimeout(800);
+  await s2.page.fill("#k-zweck", "Eis nach dem Turnier (korrigiert)"); await s2.page.click("#k-speichern");
+  await bis(() => schreib.slice(nachNeu.length).some(x => x.m === "PATCH" && /teamkasse\?id=eq\.2/.test(x.url)), 160);
   const nachEdit = schreib.slice(nachNeu.length);
   const r2 = await s2.page.evaluate(async () => {
     const w = ms => new Promise(x => setTimeout(x, ms));
@@ -84,7 +93,7 @@ module.exports = async function (h) {
     await kasseDelUmlage(7); window.toast = t0;
     let csv = ""; const c0 = URL.createObjectURL; URL.createObjectURL = b => { b.text().then(t => { csv = t; }); return "blob:x"; };
     const a0 = HTMLAnchorElement.prototype.click; HTMLAnchorElement.prototype.click = function () {};
-    kasseExport(); await w(200); URL.createObjectURL = c0; HTMLAnchorElement.prototype.click = a0;
+    kasseExport(); for (let i = 0; i < 100 && !csv; i++) await w(50); URL.createObjectURL = c0; HTMLAnchorElement.prototype.click = a0;
     return { toasts, csv };
   });
   const f2 = s2.fehler(); await s2.schliessen();

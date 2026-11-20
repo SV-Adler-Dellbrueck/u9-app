@@ -27,6 +27,8 @@ module.exports = async function (h) {
     const nach2 = { da: !!(AW_DATA[heute] && AW_DATA[heute][K[0]] && AW_DATA[heute][K[0]].da), tage: Object.keys(AW_DATA).length };
     return { nach1, nach2 };
   }, { K, heute });
+  // v890: unter Last kam der zweite Schreibvorgang erst nach den 1,8 s – auf ihn warten (Obergrenze 8 s; fehlt er, bleibt es rot)
+  for (let i = 0; i < 160 && s.gesendet.filter(g => g.methode === "POST" && /\/anwesenheit$/.test(g.pfad)).length < 2; i++) await new Promise(x => setTimeout(x, 50));
   const fehler = s.fehler();
   const posts = s.gesendet.filter(g => g.methode === "POST" && /\/anwesenheit$/.test(g.pfad));
   await s.schliessen();

@@ -65,16 +65,20 @@ module.exports = async function (h) {
       plaetze: m.querySelectorAll('select[onchange^="grillUmbuchen"]').length, sperreText: m.textContent.replace(/\s+/g, " ") };
     const sels = [...m.querySelectorAll(".gh-termin")][0].querySelectorAll("select");
     const setze = (sel, i) => { sel.value = sel.options[i].value; sel.dispatchEvent(new Event("change")); };
-    setze(sels[1], 1); await w(150);     // Platz 2 an Termin 7: Kind A – steht dort schon auf Platz 1
+    /* v890: statt fester 150 ms je Schritt auf die Meldung der App und das Neuzeichnen warten (das alte Feld ist ersetzt);
+       Obergrenze je 8 s – kommt beides nie, fehlen Meldung oder Schreibvorgang und die Prüfung wird rot. */
+    const bisNeu = async (meldung, alt) => { for (let i = 0; i < 160 && !(window._toasts.some(x => meldung.test(x)) && !document.body.contains(alt)); i++) await w(50); };
+    setze(sels[1], 1); await bisNeu(/schon/, sels[1]);     // Platz 2 an Termin 7: Kind A – steht dort schon auf Platz 1
     const sels2 = [...document.querySelectorAll("#gh-tr-modal .gh-termin")][0].querySelectorAll("select");
-    setze(sels2[1], 2); await w(150);    // Platz 2: Kind B
+    setze(sels2[1], 2); await bisNeu(/Umgebucht/, sels2[1]);    // Platz 2: Kind B
     const sels3 = [...document.querySelectorAll("#gh-tr-modal .gh-termin")][0].querySelectorAll("select");
-    setze(sels3[2], 3); await w(150);    // Sperrtag: Kind C
+    setze(sels3[2], 3); await bisNeu(/Gesperrt/, sels3[2]);    // Sperrtag: Kind C
     const weg = [...document.querySelectorAll("#gh-tr-modal button")].find(b => /aufheben/.test(b.textContent));
-    if (weg) weg.click(); await w(150);
+    if (weg) weg.click();
     out.toasts = window._toasts.slice();
     return out;
   });
+  for (let i = 0; i < 160 && !t.gesendet.some(x => x.methode === "DELETE" && /dienst_sperre/.test(x.pfad)); i++) await new Promise(x => setTimeout(x, 50));   // auf das Aufheben warten (Obergrenze 8 s)
   const tg = t.gesendet.filter(x => /dienst_/.test(x.pfad)).map(x => x.methode + " " + x.pfad.split("/").pop() + (x.suche || "") + " " + JSON.stringify(x.body));
   const f2 = t.fehler(); await t.schliessen();
   if (rt.fehlt) return h.ergebnis("Grillhütte: zwei Familien, Sperrtage, Startseite", false, ["grillTrainerOpen/grillSperren fehlt"]);

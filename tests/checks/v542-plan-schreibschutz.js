@@ -149,7 +149,8 @@ module.exports = async function (h) {
     const knopf = k && [...k.querySelectorAll("button")].find(b => /Meine Fassung speichern/.test(b.textContent));
     if (!knopf) return { fehlt: true };
     knopf.click();
-    await warte(600);
+    // v890: statt fester 600 ms auf das Schließen der Frage und den eigenen Namen warten (Obergrenze 5 s)
+    for (let i = 0; i < 100 && (document.getElementById("tp-konflikt") || !/Charles/.test(document.getElementById("tp-gespeichert").textContent || "")); i++) await warte(50);
     return { offen: !!document.getElementById("tp-konflikt"), zeile: (document.getElementById("tp-gespeichert").textContent || "").replace(/\s+/g, " ").trim() };
   }, { datum });
 

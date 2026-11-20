@@ -1,6 +1,6 @@
 {
  "szenario": "Öffnen aus der Datenbank: Altbestand, Speichern; Termin A mit Plan, dann Termin B ohne Plan",
- "haelt_fest": "Fehlerbild 5 – gespeicherte Einträge, die nicht (mehr) passen, gehen beim Öffnen still verloren und fehlen beim nächsten Speichern: die Übung vom falschen Typ fällt weg, die Dublette rutscht ins nächste freie Feld desselben Blocks; alte `durchgaenge` binden Hauptteil 2 als Durchgang an und ersetzen dessen Übung (alleFelder) durch die des Kopfes (v621). Öffnen selbst schreibt nichts. Fehlerbild 6 – ein Termin ohne Plan übernimmt die Struktur des zuvor geöffneten und speichert sie bei der ersten Änderung (Charles 19.11.: künftig Grundgerüst – Behebung in Schritt 9).",
+ "haelt_fest": "Fehlerbild 5 – behoben in v894: gespeicherte Einträge, die nicht (mehr) passen, bleiben beim Öffnen erhalten und werden wieder gespeichert: die Übung vom falschen Typ bleibt (mit Hinweis am Feld), die Dublette bleibt an ihrem Feld; alte `durchgaenge` binden Hauptteil 2 als Durchgang an, dessen eigene Übung (alleFelder) bleibt (vorher: falscher Typ fiel weg, Dublette rutschte ins nächste freie Feld, Hauptteil 2 bekam die Übung des Kopfes). Öffnen selbst schreibt nichts. Fehlerbild 6 – behoben in v892: ein Termin ohne Plan startet mit dem Grundgerüst (vorher übernahm er die Struktur samt Trainern, Haken und Kind des zuvor geöffneten und speicherte sie bei der ersten Änderung).",
  "schritte": [
   {
    "schritt": "Termin A öffnen (Altbestand)",
@@ -16,15 +16,15 @@
      "label": "Hauptteil 1",
      "felder": [
       "Passtor im Quadrat",
-      "Passtor im Quadrat",
+      "Adler TW – Einlaufen",
       null
      ]
     },
     {
      "label": "Hauptteil 2",
      "felder": [
-      "Passtor im Quadrat",
-      "Passtor im Quadrat"
+      "Stangentausch",
+      "Stangentausch"
      ]
     },
     {
@@ -81,31 +81,33 @@
         "feld": 0
        },
        {
-        "formIdx": 115,
-        "formName": "Passtor im Quadrat",
+        "formIdx": 112,
+        "formName": "Adler TW – Einlaufen",
         "trainer": "Finn",
         "slotLabel": "Hauptteil 1",
-        "key": "115-Finn",
+        "key": "112-Finn",
         "block": 1,
         "feld": 1
        },
        {
-        "formIdx": 115,
-        "formName": "Passtor im Quadrat",
+        "formIdx": 145,
+        "formName": "Stangentausch",
         "trainer": "Charles",
         "slotLabel": "Hauptteil 2",
-        "key": "115-Charles",
+        "key": "145-Charles",
         "block": 2,
-        "feld": 0
+        "feld": 0,
+        "alleFelder": true
        },
        {
-        "formIdx": 115,
-        "formName": "Passtor im Quadrat",
+        "formIdx": 145,
+        "formName": "Stangentausch",
         "trainer": "Finn",
         "slotLabel": "Hauptteil 2",
-        "key": "115-Finn",
+        "key": "145-Finn",
         "block": 2,
-        "feld": 1
+        "feld": 1,
+        "alleFelder": true
        },
        {
         "formIdx": 112,
@@ -226,12 +228,9 @@
    "schritt": "Termin B ohne Plan öffnen",
    "gesendet": [],
    "dom": [
-    "Aufwärmen",
+    "Ankommen & Aufwärmen",
     "Hauptteil 1",
     "Hauptteil 2",
-    "Torwart",
-    "Stationen",
-    "Einzel",
     "Abschlussspiel"
    ]
   },
@@ -248,7 +247,7 @@
         "formIdx": 52,
         "formName": "Hai & Fische",
         "trainer": "Alle",
-        "slotLabel": "Aufwärmen",
+        "slotLabel": "Ankommen & Aufwärmen",
         "key": "52-Alle",
         "block": 0,
         "feld": 0
@@ -256,15 +255,16 @@
       ],
       "slots": [
        {
-        "label": "Aufwärmen",
+        "label": "Ankommen & Aufwärmen",
         "dauer": 10,
+        "farbe": "#059669",
         "typ": "warmup"
        },
        {
         "label": "Hauptteil 1",
-        "dauer": 12,
+        "dauer": 20,
+        "farbe": "#1a56db",
         "typ": "main",
-        "kette": "k1",
         "coaches": [
          "Charles",
          "Finn",
@@ -273,29 +273,9 @@
        },
        {
         "label": "Hauptteil 2",
-        "dauer": 12,
+        "dauer": 20,
+        "farbe": "#7c3aed",
         "typ": "main",
-        "kette": "k1",
-        "coaches": [
-         "Charles",
-         "Finn"
-        ]
-       },
-       {
-        "label": "Torwart",
-        "dauer": 12,
-        "typ": "tw",
-        "parallelZu": 2,
-        "trainer": "Kenneth",
-        "tw": [
-         1
-        ]
-       },
-       {
-        "label": "Stationen",
-        "dauer": 15,
-        "typ": "spielform",
-        "stationen": 2,
         "coaches": [
          "Charles",
          "Finn",
@@ -303,15 +283,9 @@
         ]
        },
        {
-        "label": "Einzel",
-        "dauer": 15,
-        "typ": "individual",
-        "parallelZu": 4,
-        "kind": 5
-       },
-       {
         "label": "Abschlussspiel",
-        "dauer": 15,
+        "dauer": 20,
+        "farbe": "#c2410c",
         "typ": "abschluss"
        }
       ],

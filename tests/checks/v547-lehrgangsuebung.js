@@ -65,7 +65,7 @@ module.exports = async function (h) {
      Last lief er so mitten in den Aufruf unten. Jetzt: Modul da, eine Abfrage-Runde abwarten,
      dann erst weiter, wenn kein Abgleich mehr läuft. */
   const frei = () => s.page.waitForFunction(() => typeof bibliothekAbgleich === "function" && typeof _bibLaeuft !== "undefined" && !_bibLaeuft, null, { timeout: 20000 }).catch(() => {});
-  await frei(); await s.page.waitForTimeout(700); await frei();
+  await frei(); await Promise.all([s.page.waitForTimeout(700), s.supabaseRuhig()]); await frei();   // v890: mindestens wie bisher, dazu bis die Attrappe ruhig ist
   s.gesendet.length = 0;
   const r = await s.page.evaluate(async ({ NEU }) => {
     try { localStorage.removeItem("adler-bibliothek-stand"); } catch (e) {}

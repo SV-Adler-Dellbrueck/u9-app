@@ -12,13 +12,18 @@ module.exports = async function (h) {
   /* Erst den Puffer der ALTEN Seite leeren: beim Entladen schickt die App ihn per
      `keepalive` noch los (visibilitychange) – dieser Eintrag stammt vom echten Besuch
      oben, nicht vom Wiederherstellen, und machte die Pruefung sonst zufaellig rot. */
-  await s.page.evaluate(() => nutzungFlush());
-  await s.page.waitForTimeout(200);
+  /* v890: statt fester 200 ms auf genau den Schreibvorgang warten, den der Puffer auslöst (Obergrenze 5 s) */
+  const log = () => s.gesendet.filter(g => /\/nutzung_log$/.test(g.pfad)).length;
+  const bis = async (f, n) => { for (let i = 0; i < (n || 100) && !f(); i++) await new Promise(x => setTimeout(x, 50)); return f(); };
+  let l0 = log();
+  const imPuffer = await s.page.evaluate(() => { const n = _nutzungPuffer.length; nutzungFlush(); return n; });
+  if (imPuffer) await bis(() => log() > l0);
   s.gesendet.length = 0;
   await s.page.reload({ waitUntil: "networkidle" });
-  await s.page.waitForTimeout(1200);
-  await s.page.evaluate(() => { window.sbToken = () => "attrappe"; window.sbAuthHeaders = x => ({ ...(x || {}), "Content-Type": "application/json" }); nutzungFlush(); });
-  await s.page.waitForTimeout(200);
+  await s.page.waitForFunction(() => typeof curSection !== "undefined" && curSection === "anwesenheit" && typeof nutzungFlush === "function", null, { timeout: 8000 }).catch(() => {});
+  l0 = log();
+  const imPuffer2 = await s.page.evaluate(() => { window.sbToken = () => "attrappe"; window.sbAuthHeaders = x => ({ ...(x || {}), "Content-Type": "application/json" }); const n = _nutzungPuffer.length; nutzungFlush(); return n; });
+  if (imPuffer2) await bis(() => log() > l0);
   const nach = await s.page.evaluate(() => ({ sektion: curSection, aktivNav: (document.querySelector("#main-nav .nb.active") || {}).id || "", sichtbar: [...document.querySelectorAll('[id^="train-sub-"]')].filter(e => getComputedStyle(e).display !== "none").map(e => e.id) }));
   const logs = s.gesendet.filter(g => /\/nutzung_log$/.test(g.pfad)).flatMap(g => [].concat(g.body)).map(r => r.ereignis + ":" + r.ziel);
   const fehler = s.fehler(); await s.schliessen();

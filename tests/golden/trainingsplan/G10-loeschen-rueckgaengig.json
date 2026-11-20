@@ -1,6 +1,6 @@
 {
  "szenario": "Block löschen und Rückgängig (Torwart-Block mit einem abgewählten Haken)",
- "haelt_fest": "Fehlerbild 2 – Rückgängig stellt die Torwart-Haken über el.value statt .checked her: danach sind wieder alle angehakt. Behebung in Schritt 9.",
+ "haelt_fest": "Fehlerbild 2 – behoben in v890: Rückgängig stellt die Torwart-Haken so her, wie sie vor dem Löschen waren (vorher waren danach wieder alle angehakt).",
  "schritte": [
   {
    "schritt": "Training füllen, Torwart-Block mit Kind B abgewählt, speichern",
@@ -633,8 +633,7 @@
         "parallelZu": 4,
         "trainer": "Kenneth",
         "tw": [
-         1,
-         2
+         1
         ]
        }
       ],
@@ -655,7 +654,7 @@
     ],
     "haken": [
      "Kind A:true",
-     "Kind B:true"
+     "Kind B:false"
     ]
    }
   },
@@ -810,8 +809,7 @@
         "parallelZu": 4,
         "trainer": "Kenneth",
         "tw": [
-         1,
-         2
+         1
         ]
        }
       ],

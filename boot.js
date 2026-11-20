@@ -1704,8 +1704,8 @@ const TP_ZUSTAND={wahl:{},tw:{},kind:{}};
 /* Angehakte Torhüter des Blocks si in der Reihenfolge des Angebots (wie die Haken auf der Seite). */
 function tpTwAn(si){ const l=TP_ZUSTAND.tw[si]; return tpTwAngebot(si).map(k=>k.name).filter(n=>l===undefined||l.includes(n)); }
 function tpKindVon(si){ return TP_ZUSTAND.kind[si]||""; }
-/* Haken name an/aus; name null: zurück zur Vorgabe (alle angebotenen). Speichert nicht von selbst
-   (wie bisher – Fehlerbild 7, behoben erst ab Schritt 9). */
+/* Haken name an/aus; name null: zurück zur Vorgabe (alle angebotenen). Speichert nicht selbst – der
+   Haken ruft danach tpGeaendert (v895: verzögert speichern, Fehlerbild 7 behoben). */
 function tpTwSetzen(si,name,an){
   const tw=TP_ZUSTAND.tw;
   if(name==null)delete tw[si];
@@ -1730,8 +1730,8 @@ function _tpTwKindAufDom(){
 const _tpTwSoll=(l,name)=>l===undefined||l.includes(name);
 /* Gespeicherte Slots → tw/kind (index: gespeicherter Block → heutiger Index). Ohne Seite: ein Haken
    gilt nur am Torwart-Block, ein Kind nur am Einzelblock und nur, wenn es (aktiv) im Kader steht –
-   dieselben Bedingungen wie früher die vorhandenen Haken bzw. Optionen. Was nicht gespeichert ist,
-   bleibt, wie es war (Fehlerbild 6, behoben erst ab Schritt 9). */
+   dieselben Bedingungen wie früher die vorhandenen Haken bzw. Optionen. v892: tpZustandLaden leert
+   tw/kind vorher – was nicht gespeichert ist, gilt als Vorgabe (Fehlerbild 6 behoben). */
 function _tpTwKindLaden(slots,index){
   (slots||[]).forEach((s,si0)=>{
     const si=index?index[si0]:si0; if(si==null||!tpSlots[si])return;
@@ -1786,14 +1786,29 @@ function tpWahlSetzen(selId,i,opt){
   return w;
 }
 /* Bietet das Auswahlfeld eines Blocks diese Übung an? Genau die <option>-Liste, die das Zeichnen
-   aus tpFilteredOpts baut – was dort fehlt, fällt beim Zeichnen still weg (Fehlerbilder 4 und 5,
-   behoben erst ab Schritt 9). menge: Zwischenspeicher je Blocktyp für eine Runde. */
+   aus tpFilteredOpts baut. v893: Was dort fehlt, fällt beim Zeichnen nicht mehr weg (Fehlerbild 4,
+   siehe tpWahlMoeglich); es dient weiter zur Auswahl von Vorschlägen. menge: Zwischenspeicher je Blocktyp für eine Runde. */
 function tpWahlZulaessig(si,i,menge){
   const slot=tpSlots[si]; if(!slot||i==null||isNaN(i))return false;
   const typ=slot.typ||"main";
   let m=menge&&menge[typ];
   if(!m){ m=new Set(tpFilteredOpts(typ).map(x=>x.i)); if(menge)menge[typ]=m; }
   return m.has(Number(i));
+}
+/* v893: Gibt es die Übung überhaupt? Eine gewählte Übung bleibt, auch wenn der Blocktyp sie nicht
+   anbietet (Fehlerbild 4) – sie bekommt dann einen Hinweis am Feld (_tpFremdHinweis). */
+function tpWahlMoeglich(i){ return i!=null&&!isNaN(i)&&!!tpAllForms()[Number(i)]; }
+/* v893: Hinweis unter der Übungszeile, wenn die gewählte Übung nicht zum Blocktyp passt. Text und
+   Zeichen tragen die Bedeutung, nicht die Farbe. */
+function _tpFremdHinweis(sel,an){
+  const id=sel.id+"-fremd", da=document.getElementById(id);
+  if(!an){ if(da)da.remove(); return; }
+  if(da)return;
+  const zeile=sel.closest(".tp-feld-zeile")||sel; if(!zeile.parentNode)return;
+  const d=document.createElement("div"); d.id=id; d.className="tp-fremd-hinweis";
+  d.style.cssText="font-size:var(--s-klein);color:var(--text2);padding:2px 0 4px;line-height:1.4";
+  d.textContent="⚠️ Passt nicht zum Blocktyp – bleibt trotzdem im Plan.";
+  zeile.parentNode.insertBefore(d,zeile.nextSibling);
 }
 /* Die Felder eines Blocks in ihrer Reihenfolge (Zahl aus dem Modell, v881). */
 function tpWahlFelder(si){ return Array.from({length:tpFelderZahl(si)},(_,p)=>`tp-form-${si}-${p}`); }
@@ -1828,7 +1843,7 @@ function _tpWahlBereinigen(){
     if(!felder.has(id)||!m){ delete wahl[id]; return; }
     let i=w.i;
     if(w.erbt)i=null;
-    else if(i!=null&&!tpWahlZulaessig(+m[1],i,menge))i=null;
+    else if(i!=null&&!tpWahlMoeglich(i))i=null;   // v893: nur, was es nicht mehr gibt – nicht, was der Blocktyp nicht anbietet
     const n=_tpWahlNorm(i,{station:w.station,alle:w.alle});
     if(n)wahl[id]=n; else delete wahl[id];
   });
@@ -1841,7 +1856,15 @@ function _tpWahlAufSeite(mitHist){
   document.querySelectorAll(".tp-form-sel").forEach(s=>{
     let w=wahl[s.id];
     let v=(w&&w.i!=null)?String(w.i):"";
-    if(v&&!s.querySelector(`option[value="${v}"]`)){ w=_tpWahlNorm(null,w); if(w)wahl[s.id]=w; else delete wahl[s.id]; v=""; }
+    /* v893 (Fehlerbild 4): Eine gewählte Übung, die der Blocktyp nicht anbietet (Tausch, KI-Tausch),
+       bekommt eine eigene Option im Feld und bleibt – vorher fiel sie hier still weg. Nur eine Übung,
+       die es gar nicht (mehr) gibt, fällt weg. */
+    s.querySelectorAll("option[data-fremd]").forEach(o=>{ if(o.value!==v)o.remove(); });
+    if(v&&!s.querySelector(`option[value="${v}"]`)){
+      if(tpWahlMoeglich(w.i)){ const f=tpAllForms()[w.i], o=new Option(`${f.name} (${f.dauer})`,v); o.dataset.fremd="1"; s.add(o); }
+      else{ w=_tpWahlNorm(null,w); if(w)wahl[s.id]=w; else delete wahl[s.id]; v=""; }
+    }
+    _tpFremdHinweis(s,!!(v&&s.querySelector(`option[value="${v}"][data-fremd]`)));
     const neu=s.value!==v; if(neu)s.value=v;
     if(w&&w.station!=null)s.dataset.station=String(w.station); else delete s.dataset.station;
     if(w&&w.alle)s.dataset.alle="1"; else delete s.dataset.alle;
@@ -2097,7 +2120,7 @@ function _tpKetteNachziehen(){
     tpWahlFelder(+fi).forEach((id,p)=>{
       const w=wahl[id], kv=tpWahlIdx(`tp-form-${hi}-${p}`);
       if(!w||w.i==null||w.erbt||(kv!=null&&w.i===kv)){
-        if(kv!=null&&tpWahlZulaessig(+fi,kv,menge))tpWahlSetzen(id,kv,{station:w&&w.station,alle:w&&w.alle,erbt:true});   // v884: über den Setter
+        if(kv!=null&&(tpWahlZulaessig(+fi,kv,menge)||tpWahlMoeglich(kv)))tpWahlSetzen(id,kv,{station:w&&w.station,alle:w&&w.alle,erbt:true});   // v884: über den Setter; v893: auch eine fremde Übung des Kopfes
         else if(w&&w.erbt)tpWahlSetzen(id,null,{station:w.station,alle:w.alle,erbt:true});
       }
     });
@@ -2134,8 +2157,15 @@ function tpFeldWeglassen(si,p){
   const sichtbar=tg&&tg.gruppen?tg.gruppen.map((x,i)=>i).filter(i=>!weg.includes(i)):null;
   weg.push(sichtbar?(sichtbar[p]!=null?sichtbar[p]:p):(weg.length+p));
   slot.weg=weg;
-  for(let q=p;q<anzahl-1;q++){const a=tpCoaches[`tp-form-${si}-${q+1}`]; if(a)tpCoaches[`tp-form-${si}-${q}`]=a; else delete tpCoaches[`tp-form-${si}-${q}`];}
+  /* v889 (Fehlerbild 1): Trainer UND Übung rücken nach – vorher nur die Trainer, danach passten
+     Trainer und Übung nicht mehr zusammen. */
+  const wahl=TP_ZUSTAND.wahl;
+  for(let q=p;q<anzahl-1;q++){
+    const a=tpCoaches[`tp-form-${si}-${q+1}`]; if(a)tpCoaches[`tp-form-${si}-${q}`]=a; else delete tpCoaches[`tp-form-${si}-${q}`];
+    const w=wahl[`tp-form-${si}-${q+1}`]; if(w)wahl[`tp-form-${si}-${q}`]=w; else delete wahl[`tp-form-${si}-${q}`];
+  }
   delete tpCoaches[`tp-form-${si}-${anzahl-1}`];
+  delete wahl[`tp-form-${si}-${anzahl-1}`];
   tpGeaendert({speichern:"verzoegert"});
 }
 function tpFeldZurueck(si){ if(tpSlots[si]){delete tpSlots[si].weg; tpGeaendert({speichern:"verzoegert"});} }
@@ -2630,8 +2660,10 @@ function tpRenderTimeline(){
    – speichern nach der Regel, die die Stelle schon vorher hatte (TP_SPEICHERN):
        "verzoegert" – tpPlanSaveDebounced (1,2 s, beim Öffnen gesperrt),
        "sofort"     – tpPlanSave (nur „⇄ weiterrücken“ und „Versatz zurück“),
-       "nein"       – Dauer, neuer Block, „läuft parallel zu“, Torwart-Haken, Einzelkind, Ziel-Dauer
-                      speichern weiter nicht von selbst (Fehlerbild 7, behoben erst ab Schritt 9).
+       "nein"       – nur noch das Zwischen-Zeichnen in tpGenerate und tpAnpassenUebernehmen (gespeichert wird dort nach dem Füllen).
+     v895 (Fehlerbild 7): Dauer, neuer Block, „läuft parallel zu“, Torwart-Haken, Einzelkind und
+     Ziel-Dauer speichern jetzt ebenfalls verzögert; die Schutzregel in tpPlanSave (nie leer über voll)
+     gilt dabei wie für jede Automatik.
    Seit die Seite nicht mehr die Wahrheit ist, entfallen die Wartezeiten, die nur auf die Seite
    warteten: 60 ms in tpGenerate und tpAnpassenUebernehmen, Materialzeile 0 ms, der Durchgangs-Umbau
    aus dem Zeichnen (alte `durchgaenge` macht seit v884 das Öffnen, tpZustandLaden). */
@@ -2919,9 +2951,10 @@ function tpGroesserHinweis(selId,idx,n){
 }
 function tpUebungTausch(selId,idx){
   const sel=document.getElementById(selId); if(!sel)return;
-  /* Das Angebot des Feldes bekommt die Übung dazu (auch außerhalb des Blocktyps – Fehlerbild 4:
-     beim nächsten Zeichnen fällt sie still weg, behoben erst ab Schritt 9); gewählt wird über den Zustand (v884). */
-  if(![...sel.options].some(o=>o.value===String(idx))){ const f=tpAllForms()[idx]; if(!f)return; sel.add(new Option(f.name,String(idx))); }
+  /* Gewählt wird über den Zustand (v884). v893 (Fehlerbild 4): eine Übung außerhalb des Blocktyps
+     bekommt ihre Option über die Projektion (_tpWahlAufSeite) und bleibt auch nach dem nächsten
+     Zeichnen und im gespeicherten Plan erhalten – vorher fiel sie beim Neuzeichnen still weg. */
+  if(!tpWahlMoeglich(idx))return;
   tpWahlWaehlen(selId,idx);
   if(typeof toast==="function")toast("🔁 Getauscht – „"+(tpAllForms()[idx]||{}).name+"“");
 }
@@ -3127,7 +3160,7 @@ function _tpRenderTimelineIntern(){
     if(parallel){
       const mains=tpSlots.map((s2,i2)=>({s2,i2})).filter(x=>tpIstHauptteil(x.s2.typ));
       html+=`<div class="tp-feld"><label>Läuft parallel zu</label>
-        <select onchange="tpSlots[${si}].parallelZu=Number(this.value);tpGeaendert({speichern:'nein'})" style="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
+        <select onchange="tpSlots[${si}].parallelZu=Number(this.value);tpGeaendert({speichern:'verzoegert'})" style="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
           ${mains.map(x=>`<option value="${x.i2}"${slot.parallelZu===x.i2?" selected":""}>${x.s2.label}</option>`).join("")}
         </select></div>`;
     }
@@ -3207,7 +3240,7 @@ function _tpRenderTimelineIntern(){
       html+=`<div style="margin-top:6px">
         <div style="font-size:var(--s-klein);color:var(--text2);font-weight:600;margin-bottom:4px">Torwart-Spieler</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-          ${twPlayers.map(k=>`<label class="tp-check"><input type="checkbox" value="${esc(k.name)}" class="tp-tw-player" data-slot="${si}" onchange="tpTwSetzen(Number(this.dataset.slot),this.value,this.checked);tpGeaendert({zeichnen:false,speichern:'nein'})" checked><span>${k.name}${k.twPrio===1?" ⭐":""}<span style="color:var(--text2);font-size:var(--s-klein)">${esc(tpTwZusatz(k.name))}</span></span></label>`).join("")}
+          ${twPlayers.map(k=>`<label class="tp-check"><input type="checkbox" value="${esc(k.name)}" class="tp-tw-player" data-slot="${si}" onchange="tpTwSetzen(Number(this.dataset.slot),this.value,this.checked);tpGeaendert({zeichnen:false,speichern:'verzoegert'})" checked><span>${k.name}${k.twPrio===1?" ⭐":""}<span style="color:var(--text2);font-size:var(--s-klein)">${esc(tpTwZusatz(k.name))}</span></span></label>`).join("")}
         </div>
         <div class="tp-feld"><label for="tp-form-${si}-0">Übung</label>
           <div class="tp-feld-zeile">
@@ -3224,7 +3257,7 @@ function _tpRenderTimelineIntern(){
     } else if(art==="einzel"){
       const playerOpts=KADER.filter(k=>k.aktiv!==false).map(k=>`<option value="${esc(k.name)}">${esc(k.name)}</option>`).join("");
       html+=`<div class="tp-feld"><label for="tp-ind-player-${si}">Spieler</label>
-        <select id="tp-ind-player-${si}" onchange="tpKindSetzen(${si},this.value);tpIndPlayerChange(${si});tpGeaendert({zeichnen:false,speichern:'nein'})">
+        <select id="tp-ind-player-${si}" onchange="tpKindSetzen(${si},this.value);tpIndPlayerChange(${si});tpGeaendert({zeichnen:false,speichern:'verzoegert'})">
           <option value="">— Spieler wählen —</option>${playerOpts}
         </select>
       </div>
@@ -3315,7 +3348,7 @@ function _tpRenderTimelineIntern(){
      „Spielform: 40 Minuten“ (aus der Art der Blöcke) – zwei Zahlen für dieselbe Frage, die sich
      widersprachen. Es gilt nur noch die Minutenzahl in Schritt 5, dort mit ihrem Anteil. */
   html+=`<div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;font-size:var(--s-text);font-weight:${passt?"600":"800"};color:${passt?"var(--text2)":"#dc2626"};margin-top:6px">Gesamt: ${time} von
-    <select id="tp-dauer" onchange="tpGeaendert({speichern:'nein'})" style="font-size:var(--s-text);min-height:44px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;background:var(--surface);color:var(--text)">${[...new Set([60,75,90].concat(TP_TERMIN_MIN?[TP_TERMIN_MIN]:[]))].sort((x,y)=>x-y).map(d=>`<option value="${d}"${zielDauer===d?" selected":""}>${d}</option>`).join("")}</select>
+    <select id="tp-dauer" onchange="tpGeaendert({speichern:'verzoegert'})" style="font-size:var(--s-text);min-height:44px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;background:var(--surface);color:var(--text)">${[...new Set([60,75,90].concat(TP_TERMIN_MIN?[TP_TERMIN_MIN]:[]))].sort((x,y)=>x-y).map(d=>`<option value="${d}"${zielDauer===d?" selected":""}>${d}</option>`).join("")}</select>
     Min.${passt?tpPufferText(frei):" – zu lang!"}</div>`;
   wrap.innerHTML=html;
   // v883: Übungswahl aus dem Zustand auf die neuen Auswahlfelder (Wert, Marken, Picker-Knopf, Historie)
@@ -3695,7 +3728,7 @@ function tpSetDauer(si,wert){
   if(!tpSlots[si])return;
   tpSlots[si].dauer=Math.max(1,Number(wert)||10);
   tpSlots.forEach(s=>{if(tpKannParallel(s.typ)&&s.parallelZu===si)s.dauer=tpSlots[si].dauer;}); // Torwart/Einzel laufen genauso lang
-  tpGeaendert({speichern:"nein"});   // Fehlerbild 7: speichert nicht von selbst (Schritt 9)
+  tpGeaendert({speichern:"verzoegert"});   // v895 (Fehlerbild 7): speichert verzögert wie die übrigen Änderungen
 }
 /* Angesprochen wird der Blocktyp beim NAMEN, nicht über seine Position im Dialog.
    Die Position hat sich mit Paket 3 verschoben (Spielform und Übungsform kamen dazu) –
@@ -3712,7 +3745,7 @@ function tpDoAddSlot(idx){
     if(mi>=0){neu.parallelZu=mi;neu.dauer=tpSlots[mi].dauer;}   // gleiche Dauer wie der Hauptteil
   }
   tpSlots.push(neu);
-  tpGeaendert({speichern:"nein"});   // Fehlerbild 7: speichert nicht von selbst (Schritt 9)
+  tpGeaendert({speichern:"verzoegert"});   // v895 (Fehlerbild 7): speichert verzögert wie die übrigen Änderungen
 }
 
 function tpRemoveSlot(idx){
@@ -3729,11 +3762,12 @@ function tpRemoveSlot(idx){
   if(!slot)return;
   /* v884: Die Übungswahl des Blocks aus dem Zustand. v886: das Einzelkind ebenso (vorher über das
      Präfix tp-ind-player-<idx> gesucht, das auch -<idx>X traf – die Gegenstücke tp-ind-player-<n>X
-     gab es beim Rückgängig nie, der Fehler blieb ohne Folge). Die Torwart-Haken werden nicht gemerkt:
-     früher kamen sie über el.value (statt .checked) zurück, also gar nicht – Fehlerbild 2 bleibt,
-     behoben erst ab Schritt 9. */
+     gab es beim Rückgängig nie, der Fehler blieb ohne Folge). v890 (Fehlerbild 2): die Torwart-Haken
+     werden mitgemerkt und kommen so zurück, wie sie vor dem Löschen waren (vorher: alle angehakt). */
   const wahlAlt=tpWahlFelder(idx).map(id=>tpWahlIdx(id));
   const kindAlt=TP_ZUSTAND.kind[idx];
+  const twAlt=Array.isArray(TP_ZUSTAND.tw[idx])?TP_ZUSTAND.tw[idx].slice():undefined;
+  const offenAlt=_tpOffen.has(idx);   // v891: Klappzustand kommt mit zurück
   const coaches={}; Object.keys(tpCoaches).forEach(k=>{ const m=k.match(/^tp-form-(\d+)-(\d+)$/); if(m&&+m[1]===idx)coaches[m[2]]=tpCoaches[k]; });
   const kopie=JSON.parse(JSON.stringify(slot));
   if(kopie.parallelZu!=null&&kopie.parallelZu>idx)kopie.parallelZu--;
@@ -3748,7 +3782,9 @@ function tpRemoveSlot(idx){
     const felderNeu=tpWahlFelder(n);
     wahlAlt.forEach((i,p)=>{ const id=`tp-form-${n}-${p}`; if(!felderNeu.includes(id))return; const w=TP_ZUSTAND.wahl[id]||{}; tpWahlSetzen(id,i,{station:w.station,alle:w.alle,erbt:w.erbt}); });
     if(kindAlt!==undefined&&_tpFeldArt(tpSlots[n])==="einzel")tpKindSetzen(n,kindAlt);
-    tpTwSetzen(n,null);   // Fehlerbild 2: die Haken kommen als Vorgabe (alle angehakt) zurück, nicht wie vor dem Löschen
+    if(twAlt!==undefined&&_tpFeldArt(tpSlots[n])==="tw")TP_ZUSTAND.tw[n]=twAlt.slice();   // v890: Haken wie vor dem Löschen
+    else tpTwSetzen(n,null);                                                               // nie geändert: Vorgabe (alle)
+    if(offenAlt)_tpOffen.add(n); else _tpOffen.delete(n);   // v891: tpSlotsNeuOrdnen zieht ihn an die alte Stelle
     const reihe=tpSlots.map((_,i)=>i); reihe.pop(); reihe.splice(Math.min(idx,reihe.length),0,n);
     tpSlotsNeuOrdnen(reihe);
   },8000);
@@ -3779,6 +3815,9 @@ function tpSlotsNeuOrdnen(reihe){
     });
     _tpTwKindUmbenennen(neuVon);
   }
+  /* v891 (Fehlerbild 3): der Klappzustand hängt am Blockindex und wandert mit dem Block mit –
+     vorher blieb er an der Stelle, danach war ein anderer Block auf- bzw. zugeklappt. */
+  const offen=new Set(); _tpOffen.forEach(si=>{ const ni=neuVon[si]; if(ni!=null)offen.add(ni); }); _tpOffen=offen;
   _tpReihenfolgeAnwenden(reihe);
   tpGeaendert({speichern:"verzoegert"});
 }
@@ -4334,6 +4373,20 @@ let _tpPlanTimer=null;
    dem falschen Datum). Wiederherstellen ist Lesen, kein Griff des Trainers. */
 let _tpRestoring=false, _tpRestoreLauf=0;
 function tpPlanSaveDebounced(){ if(_tpRestoring)return; clearTimeout(_tpPlanTimer); _tpPlanTimer=setTimeout(()=>tpPlanSave(false),1200); }
+/* v895 (Nachtrag): Stand des Plans auf dieser Seite. tpPlanSave nimmt Plan und Slots am Anfang auf und
+   wartet danach noch (Abgleich, Trainername). Wird in dieser Zeit eine Vorlage übernommen oder der Plan
+   neu geöffnet, ist das Aufgenommene veraltet – ohne diese Prüfung landete es NACH der Vorlage in der
+   Datenbank und überschrieb sie (gesehen in v568 unter Last: Struktur der Vorlage, Übungen des vorigen
+   Plans, „Training füllen“ baute dann neu). */
+let _tpPlanGen=0;
+/* Wer den Plan dieses Termins an tpPlanSave vorbei schreibt (Vorlage übernehmen, Block planen), ruft das
+   vorher: die ausstehende Speicherung entfällt, eine laufende schreibt nicht mehr. Andere Termine
+   berühren den offenen Plan nicht. */
+function tpPlanFremdGeschrieben(datum){
+  const offen=document.getElementById("tp-date")?.value;
+  if(datum&&offen&&datum!==offen)return;
+  clearTimeout(_tpPlanTimer); _tpPlanGen++;
+}
 /* Die Zuordnung gehoert zur Struktur: welcher Trainer welches Feld hat, wer am Torwart-
    oder Einzelblock steht, welche Torhueter angehakt sind, welches Kind einzeln trainiert.
    Bis v455 lebte das alles nur im DOM und in tpCoaches – nach dem Neuladen war Finn nicht
@@ -4413,6 +4466,7 @@ async function tpKonfliktHolen(datum){
 async function tpPlanSave(erzwungen){
   if(!sbToken()){if(erzwungen)toast("Bitte zuerst als Trainer anmelden","err");return;}
   const datum=document.getElementById("tp-date")?.value; if(!datum){if(erzwungen)toast("Bitte einen Termin wählen","err");return;}
+  const gen=_tpPlanGen;                 // v895: Stand, aus dem Plan und Slots stammen
   const plan=tpPlanEntries();
   const slots=tpSlotsMitZuordnung();
   /* v514: `versatz` gehört zur Zuordnung. Ohne ihn hielt die Schutzregel unten einen
@@ -4439,6 +4493,8 @@ async function tpPlanSave(erzwungen){
   }
   try{
     const von=(typeof trainerMe==="function")?(await trainerMe()||null):null;
+    /* v895: Inzwischen neu geöffnet oder eine Vorlage übernommen? Dann ist das Aufgenommene veraltet. */
+    if(gen!==_tpPlanGen){ if(erzwungen)toast("Der Plan wurde inzwischen neu geladen – bitte noch einmal speichern","err"); return; }
     const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?on_conflict=datum`,{method:"POST",
       headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates,return=representation'},
       /* `slots` traegt die STRUKTUR der Einheit (welche Phasen, wie lang, was parallel)
@@ -4482,15 +4538,18 @@ async function tpPlanLoad(datum){
 }
 /* Eigene Funktion statt einer Erweiterung von tpPlanLoad: vier Stellen erwarten dort
    ein Uebungs-Array (Einheit bewerten, Eltern-Info, Sprachlob, Vorplanung). */
+/* v892: false = nicht lesbar (ohne Anmeldung, Fehler, kein Netz) – dann bleibt die Seite, wie sie
+   ist; null = gelesen, aber keine Struktur gespeichert (kein Plan oder Altbestand) – dann gilt das
+   Grundgerüst. */
 async function tpSlotsLoad(datum){
-  if(!sbToken())return null;
+  if(!sbToken())return false;
   try{
     const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?datum=eq.${encodeURIComponent(datum)}&select=slots`,{headers:sbAuthHeaders()});
-    if(sbCheck401(r)||!r.ok)return null;
+    if(sbCheck401(r)||!r.ok)return false;
     const rows=await r.json();
     const sl=rows[0]&&rows[0].slots;
     return (Array.isArray(sl)&&sl.length)?sl:null;   // Altbestand ohne Struktur: null
-  }catch(e){return null;}
+  }catch(e){return false;}
 }
 /* Weg B (Bucket-List, jetzt gebaut): den gespeicherten Plan beim Öffnen/Terminwechsel
    wieder in die Übungs-Dropdowns laden. Damit sind Übungen FEST pro Termin vorgemerkt
@@ -4676,6 +4735,7 @@ async function tpPlanRestore(datum){
   if(window._tpKlappDatum!==datum){ window._tpKlappDatum=datum; _tpOffen.clear(); _tpAlleOffen=false; }   // v857: neuer Termin, neue Übersicht
   const lauf=++_tpRestoreLauf;
   clearTimeout(_tpPlanTimer);            // eine noch ausstehende Speicherung des VORIGEN Termins gehört nicht hierher
+  _tpPlanGen++;                          // v895: eine schon laufende ebenso nicht
   _tpRestoring=true;
   try{ await _tpPlanRestoreIntern(datum,lauf); }
   finally{
@@ -4684,6 +4744,7 @@ async function tpPlanRestore(datum){
 }
 /* Gilt dieser Lauf noch? Wer schnell von A nach B tippt, startet zwei Läufe; der ältere
    darf nach seinem Warten nichts mehr zeichnen – sonst stünde die Struktur von A unter B. */
+let _tpStrukturDatum=null;   // v892: Termin, dessen Struktur gerade auf der Seite steht
 function _tpRestoreGilt(datum,lauf){ return lauf===_tpRestoreLauf&&(document.getElementById("tp-date")?.value||datum)===datum; }
 async function _tpPlanRestoreIntern(datum,lauf){
   /* v542: Den Stand merken, der beim Öffnen galt. Nur dagegen kann tpPlanSave später
@@ -4709,8 +4770,19 @@ async function _tpPlanRestoreIntern(datum,lauf){
        Zeichnen liest tpCoaches und rechnet daraus die Felder. Alte `durchgaenge` werden dabei zur
        Kette (bisher ein setTimeout aus dem Zeichnen, der während des Ladens unten lief). */
     const info=tpZustandLaden(slots);   // v886: samt Torwart-Haken und Einzelkind
+    _tpStrukturDatum=datum;
     tpRenderTimeline();
     if(typeof toast==="function")info.meldungen.forEach(m=>toast(m));
+  }else if(slots===null&&_tpStrukturDatum!==datum){
+    /* v892 (Fehlerbild 6, Charles 19.11.): Ein Termin ohne gespeicherte Struktur startet mit dem
+       Grundgerüst – nicht mit Blöcken, Trainern, Torhütern, Kind und Übungen des zuvor geöffneten
+       Termins (die bei der ersten Änderung hier gespeichert worden wären). Altpläne ohne Struktur
+       hängen ohnehin an den Namen des Grundgerüsts. Nur beim Wechsel des Termins: öffnet derselbe
+       Termin neu (Gruppen fertig, Tab erneut), bleibt die Struktur, an der gerade geplant wird. */
+    _tpStrukturDatum=datum;
+    Object.keys(TP_ZUSTAND.wahl).forEach(k=>delete TP_ZUSTAND.wahl[k]);
+    tpZustandLaden(TP_PHASEN.map(s=>({...s})));
+    tpRenderTimeline();
   }
   const plan=await tpPlanLoad(datum);
   if(!_tpRestoreGilt(datum,lauf))return;
@@ -4719,7 +4791,8 @@ async function _tpPlanRestoreIntern(datum,lauf){
 }
 /* ═══ v884 · 4.8 Schritt 5 – ÖFFNEN ÜBER DEN ZUSTAND ═══════════════════════════════════════
    tpZustandLaden(slots, plan) – rein: kein DOM, kein Zeichnen, kein Speichern.
-   slots (gespeicherte Struktur oder null = Struktur bleibt, Fehlerbild 6): setzt tpSlots und
+   slots (gespeicherte Struktur oder null = Struktur bleibt; v892: ein Termin ohne Struktur ruft es mit
+     dem Grundgerüst TP_PHASEN): setzt tpSlots und
      tpCoaches (Feld-Trainer, Trainer am Torwart-/Einzelblock), ordnet parallele Blöcke und
      Namen wie das Zeichnen und macht alte `durchgaenge` zur Kette (v621).
    plan (gespeicherte Einträge; undefined = Wahl noch nicht laden): setzt TP_ZUSTAND.wahl.
@@ -4728,8 +4801,8 @@ async function _tpPlanRestoreIntern(datum,lauf){
      erst leeren (die Übung, nicht die Marken – wie früher am Auswahlfeld), dann je Eintrag über
      block/feld, sonst station, sonst alleFelder, sonst das erste freie Feld mit gleichem
      slotLabel; nach jedem Setzen erben die Durchgänge (wie tpOnSelectChange); danach die
-     Stationen-Wiederholung (v568). Was das Feld nicht anbietet, belegt es, bleibt aber leer
-     (Fehlerbild 5 – still verworfen wie bisher, behoben erst ab Schritt 9).
+     Stationen-Wiederholung (v568). v894: Was das Feld nicht anbietet, bleibt mit Hinweis (Fehlerbild 5
+     behoben); eine Dublette bleibt an Block/Feld; eigene Einträge im Durchgang erben nicht.
    Felder und Trainerauswahl gelten so, wie das Zeichnen sie zuletzt vorgefunden hat (_tpFelderStand).
    Rückgabe: {index, meldungen} für slots; {felder, gesetzt} für plan (felder null: kein Feld, nichts geleert). */
 function tpZustandLaden(slots,plan){
@@ -4756,6 +4829,7 @@ function tpZustandLaden(slots,plan){
       if(r.neu)out.meldungen.push(`${r.neu===1?"Ein Hauptteil":r.neu+" Hauptteile"} als Durchgang angelegt – die Einheit dauert jetzt ${nachher} statt ${vorher} Min.`);
       else if(r.weg)out.meldungen.push(`Durchgang entfernt – die Einheit dauert jetzt ${nachher} Min.`);
     }
+    TP_ZUSTAND.tw={}; TP_ZUSTAND.kind={};   // v892: nichts vom zuvor geöffneten Termin (Fehlerbild 6)
     _tpTwKindLaden(slots,out.index);   // v886: Torwart-Haken und Einzelkind (vorher nach dem Zeichnen im DOM)
   }
   if(plan===undefined)return out;
@@ -4773,13 +4847,20 @@ function tpZustandLaden(slots,plan){
   if(!plan||!plan.length)return out;
   const belegt=new Set(), gesetzt=[];
   const frei=f=>!belegt.has(f.id)&&tpWahlIdx(f.id)==null;
+  /* v894: Ein Feld im Durchgang, das nur die Übung des Kopfes erbt, ist für einen eigenen Eintrag frei –
+     sonst ersetzte die geerbte Übung die eigene still (alte `durchgaenge`, Fehlerbild 5). */
+  const freiFuerEintrag=f=>!belegt.has(f.id)&&(tpWahlIdx(f.id)==null||!!(wahl[f.id]&&wahl[f.id].erbt));
   /* Setzen wie früher „el.value=…; tpOnSelectChange(el)“ samt Marken des Eintrags: eine Übung, die das
      Feld nicht anbietet, belegt es und bleibt leer; die Marken des Feldes bleiben, die des Eintrags
      kommen dazu (v608); danach erben die Durchgänge. */
+  /* v894 (Fehlerbild 5): Eine Übung, die das Feld nicht (mehr) anbietet, bleibt – mit Hinweis am Feld
+     (Projektion, v893); nur eine Übung, die es gar nicht mehr gibt, bleibt leer. Ein eigener Eintrag
+     erbt nicht vom Kopf des Durchgangs (gleicher Wert wie der Kopf gilt weiter als geerbt). */
   const setzen=(f,fi,e)=>{
     const w=wahl[f.id]||{};
     belegt.add(f.id);
-    tpWahlSetzen(f.id,tpWahlZulaessig(f.si,fi,menge)?fi:null,{station:(e&&e.station!=null)?e.station:w.station,alle:(e&&e.alleFelder)||w.alle,erbt:w.erbt});
+    const ok=tpWahlZulaessig(f.si,fi,menge)||tpWahlMoeglich(fi);
+    tpWahlSetzen(f.id,ok?fi:null,{station:(e&&e.station!=null)?e.station:w.station,alle:(e&&e.alleFelder)||w.alle,erbt:(e&&ok)?false:w.erbt});
     _tpKetteNachziehen();
     out.gesetzt.push(f.id);
   };
@@ -4787,11 +4868,13 @@ function tpZustandLaden(slots,plan){
     /* v586: Der Name entscheidet, welche Übung gemeint ist; der gespeicherte Index ist nur ein Hinweis. */
     const fi=tfIndexVon(e0); if(fi<0)return;
     const e=Object.assign({},e0,{formIdx:fi});
-    const passend=felder.filter(f=>frei(f)&&((tpSlots[f.si]||{}).label||"")===(e.slotLabel||""));
-    /* v608: Block und Feld genau dorthin – sofern der Block dort noch denselben Namen trägt. */
+    const passend=felder.filter(f=>freiFuerEintrag(f)&&((tpSlots[f.si]||{}).label||"")===(e.slotLabel||""));
+    /* v608: Block und Feld genau dorthin – sofern der Block dort noch denselben Namen trägt.
+       v894 (Fehlerbild 5): auch, wenn das Feld schon belegt ist – eine Dublette bleibt an ihrem Platz,
+       statt ins nächste freie Feld des Blocks zu rutschen. */
     if(e.block!=null&&e.feld!=null){
       const id=`tp-form-${e.block}-${e.feld}`, f=felder.find(x=>x.id===id), slotHier=tpSlots[e.block];
-      if(f&&frei(f)&&slotHier&&(slotHier.label||"")===(e.slotLabel||"")){
+      if(f&&slotHier&&(slotHier.label||"")===(e.slotLabel||"")){
         setzen(f,fi,e);
         if(e.station!=null)gesetzt.push({si:+e.block,station:Number(e.station),formIdx:fi});
         return;

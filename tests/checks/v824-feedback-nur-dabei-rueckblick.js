@@ -20,6 +20,15 @@ module.exports = async function (h) {
   const termine = [{ id: 55, datum: gestern, uhrzeit: "17:00", uhrzeit_ende: "18:15", typ: "training", titel: "Training", trainer_status: {} },
     { id: 60, datum: h.tagePlus(3), uhrzeit: "17:00", typ: "training", titel: "Training", trainer_status: {} }];
   const THEMEN = ["Übung Eins", "Übung Zwei", "Übung Drei", "Übung Vier", "Übung Fünf"];
+  /* v890: Statt fester 4 s nach dem Neuladen: warten, bis die Startseite steht (Funktionen und Platz der Karte da) und danach
+     1 s lang keine Anfrage mehr läuft – erst dann ist entschieden, ob die Frage erscheint (a, c1 und b nach dem Neuladen prüfen,
+     dass sie NICHT da ist). Obergrenze 15 s. */
+  const zuletztVon = new WeakMap();
+  const beobachten = page => { zuletztVon.set(page, Date.now()); page.on("request", () => zuletztVon.set(page, Date.now())); };
+  const bereit = async page => {
+    await page.waitForFunction(() => typeof elternCatOpen === "function" && typeof pulsNudgeLoad === "function" && !!document.getElementById("puls-nudge-slot"), null, { timeout: 15000 }).catch(() => {});
+    for (let i = 0; i < 300 && Date.now() - zuletztVon.get(page) < 1000; i++) await new Promise(x => setTimeout(x, 50));
+  };
   const lauf = async (opt, tun) => {
     const rpc = { eltern_news: {}, training_rueckblick: [{ datum: gestern, themen: THEMEN }], kasse_summary: { saldo: 0, umlagen: [], sammel: [] }, is_kasse: false };
     if (opt.anw !== undefined) rpc.eltern_dabei = [{ termin_id: 55, dabei: opt.anw }];
@@ -32,7 +41,8 @@ module.exports = async function (h) {
         rueckmeldungen: opt.rueck || [], event_puls: [], rpc }) });
     await e.page.evaluate(t => { localStorage.setItem("adler_sb_auth_eltern", JSON.stringify({ access_token: t, refresh_token: "r", expires_at: Math.floor(Date.now() / 1000) + 3600 }));
       localStorage.setItem("adler_news_seen", JSON.stringify({ tr: "2000-01-01" })); }, TOKEN);
-    await e.page.reload({ waitUntil: "networkidle" }); await e.page.waitForTimeout(4000);
+    beobachten(e.page);
+    await e.page.reload({ waitUntil: "networkidle" }); await bereit(e.page);
     const r = await tun(e.page);
     const f = e.fehler(); await e.schliessen();
     if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
@@ -49,9 +59,10 @@ module.exports = async function (h) {
 
   const b = await lauf({}, async page => {
     const vor = await karte(page);
-    await page.evaluate(() => document.querySelector("#puls-nudge-slot button[onclick^='pulsNudgeWeg']").click()); await page.waitForTimeout(200);
+    await page.evaluate(() => document.querySelector("#puls-nudge-slot button[onclick^='pulsNudgeWeg']").click());
+    await page.waitForFunction(() => !(document.getElementById("puls-nudge-slot") || {}).innerHTML?.trim(), null, { timeout: 3000 }).catch(() => {});
     const nach = await karte(page);
-    await page.reload({ waitUntil: "networkidle" }); await page.waitForTimeout(4000);
+    await page.reload({ waitUntil: "networkidle" }); await bereit(page);
     return { vor, nach, neu: await karte(page) };
   });
   if (!b.vor.da) probleme.push("b) keine Frage, obwohl das Training als zugesagt gilt");
@@ -68,13 +79,13 @@ module.exports = async function (h) {
 
   const d = await lauf({}, async page => page.evaluate(async themen => {
     const w = ms => new Promise(x => setTimeout(x, ms));
-    elternCatOpen("news"); await w(300);
+    elternCatOpen("news"); for (let i = 0; i < 100 && ![...document.querySelectorAll("#cat-news button")].some(x => /im Training geübt/.test(x.textContent)); i++) await w(50);
     const zeile = [...document.querySelectorAll("#cat-news button")].find(x => /im Training geübt/.test(x.textContent));
     if (!zeile) return { zeile: false, panel: document.getElementById("cat-news").innerText.slice(0, 120) };
-    zeile.click(); await w(300);
+    zeile.click(); for (let i = 0; i < 100 && !document.getElementById("rb-modal"); i++) await w(50);
     const m = document.getElementById("rb-modal"), ov = document.getElementById("el-cat-overlay");
     const out = { zeile: true, dialog: !!m && m.getAttribute("role") === "dialog", alle: !!m && themen.every(t => m.innerText.indexOf(t) >= 0), dahinter: ov && getComputedStyle(ov).display !== "none" };
-    const zu = m && [...m.querySelectorAll("button")].find(x => /Schließen/.test(x.textContent)); if (zu) zu.click(); await w(100);
+    const zu = m && [...m.querySelectorAll("button")].find(x => /Schließen/.test(x.textContent)); if (zu) { zu.click(); for (let i = 0; i < 60 && document.getElementById("rb-modal"); i++) await w(50); }
     out.zu = !document.getElementById("rb-modal"); return out;
   }, THEMEN));
   if (!d.zeile) probleme.push("d) keine Zeile „Im Training geübt“ in den Neuigkeiten: " + d.panel);
