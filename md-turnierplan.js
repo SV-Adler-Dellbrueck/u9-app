@@ -1950,7 +1950,12 @@ async function _htSlugFrei(basis){
   for(let i=2;i<50;i++){ if(!vorhanden.includes(basis+"-"+i))return basis+"-"+i; }
   return basis+"-"+Math.random().toString(36).slice(2,6);
 }
-function _htUrl(slug){ return appRoot()+"?turnier="+encodeURIComponent(slug); }
+/* v915 (Charles 20.11., Bild: „WhatsApp-Link immer noch mit schlechtem Bild“): WhatsApp merkt sich die Vorschau
+   je Adresse und holt sie für denselben Link nicht neu – ein neues Bild kommt nur über eine neue Adresse an.
+   Jeder Spielplan-Link (Teilen, WhatsApp, QR, Ergebnis-Link) trägt deshalb den Stand des Vorschaubildes; die Seite beachtet den Zusatz nicht.
+   Wer og-vorschau-N.jpg erneuert, zählt HT_VORSCHAU mit. */
+const HT_VORSCHAU="2";
+function _htUrl(slug){ return appRoot()+"?turnier="+encodeURIComponent(slug)+"&v="+HT_VORSCHAU; }
 const HT_FORMATE={liga:"Liga – jeder gegen jeden",gruppen:"Gruppen + Finalrunde",festival:"Festival – alle spielen, keine Tabelle"};
 const HT_SPIELFORM={funino:"FUNiño (3 gegen 3)",f3:"3+1",f4:"4+1",f5:"5+1",f6:"6+1",f7:"7 gegen 7",frei:"eigene Spielform"};
 /* Regel-Vorlagen je Spielform – bewusst als VORLAGE beschriftet, der Trainer passt sie an
