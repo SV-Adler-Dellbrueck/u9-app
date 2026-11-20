@@ -47,7 +47,7 @@ Beide Einstiege laden in zwei Wellen, damit der erste Bildschirm schnell steht:
 - **Welle 1** — `data.js`, `core.js`, `engine.js`, `views.js`, `boot.js`
 - **Welle 2** — `quiz.js` und alle `md-*.js` (Feature-Module)
 
-`eltern/index.html` teilt nur im Dashboard-Fall; Sonderrouten (`?quiz`, `?ticker`, `?heft`, `?turnier`, `?handover`, `?kind`, `?delegate`, `?match`) laden alles in einer Welle.
+`eltern/index.html` teilt nur im Dashboard-Fall; Sonderrouten (`?quiz`, `?ticker`, `?heft`, `?handover`, `?kind`, `?delegate`, `?match`) laden alles in einer Welle. Ausnahme seit v899: `?turnier=…` lädt schlank nur `core.js`, `engine.js` und `md-turnierplan.js` (`turnierStart()` im Loader, kein `shell.html`, kein Service Worker) – Code für die öffentliche Turnierseite darf deshalb keine anderen Module voraussetzen.
 
 **Die wichtigste Regel:** Welle-1-Code darf eine Welle-2-Funktion niemals ungeprüft aufrufen.
 

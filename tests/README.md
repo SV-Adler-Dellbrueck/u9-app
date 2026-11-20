@@ -149,3 +149,10 @@ await s.supabaseRuhig();   // bis keine Anfrage an die Attrappe mehr offen ist u
 - **Fest bleiben** nur Pausen, die prüfen, dass **nichts** passiert („Abbrechen schreibt nichts“) – sie tragen den Kommentar
   `bewusst fest` – und die großzügigen Startpausen der Eltern-Seite nach `reload` (3,5–5 s, unter Doppellast nie rot).
 - Gegenprobe: `node tests/run.js` zweimal gleichzeitig starten (die Prüfungen schreiben keine Dateien). Beide Läufe müssen grün sein.
+
+## Öffentliche Turnierseite (seit v897)
+
+`tests/turnier-attrappe.js` liefert eine Turnierzeile („Adler-Herbstcup U9“, zwei Gruppen, Finalrunde, fiktive Vereine) und
+die feste Uhr `JETZT` (10:28, ein Spiel läuft mit Zwischenstand). Die Prüffälle `v897-…` bis `v899-…` messen damit die echte
+Seite `?turnier=…`: Zwischenstand zählt nicht, Regelwerk bleibt offen, Filter zeigt Platzierungsspiele, Wappen mit
+Initialen-Ausweichdarstellung, Ergebnis-Modus schreibt den Plan-Index, reduzierte Bewegung, Kontrast bei 390/1280 px.
