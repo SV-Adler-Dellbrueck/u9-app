@@ -14,7 +14,7 @@ module.exports = async function (h) {
   const probleme = [], zeilen = [];
   const d = JSON.parse(fs.readFileSync(path.join(h.REPO, "uebungen/vorlagen.json"), "utf8"));
   const AUSNAHMEN = ["L4-2", "L4-5", "L4-8"];
-  const STUFEN = { "L5-8": "17-17" };   // v790: L5-8 hat zwei Hauptteile zu je 17 Minuten (Stationen mit Gruppenwechsel)
+  const STUFEN = { "L5-8": "17-17", "L5-9": "17-17" };   // v902: L5-9 wie L5-8 · v790: L5-8 hat zwei Hauptteile zu je 17 Minuten (Stationen mit Gruppenwechsel)
   let angeglichen = 0;
   for (const v of d.vorlagen) {
     const kurz = v.name.split(" ")[0];
