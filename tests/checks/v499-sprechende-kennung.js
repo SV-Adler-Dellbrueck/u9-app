@@ -39,7 +39,7 @@ module.exports = async function (h) {
   if (r.bauen.some(x => /[^a-z0-9-]/.test(x))) probleme.push(`Nicht adresstaugliche Zeichen: ${r.bauen.filter(x => /[^a-z0-9-]/.test(x)).join(", ")}`);
   if (r.frei1 !== "kinderfestival-12-09") probleme.push(`Freie Kennung wurde zu „${r.frei1}“ geändert`);
   if (r2.frei !== "kinderfestival-12-09-3") probleme.push(`Bei zwei belegten Kennungen kommt „${r2.frei}“ statt „…-3“`);
-  if (!/\?turnier=kinderfestival-12-09$/.test(r.url)) probleme.push(`Link „${r.url}“`);
+  if (!/\?turnier=kinderfestival-12-09(&v=\d+)?$/.test(r.url)) probleme.push(`Link „${r.url}“`);
   if (fehler.length) probleme.push(...fehler.slice(0, 3));
   zeilen.push(`Aus Namen: ${r.bauen.join(" · ")}`);
   zeilen.push(`Frei bleibt frei (${r.frei1}) · zweimal belegt → ${r2.frei}`);
