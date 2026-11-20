@@ -1,6 +1,6 @@
 {
  "szenario": "Einklappen: tpKlapp, Alle einklappen, Block verschieben",
- "haelt_fest": "Fehlerbild 3 – der Klappzustand hängt am Index und wandert beim Verschieben nicht mit: danach ist ein anderer Block offen. Der gespeicherte Körper hängt vom Klappen nicht ab. Behebung in Schritt 9.",
+ "haelt_fest": "Fehlerbild 3 – behoben in v891: der Klappzustand wandert beim Verschieben mit dem Block mit (vorher blieb er am Index, danach war ein anderer Block offen). Der gespeicherte Körper hängt vom Klappen nicht ab.",
  "schritte": [
   {
    "schritt": "Training füllen",
@@ -858,8 +858,8 @@
      {
       "si": 2,
       "label": "Hauptteil 2",
-      "zu": false,
-      "kurz": null
+      "zu": true,
+      "kurz": "FUNiño 2 gegen 2 – einer drängt, einer schützt · Pressing-Welle 2gg2 · Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor · Regel: Lobpflicht nach Tor"
      },
      {
       "si": 3,
@@ -870,8 +870,8 @@
      {
       "si": 4,
       "label": "Hauptteil 1",
-      "zu": true,
-      "kurz": "FUNiño 2 gegen 2 – einer drängt, einer schützt · Pressing-Welle 2gg2 · Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor"
+      "zu": false,
+      "kurz": null
      },
      {
       "si": 5,

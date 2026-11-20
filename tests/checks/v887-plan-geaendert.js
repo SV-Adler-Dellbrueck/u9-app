@@ -30,16 +30,18 @@ function rumpf(text, name) {
 }
 
 /* Die Speicherregel je Änderungsstelle – so in v886 gemessen (Teil C) und unverändert Pflicht.
-   „nein“ ist Fehlerbild 7 (behoben erst ab Schritt 9). */
+   v895: Fehlerbild 7 ist behoben (Beschluss Charles 19.11.) – die sieben Stellen, die bis v894
+   „nein“ hatten (Dauer, neuer Block, „läuft parallel zu“, Torwart-Haken, Einzelkind, Ziel-Dauer),
+   speichern jetzt verzögert; die übrigen Regeln bleiben. */
 const REGEL = {
   "tpGenerate (leerer Plan)": "verzoegert",
-  "tpSetDauer": "nein",
-  "tpDoAddSlot (Torwart)": "nein",
-  "Läuft parallel zu": "nein",
-  "Torwart-Haken": "nein",
-  "tpDoAddSlot (Einzel)": "nein",
-  "Einzelkind": "nein",
-  "Ziel-Dauer": "nein",
+  "tpSetDauer": "verzoegert",
+  "tpDoAddSlot (Torwart)": "verzoegert",
+  "Läuft parallel zu": "verzoegert",
+  "Torwart-Haken": "verzoegert",
+  "tpDoAddSlot (Einzel)": "verzoegert",
+  "Einzelkind": "verzoegert",
+  "Ziel-Dauer": "verzoegert",
   "tpSetCoach": "verzoegert",
   "tpVersatzSetzen": "sofort",
   "tpVersatzZurueck": "sofort",
@@ -59,7 +61,7 @@ const REGEL = {
 
 /* Quelltext: Funktion → erwartete Speicherregel im eigenen tpGeaendert, oder der Setter, über den sie endet. */
 const QUELLE = {
-  tpSetDauer: "nein", tpDoAddSlot: "nein",
+  tpSetDauer: "verzoegert", tpDoAddSlot: "verzoegert",
   tpSlotsNeuOrdnen: "verzoegert", tpVersatzSetzen: "sofort", tpVersatzZurueck: "sofort",
   tpFeldWeglassen: "verzoegert", tpFeldZurueck: "verzoegert", tpDurchgaengeSetzen: "verzoegert",
   tpWarmPlus: "verzoegert", tpWarmMinus: "verzoegert", tpSetCoach: "verzoegert", tpRegelWeg: "verzoegert",
@@ -99,12 +101,12 @@ module.exports = async function (h) {
     });
     pruef(!funde.length, `Quelltext: ${Object.keys(QUELLE).length} Änderungsstellen enden in tpGeaendert mit ihrer Speicherregel${funde.length ? " · " + funde.join(" | ") : ""}`);
     const inl = [
-      ["Läuft parallel zu", /parallelZu=Number\(this\.value\);tpGeaendert\(\{speichern:'nein'\}\)/],
-      ["Ziel-Dauer", /id="tp-dauer" onchange="tpGeaendert\(\{speichern:'nein'\}\)"/],
-      ["Torwart-Haken", /tpTwSetzen\([^"]*\);tpGeaendert\(\{zeichnen:false,speichern:'nein'\}\)/],
-      ["Einzelkind", /tpKindSetzen\([^"]*tpGeaendert\(\{zeichnen:false,speichern:'nein'\}\)/]
+      ["Läuft parallel zu", /parallelZu=Number\(this\.value\);tpGeaendert\(\{speichern:'verzoegert'\}\)/],
+      ["Ziel-Dauer", /id="tp-dauer" onchange="tpGeaendert\(\{speichern:'verzoegert'\}\)"/],
+      ["Torwart-Haken", /tpTwSetzen\([^"]*\);tpGeaendert\(\{zeichnen:false,speichern:'verzoegert'\}\)/],
+      ["Einzelkind", /tpKindSetzen\([^"]*tpGeaendert\(\{zeichnen:false,speichern:'verzoegert'\}\)/]
     ].filter(([, re]) => !re.test(ohne)).map(([n]) => n);
-    pruef(!inl.length, `Quelltext: „läuft parallel zu“, Ziel-Dauer, Torwart-Haken und Einzelkind enden in tpGeaendert ohne Speichern${inl.length ? " · fehlt: " + inl.join(", ") : ""}`);
+    pruef(!inl.length, `Quelltext: „läuft parallel zu“, Ziel-Dauer, Torwart-Haken und Einzelkind enden in tpGeaendert und speichern verzögert (v895)${inl.length ? " · fehlt: " + inl.join(", ") : ""}`);
     const zeit = [];
     if (/setTimeout\(\s*(\(\)\s*=>\s*\{?\s*(try\s*\{\s*)?)?tpMaterialRender/.test(ohne)) zeit.push("setTimeout(tpMaterialRender,0)");
     ["tpGenerate", "tpAnpassenUebernehmen"].forEach(n => { if (/setTimeout\(\s*r\s*,\s*60\s*\)/.test(rumpf(ohne, n) || "")) zeit.push(`60 ms in ${n}`); });
@@ -215,7 +217,7 @@ module.exports = async function (h) {
         await tpAnpassenUebernehmen();
       });
       const ab = Object.keys(REGEL).filter(n => ist[n] !== REGEL[n]);
-      pruef(!ab.length, `Speicherregel je Setter wie v886 (${Object.keys(REGEL).length} Stellen: ${["verzoegert", "sofort", "nein"].map(a => `${Object.values(REGEL).filter(x => x === a).length}× ${a}`).join(", ")})${ab.length ? " · abweichend: " + ab.map(n => `${n} ${ist[n]} statt ${REGEL[n]}`).join(" | ") : ""}`);
+      pruef(!ab.length, `Speicherregel je Setter wie v886, seit v895 ohne „nein“ (${Object.keys(REGEL).length} Stellen: ${["verzoegert", "sofort", "nein"].map(a => `${Object.values(REGEL).filter(x => x === a).length}× ${a}`).join(", ")})${ab.length ? " · abweichend: " + ab.map(n => `${n} ${ist[n]} statt ${REGEL[n]}`).join(" | ") : ""}`);
       const pr = await p.evaluate(() => { tpPlanSaveDebounced = __spEcht.deb; tpPlanSave = __spEcht.sof; return tpZustandPruefen(); });
       pruef(!pr.length, `nach allen Settern: Zustand = Seite${pr.length ? " · " + pr.slice(0, 2).join(" | ") : ""}`);
     } catch (e) { pruef(false, "B/C: Abbruch – " + String(e.message || e).split("\n")[0]); }

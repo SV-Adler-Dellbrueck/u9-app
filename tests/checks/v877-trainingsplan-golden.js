@@ -223,7 +223,7 @@ const SZENARIEN = [
     ]) },
 
   { id: "G2-uebung-tauschen", titel: "Übung tauschen: Picker, Tausch außerhalb des Typfilters, Dauer, Speichern",
-    haelt: "Fehlerbild 4 – eine getauschte Übung außerhalb des Blocktyps verschwindet beim nächsten Neuzeichnen (tpSetDauer) und fehlt dann im gespeicherten Plan. Behebung in Schritt 9.",
+    haelt: "Fehlerbild 4 – behoben in v893: eine getauschte Übung außerhalb des Blocktyps bleibt beim nächsten Neuzeichnen (tpSetDauer) erhalten und steht im gespeicherten Plan (vorher verschwand sie). Seit v895 (Fehlerbild 7) speichert tpSetDauer außerdem verzögert von selbst.",
     schritte: [
       ["Training füllen", p => p.evaluate(async () => { await tpGenerate(); })],
       ["Picker: Hauptteil 1, Feld 1 neu wählen", p => p.evaluate(() => {
@@ -247,7 +247,7 @@ const SZENARIEN = [
     ] },
 
   { id: "G3-einklappen", titel: "Einklappen: tpKlapp, Alle einklappen, Block verschieben",
-    haelt: "Fehlerbild 3 – der Klappzustand hängt am Index und wandert beim Verschieben nicht mit: danach ist ein anderer Block offen. Der gespeicherte Körper hängt vom Klappen nicht ab. Behebung in Schritt 9.",
+    haelt: "Fehlerbild 3 – behoben in v891: der Klappzustand wandert beim Verschieben mit dem Block mit (vorher blieb er am Index, danach war ein anderer Block offen). Der gespeicherte Körper hängt vom Klappen nicht ab.",
     schritte: (() => {
       const bild = () => [...document.querySelectorAll("#tp-timeline .tp-slot")].map(el => ({ si: Number(el.dataset.si), label: tpSlotName((tpSlots[Number(el.dataset.si)] || {}).label || ""),
         zu: el.classList.contains("tp-zu"), kurz: (el.querySelector(":scope > .tp-kurz") || {}).textContent || null }));
@@ -278,7 +278,7 @@ const SZENARIEN = [
     ] },
 
   { id: "G5-oeffnen-aus-der-db", titel: "Öffnen aus der Datenbank: Altbestand, Speichern; Termin A mit Plan, dann Termin B ohne Plan",
-    haelt: "Fehlerbild 5 – gespeicherte Einträge, die nicht (mehr) passen, gehen beim Öffnen still verloren und fehlen beim nächsten Speichern: die Übung vom falschen Typ fällt weg, die Dublette rutscht ins nächste freie Feld desselben Blocks; alte `durchgaenge` binden Hauptteil 2 als Durchgang an und ersetzen dessen Übung (alleFelder) durch die des Kopfes (v621). Öffnen selbst schreibt nichts. Fehlerbild 6 – ein Termin ohne Plan übernimmt die Struktur des zuvor geöffneten und speichert sie bei der ersten Änderung (Charles 19.11.: künftig Grundgerüst – Behebung in Schritt 9).",
+    haelt: "Fehlerbild 5 – behoben in v894: gespeicherte Einträge, die nicht (mehr) passen, bleiben beim Öffnen erhalten und werden wieder gespeichert: die Übung vom falschen Typ bleibt (mit Hinweis am Feld), die Dublette bleibt an ihrem Feld; alte `durchgaenge` binden Hauptteil 2 als Durchgang an, dessen eigene Übung (alleFelder) bleibt (vorher: falscher Typ fiel weg, Dublette rutschte ins nächste freie Feld, Hauptteil 2 bekam die Übung des Kopfes). Öffnen selbst schreibt nichts. Fehlerbild 6 – behoben in v892: ein Termin ohne Plan startet mit dem Grundgerüst (vorher übernahm er die Struktur samt Trainern, Haken und Kind des zuvor geöffneten und speicherte sie bei der ersten Änderung).",
     db: null,         // wird unten aus dem Altbestand gesetzt
     schritte: [
       ["Termin A öffnen (Altbestand)", p => p.evaluate(async d => {
@@ -300,7 +300,7 @@ const SZENARIEN = [
     ] },
 
   { id: "G6-torwart-parallel", titel: "Torwart-Block parallel: anlegen, parallelZu, Haken ab, Trainer, Einzeltraining mit Kind",
-    haelt: "Fehlerbild 7 (Nebenbefund) – Block anlegen, „läuft parallel zu“, Torwart-Haken und Einzelkind speichern nicht von selbst; erst tpPlanSave(true) schreibt sie. Behebung in Schritt 9.",
+    haelt: "Fehlerbild 7 (Nebenbefund) – behoben in v895: Block anlegen, „läuft parallel zu“, Torwart-Haken und Einzelkind speichern verzögert von selbst (vorher erst tpPlanSave(true)).",
     schritte: [
       ["Training füllen", p => p.evaluate(async () => { await tpGenerate(); })],
       ["Torwart-Block anlegen, parallel zu Hauptteil 1, Kind B abwählen", p => p.evaluate(() => {
@@ -339,7 +339,7 @@ const SZENARIEN = [
     ] },
 
   { id: "G8-puffer", titel: "Puffer: Gesamtzeile bei frei ≥ 9, 3–8, < 3 Minuten und nach Wechsel der Zieldauer",
-    haelt: "Ist-Zustand der Puffer-Zeile (v868). Nebenbefund Fehlerbild 7: tpSetDauer speichert nicht von selbst.",
+    haelt: "Ist-Zustand der Puffer-Zeile (v868). Nebenbefund Fehlerbild 7 – behoben in v895: tpSetDauer und die Ziel-Dauer speichern verzögert von selbst (vorher nicht).",
     schritte: (() => {
       const zeile = () => { const z = [...document.querySelectorAll("#tp-timeline div")].find(d => d.querySelector(":scope > #tp-dauer"));
         return z ? [...z.childNodes].map(n => n.id === "tp-dauer" ? n.value : n.textContent).join("").replace(/\s+/g, " ").trim() : null; };
@@ -358,7 +358,7 @@ const SZENARIEN = [
     })() },
 
   { id: "G9-feld-weglassen", titel: "Mittleres von drei Feldern weglassen",
-    haelt: "Fehlerbild 1 – beim Weglassen des mittleren Feldes rücken die Trainer nach, die Übungen nicht: Trainer und Übung passen danach nicht mehr zusammen. Behebung in Schritt 9.",
+    haelt: "Fehlerbild 1 – behoben in v889: beim Weglassen des mittleren Feldes rücken Trainer und Übungen gemeinsam nach (vorher nur die Trainer, Trainer und Übung passten danach nicht mehr zusammen).",
     schritte: [
       ["Training füllen", p => p.evaluate(async () => { await tpGenerate(); })],
       ["Hauptteil 1: drei Felder mit drei Trainern", p => p.evaluate(() => {
@@ -374,7 +374,7 @@ const SZENARIEN = [
     ] },
 
   { id: "G10-loeschen-rueckgaengig", titel: "Block löschen und Rückgängig (Torwart-Block mit einem abgewählten Haken)",
-    haelt: "Fehlerbild 2 – Rückgängig stellt die Torwart-Haken über el.value statt .checked her: danach sind wieder alle angehakt. Behebung in Schritt 9.",
+    haelt: "Fehlerbild 2 – behoben in v890: Rückgängig stellt die Torwart-Haken so her, wie sie vor dem Löschen waren (vorher waren danach wieder alle angehakt).",
     schritte: [
       ["Training füllen, Torwart-Block mit Kind B abgewählt, speichern", p => p.evaluate(async () => {
         await tpGenerate();
