@@ -7175,6 +7175,8 @@ async function renderStadionheftView(){
 /* v787 · Linien-Symbole auch in der Trainer-App (Startkacheln und Kachelseiten), gleiche Machart wie EP_ICONS in der Eltern-App (v786):
    eine Strichstärke, currentColor, aria-hidden. Unbekanntes Zeichen bleibt das Emoji – nichts fällt aus. */
 const TR_ICONS={
+  /* v910: Grillhütte – Flamme in derselben Linienart */
+  "🔥":"<path d=\"M12 21c-3.9 0-6.5-2.6-6.5-6.2 0-3.3 2.4-5.6 4-7.6.3 1.9 1.2 3 2.2 3.6C12 7.6 13.3 5 15.6 3c.3 3 3 5.3 3 9.8 0 4.5-2.7 8.2-6.6 8.2z\"/><path d=\"M12 21c-1.7 0-2.8-1.2-2.8-2.9 0-1.5 1.1-2.6 2-3.6.4 1.1 1 1.6 1.6 1.9.4-1 1-1.9 1.9-2.6.2 1.4.9 2.4.9 4.1 0 1.8-1.4 3.1-3.6 3.1z\"/>",
   "🏃":"<circle cx=\"14\" cy=\"5\" r=\"2\"/><path d=\"m6 21 3.5-6 3.5 2 2-5-4-2-3 3-3-1M13 17l1.5 4M15 12l3 2 2-1\"/>",
   "⚽":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m12 8 3.5 2.5-1.3 4h-4.4l-1.3-4zM12 3v5M20 9.5l-4.5 1M17 19l-2.8-4.5M7 19l2.8-4.5M4 9.5l4.5 1\"/>",
   "👥":"<circle cx=\"9\" cy=\"8\" r=\"3\"/><path d=\"M3.5 19a5.5 5.5 0 0 1 11 0\"/><circle cx=\"17\" cy=\"9\" r=\"2.5\"/><path d=\"M16 14a4.5 4.5 0 0 1 5 4.5\"/>",
@@ -7439,8 +7441,7 @@ function _kachelInhalt(key){
     +kTiles([
       {emo:"📅",label:"Termine",fn:"go",arg:"termine"},
       // Team-Sicht auf die Verfügbarkeit – NEBEN „Bist du dabei?" (Ich-Sicht), nicht statt.
-      {emo:"🧑‍🏫",label:"Trainerplan",fn:"trainerPlanOpen"},
-      {emo:"🗓️",label:"Meetings",fn:"trainerMeetingOpen"}   // v527: Übersicht; angelegt wird im Termin
+      {emo:"🧑‍🏫",label:"Trainerplan",fn:"trainerPlanOpen"}
     ],col)
     +kSec("Notizen")
     +kTiles([
@@ -7451,6 +7452,9 @@ function _kachelInhalt(key){
     +kSec("Team-Orga")
     +kTiles([
       {emo:"🔥",label:"Grillhütte",fn:"grillTrainerOpen"},   // v910 PO 20.11.: gehört zu Orga, nicht unter Training → Termine
+      /* v910: Meetings aus „Termine“ hierher – mit der Grillhütte sind es sechs Kacheln in zwei Dreierreihen, und Orga
+         bleibt ein Bildschirm (v849). Angelegt wird ein Meeting weiter im Termin (v527). */
+      {emo:"🗓️",label:"Meetings",fn:"trainerMeetingOpen"},
       {emo:"🎉",label:"Mitbringliste",fn:"mitbringTrainerOpen"},
       {emo:"💰",label:"Teamkasse",fn:"kasseOpen"},
       {emo:"🧰",label:"Material",fn:"materialOpen"},
