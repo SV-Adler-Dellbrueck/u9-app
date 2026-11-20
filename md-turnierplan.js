@@ -2325,7 +2325,7 @@ function htRender(){
       <div style="font-size:var(--s-klein);color:var(--text2);word-break:break-all;background:var(--surface2);border-radius:8px;padding:8px 10px;margin-bottom:8px">${esc(url)}</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-sm btn-p" onclick="htShare()"><i class="ti ti-share"></i>Spielplan-Link teilen</button>
-        <a class="btn btn-sm" href="https://wa.me/?text=${encodeURIComponent("🏆 "+_HT.name+" – Spielplan & Live-Ergebnisse: "+url)}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+        <a class="btn btn-sm" href="https://wa.me/?text=${encodeURIComponent(htTeilenText(_HT,url))}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
         <a class="btn btn-sm" href="${esc(url)}" target="_blank" rel="noopener noreferrer"><i class="ti ti-external-link"></i>Ansicht öffnen</a>
       </div>
       <div id="ht-qr" style="width:180px;height:180px;margin:10px auto 0;border-radius:10px;background:#fff;padding:6px;box-sizing:border-box" data-url="${esc(url)}"></div>
@@ -2466,9 +2466,23 @@ async function htFinalsFill(){
 }
 /* Spielplan-Link: dieselbe Seite fuer Gast-Trainer, Gast-Eltern und unsere Eltern.
    Nur zum Ansehen – Ergebnisse eintragen kann nur, wer den Ergebnis-Link hat. */
+/* v909 PO 20.11.: „Ist es möglich, dass der WhatsApp-Link schöner aussieht?“ – Das Vorschaubild kommt aus den
+   Open-Graph-Angaben (für alle Links gleich, die Seite ist statisch); je Turnier steht hier der Text: Name, Tag mit
+   Uhrzeit, Ort, eine Zeile, was der Link bietet, und der Link allein in der letzten Zeile. */
+function htTeilenText(row,url){
+  const cfg=(row&&row.config)||{}, fest=fstIst(row);
+  const tag=row&&row.datum?new Date(row.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit"}):"";
+  const uhr=fest?(cfg.startIst||cfg.start||""):(cfg.start||"");
+  const z=["🏆 "+((row&&row.name)||"Turnier")];
+  if(tag)z.push("📅 "+tag+(uhr?" · ab "+uhr+" Uhr":""));
+  if(row&&row.ort)z.push("📍 "+row.ort);
+  z.push(fest?"👉 Spielplan, Felder und laufende Runde – mit eurem Wappen:":"👉 Spielplan, Live-Stand und Tabellen – mit eurem Wappen:");
+  if(url)z.push(url);
+  return z.join("\n");
+}
 function htShare(){
   const url=_htUrl(_HT.slug);
-  if(navigator.share){navigator.share({title:_HT.name,text:"🏆 "+_HT.name+" – Spielplan, Zeiten und Infos für alle",url}).catch(()=>{});return;}
+  if(navigator.share){navigator.share({title:_HT.name,text:htTeilenText(_HT,url)}).catch(()=>{});return;}   // Link im Text als letzte Zeile – manche Apps hängen ein url-Feld ohne Umbruch an
   const zeigen=()=>frageText({emoji:"🔗",titel:"Spielplan-Link",sub:"Link markieren und kopieren, dann weiterschicken.",wert:url,ja:"Fertig",markieren:true});
   try{navigator.clipboard.writeText(url).then(()=>toast("Spielplan-Link kopiert ✓"),zeigen);}catch(e){zeigen();}
 }
