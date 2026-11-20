@@ -290,6 +290,7 @@ async function tmAdd(){
       if(typeof tmMatchdaySync==="function")
         (Array.isArray(payload)?payload:[payload]).forEach(row=>tmMatchdaySync(row));
       terminIdCacheClear();
+      if(body.heim===true&&(body.typ==="spiel"||body.typ==="turnier")&&typeof ghAutoEinteilen==="function")setTimeout(()=>ghAutoEinteilen({still:true}),600);   // v912: Grillhütte automatisch
       toast(daten.length>1?`🔁 ${daten.length} Termine angelegt${ausgelassen?` · ${ausgelassen} Ferienwoche${ausgelassen===1?"":"n"} ausgelassen 🏖️`:""} ✓`:"Termin angelegt ✓");
       document.getElementById("tm-titel").value="";
       /* Hinweis leeren, Torzahlen NICHT: der Hinweis gilt fuer genau diesen Termin, der
