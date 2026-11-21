@@ -157,7 +157,7 @@ module.exports = async function (h) {
   if (m.vorStart !== 0 || m.knopfVor !== "Jetzt aufnehmen" || m.druck !== "false" || m.druckAn !== "true" || m.gruen !== "rgb(21, 128, 61)" || m.rot !== "rgb(185, 28, 28)" || m.hGruen < 44 || m.hRot < 44 || !/Stopp/.test(m.textRot) || !m.beschriftet)
     probleme.push(`m) Tasten (v764): ${JSON.stringify(m)}`);
   const k = r.k;
-  if (k.knopf !== "KI-Auswertung") probleme.push(`k) Knopf heißt „${k.knopf}“ statt „KI-Auswertung“`);
+  if (k.knopf !== "Fertig – auswerten") probleme.push(`k) Knopf heißt „${k.knopf}“ statt „Fertig – auswerten“ (v921)`);
   const gesp = gespeichert.join(" ");
   if (!k.zu || !k.bogenZu || !/"spass":4/.test(gesp)) probleme.push(`k) sofort gespeichert (v813): ${JSON.stringify(k)} · ${gesp.slice(0, 200)}`);
   if (!r.l.ov || r.l.neu !== 0 || !r.l.text) probleme.push(`l) ⤢: ${JSON.stringify(r.l)}`);

@@ -43,9 +43,12 @@ module.exports = async function (h) {
     const notiz = document.getElementById("eb-notiz");
     notiz.value = "Selbst getippt.";
     document.getElementById("nb-text").value = _nbText = "Heute war die Gruppe unruhig und hat nicht zugehört.";
-    await nbAuswerten("training"); await warte(50);
+    /* v921: Der Knopf im kleinen Feld speichert seitdem sofort und schließt den Bogen (wie die Vollansicht seit v813) –
+       das zweimalige Auswerten im offenen Bogen prüfen wir deshalb direkt am Eintragen (nbKiAnwenden), wo die Regel lebt. */
+    const kiErg = { art: "training", ergebnis: { einheit: { spass: 4, umsetzung: null, erfolg: null, notiz: "Die Gruppe war unruhig." }, uebungen: [], kinder: [], tagebuch: null } };
+    nbKiAnwenden("training", kiErg, { zurueck: {} }); await warte(50);
     out.c = { erst: notiz.value };
-    await nbAuswerten("training"); await warte(50);
+    nbKiAnwenden("training", kiErg, { zurueck: {} }); await warte(50);
     out.c.zweit = notiz.value;
     out.c.status = document.getElementById("nb-status").textContent;
     // d) Korrektur einsprechen
@@ -79,7 +82,7 @@ module.exports = async function (h) {
   if (a.lang !== "Heute war es gut. Die Kinder hatten Spaß") probleme.push(`a) lange Pause beginnt keinen Satz: „${a.lang}“`);
   if (a.leer !== "Heute war es gut") probleme.push(`a) Anfang nicht großgeschrieben: „${a.leer}“`);
   if (!(a.pause >= 2500)) probleme.push("a) Satzpause fehlt oder ist zu kurz: " + a.pause);
-  if (!r.b.imKasten || r.b.text !== "KI-Auswertung" || r.b.hoch < 44) probleme.push("b) Knopfreihe: " + JSON.stringify(r.b));
+  if (!r.b.imKasten || r.b.text !== "Fertig – auswerten"   /* v921 */ || r.b.hoch < 44) probleme.push("b) Knopfreihe: " + JSON.stringify(r.b));
   if (r.c.erst !== "Selbst getippt.\nDie Gruppe war unruhig." || r.c.zweit !== r.c.erst) probleme.push("c) zweite Auswertung: " + JSON.stringify(r.c));
   if (!r.d.knopf || !r.d.ov || !/Korrektur: $/.test(r.d.text)) probleme.push("d) Korrektur: " + JSON.stringify(r.d));
   const e = r.e;

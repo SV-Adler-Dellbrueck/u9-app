@@ -67,7 +67,7 @@ module.exports = async function (h) {
   }, { K, datum, morgen });
   const fe = s.fehler(); await s.schliessen();
   const J = JSON.stringify;
-  if (J(r.sterne) !== J([2, 3, 2, 2])) probleme.push("a) Kinder-Sterne: " + J(r.sterne));
+  if (J(r.sterne) !== J([0, 3, 0, 0])) probleme.push("a) Kinder-Sterne: " + J(r.sterne));   // v921: keine ★★-Vorbelegung mehr (nur Ausreißer)
   zeilen.push("a) Kinder-Skala vorbelegt: " + J(r.sterne) + " (ein vergebener Wert 3 bleibt)");
   if (r.bew.n !== 2 || Math.abs(r.bew.schnitt - (4 + 5 + 3 + 5 + 5 + 4) / 6) > 1e-9) probleme.push("b) Schnitt: " + J(r.bew));
   if (!/^★ 4,3 \(2×\)$/.test(r.kurz)) probleme.push("b) Kurzform: " + r.kurz);

@@ -1737,3 +1737,14 @@ details.htp-info .inhalt{padding:0 16px 16px;white-space:pre-wrap;line-height:1.
 .htp-zurueck{position:sticky;top:0;z-index:50;background:#1e3a8a;padding:6px 12px;padding-top:max(6px,env(safe-area-inset-top))}
 .htp-zurueck button{min-height:44px;background:transparent;border:0;color:#fff;font:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer;padding:0 4px;text-decoration:underline;text-underline-offset:3px}
 .fst-teamwahl{margin-top:-4px}
+/* v921 Ergebniskarte der Nachbewertung */
+.nb-erg-ok{background:var(--green-bg);border:2px solid var(--green);border-radius:var(--rl);padding:12px;margin-top:4px}
+.nb-erg-titel{font-size:var(--s-karte);font-weight:900;color:var(--green)}
+.nb-erg-zeilen{font-size:var(--s-text);line-height:1.6;margin-top:4px;color:var(--text)}
+.nb-erg-sek{font-size:var(--s-text);font-weight:800;color:var(--text2);margin:14px 0 4px}
+.nb-erg-hinweis{font-size:var(--s-klein);color:var(--text2);margin-bottom:4px}
+.nb-erg-gruppe{font-size:var(--s-text);font-weight:800;margin:8px 0 4px}
+.nb-erg-chips{display:flex;flex-wrap:wrap;gap:6px}
+.nb-erg-chip{min-height:44px;padding:6px 12px;border:1px solid var(--rand-bedien);border-radius:999px;background:var(--surface);color:var(--text);font:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer}
+.nb-erg-chip[aria-pressed="true"]{border:2px solid var(--blue);background:var(--blue-bg)}
+.nb-erg-chip.schwach[aria-pressed="true"]{border:2px solid var(--amber);background:var(--amber-bg)}

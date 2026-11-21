@@ -58,8 +58,8 @@ module.exports = async function (h) {
     out.c.ue2 = Number(document.getElementById("eb-stars-ue-1-Durchführung").dataset.val);
     await tippe("★★★ okay"); await tippe("★★ selten");
     // Kinder
-    out.d = { kinder: document.querySelector("#nb-weg").textContent.includes("Wie waren die Kinder") };
-    const kb = [...document.querySelectorAll("#nb-weg button[aria-label]")].find(b => /Kind B: stark/.test(b.getAttribute("aria-label")));
+    out.d = { kinder: document.querySelector("#nb-weg").textContent.includes("Wer stach heute heraus")   /* v921: nur Ausreißer */ };
+    const kb = [...document.querySelectorAll("#nb-weg button[aria-label]")].find(b => /Kind B: besonders stark/.test(b.getAttribute("aria-label")));
     kb && kb.click(); await warte(50);
     out.d.sterne = Number(document.getElementById("eb-stars-sp-1").dataset.val);
     [...document.querySelectorAll("#nb-weg button")].find(b => b.textContent.trim() === "Weiter").click(); await warte(50);

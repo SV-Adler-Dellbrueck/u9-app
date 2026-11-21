@@ -521,7 +521,7 @@ function nbSprachHtml(art, fuer){
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
       ${kannHoeren?`<button id="nb-mic" class="btn" style="flex:1 1 150px;min-height:48px;justify-content:center" onclick="nbDiktat('${art}')"><i class="ti ti-microphone"></i>${_nbText?"Weiter einsprechen":"Einsprechen"}</button>`:""}
       <button id="nb-gross" class="btn" style="flex:0 0 48px;min-height:48px;justify-content:center" onclick="nbGross('${art}',false)" aria-label="Text groß anzeigen und bearbeiten"><i class="ti ti-arrows-maximize"></i></button>
-      <button id="nb-los" class="btn btn-p" style="flex:1 1 150px;min-height:48px;justify-content:center;white-space:nowrap" onclick="nbAuswerten('${art}')"><i class="ti ti-sparkles"></i>KI-Auswertung</button>
+      <button id="nb-los" class="btn btn-p" style="flex:1 1 150px;min-height:48px;justify-content:center;white-space:nowrap" onclick="nbAuswerten('${art}')"><i class="ti ti-sparkles"></i>Fertig – auswerten</button>
     </div>
     <div id="nb-status" role="status" aria-live="polite" style="font-size:var(--s-klein);color:var(--text2);margin-top:6px;line-height:1.45"></div>
   </div>`;
@@ -602,7 +602,7 @@ function nbGrossFuss(){
   f.innerHTML = `${kann?`<div style="display:flex;gap:8px">
       <button id="nb-gross-mic" type="button" class="btn" style="flex:1 1 0;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800;background:var(--fam-training);border-color:var(--fam-training);color:#fff" onclick="nbGrossStart()" aria-pressed="false"><i class="ti ti-player-play-filled"></i><span>Jetzt aufnehmen</span></button>
       <button id="nb-gross-stopp" type="button" class="btn" style="flex:1 1 0;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800;background:#b91c1c;border-color:#b91c1c;color:#fff" onclick="nbGrossStopp()" aria-label="Aufnahme pausieren oder stoppen – der Text bleibt stehen"><i class="ti ti-player-pause-filled"></i><span>Stopp / Pause</span></button></div>`:""}
-    <button id="nb-gross-los" class="btn btn-p" style="min-height:56px;justify-content:center" onclick="nbGrossAuswerten('${art}')"><i class="ti ti-sparkles"></i>KI-Auswertung</button>`;
+    <button id="nb-gross-los" class="btn btn-p" style="min-height:56px;justify-content:center" onclick="nbGrossAuswerten('${art}')"><i class="ti ti-sparkles"></i>Fertig – auswerten</button>`;
   nbGrossTasten();
 }
 /* Grün zeigt, ob gerade aufgenommen wird (Text und aria-pressed, nicht nur Farbe). */
@@ -657,7 +657,7 @@ async function nbGrossAuswerten(art){
     if(ta.value !== stand){ ta.value = stand; nbGrossSync(stand); }
   }
   const los = document.getElementById("nb-gross-los");
-  if(los){ los.disabled = true; los.innerHTML = '<i class="ti ti-loader-2"></i>Wertet aus …'; }
+  if(los){ los.disabled = true; los.innerHTML = '<i class="ti ti-loader-2"></i>KI wertet aus … gleich fertig'; }
   if(st) st.textContent = "";
   let x = null;
   try{ x = await nbKiHolen(art, text); }
@@ -687,10 +687,13 @@ async function nbSchnellAbschluss(art){
   const s = _nbSchnell; _nbSchnell = null;
   if(_nbWeg && typeof nbWegAus==="function") nbWegAus();   // v806: von der Startseite steht der Einstieg noch da – er wird zum normalen Bogen, dann wie bisher speichern
   const zeilen = _nbBewertungZeilen.slice();
+  /* v921: Ergebniskarte – „✅ Ausgewertet und gespeichert“, die Zusammenfassung und (Training) die Kinder, die
+     herausstachen. Mit Tagebuch-Vorschlag in der Prüfkarte oben, sonst als eigene kleine Karte. */
+  const erg = { art, zeilen, datum:(art==="training" && typeof EB_DATUM!=="undefined") ? EB_DATUM : null };
   const weiter = async () => {
     const id = await _nbTbSichern;
-    if(id && typeof tbPruefenOpen==="function") tbPruefenOpen(id, { bewertung:zeilen, fuer:s.fuer });
-    else toast("Nachbereitet ✓");
+    if(id && typeof tbPruefenOpen==="function") tbPruefenOpen(id, { bewertung:zeilen, fuer:s.fuer, ergebnis:erg });
+    else nbErgebnisOpen(erg);
     if(typeof wieWarsKarte==="function") wieWarsKarte();
   };
   if(art==="training"){
@@ -845,9 +848,9 @@ async function nbAuswerten(art){
   const text = (ta&&ta.value||"").trim();
   if(text.length<15){ if(st) st.textContent = "Erzähl ein paar Sätze – dann kann die KI etwas eintragen."; return; }
   nbDiktatStop();
-  if(los){ los.disabled = true; los.innerHTML = '<i class="ti ti-loader-2"></i>Wertet aus …'; }
+  if(los){ los.disabled = true; los.innerHTML = '<i class="ti ti-loader-2"></i>KI wertet aus … gleich fertig'; }
   if(st) st.textContent = "";
-  const fertig = () => { const l = document.getElementById("nb-los"); if(l){ l.disabled = false; l.innerHTML = '<i class="ti ti-sparkles"></i>KI-Auswertung'; } };
+  const fertig = () => { const l = document.getElementById("nb-los"); if(l){ l.disabled = false; l.innerHTML = '<i class="ti ti-sparkles"></i>Fertig – auswerten'; } };
   let x = null;
   try{ x = await nbKiHolen(art, text); }
   catch(e){
@@ -856,7 +859,14 @@ async function nbAuswerten(art){
     return;
   }
   fertig();
-  if(x) nbKiAnwenden(art, x.d, x.m);
+  if(!x) return;
+  /* v921 (Charles 21.11., Bild): Nach „KI-Auswertung“ im kleinen Feld stand nur eine graue Zeile – kein Speichern,
+     kein nächster Schritt. v813 hatte „alles gleich machen“ für die Vollansicht umgesetzt, dieser Weg fehlte.
+     Jetzt wie dort: eintragen, sofort speichern, Ergebniskarte. Hat die KI nichts gefunden, bleibt der Bogen offen. */
+  const bericht = nbKiAnwenden(art, x.d, x.m);
+  if(!bericht || !bericht.length) return;
+  if(!_nbSchnell || _nbSchnell.fuer!==_nbFuer) _nbSchnell = { fuer:_nbFuer, art };
+  nbSchnellAbschluss(art);
 }
 /* Sterne setzen wie ein Tipp – über einheitSetStar, damit Anzeige und Wert übereinstimmen. */
 function _nbStern(key, wert, max, groesse){
@@ -1005,7 +1015,7 @@ function nbWegStart(art){
        Vor dem Start der Einzelbewertung (v648, bewertung_ab) stehen im Bogen keine Sterne je Kind –
        die Knöpfe hier schrieben ins Leere. Der Schritt kommt nur, wenn der Bogen die Zeilen hat.
        Seit v677 hat er sie immer (Trainingseinsatz ist nicht gesperrt) – außer ohne erfasste Anwesenheit. */
-    if(kids.length && document.getElementById("eb-stars-sp-0")) s.push({ typ:"kinder", titel:"Die Kinder", frage:"Wie waren die Kinder heute dabei?", kinder:kids });
+    if(kids.length && document.getElementById("eb-stars-sp-0")) s.push({ typ:"kinder", titel:"Die Kinder", frage:"Wer stach heute heraus? Nur die antippen – alle anderen bleiben ohne Wertung.", kinder:kids });   // v921: nur Ausreißer
     s.push({ typ:"text", titel:"Zum Schluss", frage:"Noch eine Notiz zur Einheit?", felder:[{ id:"eb-notiz", label:"Notiz zur Einheit (optional)" }, NB_MIT_FELD] });
   }else{
     if(!_FZ) return;
@@ -1124,7 +1134,7 @@ function nbWegZeichnen(){
     html = kopf + st.kinder.map((name,k)=>{
       const v = (typeof einheitGetStar==="function"?einheitGetStar("sp-"+k):0);
       return `<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:var(--border)"><span style="flex:1;min-width:0;font-size:var(--s-text);font-weight:700">${esc(name)}</span>
-        ${[["★","ruhig"],["★★","gut"],["★★★","stark"]].map(([s,l],j)=>`<button type="button" aria-pressed="${v===j+1}" aria-label="${esc(name)}: ${l}" onclick="nbWegKind(${k},${j+1})" style="min-width:58px;min-height:44px;border:${v===j+1?"2px solid var(--blue)":"1px solid var(--rand-bedien)"};border-radius:10px;background:${v===j+1?"var(--blue-bg)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;line-height:1.1;cursor:pointer">${s}<br>${l}</button>`).join("")}</div>`;
+        ${[["★","nicht entfaltet"],["★★","normal"],["★★★","besonders stark"]].map(([s,l],j)=>`<button type="button" aria-pressed="${v===j+1}" aria-label="${esc(name)}: ${l}" onclick="nbWegKind(${k},${j+1})" style="min-width:58px;min-height:44px;border:${v===j+1?"2px solid var(--blue)":"1px solid var(--rand-bedien)"};border-radius:10px;background:${v===j+1?"var(--blue-bg)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;line-height:1.1;cursor:pointer">${s}<br>${l}</button>`).join("")}</div>`;
     }).join("") + fuss("Weiter");
   }else if(st.typ==="text"){
     html = kopf + st.felder.map(f=>{
@@ -1171,4 +1181,56 @@ function nbWegZeichnen(){
 }
 
 /* MODUL_WACHE: letzter Name der Datei. Stirbt sie vorher, fehlt genau dieser. */
+/* ═══ v921 · Ergebniskarte der Nachbewertung (Charles 21.11.: „maximale Usability … mit minimalem Aufwand
+   schnellstmöglich ihre Bewertung abgeben“). Kinder: nur wer heraussticht – ★★★ besonders stark, ★ Potenzial
+   heute nicht entfaltet (Kachel „Nur Ausreißer“): alle anderen bleiben ohne Wertung, keine Zahl, die niemand
+   vergeben hat. Vorausgewählt ist, was die KI aus der Erzählung eingetragen hat; ein Tipp speichert sofort
+   (awQualSetzen, derselbe Weg wie der Bogen), ein zweiter nimmt den eigenen Wert zurück. */
+let _nbErg = null;
+function _nbErgKinder(){
+  const d = _nbErg && _nbErg.datum;
+  if(!d || typeof AW_DATA==="undefined" || !AW_DATA[d]) return [];
+  const ich = (typeof EB_ME!=="undefined" && EB_ME) || "Trainer";
+  return Object.keys(AW_DATA[d]).filter(n=>AW_DATA[d][n] && AW_DATA[d][n].da).sort((a,b)=>a.localeCompare(b,"de"))
+    .map(n=>{ const x = AW_DATA[d][n]; const v = (x.qual_von && x.qual_von[ich]) || 0; return { name:n, v }; });
+}
+function nbErgebnisBlock(erg){
+  if(erg) _nbErg = erg;
+  if(!_nbErg) return "";
+  const z = (_nbErg.zeilen||[]).filter(Boolean);
+  const kinder = _nbErg.art==="training" ? _nbErgKinder() : [];
+  _nbErg.kinder = kinder;
+  const chips = (v, cls) => kinder.map((k,i)=>`<button type="button" class="nb-erg-chip${cls}" aria-pressed="${k.v===v}" onclick="nbErgKind(${i},${v})">${esc(k.name)}${k.v===v?" ✓":""}</button>`).join("");
+  return `<div class="nb-erg-ok" role="status"><div class="nb-erg-titel">✅ Ausgewertet und gespeichert</div>
+      ${z.length?`<div class="nb-erg-zeilen">${z.map(x=>`<div>${esc(x)}</div>`).join("")}</div>`:""}</div>
+    ${kinder.length?`<div class="nb-erg-sek">Die Kinder – nur wer heute heraussticht</div>
+      <div class="nb-erg-hinweis">Alle anderen bleiben ohne Wertung. Antippen speichert, nochmal tippen nimmt zurück.</div>
+      <div class="nb-erg-gruppe">★★★ Heute besonders stark</div><div class="nb-erg-chips">${chips(3,"")}</div>
+      <div class="nb-erg-gruppe">★ Potenzial heute nicht entfaltet</div><div class="nb-erg-chips">${chips(1," schwach")}</div>`:""}`;
+}
+async function nbErgKind(i, v){
+  const k = _nbErg && _nbErg.kinder && _nbErg.kinder[i]; if(!k || !_nbErg.datum) return;
+  const neu = k.v===v ? 0 : v;
+  if(typeof awQualSetzen==="function") await awQualSetzen(_nbErg.datum, { [k.name]: neu });
+  if(document.getElementById("nb-ergebnis")) nbErgebnisZeichnen();
+  if(document.getElementById("tb-pruefen") && typeof tbPruefenZeichnen==="function") tbPruefenZeichnen();
+}
+function nbErgebnisOpen(erg){
+  _nbErg = erg;
+  const { karte } = fensterAuf("nb-ergebnis", { mitte:true, breite:480 });
+  karte.id = "nb-ergebnis-karte";
+  nbErgebnisZeichnen();
+}
+function nbErgebnisZeichnen(){
+  const k = document.getElementById("nb-ergebnis-karte"); if(!k) return;
+  k.innerHTML = `${mdlHead("nb-ergebnis","✅","Nachbereitung", _nbErg && _nbErg.art==="training" ? "Training" : "Spieltag","#15803d")}
+    ${nbErgebnisBlock()}
+    <button type="button" class="btn btn-p" onclick="nbErgebnisZu()" style="width:100%;min-height:56px;margin-top:14px;justify-content:center;font-size:var(--s-karte)"><i class="ti ti-check"></i>Fertig</button>`;
+}
+function nbErgebnisZu(){
+  document.getElementById("nb-ergebnis")?.remove(); _nbErg = null;
+  if(typeof wieWarsKarte==="function") wieWarsKarte();
+}
+
 function fazitModulDa(){ return true; }
+

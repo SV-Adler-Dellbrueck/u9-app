@@ -34,7 +34,7 @@ module.exports = async function (h) {
       const k = _nbWeg.schritte.findIndex(x => x.typ === "kinder");
       if (k >= 0) {
         _nbWeg.i = k; nbWegZeichnen();
-        const kb = [...document.querySelectorAll("#nb-weg button[aria-label]")].find(b => /Kind B: stark/.test(b.getAttribute("aria-label")));
+        const kb = [...document.querySelectorAll("#nb-weg button[aria-label]")].find(b => /Kind B: besonders stark/.test(b.getAttribute("aria-label")));
         kb && kb.click(); await warte(50);
         out.sterne = Number((document.getElementById("eb-stars-sp-1") || { dataset: {} }).dataset.val || 0);
       }
@@ -50,7 +50,7 @@ module.exports = async function (h) {
   if (vor.r.fehlt) return h.ergebnis("Nachbewertung: Trainingseinsatz je Kind, vor und nach dem Stichtag", false, ["nbWegStart fehlt"]);
   if (!vor.r.zeilen || !vor.r.schritte.includes("kinder") || vor.r.sterne !== 3) probleme.push(`a) v677: Vor dem Stichtag fehlt der Trainingseinsatz: Zeilen ${vor.r.zeilen}, Schritt ${vor.r.schritte.includes("kinder")}, Sterne ${vor.r.sterne}`);
   /* v795: beide Kinder stehen schon auf „gut“ (2) – die Zählung kennt sie als beantwortet */
-  if (!/Kinder: 2 von 2/.test(vor.r.ende)) probleme.push(`a) Zusammenfassung: ${vor.r.ende.slice(0, 160)}`);
+  if (!/Kinder: 1 von 2/.test(vor.r.ende))   /* v921: keine ★★-Vorbelegung mehr – gezählt wird, wer angetippt wurde */ probleme.push(`a) Zusammenfassung: ${vor.r.ende.slice(0, 160)}`);
   if (!nach.r.schritte.includes("kinder") || nach.r.sterne !== 3) probleme.push(`b) Ab dem Stichtag: Schritt ${nach.r.schritte.includes("kinder")}, Sterne ${nach.r.sterne}`);
   const f = vor.f.concat(nach.f); if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
   zeilen.push(`a) v677: vor dem Stichtag ${vor.r.schritte.length} Schritte mit „Die Kinder“, Tipp setzt ${vor.r.sterne} Sterne · b) ab dem Stichtag ${nach.r.schritte.length} Schritte, Tipp setzt ${nach.r.sterne} Sterne`);

@@ -54,6 +54,9 @@ module.exports = async function (h) {
     // e) Grenzen und Mitwachsen
     const hoch0 = document.getElementById("eb-notiz").offsetHeight;
     document.getElementById("nb-text").value = "Heute war es unruhig, das hat sich durchgezogen."; _nbText = document.getElementById("nb-text").value;
+    /* v921: Das kleine Feld speichert nach dem Auswerten sofort und schließt den Bogen (Ergebniskarte). Hier geht es um
+       das Eintragen in den offenen Bogen – den Abschluss prüfen v813 und v921. */
+    window.nbSchnellAbschluss = async () => {};
     await nbAuswerten("training"); await warte(80);
     out.e = { ebNotizMax: document.getElementById("eb-notiz").maxLength, ueMax: document.getElementById("eb-ue-notiz-0").maxLength,
       nbMax: document.getElementById("nb-text").maxLength, notizLaenge: document.getElementById("eb-notiz").value.length,
