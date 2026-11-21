@@ -446,9 +446,9 @@ function elternGrussSetzen(kids,termin){
 function elternPortalDashboard(root){
   root.innerHTML=`<div class="ep-wrap">
     <div id="ep-kopf" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;padding:12px 12px 12px;margin-bottom:12px;background:var(--blue);color:#fff;border-radius:18px;box-shadow:0 2px 8px rgba(26,86,219,.25)">
-      <div style="display:flex;align-items:center;gap:10px;min-width:0"><img src="logo.png" alt="" width="40" height="40" style="flex:none;border-radius:50%;background:#fff"><div style="min-width:0"><div style="font-size:var(--s-teil);font-weight:800;line-height:1.15">Eltern-Bereich</div><div id="ep-gruss" style="font-size:var(--s-klein);opacity:.95">SV Adler Dellbrück · U9</div><div id="ep-gruss2" style="font-size:var(--s-klein);opacity:.95"></div></div></div>
-      <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
-        <button type="button" id="rufe-kopf" onclick="rufeEinstieg()" title="Adler-Rufe – Nachrichten im Team" aria-label="Adler-Rufe öffnen – Nachrichten im Team" class="btn btn-kopf" style="position:relative">💬<span class="rufe-badge" style="display:none;position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font-size:var(--s-klein);font-weight:800;align-items:center;justify-content:center;border:2px solid #fff;box-sizing:border-box"></span></button>
+      <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 150px"><img src="logo.png" alt="" width="40" height="40" style="flex:none;border-radius:50%;background:#fff"><div style="min-width:0"><div style="font-size:var(--s-teil);font-weight:800;line-height:1.15">Eltern-Bereich</div><div id="ep-gruss" style="font-size:var(--s-klein);opacity:.95">SV Adler Dellbrück · U9</div><div id="ep-gruss2" style="font-size:var(--s-klein);opacity:.95"></div></div></div>
+      <div style="display:flex;align-items:center;gap:6px;margin-left:auto;flex:none">
+        <button type="button" id="rufe-kopf" onclick="rufeEinstieg()" title="Chats – Nachrichten im Team" aria-label="Chats öffnen – Nachrichten im Team" class="btn btn-kopf ep-chats" style="position:relative">💬<span class="ep-chats-wort">Chats</span><span class="rufe-badge" style="display:none;position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font-size:var(--s-klein);font-weight:800;align-items:center;justify-content:center;border:2px solid #fff;box-sizing:border-box"></span></button>
         <button type="button" id="ep-menue-knopf" onclick="elternMenueUmschalten()" aria-expanded="false" aria-controls="ep-menue" aria-label="Mehr: Schriftgröße, Dunkelmodus, Hilfe, Mein Konto" title="Mehr" class="btn btn-kopf" style="font-size:var(--s-teil)">⋯</button>
       </div>
       <div id="ep-menue" style="display:none;flex-basis:100%;flex-wrap:wrap;justify-content:space-around;gap:8px;padding-top:10px;margin-top:2px;border-top:1px solid rgba(255,255,255,.35)">
@@ -628,9 +628,10 @@ function elternThemeOnToggle(){
 /* Kategorie-Fenster: die Panels liegen (versteckt) im #el-cat-overlay im DOM (damit die
    Async-Loader ihre Slots füllen); der Button zeigt nur das gewählte Panel im Vollbild-Overlay. */
 function elternCatOpen(id){
+  if(id==="datenschutz")id="regeln";   // v926: Freigaben & Notfallkarte stehen im Bereich „Regeln & Freigaben“
   const ov=document.getElementById("el-cat-overlay"); if(!ov)return;
   if(typeof nutzungLog==="function")nutzungLog("eltern-bereich",id);
-  const T={todo:"📌 Zu erledigen",news:"📣 Adler News",mehr:"📰 Mehr vom Team",regeln:"📋 Regeln & Vereinbarungen",datenschutz:"🔒 Freigaben & Notfallkarte",kontakt:"🗣️ Trainerteam kontaktieren"};
+  const T={todo:"📌 Zu erledigen",news:"📣 Adler News",mehr:"📰 Mehr vom Team",regeln:"📋 Regeln & Freigaben",datenschutz:"📋 Regeln & Freigaben",kontakt:"🗣️ Trainerteam kontaktieren"};
   ov.querySelectorAll(".el-cat-panel").forEach(p=>p.style.display="none");
   const panel=document.getElementById("cat-"+id); if(panel)panel.style.display="block";
   const ttl=document.getElementById("el-cat-title"); if(ttl)ttl.textContent=T[id]||(panel&&panel.dataset&&panel.dataset.catTitle)||""; // Kind-Panels tragen ihren Titel selbst
@@ -1145,34 +1146,31 @@ async function elternDashLoad(){
      Die Ansage steht jetzt ÜBER der Terminkarte (vorher darunter). Die Weihnachtsfeier bleibt ganz
      oben (v830). Die Zonen sind flach gebaut – Überschrift und Slots sind Geschwister –, und eine
      Überschrift zeigt sich nur, wenn in ihrer Zone etwas steht (elternZonenPruefen). */
-  const zone=(id,titel)=>`<div class="el-zone" data-zone="${id}" hidden style="font-size:var(--s-klein);font-weight:800;letter-spacing:.3px;color:#475569;margin:14px 2px 8px">${titel}</div>`;
+  const zone=(id,titel)=>`<div class="el-zone" data-zone="${id}" hidden style="font-size:var(--s-karte);font-weight:900;color:var(--text);margin:16px 4px 8px">${titel}</div>`;
   /* v924 (Charles 21.11., Bild freigegeben): „Für euch“ – ein Karussell ganz oben mit allem, was Eltern gerade tun sollen.
      Die Karten bleiben in ihren Slots (Porträt-Bogen mit Frist zuerst, dann Weihnachtsfeier, dann Steckbrief); die Slots
      sind display:contents, so werden ihre Karten zu Gliedern der Bahn. fuerEuchSync zählt, blendet ein und aus. */
   html+=`<section id="fuer-euch" class="fe" aria-label="Für euch" hidden>
     <div class="fe-kopf"><span class="fe-titel">📌 Für euch</span><span id="fe-zahl" class="fe-zahl" aria-live="polite"></span></div>
-    <div id="fe-bahn" class="fe-bahn" tabindex="-1"><div id="nest-bogen-slot"></div><div id="feier-slot"></div><div id="steckbrief-slot"></div></div>
+    <div id="fe-bahn" class="fe-bahn" tabindex="-1"><div id="eltern-offen-slot"></div><div id="nest-bogen-slot"></div><div id="feier-slot"></div><div id="fe-todo-slot"><button id="eltern-todo-btn" class="btn btn-zeile" onclick="elternCatOpen('todo')" style="display:none;">
+    <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:var(--amber-bg);display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1">📌</span>
+    <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Zu erledigen</span><span style="display:block;font-size:var(--s-klein);color:var(--text2);font-weight:400;margin-top:1px">Rückmeldungen, Mitbringen, Grillhütte, „Wie war's"</span></span>
+    <span id="eltern-todo-badge" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber);font-weight:800;font-size:var(--s-text);border-radius:12px;padding:2px 9px"></span>
+    <span style="font-size:var(--s-teil);color:var(--text3)">›</span>
+  </button></div><div id="steckbrief-slot"></div><div id="push-hinweis-slot"></div></div>
     <div id="fe-punkte" class="fe-punkte" aria-hidden="true"></div></section>`;
   html+='<div id="eltern-live-slot"></div>';
   html+='<div id="ansage-slot"></div>'; // H1: ungelesene Trainer-Ansagen als Banner
   html+='<div id="eltern-top-slot"></div>';        // hier landet die Terminkarte (s. u.)
   if(termin&&(termin.typ==="spiel"||termin.typ==="turnier"))html+='<div id="pause-card"></div>';
   html+='<div id="genesung-slot"></div>'; // I-A: „X fehlt gerade" – 1-Tap-Genesungsgruß (nur mit Trainer-Freigabe)
-  html+=zone("offen","Noch offen");
-  html+='<div id="eltern-offen-slot"></div>';      // offene Rückmeldungen der nächsten 14 Tage
+  /* v926: „Noch offen“ ist in „📌 Für euch“ aufgegangen (Rückmeldung fehlt, Zu erledigen, Benachrichtigungen) */
   // ── 📌 ZU ERLEDIGEN: alle offenen Punkte gebündelt, ganz oben. Die Loader füllen die Slots;
   //    ist alles leer, blendet elternTodoSync() die ganze Sektion aus. ──
   // 📌 To-Do's als Kategorie-Button (optisch wie die Kategorien unten); Inhalt öffnet sich im
   //    Overlay-Panel #cat-todo. Sichtbar nur, wenn offene Punkte da sind (elternTodoSync nach den Loadern).
-  html+=`<button id="eltern-todo-btn" class="btn btn-zeile" onclick="elternCatOpen('todo')" style="display:none;margin-bottom:10px">
-    <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:var(--amber-bg);display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1">📌</span>
-    <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Zu erledigen</span><span style="display:block;font-size:var(--s-klein);color:var(--text2);font-weight:400;margin-top:1px">Rückmeldungen, Mitbringen, Grillhütte, „Wie war's"</span></span>
-    <span id="eltern-todo-badge" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber);font-weight:800;font-size:var(--s-text);border-radius:12px;padding:2px 9px"></span>
-    <span style="font-size:var(--s-teil);color:var(--text3)">›</span>
-  </button>`;
-  html+='<div id="push-hinweis-slot"></div>';   // v698 – seit v838 in „Noch offen“: Benachrichtigungen, solange sie aus sind
   /* v734 Porträt-Bogen und v922 Steckbrief stehen seit v924 oben in „Für euch“ */
-  html+=zone("neu","Neu");
+  html+=zone("neu","💬 Neu für euch");   // v926: Chats und News, direkt unter den Terminen
   html+='<div id="rufe-hinweis"></div>';          // v673: neue Adler-Rufe – nur wenn es welche gibt
   // 📣 Adler News: eigener Button (News ≠ To-Do); Panel #cat-news; roter Badge bei Ungelesenem.
   /* PO v407: „adlernews auch nur wenn etwas drin ist." – wie beim To-Do-Knopf: unsichtbar
@@ -1263,11 +1261,7 @@ async function elternDashLoad(){
       ${termin.typ==="turnier"?'<div id="turnierplan-card"></div>':""}
       ${(termin.datum===heute&&(termin.typ==="spiel"||termin.typ==="turnier"))?elternTickerHtml(termin):""}
       <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-        ${termin.datum>heute
-          /* v859 (Bestandsaufnahme 3.11): Vor dem Termin gibt es noch keine Fotos – der Knopf öffnete ein leeres Album.
-             Jetzt führt er zu den Fotos der letzten Spieltage; ab dem Tag selbst wie bisher zu diesem Termin. */
-          ?`<button onclick="if(typeof spieltagGalerieOpen==='function')spieltagGalerieOpen()" class="btn" style="flex:1;min-width:130px;justify-content:center">📸 Fotos der letzten Spieltage</button>`
-          :`<button onclick="galerieOpen(${termin.id},'${(termin.titel||termin.gegner||m.label).replace(/'/g,'')}')" class="btn" style="flex:1;min-width:130px;justify-content:center">📸 ${fotoLabel(termin.typ)}</button>`}
+        ${termin.datum>heute?"":`<button onclick="galerieOpen(${termin.id},'${(termin.titel||termin.gegner||m.label).replace(/'/g,'')}')" class="btn" style="flex:1;min-width:130px;justify-content:center">📸 ${fotoLabel(termin.typ)}</button>`}<!-- v926: vor dem Termin kein Fotoknopf (die Spieltagsgalerie steht unter „Mehr vom Team“) -->
         <!-- „Alle Termine" entfernt: die Kachel „Alle Termine & Kalender-Abo" darunter kann dasselbe + mehr (PO) -->
       </div>
       </div>
@@ -1278,13 +1272,14 @@ async function elternDashLoad(){
   /* Ersatz per FUNKTION, nicht per String: in $-Zeichen der Termindaten („$" im Titel,
      „$&") sieht String.replace sonst Rückverweise und frisst Teile der Karte. */
   const offenHtml=elternOffeneRsvpHtml(termineListe,kids,rsvpAll,termin&&termin.id);
-  html=html.replace('<div id="eltern-top-slot"></div>',()=>terminHtml)
-           .replace('<div id="eltern-offen-slot"></div>',()=>offenHtml);
+  html=html.replace('<div id="eltern-top-slot"></div>',()=>elternTerminKarussell(terminHtml,termineListe,kids,rsvpAll,termin))
+           .replace('<div id="eltern-offen-slot"></div>',()=>`<div id="eltern-offen-slot">${offenHtml}</div>`);   // v926: der Slot bleibt (Glied im Karussell „Für euch“)
   // ── TERMINE ── (Karussell + Kalender-Abo)
   /* v718 „entschlacken“: Überschrift nur, wenn es weitere Termine gibt; „Alle Termine &
      Kalender-Abo“ steht als Kachel unter „Mehr“ statt als eigene Karte mit einem Knopf. */
   /* v811: Kacheln (Wochen zum Wischen), Liste („Danach“) oder beides – die Wahl merkt sich das Gerät */
-  html+=elternTermineHtml(termineListe,kids,rsvpAll,termin&&termin.id);
+  /* v926: Die folgenden Termine stehen im Karussell oben; Wochenstreifen und „Alle Termine der Saison“ hier entfallen –
+     die Saison steht unter „Fürs Team → Alle Termine“. */
   /* PO: „Rückblick unter Termine setzen." Der Nach-dem-Spiel-Gruß stand über den Terminen
      und drängte sich damit vor das, was zu tun ist. Er bleibt aber eine SICHTBARE Karte und
      wandert bewusst nicht in eine Kategorie: er ist das einzige auf dieser Seite, das nichts
@@ -1303,42 +1298,38 @@ async function elternDashLoad(){
   // Einheitliche Aktions-Zeile für die Panel-Inhalte (Icon + Titel + Beschreibung + ›, farbiger
   // Akzent links in Tönen der Kategorie-Farbe). noClose=true lässt das Fenster offen (z. B. Export).
   const elRow=(emo,label,d,onclick,col,noClose)=>`<button onclick="${noClose?"":"elternCatClose();"}${onclick}" class="btn btn-zeile" style="margin-bottom:8px"><span style="font-size:var(--s-teil);line-height:1">${emo}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-text);font-weight:700">${label}</span>${/^<span class="kanal-unter"/.test(d)?d:`<span style="display:block;font-size:var(--s-klein);color:var(--text2);font-weight:400;margin-top:1px">${d}</span>`}</span><span style="font-size:var(--s-karte);color:var(--text3)">›</span></button>`;   // v896: Adler-Kanäle bringen ihre Unterzeile fertig mit (kanalUnter)
-  const catBtn=(id,emoji,title,desc,grad)=>`<button onclick="elternCatOpen('${id}')" class="btn btn-zeile" style="margin-bottom:8px"><span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon(emoji)}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">${title}</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">${desc}</span></span><span style="font-size:var(--s-teil);color:#64748b">›</span></button>`;
+  const catBtn=(id,emoji,title,desc,grad)=>`<button onclick="elternCatOpen('${id}')" class="btn btn-zeile"><span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon(emoji)}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">${title}</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">${desc}</span></span><span style="font-size:var(--s-teil);color:#64748b">›</span></button>`;
   /* v862 (Charles 18.11., 3.15): oben „Fürs Team“ (Trainerteam, Termine, Kasse), dann „Für die Kinder“, dann „Mehr“.
      Vorher stand „Für die Kinder“ vor dem Weg zum Trainerteam. */
-  html+=sec("Fürs Team");
-  // v637: Der Weg zum Trainerteam steht zuerst und heißt so, wie Eltern danach suchen.
-  html+=catBtn('kontakt','🗣️','Trainerteam kontaktieren','Frage oder Elterngespräch','linear-gradient(135deg,#475569,#334155)');
-  // v718: vorher eine eigene Karte „Termine“ mit nur diesem Knopf
-  html+=`<button type="button" id="alle-termine-kachel" onclick="elternTermineOpen()" class="btn btn-zeile" style="margin-bottom:8px"><span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("📅")}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Alle Termine &amp; Kalender-Abo</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Ganze Saison, im eigenen Kalender abonnieren</span></span><span aria-hidden="true" style="font-size:var(--s-teil);opacity:.85">›</span></button>`;
-  /* v699: Mannschaftskasse als eigene Kachel – alle Eltern lesen Kassenstand und jede Bewegung;
-     darunter „Kasse führen“, nur für die Kasse (elternKasseRolleLoad füllt den Slot). */
-  const mkSaldo=kasse&&kasse.saldo!=null?`Kassenstand ${Number(kasse.saldo).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})} € · Ausgaben und Beiträge`:"Kassenstand, Ausgaben und Beiträge";
-  html+=`<button type="button" id="mannschaftskasse-kachel" onclick="if(typeof mannschaftskasseOpen==='function')mannschaftskasseOpen()" class="btn btn-zeile" style="margin-bottom:8px">
-    <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("💰")}</span><span style="flex:1;min-width:0"><span style="display:block;font-weight:800;font-size:var(--s-karte)">Mannschaftskasse</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">${mkSaldo}</span><span id="mk-beitrag-stand" style="display:block;font-size:var(--s-klein);font-weight:700;margin-top:3px"></span></span><span aria-hidden="true" style="font-size:var(--s-teil);opacity:.85">›</span></button>`;   // v710: Maße wie catBtn – stand sichtbar aus der Flucht
-  html+=`<div id="kasse-verwalten-slot"></div>`;   // v664/v699: „Kasse führen“ – nur für die Kasse
+  /* v926 (Charles 21.11., Bild freigegeben): erst „Für die Kinder“, dann „Fürs Team“ – Kacheln zu zweit statt neun langer
+     Zeilen. Mannschaftskasse steht unter „Mehr vom Team“, „Regeln“ und „Freigaben & Notfallkarte“ sind eine Kachel. */
   html+=sec("🎮 Für die Kinder");
-  html+=`<button onclick="elternKabineStart()" class="btn btn-zeile" style="margin-bottom:8px">
-    <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("🎮")}</span>
-    <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Die Kabine</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Für dein Kind: Galerie, Missionen &amp; Quiz (${XP_ICON} Federn)</span></span>
-    <span style="font-size:var(--s-teil);color:#64748b">›</span>
-  </button>`;
-  html+=`<button onclick="kinderAppOpen()" class="btn btn-zeile" style="margin-bottom:8px">
-    <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("\u{1F4F1}")}</span>
-    <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Kinder-App</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Eigenes Ger\u00e4t koppeln und die Appzeit einstellen</span></span>
-    <span style="font-size:var(--s-teil);opacity:.85">\u203a</span>
-  </button>`;
+  html+='<div class="el-gitter">';
   html+=kids.map(k=>{const kd=k.kader||{};
-    return `<button onclick="elternCatOpen('kind-${k.spieler_id}')" class="btn btn-zeile" style="margin-bottom:8px">
+    return `<button onclick="elternCatOpen('kind-${k.spieler_id}')" class="btn btn-zeile el-breit">
       <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("🃏")}</span>
       <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">${esc(kd.name||"Kind")}${kd.nr!=null?` <span style="font-weight:600;opacity:.8">#${kd.nr}</span>`:""}</span><span id="xp-chip-${k.spieler_id}" style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Karte, Abzeichen, Sprachlob &amp; Statistik</span></span>
       <span style="font-size:var(--s-teil);color:#64748b">›</span>
     </button>`;
   }).join("");
-  html+=sec("Mehr");
-  html+=catBtn('mehr','📰','Mehr vom Team','Nachlesen, Adler Nest, Spieltagsgalerie, Börse, Fundbüro','linear-gradient(135deg,#1e3a8a,#2563eb)');
-  html+=catBtn('regeln','📋','Regeln &amp; Vereinbarungen','Unsere Vereinbarung &amp; das Fairplay-Quiz','linear-gradient(135deg,#15803d,#047857)');
-  html+=catBtn('datenschutz','🔒','Freigaben &amp; Notfallkarte','Foto/Video-Freigabe und Notfallkarte je Kind','linear-gradient(135deg,#0f766e,#115e59)');
+  html+=`<button onclick="elternKabineStart()" class="btn btn-zeile">
+    <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("🎮")}</span>
+    <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Die Kabine</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Für dein Kind: Galerie, Missionen &amp; Quiz (${XP_ICON} Federn)</span></span>
+    <span style="font-size:var(--s-teil);color:#64748b">›</span>
+  </button>`;
+  html+=`<button onclick="kinderAppOpen()" class="btn btn-zeile">
+    <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("\u{1F4F1}")}</span>
+    <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Kinder-App</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Eigenes Ger\u00e4t koppeln und die Appzeit einstellen</span></span>
+    <span style="font-size:var(--s-teil);opacity:.85">\u203a</span>
+  </button>`;
+  html+='</div>';
+  html+=sec("👥 Fürs Team");
+  html+='<div class="el-gitter">';
+  html+=catBtn('kontakt','🗣️','Trainerteam','Frage oder Elterngespräch','');
+  html+=`<button type="button" id="alle-termine-kachel" onclick="elternTermineOpen()" class="btn btn-zeile"><span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("📅")}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Alle Termine</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Ganze Saison, im eigenen Kalender abonnieren</span></span><span aria-hidden="true" style="font-size:var(--s-teil);opacity:.85">›</span></button>`;
+  html+=catBtn('mehr','📰','Mehr vom Team','Nest, Galerie, Kasse, Börse, Fundbüro','');
+  html+=catBtn('regeln','📋','Regeln &amp; Freigaben','Vereinbarung, Quiz, Fotos, Notfallkarte','');
+  html+='</div>';
   // Versionszeile: hilft, wenn jemand „bei mir sieht das anders aus" meldet (v409)
   html+=`<div id="app-version-eltern" style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin:16px 0 4px"></div>`;
   html+=`<div id="el-cat-overlay" style="display:none;position:fixed;inset:0;z-index:10000;background:var(--bg,#f1f5f9);overflow-y:auto"><div style="max-width:560px;margin:0 auto;padding:12px 16px 40px">
@@ -1364,6 +1355,10 @@ async function elternDashLoad(){
         ${(typeof WRAPPED_SICHTBAR!=="undefined"&&WRAPPED_SICHTBAR)?elRow("📊","Saison-Statistik","Spiele, Einsätze &amp; Highlights – ansehen, auf Wunsch teilen",`childWrappedOpen(${k.spieler_id})`,"#a855f7"):""}
       </div>`;}).join("")}
     <div id="cat-mehr" class="el-cat-panel" style="display:none">`;
+  const mkSaldo=kasse&&kasse.saldo!=null?`Kassenstand ${Number(kasse.saldo).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})} € · Ausgaben und Beiträge`:"Kassenstand, Ausgaben und Beiträge";
+  html+=`<button type="button" id="mannschaftskasse-kachel" onclick="if(typeof mannschaftskasseOpen==='function')mannschaftskasseOpen()" class="btn btn-zeile" style="margin-bottom:8px">
+    <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("💰")}</span><span style="flex:1;min-width:0"><span style="display:block;font-weight:800;font-size:var(--s-karte)">Mannschaftskasse</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">${mkSaldo}</span><span id="mk-beitrag-stand" style="display:block;font-size:var(--s-klein);font-weight:700;margin-top:3px"></span></span><span aria-hidden="true" style="font-size:var(--s-teil);opacity:.85">›</span></button>`;   // v710: Maße wie catBtn – stand sichtbar aus der Flucht
+  html+=`<div id="kasse-verwalten-slot"></div>`;   // v664/v699: „Kasse führen“ – nur für die Kasse
   const grp=t=>`<div style="font-size:var(--s-text);font-weight:800;color:var(--text2);margin:14px 4px 6px">${t}</div>`;   // v862 (3.15): Gruppen statt neun Dinge ohne Ordnung
   html+=grp("Lesen");
   html+=elRow("📣","Nachlesen","Ansagen des Trainerteams und Neues in der App – auch was schon gelesen ist","elternNachlesenOpen()","#1e3a8a");   // v859 (3.7)
@@ -1392,9 +1387,9 @@ async function elternDashLoad(){
         <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Fairplay-Quiz</span><span style="display:block;font-size:var(--s-klein);margin-top:1px">✓ Schon gespielt – die ${XP_LABEL} sind beim Kind angekommen</span></span>
       </div>`
     : elRow("🏅","Fairplay-Quiz spielen",`${XP_ICON} 50 ${XP_LABEL} fürs Kind – kurze Fragen zum Codex`,"fairplayQuizStart(window._elternKids)","#15803d");
-  html+=`</div>`; // /cat-regeln
   // ── DATENSCHUTZ & FREIGABEN (NEU): Foto/Video + Notfallkarte pro Kind + Datenexport ──
-  html+=`<div id="cat-datenschutz" class="el-cat-panel" style="display:none">`;
+  html+=`<div class="el-grp-titel" style="font-size:var(--s-klein);font-weight:800;color:var(--text2);margin:14px 2px 6px">Freigaben &amp; Notfallkarte</div>`;
+  html+=`<div id="cat-datenschutz">`;   // v926: Teil von „Regeln & Freigaben“ (eine Kachel)
   html+=elRow("🛡️","So schützen wir eure Fotos &amp; Daten","Warum die App sicherer ist als die WhatsApp-Gruppe – kurz erklärt","datenschutzInfoOpen()","#115e59",true);
   html+=kids.map(k=>{const kn=esc((k.kader&&k.kader.name)||"Kind");const nn=((k.kader&&k.kader.name)||"").replace(/'/g,"");
     return elRow("📸",`Foto- &amp; Video-Freigabe: ${kn}`,"App-intern / Trainingsvideos / öffentlich – jederzeit widerrufbar",`elternFotoConsentOpen(${k.spieler_id},'${nn}')`,"#0f766e")
@@ -1402,6 +1397,7 @@ async function elternDashLoad(){
   }).join("");
   html+=elRow("⚙️","Daten herunterladen oder löschen","Steht jetzt unter „Mein Konto“ (oben ⋯)","elternKontoOpen()","#14b8a6");   // v860
   html+=`</div>`; // /cat-datenschutz
+  html+=`</div>`; // /cat-regeln (v926: mit den Freigaben)
   html+=`<div id="cat-kontakt" class="el-cat-panel" style="display:none">`;
   html+=`<div id="eg-slot"></div>`; // Status einer laufenden Elterngespräch-Anfrage
   html+=elRow("🗣️","Elterngespräch anfragen","Kurz Bescheid sagen – der Trainer meldet sich zur Terminabstimmung","elternGespraechOpen()","#334155");
@@ -1441,6 +1437,7 @@ async function elternDashLoad(){
   if(typeof nestBogenKarte==="function")nestBogenKarte(kids);
   if(typeof steckbriefKarte==="function")steckbriefKarte(kids);             // v922: Steckbrief-Karte (md-fanfakten.js, Welle 2)
   fuerEuchStart();                             // v924: Karussell „Für euch“ beobachtet seine Slots
+  elternTkStart();                             // v926: Termin-Karussell
   window._elternKids=kids;   // v699: die Mannschaftskasse zeigt den Stand der eigenen Kinder beim Öffnen
   elternKasseKachelStand(kids, kasse);   // v716: „Beitrag bezahlt / offen“ direkt auf der Kachel
   elternGenesungLoad(kids);                    // I-A: Genesungsgrüße für pausierte Teamkinder
@@ -1607,25 +1604,18 @@ function elternOffeneRsvpHtml(rows,kids,rsvpAll,ausserId){
     .filter(x=>x.kinder.length);
   if(!offen.length)return "";
   const anzahl=offen.reduce((n,x)=>n+x.kinder.length,0);
-  const zeilen=offen.map(({t,kinder})=>{
+  /* v926: In „Für euch“ steht nur der Hinweis – die Antwortknöpfe stehen einmal, auf der Karte im Termin-Karussell
+     (v686: jeder Termin einmal). „Jetzt antworten“ springt dorthin; liegt der Termin nicht im Karussell, öffnet das Fenster. */
+  const zeilen=offen.slice(0,3).map(({t,kinder})=>{
     const m=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ,col:"#1e3a8a"};
     const d=new Date(t.datum+"T00:00:00"), wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
-    const zeit=elternZeitKurz(t); // v729: mit Ende
-    const kidRows=kinder.map(k=>{
-      const kd=k.kader||{};
-      const btns=Object.keys(EP_RSVP).map(s=>{   // v840: vier Stufen, auch „Krank“
-        const c=EP_RSVP[s];
-        return elternAntwortKnopf({s,on:false,act:`elternRsvp(${t.id},${k.spieler_id},'${s}')`,name:kd.name});
-      }).join("");
-      return `<div style="margin-top:8px">
-        <div style="font-size:var(--s-text);font-weight:700;margin-bottom:5px">${esc(kd.name||"Kind")}${kd.nr!=null?` <span style="color:var(--text3);font-weight:600">#${kd.nr}</span>`:""}</div>
-        <div style="display:flex;gap:6px">${btns}</div></div>`;
-    }).join("");
-    return `<div style="border-top:1px solid #f1f5f9;margin-top:10px;padding-top:10px">
-      <div role="button" tabindex="0" onclick="terminDetailOpen(${t.id})" style="cursor:pointer;min-height:44px;display:flex;align-items:center;gap:6px;font-size:var(--s-text);font-weight:800">${m.icon} ${esc(t.titel||t.gegner||m.label)} <span style="margin-left:auto;color:#2563eb" aria-hidden="true">›</span></div>
-      <div style="font-size:var(--s-klein);color:#64748b">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${zeit?" · "+zeit:""}${t.platz?" · 🏟️ "+esc(t.platz):""}</div>
-      ${kidRows}</div>`;
-  }).join("");
+    const zeit=elternZeitKurz(t);
+    const wer=(kids||[]).length>1?` · ${kinder.map(k=>esc((k.kader&&k.kader.name)||"Kind")).join(", ")}`:"";
+    return `<div class="el-offen-zeile" style="border-top:1px solid #f1f5f9;margin-top:8px;padding-top:8px">
+      <div style="font-size:var(--s-text);font-weight:800">${m.icon} ${esc(t.titel||t.gegner||m.label)}</div>
+      <div style="font-size:var(--s-klein);color:#64748b">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${zeit?" · "+zeit:""}${wer}</div>
+      <button type="button" class="btn btn-p el-offen-los" onclick="elternTkZeigen(${Number(t.id)})" style="width:100%;justify-content:center;margin-top:8px">Jetzt antworten</button></div>`;
+  }).join("")+(offen.length>3?`<div style="font-size:var(--s-klein);color:#64748b;margin-top:8px">und ${offen.length-3} weitere – im Karussell „Nächste Termine“</div>`:"");
   return `<div id="eltern-offen-card" style="background:#fff;border:1px solid #cbd5e1;border-left:4px solid #d97706;border-radius:14px;padding:14px 16px 16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)">
     <div style="display:flex;align-items:baseline;gap:8px">
       <div style="font-size:var(--s-karte);color:#b45309;font-weight:900">❗ Rückmeldung fehlt</div>
@@ -2906,11 +2896,15 @@ async function elternBetreuungLoad(terminId,kids){
   try{const r=await fetch(`${SB_URL}/rest/v1/rpc/betreuung_board`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_termin:terminId})});if(r.ok)board=((await r.json())||[]).map(x=>x.name);}catch(e){}
   const toggles=betreuungKnopf(terminId,kids,mine,"dash");
   const list=board.length?`<b style="color:#059669">${board.map(esc).join(", ")}</b>`:`<span style="color:#b45309;font-weight:700">noch niemand – bitte helft mit ⚠️</span>`;
-  box.innerHTML=`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
-    <div style="font-weight:700;font-size:var(--s-text);margin-bottom:2px">🙋 Betreuung beim Training</div>
-    <div style="font-size:var(--s-klein);color:#64748b;margin-bottom:6px">Mindestens ein Elternteil sollte während des Trainings vor Ort bleiben.</div>
+  const inhalt=`<div style="font-size:var(--s-klein);color:#64748b;margin-bottom:6px">Mindestens ein Elternteil sollte während des Trainings vor Ort bleiben.</div>
     <div style="font-size:var(--s-text);margin-bottom:4px">Vor Ort: ${list}</div>
-    ${toggles}
+    ${toggles}`;
+  /* v926 (Charles 21.11.: „Offenes bleibt groß“): Ist jemand vor Ort eingetragen, steht nur eine Zeile da; ein Tipp klappt auf. */
+  box.innerHTML=board.length
+    ?`<details class="tk-erledigt" style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:4px"><summary>✓ Betreuung: ${board.map(esc).join(", ")}</summary>${inhalt}</details>`
+    :`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
+    <div style="font-weight:700;font-size:var(--s-text);margin-bottom:2px">🙋 Betreuung beim Training</div>
+    ${inhalt}
   </div>`;
 }
 /* Helfer-Aufgaben KOMPAKT in der grossen Termin-Kachel.
@@ -2956,8 +2950,12 @@ async function elternHelferKachelLoad(t){
       ${x.user_id===uid?`<button class="btn btn-sm btn-d" onclick="tdHelferDel(${x.id},${t.id})" aria-label="Eintrag entfernen" style="flex:none;min-width:44px;justify-content:center">✕</button>`:""}
     </div>`).join("");
 
-  box.innerHTML=`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
-    <div style="font-weight:700;font-size:var(--s-text);margin-bottom:2px">🙌 Wer hilft mit?</div>
+  /* v926: Sind alle Aufgaben besetzt, steht nur eine Zeile da („✓ Wer hilft mit: Tee 2 von 2 · …“); ein Tipp klappt auf. */
+  const alleVoll=aufgaben.every(a=>(je[a.t]||[]).length>=a.n);
+  const kurzZeile=aufgaben.map(a=>`${esc(a.t.split(" ")[0])} ${(je[a.t]||[]).length} von ${a.n}`).join(" · ");
+  box.innerHTML=`<${alleVoll?'details class="tk-erledigt"':'div'} style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:${alleVoll?4:10}px">
+    ${alleVoll?`<summary>✓ Wer hilft mit: ${kurzZeile}</summary>`:""}
+    <div style="font-weight:700;font-size:var(--s-text);margin-bottom:2px${alleVoll?";display:none":""}">🙌 Wer hilft mit?</div>
     <div style="font-size:var(--s-klein);color:#64748b;margin-bottom:2px">Ein Tipp genügt – nochmal tippen trägt dich wieder aus.</div>
     ${t.helfer_hinweis?`<div style="font-size:var(--s-klein);color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:6px 9px;margin-top:6px;line-height:1.4">💬 ${esc(t.helfer_hinweis)}</div>`:""}
     ${zeilen}
@@ -2969,7 +2967,7 @@ async function elternHelferKachelLoad(t){
       <input id="helfer-eigen-k" maxlength="60" placeholder="Was übernimmst du?" aria-label="Eigene Aufgabe eintragen" style="flex:1;min-width:0;min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);box-sizing:border-box" onkeydown="if(event.key==='Enter')tdHelferAddEigen(${Number(t.id)},this)">
       <button onclick="tdHelferAddEigen(${Number(t.id)},this)" aria-label="Eigene Aufgabe eintragen" class="btn" style="flex:none;min-width:52px;justify-content:center;font-size:var(--s-karte)">✓</button>
     </div>`:""}
-  </div>`;
+  </${alleVoll?"details":"div"}>`;
 }
 function elternHelferEigenAuf(){
   const b=document.getElementById("helfer-eigen-box"); if(!b)return;
@@ -2997,10 +2995,10 @@ const _elZu=()=>{
 const ELTERN_TOUR=[
   {emo:"🦅", t:"Willkommen bei den Adlern", vor:_elZu,
    d:"Hier läuft alles rund um dein Kind bei der U9 zusammen. Sechs kurze Schritte zeigen dir, wo was ist – du startest sie jederzeit über ⋯ und ❓ oben neu."},
-  {emo:"👍", t:"Der nächste Termin", sel:["#termin-card"], vor:_elZu,
+  {emo:"👍", t:"Die nächsten Termine", sel:["#termin-card"], vor:_elZu,
    d:"Ganz oben steht der nächste Termin. Training gilt als zugesagt – sag nur ab, wenn dein Kind nicht kommt. Bei Spielen und Festivals tippst du auf Zu- oder Absage. Nochmal auf die gewählte Antwort tippen nimmt sie zurück. Ein Tipp auf den Termin zeigt Adresse, Route, „Was muss mit?“ und „Wer hilft mit?“."},
-  {emo:"📬", t:"Noch offen", sel:["#eltern-offen-card","#eltern-todo-btn"],
-   d:"Fehlt eine Rückmeldung oder steht eine Aufgabe für euch an, siehst du es hier gesammelt – auch die ersten Schritte für neue Eltern."},
+  {emo:"📌", t:"Für euch", sel:["#fuer-euch"],
+   d:"Ganz oben steht alles, was gerade zu tun ist: eine fehlende Rückmeldung, die Mitbringliste, der Steckbrief, Aufgaben für euch. Zur Seite wischen zeigt die nächste Karte; ✕ blendet aus, was erledigt ist."},
   {emo:"🎮", t:"Für die Kinder", sel:['button[onclick="elternKabineStart()"]'],
    d:"In der Kabine darf dein Kind spielen: Quiz, Missionen, Sammelalbum – zurück geht es nur mit dem Kabinen-Code vom Trainerteam. Darunter: die Kinder-App fürs eigene Gerät und die Karte deines Kindes, ohne Bewertungszahlen."},
   {emo:"🗣️", t:"Trainerteam erreichen", sel:['button[onclick="elternCatOpen(\'kontakt\')"]'],
@@ -3286,7 +3284,7 @@ async function elternPushHinweis(){
 }
 function elternPushHinweisAn(){ if(typeof pushKarteAn==="function")return pushKarteAn("push-hinweis-slot","parent"); }
 /* ═══ v924 · „Für euch“ – Karussell oben auf der Eltern-Startseite ═══ */
-function fuerEuchKarten(){ const b=document.getElementById("fe-bahn"); if(!b)return []; return [...b.children].flatMap(sl=>[...sl.children]).filter(k=>k.nodeType===1&&!k.hidden); }
+function fuerEuchKarten(){ const b=document.getElementById("fe-bahn"); if(!b)return []; return [...b.children].flatMap(sl=>[...sl.children]).filter(k=>k.nodeType===1&&!k.hidden&&k.style.display!=="none"&&k.innerHTML.trim()!==""); }
 function fuerEuchSync(){
   const sek=document.getElementById("fuer-euch"), b=document.getElementById("fe-bahn"); if(!sek||!b)return;
   const karten=fuerEuchKarten(), n=karten.length;
@@ -3304,9 +3302,77 @@ function fuerEuchSync(){
 function fuerEuchStart(){
   const b=document.getElementById("fe-bahn"); if(!b||b._feBeob)return;
   b._feBeob=true;
-  try{ new MutationObserver(()=>fuerEuchSync()).observe(b,{childList:true,subtree:true}); }catch(e){}
+  try{ new MutationObserver(()=>fuerEuchSync()).observe(b,{childList:true,subtree:true,attributes:true,attributeFilter:["style","hidden"]}); }catch(e){}
   b.addEventListener("scroll",()=>{ clearTimeout(b._feT); b._feT=setTimeout(fuerEuchSync,80); },{passive:true});
   fuerEuchSync();
+}
+
+/* ═══ v926 · „📅 Nächste Termine“ als Karussell (Charles 21.11., Bild freigegeben) ═══
+   Karte 1 ist die volle Terminkarte wie bisher (mit Wetter, Betreuung, Helfern, Spielplan – deren Bausteine laden über
+   feste IDs nach). Dahinter folgen bis zu vier weitere Termine: Datum, Zeit, Adresse mit Route, Rückmeldung je Kind,
+   „Hilfe gesucht“, wenn der Termin Aufgaben für Eltern hat, und „Alles zum Termin ›“ (das Termin-Fenster). */
+function elternTerminKarussell(erste,rows,kids,rsvpAll,termin){
+  if(!termin)return erste;
+  const heute=isoLokal();
+  const weitere=(rows||[]).filter(t=>Number(t.id)!==Number(termin.id)&&String(t.datum)>=heute&&!(typeof terminVorbei==="function"&&terminVorbei(t)))
+    .sort((a,b)=>String(a.datum).localeCompare(String(b.datum))||String(a.uhrzeit||"").localeCompare(String(b.uhrzeit||""))).slice(0,4);
+  return `<section id="termine-karussell" class="tk-sek" aria-label="Nächste Termine">
+    <div class="fe-kopf"><span class="fe-titel">📅 Nächste Termine</span><span id="tk-zahl" class="fe-zahl" aria-live="polite"></span></div>
+    <div id="tk-bahn" class="tk-bahn" tabindex="-1" data-scrollkeep="tk">${erste}${weitere.map(t=>elternTerminKarteKlein(t,kids,rsvpAll)).join("")}</div>
+    <div id="tk-punkte" class="fe-punkte" aria-hidden="true"></div></section>`;
+}
+function elternTerminKarteKlein(t,kids,rsvpAll){
+  kids=kids||[];
+  const m=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ};
+  const ab=_elAbgesagt(t), giltZu=elternGiltZugesagt(t), r=(rsvpAll||{})[t.id]||{};
+  const st=k=>{ const c=r[k.spieler_id]; return c?(typeof c==="string"?c:c.status):null; };
+  const offen=ab||giltZu?[]:kids.filter(k=>!st(k));
+  const st1=kids.length===1?st(kids[0]):null;
+  const zeichen=ab?null:kids.length===1?(st1&&EP_RSVP[st1]?{symbol:EP_RSVP[st1].emo,text:"Rückmeldung: "+EP_RSVP[st1].lbl}:giltZu?{symbol:"✓",text:"Gilt als zugesagt"}:{symbol:"❗",text:"Rückmeldung fehlt"})
+    :(offen.length?{symbol:"❗",text:`Rückmeldung fehlt für ${offen.length} von ${kids.length} Kindern`}:{symbol:"✓",text:"Alle Kinder haben geantwortet"});
+  const band=terminKarteBand({typ:t.typ,datum:t.datum,zeit:t.uhrzeit?String(t.uhrzeit).slice(0,5):"",etikett:"",abgesagt:ab,zeichen,
+    titelHtml:`${m.icon} ${esc(t.titel||t.gegner||m.label)}`});
+  const zeit=elternZeitZeile(t);
+  const rsvpRows=ab?"":kids.map(k=>{ const kd=k.kader||{}, s=st(k);
+    const btns=Object.keys(EP_RSVP).map(x=>{ const on=s===x; return elternAntwortKnopf({s:x,on,act:on?`elternRsvpClear(${t.id},${k.spieler_id})`:`elternRsvp(${t.id},${k.spieler_id},'${x}')`,name:kd.name,vorab:!s}); }).join("");
+    return `<div style="margin-top:10px"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="font-weight:700;font-size:var(--s-text)">${esc(kd.name||"Kind")}</span>
+      <span class="tk-stand" style="margin-left:auto;font-size:var(--s-klein);font-weight:700;color:${s&&EP_RSVP[s]?EP_RSVP[s].col:(giltZu?"#475569":"#b45309")}">${s&&EP_RSVP[s]?EP_RSVP[s].emo+" "+EP_RSVP[s].lbl:(giltZu?"✓ "+EL_GILT_TEXT:"❗ offen")}</span></div>
+      <div style="display:flex;gap:6px">${btns}</div></div>`; }).join("");
+  const aufgaben=(typeof helferTasksFuer==="function")?helferTasksFuer(t.typ,t):[];
+  const hilfe=ab?[]:[t.typ==="training"?"Betreuung vor Ort":"",...aufgaben.map(a=>`${a.t.split(" ")[0]} ${a.kurz(t)}`)].filter(Boolean);
+  return `<div class="tk-karte-klein" data-termin="${Number(t.id)}" style="background:#fff;border-radius:18px;padding:10px 10px 14px;border:1px solid #cbd5e1;box-shadow:0 1px 3px rgba(0,0,0,.07)">
+    ${band}
+    <div style="padding:10px 8px 0">
+      <div style="font-size:var(--s-text);color:#475569;line-height:1.4">${zeit||""}${t.ort?(zeit?" · ":"")+mapsAnchor(t.ort):""}</div>
+      ${(typeof elternAnfahrtHtml==="function")?elternAnfahrtHtml(t):""}
+      ${rsvpRows}
+      ${hilfe.length?`<div class="tk-hilfe" style="margin-top:10px;font-size:var(--s-text);color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:8px 10px">🙌 Hilfe gesucht: ${hilfe.map(esc).join(" · ")}</div>`:""}
+      <button type="button" class="btn" onclick="terminDetailOpen(${Number(t.id)})" style="width:100%;justify-content:center;margin-top:10px">Alles zum Termin ›</button>
+    </div></div>`;
+}
+function elternTkZeigen(id){
+  const b=document.getElementById("tk-bahn"), k=b&&[...b.children].find(x=>Number(x.dataset.termin)===Number(id));
+  if(!k){ if(typeof terminDetailOpen==="function")terminDetailOpen(id); return; }
+  const sek=document.getElementById("termine-karussell");
+  if(sek&&sek.scrollIntoView)sek.scrollIntoView({block:"start",behavior:"smooth"});
+  b.scrollTo({left:k.offsetLeft-b.children[0].offsetLeft,behavior:"smooth"});
+  setTimeout(()=>{ const x=k.querySelector("button[aria-pressed]"); if(x)try{x.focus({preventScroll:true});}catch(e){} elternTkSync(); },450);
+}
+function elternTkSync(){
+  const sek=document.getElementById("termine-karussell"), b=document.getElementById("tk-bahn"); if(!sek||!b)return;
+  const karten=[...b.children], n=karten.length;
+  sek.classList.toggle("tk-einzeln",n<2);
+  karten.forEach((k,i)=>{ k.setAttribute("aria-roledescription","Karte"); k.setAttribute("aria-label",`Termin ${i+1} von ${n}`); });
+  let akt=0; if(n>1&&karten[1]){ const schritt=(karten[1].offsetLeft-karten[0].offsetLeft)||1; akt=Math.max(0,Math.min(n-1,Math.round(b.scrollLeft/schritt))); }
+  const z=document.getElementById("tk-zahl"), pk=document.getElementById("tk-punkte");
+  if(z)z.textContent=n>1?`${akt+1} von ${n}`:"";
+  if(pk)pk.innerHTML=n>1?karten.map((_,i)=>`<i class="${i===akt?"an":""}"></i>`).join(""):"";
+}
+function elternTkStart(){
+  const b=document.getElementById("tk-bahn"); if(!b||b._tkBeob)return;
+  b._tkBeob=true;
+  b.addEventListener("scroll",()=>{ clearTimeout(b._tkT); b._tkT=setTimeout(elternTkSync,80); },{passive:true});
+  elternTkSync();
 }
 
 function elternPushHinweisWeg(){ if(typeof pushKarteWeg==="function")pushKarteWeg("push-hinweis-slot"); }

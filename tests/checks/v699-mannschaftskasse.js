@@ -45,10 +45,13 @@ module.exports = async function (h) {
     const w = ms => new Promise(x => setTimeout(x, ms));
     for (let i = 0; i < 40 && typeof mannschaftskasseOpen !== "function"; i++) await w(100);
     const out = {}, txt = e => e ? e.textContent.replace(/\s+/g, " ").trim() : "";
+    /* seit v926 steht die Kachel unter „Mehr vom Team“ (Charles 21.11.: nichts, was Eltern immer im Blick haben müssen) */
+    out.aufStart = !!document.querySelector("#ep-dash-body > #mannschaftskasse-kachel, .el-gitter #mannschaftskasse-kachel");
+    elternCatOpen("mehr"); await w(200);
     const k = document.getElementById("mannschaftskasse-kachel");
     out.a = { kachel: txt(k), h: k ? Math.round(k.getBoundingClientRect().height) : 0, fuehren: !!document.getElementById("kasse-fuehren-kachel"),
       altKarte: /Kassenstand:/.test(txt(document.getElementById("cat-mehr"))) };
-    k?.click(); for (let i = 0; i < 30 && !document.querySelector("#mk-modal .kasse-zeile"); i++) await w(100); await w(400);
+    k?.click(); elternCatClose(); for (let i = 0; i < 30 && !document.querySelector("#mk-modal .kasse-zeile"); i++) await w(100); await w(400);
     const m = document.getElementById("mk-modal");
     out.b = { role: m && m.getAttribute("role"), modal: m && m.getAttribute("aria-modal"), text: txt(m), zeilen: m ? m.querySelectorAll(".kasse-zeile").length : 0,
       bearbeiten: m ? m.querySelectorAll('[aria-label="Bearbeiten"],[aria-label="Löschen"]').length : -1,
@@ -101,6 +104,7 @@ module.exports = async function (h) {
   if (f1.length) probleme.push("Konsole Eltern: " + f1.slice(0, 2).join(" | "));
   if (f2.length) probleme.push("Konsole Kasse: " + f2.slice(0, 2).join(" | "));
   if (!/Mannschaftskasse/.test(r.a.kachel) || !/152,50/.test(r.a.kachel) || r.a.h < 44) probleme.push(`a) Kachel: ${JSON.stringify(r.a)}`);
+  if (r.aufStart) probleme.push("a) Mannschaftskasse steht noch auf der Startseite");
   if (r.a.fuehren) probleme.push("a) „Kasse führen“ bei normalem Elternteil");
   if (r.a.altKarte) probleme.push("a) alte Teamkasse-Karte steht noch unter „Mehr vom Team“");
   const b = r.b;

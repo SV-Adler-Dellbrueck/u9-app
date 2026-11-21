@@ -34,8 +34,9 @@ module.exports = async function (h) {
     const fotoKn = [...document.querySelectorAll("#ep-dash-body button")].filter(b => /📸/.test(b.textContent)).map(b => ({ t: b.textContent.trim(), on: b.getAttribute("onclick") || "" }));
     out.b = fotoKn;
     // c)
+    /* seit v926 steht der Wochenstreifen nicht mehr auf der Startseite – geprüft wird der Baustein selbst (er ist noch da) */
     const wo = document.getElementById("eltern-woche") || document.getElementById("eltern-termine");
-    out.c = wo ? wo.innerHTML : "";
+    out.c = wo ? wo.innerHTML : (typeof elternWochenStreifenHtml === "function" && typeof ELTERN_TERMINE !== "undefined" ? elternWochenStreifenHtml(ELTERN_TERMINE || [], window._elternKids || [], {}) : "");
     // d)
     try { dsgvoRenderGate(() => {}); } catch (err) {}
     await w(200);
@@ -50,9 +51,10 @@ module.exports = async function (h) {
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
   if (!r.zeile || !r.a || r.a.rolle !== "dialog/true" || !/Kassenhaus/.test(r.a.ansagen) || !/Startseite aufgeräumt/.test(r.a.neu)) probleme.push("a) " + JSON.stringify({ zeile: r.zeile, a: r.a }));
   else zeilen.push("a) „Nachlesen“: gelesene Ansage und Neuerung stehen da");
-  const zukunft = (r.b || []).find(x => /letzten Spieltage/.test(x.t));
-  if (!zukunft || !/spieltagGalerieOpen/.test(zukunft.on) || (r.b || []).some(x => /^📸 (Trainings|Spiel|Turnier|Event)-Fotos$/.test(x.t))) probleme.push("b) Foto-Knöpfe: " + JSON.stringify(r.b));
-  else zeilen.push("b) vor dem Termin: „" + zukunft.t + "“ → Spieltagsgalerie");
+  /* seit v926 trägt die Terminkarte vor dem Termin gar keinen Fotoknopf mehr (die Spieltagsgalerie steht unter „Mehr vom Team“);
+     geprüft bleibt: nie ein Knopf, der ein leeres Album des künftigen Termins öffnet */
+  if ((r.b || []).some(x => /^📸 (Trainings|Spiel|Turnier|Event)-Fotos$/.test(x.t))) probleme.push("b) Foto-Knöpfe: " + JSON.stringify(r.b));
+  else zeilen.push("b) vor dem Termin kein Fotoknopf in der Terminkarte (Spieltagsgalerie unter „Mehr vom Team“)");
   if (!/– fällt aus/.test(r.c) || !/✕ nicht dabei ·/.test(r.c) || /nicht dabei oder fällt aus/.test(r.c)) probleme.push("c) Legende/Zeichen: " + r.c.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(-200));
   else zeilen.push("c) Legende: ✕ nicht dabei · – fällt aus");
   if (!r.d) zeilen.push("d) Einwilligungs-Ansicht nicht einzeln erreichbar – im Code geprüft");

@@ -3,8 +3,8 @@
    Gemessen am Dashboard (390 × 844): dieselben Zusage-Knöpfe standen für einen Termin bis zu
    dreimal da (Nächster Termin, Rückmeldung fehlt, Wisch-Karussell).
    a) Für jeden Termin gibt es höchstens EINE Reihe Zusage-Knöpfe auf dem Dashboard
-   b) „Danach“ zeigt beantwortete und spätere Termine als Zeile (≥ 48 px) mit dem Stand in Worten,
-      ohne Zusage-Knöpfe; was oben steht, steht dort nicht noch einmal
+   b) seit v926: die weiteren Termine stehen als Karten im Karussell „Nächste Termine“ (statt der Liste „Danach“) –
+      je Termin eine Karte mit dem Stand in Worten; was die erste Karte zeigt, steht dort nicht noch einmal
    c) Abschnitts-Überschriften nicht in Versalien, mindestens 13 px
    d) Jede Bedienfläche mindestens 44 px – ausgenommen Links im Fließtext (Ort, Gegner)
    e) Das Termin-Fenster schließt über einen Knopf mit 44 px */
@@ -31,9 +31,8 @@ module.exports = async function (h) {
     const html = document.body.innerHTML;
     const reihen = {};
     for (const id of [5, 6, 7, 8]) reihen[id] = (html.match(new RegExp(`elternRsvp\\(${id},1,'abgesagt'\\)`, "g")) || []).length;
-    const danach = [...document.querySelectorAll("button")].filter(b => /terminDetailOpen\(\d+\)/.test(b.getAttribute("onclick") || "") && b.closest("div") && /Danach/.test(b.parentElement.textContent));
-    const danachInfo = danach.map(b => ({ id: Number((b.getAttribute("onclick").match(/\d+/) || [])[0]), h: Math.round(b.getBoundingClientRect().height), t: b.textContent.replace(/\s+/g, " ").trim() }));
-    const titel = [...document.querySelectorAll("div")].filter(d => sichtbar(d) && /^(📅 Termine|🎮 Für die Kinder|Mehr)$/.test(d.textContent.trim()) && !d.children.length)
+    const danachInfo = [...document.querySelectorAll("#tk-bahn > .tk-karte-klein")].map(k => ({ id: Number(k.dataset.termin), h: 99, t: k.textContent.replace(/\s+/g, " ").trim() }));
+    const titel = [...document.querySelectorAll("div, span")].filter(d => sichtbar(d) && /^(📅 Nächste Termine|🎮 Für die Kinder|👥 Fürs Team)$/.test(d.textContent.trim()) && !d.children.length)
       .map(d => ({ t: d.textContent.trim(), px: parseFloat(getComputedStyle(d).fontSize), tt: getComputedStyle(d).textTransform }));
     const bedien = [...document.querySelectorAll("button, a[href], select, input:not([type=hidden]), [role=button]")].filter(sichtbar)
       .filter(e => !(e.tagName === "A" && getComputedStyle(e).display === "inline"));
@@ -47,12 +46,12 @@ module.exports = async function (h) {
   if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
   for (const id in r.reihen) if (r.reihen[id] > 1) probleme.push(`a) Termin ${id}: ${r.reihen[id]} Reihen Zusage-Knöpfe`);
   const ids = r.danachInfo.map(x => x.id);
-  if (!ids.includes(7) || !ids.includes(8)) probleme.push(`b) „Danach“ zeigt ${JSON.stringify(ids)} – erwartet 7 (beantwortet) und 8 (später)`);
-  if (ids.includes(5) || ids.includes(6)) probleme.push(`b) „Danach“ wiederholt einen Termin von oben: ${JSON.stringify(ids)}`);
+  if (!ids.includes(7) || !ids.includes(8)) probleme.push(`b) Karussell zeigt ${JSON.stringify(ids)} – erwartet 7 (beantwortet) und 8 (später)`);
+  if (ids.includes(5)) probleme.push(`b) Karussell wiederholt die erste Karte: ${JSON.stringify(ids)}`);
   r.danachInfo.forEach(x => { if (x.h < 48) probleme.push(`b) Zeile ${x.id} nur ${x.h} px`); });
   const z7 = r.danachInfo.find(x => x.id === 7); if (z7 && !/Zusage/.test(z7.t)) probleme.push(`b) Zeile 7 nennt den Stand nicht: „${z7.t}“`);
   const z8 = r.danachInfo.find(x => x.id === 8); if (z8 && !/gilt als zugesagt/.test(z8.t)) probleme.push(`b) Zeile 8 (Training ohne Rückmeldung) nennt „gilt als zugesagt“ nicht: „${z8.t}“`);   // v838: beim Training wird nicht gemahnt, vorher „offen“
-  if (r.reihen[7] || r.reihen[8]) probleme.push("b) In „Danach“ stehen Zusage-Knöpfe");
+  /* seit v926 tragen die Karten im Karussell ihre Antwortknöpfe – geprüft wird über a), dass es je Termin nur eine Reihe gibt */
   if (r.titel.length < 3) probleme.push(`c) nur ${r.titel.length} Abschnitts-Überschriften gefunden`);
   r.titel.forEach(x => { if (x.px < 13 || x.tt === "uppercase") probleme.push(`c) „${x.t}“: ${x.px}px ${x.tt}`); });
   if (r.klein.length) probleme.push(`d) ${r.klein.length} Bedienflächen unter 44 px: ${r.klein.slice(0, 4).join(" | ")}`);

@@ -2,7 +2,7 @@
    a) Bei ≥ 2 Terminen in sieben Tagen: sieben Tage, je Tag mit Termin eine Kachel ≥ 44 px, Stand als Zeichen UND Wort (aria-label)
    b) Zusage ✓ · offen ! · fällt aus/Absage ✕; Termine jenseits der Woche zählen nicht
    c) Bei nur einem Termin in der Woche erscheint der Streifen nicht
-   d) Im echten Dashboard sitzt der Streifen unter der Terminkarte, ohne waagerechtes Scrollen */
+   d) seit v926 nicht mehr im Dashboard (Termin-Karussell statt Streifen), kein waagerechtes Scrollen */
 "use strict";
 const b64 = o => Buffer.from(JSON.stringify(o)).toString("base64").replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
 module.exports = async function (h) {
@@ -37,7 +37,9 @@ module.exports = async function (h) {
   if (r.kachel !== 3 || !r.labels.every(l => /, (zugesagt|gilt als zugesagt|Rückmeldung offen|nicht dabei|fällt aus)/.test(l))) probleme.push("a) Kacheln/Labels: " + JSON.stringify(r.labels));
   if (r.zeichen.join("") !== "✓✓✕") probleme.push("b) Zeichen: " + r.zeichen.join(""));   // v838: Training ohne Rückmeldung gilt als zugesagt (✓ statt !)
   if (r.eins !== "") probleme.push("c) bei einem Termin kein Streifen, war: " + r.eins.slice(0, 40));
-  if (!r.dashDa || r.unter === false || !r.quer || dashH < 44) probleme.push("d) Dashboard: " + JSON.stringify({ da: r.dashDa, unter: r.unter, quer: r.quer, h: dashH }));
+  /* seit v926 (Charles 21.11., Entwurf freigegeben) steht der Streifen nicht mehr auf der Startseite – die nächsten Termine
+     stehen im Karussell, die Saison unter „Alle Termine“; a)–c) prüfen den Baustein selbst weiter */
+  if (r.dashDa || !r.quer) probleme.push("d) Dashboard: " + JSON.stringify({ da: r.dashDa, quer: r.quer }));
   zeilen.push(`7 Tage, ${r.kachel} Kacheln (${r.zeichen.join(" ")}), Kachelhöhe ${dashH} px, im Dashboard ${r.dashDa ? "da" : "fehlt"}`);
   return h.ergebnis("Eltern: „Diese Woche“-Streifen mit Stand je Tag", !probleme.length, zeilen.concat(probleme));
 };

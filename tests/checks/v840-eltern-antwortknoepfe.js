@@ -24,9 +24,10 @@ module.exports = async function (h) {
       p: b.getAttribute("aria-pressed"), l: b.getAttribute("aria-label") || "", zeilen: Math.round(b.getBoundingClientRect().height / parseFloat(getComputedStyle(b).lineHeight || 16)) }));
     const out = {};
     out.karte = lies(document.getElementById("termin-card"), 'button[onclick*="elternRsvp"]');
-    out.offen = lies(document.getElementById("eltern-offen-card"), 'button[onclick^="elternRsvp("]').slice(0, 4);
+    /* seit v926 stehen die Knöpfe für weitere Termine auf den Karten im Termin-Karussell („Rückmeldung fehlt“ ist nur noch ein Hinweis) */
+    out.offen = lies(document.querySelector("#tk-bahn .tk-karte-klein"), 'button[onclick^="elternRsvp("]').slice(0, 4);
     if (typeof tmDetailOpen === "function" || typeof elternTerminDetail === "function") { /* Termin-Fenster */ }
-    const oeffner = document.querySelector('#eltern-offen-card [onclick*="Detail"], #eltern-offen-card [onclick*="tdOpen"], #eltern-offen-card [onclick*="terminDetail"]');
+    const oeffner = document.querySelector('#tk-bahn .tk-karte-klein [onclick*="terminDetailOpen"]');
     if (oeffner) { oeffner.click(); await w(900); }
     const fenster = [...document.querySelectorAll('[role="dialog"]')].find(d => d.querySelector('button[onclick^="tdRsvp("]'));
     out.fenster = lies(fenster, 'button[onclick^="tdRsvp("]'); if (fenster) fenster.remove();
