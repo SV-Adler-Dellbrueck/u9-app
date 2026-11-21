@@ -1,0 +1,66 @@
+# v930 · Vertonung Lennart – erzeugt die Vorlese-Aufnahmen mit der Maskottchen-Stimme „Lennart – Energetic“
+# (ElevenLabs, Modell eleven_v4; Beschluss 21.11.2026) und öffnet einen Pull Request mit den MP3.
+# Nur von Hand: Actions → „Vertonung Lennart“ → Run workflow. Texte und Dateinamen kommen aus
+# tools/quiz-audio-namen.js (dieselbe Liste wie doku/vertonung-lennart/sprechtexte.md).
+# Der Schlüssel steht nur im Secret ELEVENLABS_API_KEY – nie im Repo, nie im Log.
+name: Vertonung Lennart
+
+on:
+  workflow_dispatch:
+    inputs:
+      modus:
+        description: "fehlend = nur fehlende Dateien · alle = alles neu (ersetzt alte Aufnahmen, löscht verwaiste)"
+        type: choice
+        options: [fehlend, alle]
+        default: fehlend
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: vertonung-lennart
+  cancel-in-progress: false
+
+jobs:
+  vertonen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Aufnahmen erzeugen
+        id: erzeugen
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          MODUS: ${{ inputs.modus }}
+        run: node tools/vertonung-lennart.mjs
+
+      - name: Pull Request öffnen
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MODUS: ${{ inputs.modus }}
+        run: |
+          if [ -z "$(git status --porcelain -- audio)" ]; then echo "Keine geänderten Aufnahmen – kein Pull Request."; exit 0; fi
+          zweig="vertonung/lennart-${MODUS}-${GITHUB_RUN_ID}"
+          node -e '
+            const fs=require("fs"); let e={}; try{e=JSON.parse(fs.readFileSync(".vertonung-ergebnis.json","utf8"))}catch(x){}
+            const z=[`Erzeugt von der Action „Vertonung Lennart“ (Modus ${process.env.MODUS}), Lauf ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}.`,"",
+              `Stimme „Lennart – Energetic“ (HxvFDONerAuYFCkD1hBR), Modell eleven_v4 · ${e.erzeugt??"?"} Dateien · ${e.zeichen??"?"} Zeichen · ${(e.geloescht||[]).length} verwaiste gelöscht.`];
+            if((e.fehler||[]).length) z.push("","**Fehler:**",...e.fehler.map(x=>"- "+x));
+            z.push("","Vor dem Mergen: Stichprobe anhören, Ausnahmeliste in tests/checks/v567-quiz-audio.js nachziehen, node tests/run.js.");
+            fs.writeFileSync("/tmp/pr.md",z.join("\n"));'
+          rm -f .vertonung-ergebnis.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$zweig"
+          git add -A -- audio
+          git commit -q -m "Vertonung Lennart (${MODUS}): Aufnahmen unter audio/"
+          git push -q -u origin "$zweig"
+          gh pr create --draft --base "${GITHUB_REF_NAME}" --head "$zweig" --title "Vertonung Lennart (${MODUS})" --body-file /tmp/pr.md \
+            || echo "::warning::Pull Request konnte nicht geöffnet werden (Einstellung „Allow GitHub Actions to create pull requests“?). Zweig $zweig ist gepusht."

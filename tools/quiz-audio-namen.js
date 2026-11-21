@@ -8,6 +8,7 @@
    Aufruf im Repo-Wurzelverzeichnis:  node tools/quiz-audio-namen.js            (alle)
                                       node tools/quiz-audio-namen.js --fehlend  (nur ohne Datei)
                                       node tools/quiz-audio-namen.js --liste [--schreiben]
+                                      node tools/quiz-audio-namen.js --json     (für die Action „Vertonung Lennart“)
 
    v928 · `--liste` druckt die Vorlage für die Gesamtvertonung mit der Maskottchen-Stimme „Lennart – Energetic“
    (ElevenLabs, eleven_v4; Beschluss 21.11.2026): alle Taktik-Szenarien, die Fragen der Adler-Schule
@@ -43,6 +44,23 @@ function hash(text) {
 }
 
 if (process.argv.includes("--liste")) { liste(); process.exit(0); }
+if (process.argv.includes("--json")) { process.stdout.write(JSON.stringify(eintraege(), null, 1)); process.exit(0); }
+/* v930: alle Sprechtexte als Liste {ordner, datei, text, quelle} – dieselbe Quelle wie --liste, damit Liste und
+   Aufnahmen nie auseinanderlaufen. Gleiche Texte (etwa dieselbe Antwort in zwei Szenen) stehen nur einmal da. */
+function eintraege() {
+  let K = { fragen: [], merkkarten: [] };
+  try { K = JSON.parse(fs.readFileSync(path.join(WURZEL, "uebungen", "kinderfragen.json"), "utf8")); } catch (e) {}
+  const aus = [], gesehen = new Set();
+  const dazu = (ordner, roh, quelle) => { const text = sprechtext(roh), datei = hash(text) + ".mp3", k = ordner + "/" + datei;
+    if (gesehen.has(k)) return; gesehen.add(k); aus.push({ ordner, datei, text, quelle }); };
+  S.forEach((sc, i) => dazu("audio/quiz", sc.desc + " " + sc.task, `Szenario ${i + 1} „${sc.title}“`));
+  (K.fragen || []).forEach(f => {
+    dazu("audio/schule", f.frage + (f.typ === "ab" ? " Bild A oder Bild B?" : ""), f.id);
+    if (f.typ === "szene") (f.optionen || []).forEach((o, i) => dazu("audio/schule", o, `${f.id} Antwort ${i + 1}`));
+  });
+  (K.merkkarten || []).forEach(m => dazu("audio/schule", m.merksatz, m.id));
+  return aus;
+}
 function liste() {
   let K = { fragen: [], merkkarten: [] };
   try { K = JSON.parse(fs.readFileSync(path.join(WURZEL, "uebungen", "kinderfragen.json"), "utf8")); } catch (e) {}
