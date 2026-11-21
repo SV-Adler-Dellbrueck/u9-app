@@ -37,7 +37,7 @@ summary(`### Vertonung Lennart (${modus})\n\n${auswahl.length} von ${alle.length
 if (zeichen > GRENZE) abbruch(`${zeichen} Zeichen – mehr als die Grenze von ${GRENZE}. Nichts erzeugt.`);
 if (nurZaehlen) process.exit(0);
 if (!auswahl.length) { console.log("Nichts zu tun."); process.exit(0); }
-if (!schluessel) abbruch("Secret ELEVENLABS_API_KEY fehlt (Repo → Settings → Secrets and variables → Actions).");
+if (!schluessel) abbruch("Secret fehlt – erwartet ADLERAPPELEVENLABS oder ELEVENLABS_API_KEY (https://github.com/SV-Adler-Dellbrueck/u9-app/settings/secrets/actions).");
 
 const kopf = () => ({ "xi-api-key": schluessel, "Accept": "application/json" });
 async function holen(url, opt = {}) {
