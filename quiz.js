@@ -10,18 +10,28 @@
    TAKTIK-QUIZ
 ═══════════════════════════════════ */
 
+/* v927 · Jeder Block nennt seine Szenarien selbst (von/bis = Index in TQ_SCENARIOS, bis exklusiv) und sein Feld.
+   Der Index im Array ist der Schlüssel des gespeicherten Fortschritts (adler_quiz_progress, quiz_progress) – neue
+   Blöcke werden deshalb nur ANGEHÄNGT. Die Anzeige-Reihenfolge steht in TQ_GRUPPEN, nicht in der Array-Reihenfolge. */
 const TQ_BLOCKS=[
-  {name:"Grundlagen der Raute",icon:"ti-diamond",col:"#2563eb"},
-  {name:"ADLER & IGEL",icon:"ti-arrows-exchange",col:"#7c3aed"},
-  {name:"Umschalten – Ball weg, Ball da",icon:"ti-bolt",col:"#dc2626"},
-  {name:"Spielaufbau",icon:"ti-arrow-up-right",col:"#0891b2"},
-  {name:"Flügel & Konter",icon:"ti-run",col:"#ea580c"},
-  {name:"Ecken, Einwürfe & Freistöße",icon:"ti-star",col:"#ca8a04"},
-  {name:"Torwartspiel",icon:"ti-shield-check",col:"#059669"},
-  {name:"Ballbesitz & Geduld",icon:"ti-clock",col:"#0d9488"},
-  {name:"Verteidigen als Team",icon:"ti-shield",col:"#4f46e5"},
-  {name:"Spiel lesen",icon:"ti-brain",col:"#db2777"}
+  {name:"Grundlagen der Raute",icon:"ti-diamond",col:"#2563eb",von:0,bis:10,feld:"4+1"},
+  {name:"ADLER & IGEL",icon:"ti-arrows-exchange",col:"#7c3aed",von:10,bis:20,feld:"4+1"},
+  {name:"Umschalten – Ball weg, Ball da",icon:"ti-bolt",col:"#dc2626",von:20,bis:30,feld:"4+1"},
+  {name:"Spielaufbau",icon:"ti-arrow-up-right",col:"#0891b2",von:30,bis:40,feld:"4+1"},
+  {name:"Flügel & Konter",icon:"ti-run",col:"#ea580c",von:40,bis:50,feld:"4+1"},
+  {name:"Ecken, Einwürfe & Freistöße",icon:"ti-star",col:"#ca8a04",von:50,bis:60,feld:"4+1"},
+  {name:"Torwartspiel",icon:"ti-shield-check",col:"#059669",von:60,bis:70,feld:"4+1"},
+  {name:"Ballbesitz & Geduld",icon:"ti-clock",col:"#0d9488",von:70,bis:80,feld:"4+1"},
+  {name:"Verteidigen als Team",icon:"ti-shield",col:"#4f46e5",von:80,bis:90,feld:"4+1"},
+  {name:"Spiel lesen",icon:"ti-brain",col:"#db2777",von:90,bis:100,feld:"4+1"},
+  {name:"3+1 – Raute ohne Aufpasser",icon:"ti-diamond",col:"#0ea5e9",von:100,bis:110,feld:"3+1"},
+  {name:"FUNiño – Dreieck ohne Jäger",icon:"ti-triangle",col:"#16a34a",von:110,bis:120,feld:"funino"}
 ];
+const TQ_GRUPPEN=[{titel:"So spielen wir",bloecke:[10,11]},{titel:"4+1 – mit Aufpasser und Jäger",bloecke:[0,1,2,3,4,5,6,7,8,9]}];
+const TQ_FELD_TEXT={"4+1":"die Raute","3+1":"das 3+1","funino":"FUNiño"};
+/* Medaille und „gemeistert“ im Verhältnis zur Blockgröße (bei 10 Fragen wie bisher 9/7/5). */
+function tqMedaille(score,total){ const r=total?score/total:0; return r>=0.9?"🥇":r>=0.7?"🥈":r>=0.5?"🥉":""; }
+function tqGemeistert(d){ return !!(d&&d.total&&d.score/d.total>=0.7); }
 const TQ_PROGRESS_KEY="adler_quiz_progress";
 let tqActive=false,tqIdx=0,tqScore=0,tqTotal=0,tqChecked=false;
 let tqBlock=-1,tqPlayer=null,tqPlayerRole="";
@@ -265,7 +275,7 @@ function tqRenderTrainerView(){
   let html='<div style="overflow-x:auto"><table class="card" style="width:100%;border-collapse:collapse;font-size:11px">';
   html+='<tr style="background:var(--surface2);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">';
   html+='<td style="padding:6px 8px">Spieler</td>';
-  TQ_BLOCKS.forEach((b,i)=>{html+=`<td style="padding:6px 4px;text-align:center;min-width:50px" title="${b.name}"><i class="${b.icon}" style="font-size:12px"></i><br>${i+1}</td>`;});
+  TQ_BLOCKS.forEach((b,i)=>{html+=`<td style="padding:6px 4px;text-align:center;min-width:50px" title="${b.name}"><i class="ti ${b.icon}" style="font-size:12px"></i><br>${i+1}</td>`;});
   html+='<td style="padding:6px 8px;text-align:center">Gesamt</td></tr>';
   players.forEach(name=>{
     const pp=progress[name]||{};
@@ -276,9 +286,9 @@ function tqRenderTrainerView(){
       if(d){
         const pct=Math.round(d.score/d.total*100);
         const col=pct>=80?"#16a34a":pct>=50?"#b45309":"#dc2626";
-        const medaille=d.score>=9?" 🥇":d.score>=7?" 🥈":d.score>=5?" 🥉":""; // K4
+        const medaille=tqMedaille(d.score,d.total); // K4, v927 im Verhältnis
         totalScore+=d.score;totalQ+=d.total;
-        html+=`<td style="padding:5px 4px;text-align:center;color:${col};font-weight:700" title="${d.score}/${d.total} am ${d.date}">${pct}%${medaille}</td>`;
+        html+=`<td style="padding:5px 4px;text-align:center;color:${col};font-weight:700" title="${d.score}/${d.total} am ${d.date}">${pct}%${medaille?" "+medaille:""}</td>`;
       }else{
         html+='<td style="padding:5px 4px;text-align:center;color:var(--text3)">–</td>';
       }
@@ -487,12 +497,12 @@ function tqStart(){
 // Taktik-Quiz-Einstieg als Karte (wie wqRenderLauncher) – klappt die 10 Blöcke auf.
 function tqRenderTaktikLauncher(pp){
   pp=pp||{};
-  const done=TQ_BLOCKS.filter((b,i)=>pp[i]&&pp[i].score>=7).length, total=TQ_BLOCKS.length;
+  const done=TQ_BLOCKS.filter((b,i)=>tqGemeistert(pp[i])).length, total=TQ_BLOCKS.length;
   const pct=Math.round(done/total*100);
   return `<div class="card" role="button" tabindex="0" style="padding:0;margin-top:10px;overflow:hidden;cursor:pointer" onclick="tqBlocksShow()">
     <div style="background:linear-gradient(135deg,#7c3aed,#2563eb);padding:12px 14px;color:#fff">
       <div style="font-size:14px;font-weight:800;margin-bottom:2px">🎯 Taktik-Quiz</div>
-      <div style="font-size:11px;opacity:.95;margin-bottom:8px">Die Raute verstehen – ${total} Blöcke Spielverständnis</div>
+      <div style="font-size:11px;opacity:.95;margin-bottom:8px">3+1, FUNiño und Raute – ${total} Blöcke Spielverständnis</div>
       <div style="height:8px;background:rgba(255,255,255,.25);border-radius:4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:#fbbf24;border-radius:4px;transition:width .4s"></div></div>
       <div style="font-size:10px;margin-top:5px;opacity:.9">${done}/${total} Blöcke gemeistert</div>
     </div>
@@ -522,18 +532,23 @@ function tqBlocksShow(){
     <div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:2px">Wähle einen Block!</div>
     <div style="font-size:11px;color:var(--text2);margin-bottom:12px">Jeder Block hat 10 Fragen. Dein Fortschritt wird gespeichert.</div>
     <div id="tq-blocks-grid" style="display:flex;flex-direction:column;gap:8px">`;
-  TQ_BLOCKS.forEach((b,i)=>{
-    const bp=pp[i];
-    const pct=bp?Math.round(bp.score/bp.total*100):0;
-    // gemeistert (>=7) = Medaille; angefangen (1..6) = klarer Hinweis, damit gespielte
-    // Bloecke nicht "unberuehrt" aussehen (Bugfix: Federn da, Block sah leer aus).
-    const medaille=bp?(bp.score>=9?" 🥇":bp.score>=7?" 🥈":bp.score>=5?" 🥉":bp.score>=1?" ▶":""):"";
-    const status=bp?(bp.score>=7?"":" · angefangen"):"";
-    html+=quizChoiceCard({
-      icon:`<i class="ti ${b.icon}" style="color:${b.col||"var(--purple)"}"></i>`,
-      titel:`${b.name}${medaille}`, fertig:!!(bp&&bp.score>=7), pct, col:b.col||"var(--purple)",
-      sub:`Block ${i+1}${bp?" · "+bp.score+"/"+bp.total+" richtig"+status:" · 10 Fragen"}`,
-      onclick:`tqStartBlock(${i})`
+  TQ_GRUPPEN.forEach(g=>{
+    html+=`<div class="tq-gruppe" style="font-size:13px;font-weight:800;color:var(--text);margin:6px 0 0">${esc(g.titel)}</div>`;
+    g.bloecke.forEach(i=>{
+      const b=TQ_BLOCKS[i]; if(!b)return;
+      const bp=pp[i], n=b.bis-b.von;
+      const pct=bp?Math.round(bp.score/bp.total*100):0;
+      // gemeistert (>=70 %) = Medaille; angefangen = klarer Hinweis, damit gespielte
+      // Bloecke nicht "unberuehrt" aussehen (Bugfix: Federn da, Block sah leer aus).
+      const m=bp?tqMedaille(bp.score,bp.total):"";
+      const medaille=bp?(m?" "+m:bp.score>=1?" ▶":""):"";
+      const status=bp?(tqGemeistert(bp)?"":" · angefangen"):"";
+      html+=quizChoiceCard({
+        icon:`<i class="ti ${b.icon}" style="color:${b.col||"var(--purple)"}"></i>`,
+        titel:`${b.name}${medaille}`, fertig:tqGemeistert(bp), pct, col:b.col||"var(--purple)",
+        sub:bp?`${bp.score}/${bp.total} richtig${status}`:`${n} Fragen`,
+        onclick:`tqStartBlock(${i})`
+      });
     });
   });
   html+=`</div>`;
@@ -566,12 +581,12 @@ async function wcDone(challengeId,btn){
   }catch(e){ toast("Hat nicht geklappt (online & angemeldet?)","err"); if(btn)btn.disabled=false; }
 }
 // Adler-Stickerheft: pro gemeistertem Block (>=7) ein farbiger Sticker, sonst ausgegraut
-const TQ_STICKERS=["💎","🦅","⚡","🎯","🏃","🥅","🛡️","👟","🧠","🔥"];
+const TQ_STICKERS=["💎","🦅","⚡","🎯","🏃","🥅","🛡️","👟","🧠","🔥","🔷","🔺"];
 function tqRenderStickers(pp){
   pp=pp||{};
   const items=TQ_BLOCKS.map((b,i)=>{
     const bp=pp[i];
-    const gold=bp&&bp.score>=9, done=bp&&bp.score>=7;
+    const gold=!!bp&&tqMedaille(bp.score,bp.total)==="🥇", done=tqGemeistert(bp);
     const emo=TQ_STICKERS[i]||"⭐";
     const style=done?"":"filter:grayscale(100%);opacity:.35";
     return `<div style="text-align:center">
@@ -579,10 +594,10 @@ function tqRenderStickers(pp){
       <div style="font-size:8px;color:var(--text3);line-height:1.1;margin-top:2px">${done?(gold?"🥇 ":"")+esc(b.name.split(" ")[0]):"?"}</div>
     </div>`;
   }).join("");
-  const geschafft=TQ_BLOCKS.filter((b,i)=>pp[i]&&pp[i].score>=7).length;
+  const geschafft=TQ_BLOCKS.filter((b,i)=>tqGemeistert(pp[i])).length;
   return `<div class="card" style="padding:10px 12px;margin-top:10px">
     <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--purple-text);margin-bottom:8px">🏅 Dein Sticker-Heft (${geschafft}/${TQ_BLOCKS.length})</div>
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">${items}</div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px">${items}</div>
   </div>`;
 }
 // Kooperatives Team-Barometer: Summe aller gelösten Aufgaben des Teams -> gemeinsames Ziel
@@ -618,8 +633,8 @@ function tqSelectPlayer(name){
 
 function tqStartBlock(block){
   tqBlock=block;
-  const start=block*10,end=Math.min(start+10,TQ_SCENARIOS.length);
-  tqScenarios=TQ_SCENARIOS.slice(start,end);
+  const b=TQ_BLOCKS[block]||{von:block*10,bis:block*10+10};
+  tqScenarios=TQ_SCENARIOS.slice(b.von,Math.min(b.bis,TQ_SCENARIOS.length));
   tqActive=true;tqIdx=0;tqScore=0;tqTotal=0;tqChecked=false;
   document.getElementById("taktik-field")?.classList.add("quiz-mode");
   tqLoadScenario(0);
@@ -633,6 +648,7 @@ function tqStop(){
   tqActive=false;tqBlock=-1;tqCurrentOpps=[];
   tqChipRemove(); // K6
   document.getElementById("taktik-field")?.classList.remove("quiz-mode");
+  tqFeldZurueck(); // v927: Taktikboard-Feld wie vorher
   if(document.body.classList.contains("quiz-extern")){
     tqStart();return;
   }
@@ -669,6 +685,7 @@ function tqLoadScenario(idx){
       <div id="tq-feedback"></div>
     </div>`;
 
+  tqFeldZeichnen(sc.feld||TQ_BLOCKS[tqBlock]?.feld||"4+1"); // v927: Feld je Spielform
   tbField=sc.start.map(s=>({name:s.name,x:s.x,y:s.y,cls:s.cls,role:s.role,locked:s.locked||false}));
   tbBall={x:sc.ball.from.x,y:sc.ball.from.y};
   tbBench=[];
@@ -801,6 +818,8 @@ function tqRewardAnimation(sc){
   },550);
 }
 
+/* v927: Lösungskreise mit lesbarer Schrift (≥ 11,5 px, v683) – dafür die Kurzform der Rolle. */
+const TQ_ROLLE_KURZ={"TW":"TW","Aufpasser":"Auf","Flitzer L":"FL","Flitzer R":"FR","Jäger":"Jä"};
 function tqShowSolution(sc){
   const tokensEl=document.getElementById("taktik-tokens");
   if(!tokensEl)return;
@@ -809,7 +828,7 @@ function tqShowSolution(sc){
     alts.forEach((t,ai)=>{
       const marker=document.createElement("div");
       marker.style.cssText=`position:absolute;z-index:7;left:${t.x}%;top:${t.y}%;transform:translate(-50%,-50%);width:${t.r*2.2}%;aspect-ratio:1;border-radius:50%;border:3px dashed #22c55e;background:rgba(34,197,94,.15);pointer-events:none;display:flex;align-items:center;justify-content:center;opacity:${ai===0?1:.5}`;
-      marker.innerHTML=`<span style="font-size:7px;font-weight:700;color:#15803d;text-align:center;line-height:1.2">${role}${ai>0?" (auch ok)":""}</span>`;
+      marker.innerHTML=`<span class="tq-loes-text" style="font-size:12px;font-weight:800;color:#14532d;background:rgba(255,255,255,.92);border-radius:6px;padding:1px 5px;text-align:center;line-height:1.25">${esc(TQ_ROLLE_KURZ[role]||role)}${ai>0?" (auch ok)":""}</span>`;
       tokensEl.appendChild(marker);
     });
   });
@@ -835,8 +854,8 @@ function tqShowResult(){
   const panel=document.getElementById("tq-panel");
   const pct=tqTotal?Math.round(tqScore/tqTotal*100):0;
   const pName=tqPlayer||"Du";
-  const resultMsg=pct>=80?{emoji:"🏆🦅🏆",title:"TAKTIK-PROFI!",sub:pName+" versteht die Raute – das war stark!"}:pct>=60?{emoji:"🌟⚽🌟",title:"RICHTIG GUT!",sub:pName+" ist auf dem besten Weg zum Taktik-Profi!"}:pct>=40?{emoji:"💪⚡💪",title:"GUTER START!",sub:pName+" wird immer besser – einfach weiter üben!"}:{emoji:"🦅🔥🦅",title:"WEITER SO!",sub:"Jeder Adler fängt mal klein an – "+pName+" schafft das!"};
-  const medaille=tqScore>=9?"🥇":tqScore>=7?"🥈":tqScore>=5?"🥉":""; // K4
+  const resultMsg=pct>=80?{emoji:"🏆🦅🏆",title:"TAKTIK-PROFI!",sub:pName+" versteht "+(TQ_FELD_TEXT[TQ_BLOCKS[tqBlock]?.feld]||"die Raute")+" – das war stark!"}:pct>=60?{emoji:"🌟⚽🌟",title:"RICHTIG GUT!",sub:pName+" ist auf dem besten Weg zum Taktik-Profi!"}:pct>=40?{emoji:"💪⚡💪",title:"GUTER START!",sub:pName+" wird immer besser – einfach weiter üben!"}:{emoji:"🦅🔥🦅",title:"WEITER SO!",sub:"Jeder Adler fängt mal klein an – "+pName+" schafft das!"};
+  const medaille=tqMedaille(tqScore,tqTotal); // K4, v927 im Verhältnis zur Blockgröße
   panel.innerHTML=`
     <div class="tq-panel" id="tq-result-panel" style="text-align:center;position:relative;overflow:hidden">
       <div style="font-size:36px;margin-bottom:4px">${resultMsg.emoji}</div>
@@ -855,7 +874,36 @@ function tqShowResult(){
   // FEAT S: Quiz-XP – greift nur, wenn auf dem Gerät eine Eltern-/Trainer-Session liegt
   // (anon = stiller No-Op). Server kappt auf 1 Gutschrift pro Kind und Tag.
   if(tqPlayer)xpAwardByName(tqPlayer,"quiz").then(d=>{if(d>0)setTimeout(()=>toast(`${XP_ICON} +${d} ${XP_LABEL} für ${tqPlayer}!`),1400);}).catch(()=>{});
+  tqFeldZurueck();
   if(!document.body.classList.contains("quiz-extern"))taktikReset("adler");
+}
+
+/* v927 · Feld je Spielform (Durchführungsbestimmungen Kreis Köln 2.4/2.5): Felder mit Jugendtoren haben nur eine
+   Mittellinie, Minitor-Felder (FUNiño) zwei Schusszonen. Gezeichnet im selben Maßstab wie #taktik-field (300×400,
+   Steine in Prozent), deshalb ein eigenes SVG statt _skz (das hat 10 % Rand). Das Original wird gemerkt und bei
+   „Beenden“ zurückgesetzt – das Taktikboard bleibt, wie es ist. */
+let tqFeldOrig=null;
+function tqFeldSvg(feld){
+  const L='stroke="rgba(255,255,255,.55)" stroke-width="1.5" fill="none"', T='fill="rgba(255,255,255,.9)"';
+  let h=`<rect width="300" height="400" fill="#2d6a2d"/><rect x="8" y="8" width="284" height="384" rx="2" ${L}/>
+    <line x1="8" y1="200" x2="292" y2="200" ${L}/>`;
+  if(feld==="funino"){
+    [84,216].forEach(x=>{ h+=`<rect x="${x-15}" y="2" width="30" height="6" rx="1" ${T}/><rect x="${x-15}" y="392" width="30" height="6" rx="1" ${T}/>`; });
+    h+=`<line x1="8" y1="96" x2="292" y2="96" ${L} stroke-dasharray="7 6"/><line x1="8" y1="304" x2="292" y2="304" ${L} stroke-dasharray="7 6"/>`;
+  }else{
+    h+=`<rect x="114.5" y="1" width="71" height="7" rx="1" ${T}/><rect x="114.5" y="392" width="71" height="7" rx="1" ${T}/>`;
+  }
+  return h;
+}
+function tqFeldZeichnen(feld){
+  const svg=document.querySelector("#taktik-field > svg"); if(!svg)return;
+  if(tqFeldOrig===null)tqFeldOrig=svg.innerHTML;
+  if(svg.dataset.feld===feld)return;
+  svg.innerHTML=tqFeldSvg(feld); svg.dataset.feld=feld;
+}
+function tqFeldZurueck(){
+  const svg=document.querySelector("#taktik-field > svg"); if(!svg||tqFeldOrig===null)return;
+  svg.innerHTML=tqFeldOrig; delete svg.dataset.feld;
 }
 
 /* ═══════════════════════════════════
@@ -1446,7 +1494,7 @@ function kidsIntroMaybe(){
     <div style="text-align:left;font-size:13px;color:#334155;line-height:1.5">
       <div style="margin-bottom:8px">🪶 <b>Adler-Federn</b> bekommst du für jede <b>richtige Antwort</b> (jede Frage einmal) und für <b>Technik-Abzeichen</b>.</div>
       <div style="margin-bottom:8px">🃏 Deine <b>Adler-Karte</b> wird immer cooler: mit mehr Federn schaltest du neue Designs frei – 🥉 Bronze, 🥈 Silber, 🥇 Gold und mehr!</div>
-      <div>🎯 Es gibt <b>Taktik</b> (die Raute) und <b>Fußball-Wissen</b> (WM, Bundesliga, Regeln, Legenden …).</div>
+      <div>🎯 Es gibt <b>Taktik</b> (3+1, FUNiño und die Raute) und <b>Fußball-Wissen</b> (WM, Bundesliga, Regeln, Legenden …).</div>
     </div>
     <button class="btn btn-p" style="width:100%;min-height:48px;margin-top:14px;font-size:15px;font-weight:800" onclick="kidsIntroClose()">Los geht's! 🚀</button>
   </div>`;
