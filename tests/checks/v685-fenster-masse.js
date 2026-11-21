@@ -52,7 +52,8 @@ module.exports = async function (h) {
     window._wieWarsKey = "t2"; todoDoppelWeg();
     const b1 = { t2: !!slot.querySelector('[data-termin="t2"]'), andere: !!slot.querySelector('[data-termin="d2026-01-01"]') };
     window._wieWarsKey = "d2026-01-01"; todoDoppelWeg();
-    const b2 = { zeilen: slot.querySelectorAll(".todo-zeile").length, einstieg: /Nachbereiten – Training/.test(slot.textContent), karte: !!slot.querySelector(".card") };
+    const unten = document.getElementById("home-nachbereiten");   // v929: Einstieg ohne To-do unter „Für dich“
+    const b2 = { zeilen: slot.querySelectorAll(".todo-zeile").length, einstieg: /Nachbereiten – Training/.test(slot.textContent + (unten ? unten.textContent : "")), karte: !!slot.querySelector(".card") };
     window._wieWarsKey = null;
     return { fenster, b1, b2 };
   });

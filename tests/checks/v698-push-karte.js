@@ -86,7 +86,8 @@ module.exports = async function (h) {
     await renderHome(); await w(300);
     const box = document.getElementById("home-content");
     const k = document.getElementById("push-hinweis");
-    return { erstes: box && box.firstElementChild && box.firstElementChild.id, karte: !!k && box.firstElementChild.contains(k), text: k ? k.textContent.replace(/\s+/g, " ").trim() : "" };
+    const fd = document.getElementById("fuer-dich");
+    return { erstes: box && box.firstElementChild && box.firstElementChild.id, imKarussell: !!k && !!fd && fd.contains(k) && !fd.hidden, text: k ? k.textContent.replace(/\s+/g, " ").trim() : "" };
   }, STUBS.toString());
   const ft = t.fehler(); await t.schliessen();
   if (f.length) probleme.push("Konsole Eltern: " + f.slice(0, 2).join(" | "));
@@ -101,7 +102,8 @@ module.exports = async function (h) {
   if (!r.c.dialog || r.c.dialog.role !== "dialog" || r.c.dialog.modal !== "true" || r.c.dialog.erste !== "iPhone" || !/Zum Home-Bildschirm/.test(r.c.dialog.text) || !/16\.4/.test(r.c.dialog.text)) probleme.push(`c/e) Anleitung: ${JSON.stringify(r.c.dialog)}`);
   if (r.e.verstanden < 48 || !r.e.zu) probleme.push(`e) Verstanden: ${JSON.stringify(r.e)}`);
   if (r.d.fall !== "gesperrt" || !/Sperre/.test(r.d.knopf) || !/App-Info/.test(r.d.anleitung) || !/Zulassen/.test(r.d.anleitung)) probleme.push(`d) Gesperrt: ${JSON.stringify(r.d).slice(0, 200)}`);
-  if (rt.erstes !== "push-hinweis-slot-trainer" || !rt.karte || !/Adler-Rufe/.test(rt.text)) probleme.push(`f) Trainer: ${JSON.stringify(rt).slice(0, 200)}`);
+  // v929: die Karte steht im Karussell „Für dich“ ganz oben auf der Startseite (wie bei den Eltern seit v926)
+  if (!rt.imKarussell || !/Adler-Rufe/.test(rt.text)) probleme.push(`f) Trainer: ${JSON.stringify(rt).slice(0, 200)}`);
   if (!r.g.some(u => /rpc\/kasse_spenden_link_setzen/.test(u)) || r.g.some(u => /rest\/v1\/team_config/.test(u))) probleme.push(`g) Spendenlink: ${JSON.stringify(r.g)}`);
   zeilen.push(`Eltern: Karte ganz oben (davor ${r.a.davor || "nichts"}) · Knopf ${r.b.knopf} px · Einschalten → Test-Meldung ${r.b.test}×`);
   zeilen.push(`iPhone: „${r.c.knopf}“ → Anleitung, zuerst ${r.c.dialog && r.c.dialog.erste} · gesperrt: „${r.d.knopf}“`);

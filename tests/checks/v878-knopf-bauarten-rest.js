@@ -155,8 +155,9 @@ module.exports = async function (h) {
   else zeilen.push(`a) Quelltext: ${gesamt} Knöpfe in ${DATEIEN.length} Dateien, keine eigenen Knopffarben mehr · Ausnahmen: ${Object.values(ausnahmen).reduce((x, y) => x + y, 0)} Stellen in ${Object.keys(ausnahmen).length} Bauarten`);
   // shell.html: die Verlaufsknöpfe tragen jetzt Bauarten
   const shell = fs.readFileSync(path.join(h.REPO, "shell.html"), "utf8");
+  // v929: #rufe-kopf trägt zusätzlich „ep-chats“ (Chats als Wort wie im Eltern-Kopf) – die Bauart bleibt btn-kopf
   const ids = { "tp-start-echt": "btn btn-p", "aw-save-btn": "btn btn-p", "rufe-kopf": "btn btn-kopf", "kopf-menue-knopf": "btn btn-kopf", "help-btn": "btn btn-kopf", "theme-toggle": "btn btn-kopf" };
-  for (const [id, kl] of Object.entries(ids)) { const t = (shell.match(new RegExp(`<button[^>]*id="${id}"[^>]*>`)) || [""])[0]; if (!t.includes(`class="${kl}"`)) probleme.push(`a) shell.html #${id}: Klasse „${kl}“ fehlt`); }
+  for (const [id, kl] of Object.entries(ids)) { const t = (shell.match(new RegExp(`<button[^>]*id="${id}"[^>]*>`)) || [""])[0]; if (!new RegExp(`class="${kl}( [a-z-]+)*"`).test(t)) probleme.push(`a) shell.html #${id}: Klasse „${kl}“ fehlt`); }
   if (!/class="btn btn-p" onclick="kaderEditOpen\(\)"/.test(shell)) probleme.push("a) shell.html „Spieler verwalten“ ist keine .btn-p");
   if (/linear-gradient/.test((shell.match(/<button[^>]*>/g) || []).join(""))) probleme.push("a) shell.html: noch ein Knopf mit Farbverlauf");
   if (/\.tp-start-leiste button\{[^}]*#166534/.test(fs.readFileSync(path.join(h.REPO, "styles.css"), "utf8"))) probleme.push("a) styles.css: Startleiste noch grün");

@@ -37,11 +37,13 @@ module.exports = async function (h) {
     // a) erst der Fall ohne offene To-Dos (fazitOffene leer), dann mit
     const echt = window.fazitOffene; window.fazitOffene = async () => [];
     await trainerTodoLoad();
-    const leer = [...slot.querySelectorAll("button")].map(b => (b.textContent || "").trim());
+    const unten = () => [...(document.getElementById("home-nachbereiten") || document.createElement("i")).querySelectorAll("button")];   // v929
+    const leer = [...slot.querySelectorAll("button"), ...unten()].map(b => (b.textContent || "").trim());
     window.fazitOffene = echt;
     await trainerTodoLoad();
     const voll = [...slot.querySelectorAll("button")].map(b => (b.textContent || "").trim());
-    const einstieg = [...slot.querySelectorAll("button")].find(b => /Nachbereiten – Training, Spiel, Festival/.test(b.textContent || ""));
+    // v929: ohne To-do steht der Einstieg unter „Für dich“ (#home-nachbereiten), nicht im To-do-Slot
+    const einstieg = [...slot.querySelectorAll("button"), ...(document.getElementById("home-nachbereiten") || document.createElement("i")).querySelectorAll("button")].find(b => /Nachbereiten – Training, Spiel, Festival/.test(b.textContent || ""));
     einstieg?.click();
     for (let i = 0; i < 40 && !document.querySelector("#eb-card [role=button]"); i++) await warte(50);
     const zeilen = [...document.querySelectorAll("#eb-card [role=button]")].map(z => z.textContent.replace(/\s+/g, " ").trim());

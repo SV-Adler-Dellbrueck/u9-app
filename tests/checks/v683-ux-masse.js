@@ -38,7 +38,7 @@ module.exports = async function (h) {
       const texte = alle("*").filter(e => [...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim()) && sichtbar(e));
       const winzig = texte.filter(e => parseFloat(getComputedStyle(e).fontSize) < 11.5)
         .map(e => e.textContent.replace(/\s+/g, " ").trim().slice(0, 24) + "@" + getComputedStyle(e).fontSize);
-      const breit = alle("*").filter(e => sichtbar(e) && getComputedStyle(e).position !== "fixed" && e.getBoundingClientRect().right > W + 1)
+      const breit = alle("*").filter(e => sichtbar(e) && getComputedStyle(e).position !== "fixed" && !e.closest(".fe-bahn") && e.getBoundingClientRect().right > W + 1)   /* v929: Karten im Karussell „Für dich“ liegen gewollt rechts daneben */
         .filter(e => !e.closest("[style*='overflow-x:auto'],[style*='overflow-x: auto'],.kader-wrap,.frow"))
         .map(e => (e.id || e.className || e.tagName).toString().slice(0, 24));
       out[k] = { klein, winzig, breit: [...new Set(breit)].slice(0, 4) };
