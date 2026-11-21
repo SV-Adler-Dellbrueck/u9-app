@@ -43,9 +43,11 @@ module.exports = async function (h) {
     out.fortNach = (document.getElementById("sb-fortschritt") || {}).textContent;
     out.twGedrueckt = tw ? tw.getAttribute("aria-pressed") : "";
     const sp = m && [...m.querySelectorAll("button")].find(b => b.textContent.trim() === "Speichern"); if (sp) sp.click();
-    await w(800);
+    /* Warten auf den Zustand statt fester Zeit (unter Last der ganzen Reihe reichten 800 ms nicht): Speichern schließt das Fenster */
+    for (let i = 0; i < 60 && document.getElementById("fanfacts-modal"); i++) await w(100);
+    for (let i = 0; i < 30 && !document.querySelector("#steckbrief-slot .sb-karte-spaeter"); i++) await w(100);
     const k2 = document.querySelector("#steckbrief-slot .sb-karte-spaeter"); if (k2) k2.click();
-    await w(300);
+    for (let i = 0; i < 40 && document.querySelector("#steckbrief-slot .sb-karte"); i++) await w(100);
     out.nachSpaeter = !!document.querySelector("#steckbrief-slot .sb-karte");
     out.spaeterGemerkt = Number(localStorage.getItem("adler_steckbrief_spaeter_1") || 0) > Date.now();
     return out;

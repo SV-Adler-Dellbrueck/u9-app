@@ -2041,7 +2041,8 @@ function _htGen(teams,cfg){
     }
     slot++;
   }
-  return done.map(m=>({...m,ta:null,tb:null}));
+  /* v923: Gruppen- und Runden-Spiele gleich oft auf jedem Feld; das Finale bleibt auf Feld 1 */
+  return feldAusgleich(done,felder,{zeitscheibe:x=>x.zeit,fest:x=>x.phase==="Finale"}).map(m=>({...m,ta:null,tb:null}));
 }
 // Tabelle über eine Teilmenge des Plans (nur echte Team-Indizes, nur mit Ergebnis).
 // v897: zaehlt (optional) wählt die Spiele – die öffentliche Seite und der Monitor zählen nur
@@ -2896,7 +2897,11 @@ function fstPlanBauen(teams,cfg){
       plan.push({runde:s+1,feld:fi+1,form:felder[fi].form||"funino",zeit,a:p[0],b:p[1],phase:"Runde "+(s+1)});
     });
   });
-  return fstFelderAusgleichen(plan,felder);
+  /* v923: danach je Mannschaft gleich oft auf jedem Feld; wer nie auf einem Jugendtor-Feld stand, kostet viel */
+  const jugNr=felder.map((f,i)=>_fstJugendtore(f.form||"funino")?i+1:0).filter(Boolean);
+  return feldAusgleich(fstFelderAusgleichen(plan,felder),F,{zeitscheibe:x=>x.runde,
+    strafe:zt=>(jugNr.length&&jugNr.length<F&&!jugNr.some(f=>zt[f]>0))?1000:0,
+    form:nr=>(felder[nr-1]||{}).form||"funino"});
 }
 /* ═══ v516 – Jede Mannschaft einmal aufs grosse Feld ═══
    PO nach dem Blick in den fertigen Plan: „Jedes Team soll auf jeden Fall mal 4+1 spielen."
@@ -2933,6 +2938,83 @@ function fstFelderAusgleichen(plan,felder){
     });
     sp.forEach(x=>{ if(jug(x.feld)){hatte.add(x.a);hatte.add(x.b);} });
   });
+  return p;
+}
+/* ═══ v923 – Jede Mannschaft gleich oft auf jedem Feld ═══
+   Charles 21.11.: „… so weit ausgeglichen, dass jede Mannschaft auch gleich häufig auf den verschiedenen Plätzen
+   spielt.“ Am Festival 21.11. stand ein Team 4× auf Feld 1 und 1× auf Feld 2, ein anderes umgekehrt.
+   Wie fstFelderAusgleichen ändert dieser Nachlauf nur, WO gespielt wird: er tauscht die Felder zweier Spiele derselben
+   Zeitscheibe oder legt ein Spiel auf ein freies Feld dieser Zeitscheibe. Paarungen, Runden und Uhrzeiten bleiben.
+   Ziel: je Mannschaft und Feld möglichst gleich viele Spiele (Summe der Quadrate minimal → Unterschied höchstens 1,
+   wo es aufgeht). Vorrang hat weiter v516: jede Mannschaft mindestens einmal auf einem Jugendtor-Feld (strafe).
+   zeitscheibe(x) nennt die Scheibe, fest(x) schließt Spiele aus (Finale bleibt auf Feld 1). */
+function feldAusgleich(plan,F,o){
+  o=o||{};
+  const p=(plan||[]).map(x=>({...x}));
+  const fest=o.fest||(()=>false), scheibe=o.zeitscheibe||(x=>x.runde), strafe=o.strafe||(()=>0), form=o.form||null;
+  const spiele=p.filter(x=>!fest(x)&&typeof x.a==="number"&&typeof x.b==="number"&&x.feld>=1&&x.feld<=F);
+  if(F<2||spiele.length<2)return p;
+  const teams=[...new Set(spiele.flatMap(x=>[x.a,x.b]))];
+  const z={}; teams.forEach(t=>z[t]=Array(F+1).fill(0));
+  spiele.forEach(x=>{ z[x.a][x.feld]++; z[x.b][x.feld]++; });
+  /* Kosten je Mannschaft: Summe der Quadrate (gleichmäßig) plus ein Aufschlag für jede Stufe über „höchstens 1 Unterschied“
+     – sonst gewinnt eine Verteilung 3/2/2/0 gegen 3/1/2/1 */
+  const kosten=()=>{ let k=0, gross=0; teams.forEach(t=>{ let mx=0, mn=Infinity; for(let f=1;f<=F;f++){ const c=z[t][f]; k+=c*c; if(c>mx)mx=c; if(c<mn)mn=c; }
+    if(mx-mn>1)k+=100*(mx-mn-1); if(mx-mn>gross)gross=mx-mn; k+=strafe(z[t]); }); return k+(gross>1?10000*(gross-1):0); };   // zuerst der größte Unterschied
+  const setze=(x,f)=>{ z[x.a][x.feld]--; z[x.b][x.feld]--; x.feld=f; z[x.a][f]++; z[x.b][f]++; };
+  const gruppen={}; spiele.forEach(x=>{ const k=String(scheibe(x)); (gruppen[k]=gruppen[k]||[]).push(x); });
+  /* Je Zeitscheibe alle Zuordnungen ihrer Spiele auf die Felder durchprobieren, die sie nicht mit festen Spielen teilen
+     (höchstens 4 Felder → höchstens 24 Möglichkeiten), und die günstigste nehmen; so lange, bis sich nichts mehr bessert. */
+  const perms=(frei,m)=>{ const out=[]; const geh=(w,rest)=>{ if(w.length===m){out.push(w.slice());return;} rest.forEach((f,i)=>{ w.push(f); geh(w,rest.filter((_,j)=>j!==i)); w.pop(); }); }; geh([],frei); return out; };
+  const keys=Object.keys(gruppen);
+  const freiIn={}; keys.forEach(k=>{ const g=gruppen[k]; const festIn=new Set(p.filter(x=>String(scheibe(x))===k&&!g.includes(x)).map(x=>x.feld));
+    freiIn[k]=[]; for(let f=1;f<=F;f++)if(!festIn.has(f))freiIn[k].push(f); });
+  const abstieg=()=>{ let jetzt=kosten();
+    for(let runde=0;runde<30;runde++){
+      let besser=false;
+      for(const k of keys){
+        const g=gruppen[k]; if(freiIn[k].length<g.length)continue;
+        let best=g.map(x=>x.feld), bestK=jetzt;
+        for(const w of perms(freiIn[k],g.length)){ g.forEach((x,i)=>setze(x,w[i])); const neu=kosten(); if(neu<bestK){ bestK=neu; best=w; } }
+        g.forEach((x,i)=>setze(x,best[i]));
+        if(bestK<jetzt){ jetzt=bestK; besser=true; }
+      }
+      if(!besser)break;
+    }
+    return jetzt; };
+  /* Mehrere Anläufe aus gemischten Startzuordnungen (fester Zufall – derselbe Plan ergibt dasselbe Ergebnis);
+     der erste Anlauf startet von der bisherigen Verteilung. Behalten wird der beste. */
+  let seed=12345; const zufall=n=>{ seed=(Math.imul(seed^(seed>>>15),2246822519)+374761393)>>>0; seed=(seed^(seed>>>13))>>>0; return seed%n; };   // 32-Bit-Ganzzahl, bleibt genau
+  let bestK=abstieg(), bestF=spiele.map(x=>x.feld);
+  for(let anlauf=0;anlauf<300&&bestK>0;anlauf++){
+    keys.forEach(k=>{ const g=gruppen[k]; if(freiIn[k].length<g.length)return; const ps=perms(freiIn[k],g.length); const w=ps[zufall(ps.length)]; g.forEach((x,i)=>setze(x,w[i])); });
+    const k=abstieg(); if(k<bestK){ bestK=k; bestF=spiele.map(x=>x.feld); }
+  }
+  spiele.forEach((x,i)=>setze(x,bestF[i]));
+  /* Bleibt eine Mannschaft mehr als 1 auseinander, gezielt suchen: Zeitscheibe für Zeitscheibe, nie mehr als
+     ⌈Spiele/Felder⌉+e auf einem Feld, am Ende höchstens 1+e Unterschied. Mit Obergrenze an Schritten, damit große
+     Turniere nicht hängen; gefunden wird sie nur übernommen, wenn sie insgesamt günstiger ist. */
+  const spreiz=()=>Math.max(...teams.map(t=>{ const c=z[t].slice(1); return Math.max(...c)-Math.min(...c); }));
+  const spiel={}; teams.forEach(t=>spiel[t]=0); spiele.forEach(x=>{ spiel[x.a]++; spiel[x.b]++; });
+  for(let e=0;e<spreiz()-1;e++){
+    const hoch=t=>Math.ceil(spiel[t]/F)+e; let schritte=0, treffer=null;
+    const vorher=spiele.map(x=>x.feld);
+    const geh=i=>{
+      if(treffer||++schritte>150000)return;
+      if(i===keys.length){ if(teams.every(t=>{ const c=z[t].slice(1); return Math.max(...c)-Math.min(...c)<=1+e; }))treffer=spiele.map(x=>x.feld); return; }
+      const g=gruppen[keys[i]]; if(freiIn[keys[i]].length<g.length){ geh(i+1); return; }
+      for(const w of perms(freiIn[keys[i]],g.length)){
+        g.forEach((x,j)=>setze(x,w[j]));
+        if(g.every(x=>z[x.a][x.feld]<=hoch(x.a)&&z[x.b][x.feld]<=hoch(x.b)))geh(i+1);
+        if(treffer)return;
+      }
+    };
+    geh(0);
+    if(treffer){ spiele.forEach((x,i)=>setze(x,treffer[i])); const k=abstieg(); if(k<bestK){ bestK=k; bestF=spiele.map(x=>x.feld); } }
+    spiele.forEach((x,i)=>setze(x,(treffer&&bestF)?bestF[i]:vorher[i]));
+    if(treffer)break;
+  }
+  if(form)spiele.forEach(x=>{ x.form=form(x.feld); });
   return p;
 }
 /* ═══ v516 – „Team zu klein fuer dieses Feld" ═══
