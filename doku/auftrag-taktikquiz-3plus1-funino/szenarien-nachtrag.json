@@ -1,0 +1,1724 @@
+{
+ "schema": "adler-taktikquiz/1",
+ "stand": "2026-11-21-1",
+ "bloecke": [
+  {
+   "name": "3+1 – Raute ohne Aufpasser",
+   "icon": "ti-diamond",
+   "col": "#0ea5e9",
+   "feld": "3+1",
+   "szenarien": [
+    {
+     "feld": "3+1",
+     "title": "3+1 – Grundstellung beim Toraus des Gegners",
+     "desc": "Toraus – der Gegner dribbelt von seiner Torauslinie ein. Im 3+1 fehlt der Aufpasser, der Torwart spielt mit.",
+     "task": "Bringe Jäger und Flitzer in die Grundstellung – alle in der eigenen Hälfte!",
+     "hint": "Jäger kurz vor der Mittellinie, die Flitzer links und rechts dahinter. Keiner bleibt drüben!",
+     "ball": {
+      "from": {
+       "x": 40,
+       "y": 5
+      },
+      "to": {
+       "x": 40,
+       "y": 5
+      }
+     },
+     "opps": [
+      {
+       "x": 40,
+       "y": 5,
+       "label": "Gegner"
+      },
+      {
+       "x": 28,
+       "y": 18,
+       "label": "Gegner"
+      },
+      {
+       "x": 72,
+       "y": 18,
+       "label": "Gegner"
+      },
+      {
+       "x": 50,
+       "y": 2,
+       "label": "Geg. TW"
+      }
+     ],
+     "start": [
+      {
+       "name": "TW",
+       "x": 50,
+       "y": 92,
+       "cls": "tb-tw",
+       "role": "TW",
+       "locked": true
+      },
+      {
+       "name": "Flitzer L",
+       "x": 15,
+       "y": 45,
+       "cls": "tb-fl",
+       "role": "Flitzer L",
+       "locked": false
+      },
+      {
+       "name": "Flitzer R",
+       "x": 85,
+       "y": 45,
+       "cls": "tb-fl",
+       "role": "Flitzer R",
+       "locked": false
+      },
+      {
+       "name": "Jäger",
+       "x": 50,
+       "y": 38,
+       "cls": "tb-jaeg",
+       "role": "Jäger",
+       "locked": false
+      }
+     ],
+     "targets": {
+      "Jäger": {
+       "x": 50,
+       "y": 57,
+       "r": 12
+      },
+      "Flitzer L": {
+       "x": 30,
+       "y": 66,
+       "r": 13
+      },
+      "Flitzer R": {
+       "x": 70,
+       "y": 66,
+       "r": 13
+      }
+     },
+     "explain": {
+      "correct": "⚽ Genau! Alle in der eigenen Hälfte – Jäger vorne, Flitzer dahinter, der Torwart sichert.",
+      "wrong": "Tipp: Beim Toraus des Gegners geht ihr alle hinter die Mittellinie. Jäger vorne in der Mitte, Flitzer L links und Flitzer R rechts etwas dahinter."
+     }
+    },
+    {
+     "feld": "3+1",
+     "title": "3+1 – Torwart eröffnet flach",
+     "desc": "Toraus für euch! Euer Torwart hat den Ball. Bei uns gibt es keinen weiten Abschlag – er spielt flach zu einem Mitspieler.",
+     "task": "Wohin laufen Jäger und Flitzer, damit der Torwart sie anspielen kann?",
+     "hint": "Nicht alle zum Torwart! Die Flitzer gehen breit an die Seiten, der Jäger nach vorne zur Mittellinie.",
+     "ball": {
+      "from": {
+       "x": 50,
+       "y": 90
+      },
+      "to": {
+       "x": 50,
+       "y": 90
+      }
+     },
+     "opps": [
+      {
+       "x": 30,
+       "y": 40,
+       "label": "Gegner"
+      },
+      {
+       "x": 70,
+       "y": 40,
+       "label": "Gegner"
+      },
+      {
+       "x": 50,
+       "y": 35,
+       "label": "Gegner"
+      },
+      {
+       "x": 50,
+       "y": 4,
+       "label": "Geg. TW"
+      }
+     ],
+     "start": [
+      {
+       "name": "TW",
+       "x": 50,
+       "y": 92,
+       "cls": "tb-tw",
+       "role": "TW",
+       "locked": true
+      },
+      {
+       "name": "Flitzer L",
+       "x": 40,
+       "y": 80,
+       "cls": "tb-fl",
+       "role": "Flitzer L",
+       "locked": false
+      },
+      {
+       "name": "Flitzer R",
+       "x": 60,
+       "y": 80,
+       "cls": "tb-fl",
+       "role": "Flitzer R",
+       "locked": false
+      },
+      {
+       "name": "Jäger",
+       "x": 50,
+       "y": 78,
+       "cls": "tb-jaeg",
+       "role": "Jäger",
+       "locked": false
+      }
+     ],
+     "targets": {
+      "Flitzer L": {
+       "x": 15,
+       "y": 72,
+       "r": 14
+      },
+      "Flitzer R": {
+       "x": 85,
+       "y": 72,
+       "r": 14
+      },
+      "Jäger": {
+       "x": 50,
+       "y": 56,
+       "r": 13
+      }
+     },
+     "explain": {
+      "correct": "👏 Super! Drei Anspielstationen – der Torwart kann flach links, rechts oder nach vorne spielen.",
+      "wrong": "Tipp: Steht ihr alle beim Torwart, kann er keinen sicheren Pass spielen. Flitzer breit an die Seiten, Jäger vorne zur Mittellinie."
+     }
+    },
+    {
+     "feld": "3+1",
+     "title": "3+1 – Adler: der Torwart kommt raus",
+     "desc": "Flitzer L hat den Ball in der eigenen Hälfte erobert. Sofort ADLER – macht das Feld groß!",
+     "task": "Schiebe Flitzer R, Jäger und Torwart in die ADLER-Stellung!",
+     "hint": "Flitzer R an die rechte Seitenlinie, Jäger ganz nach vorne. Der Torwart kommt raus und steht da, wo sonst der Aufpasser steht.",
+     "ball": {
+      "from": {
+       "x": 20,
+       "y": 62
+      },
+      "to": {
+       "x": 20,
+       "y": 62
+      }
+     },
+     "opps": [
+      {
+       "x": 32,
+       "y": 56,
+       "label": "Gegner"
+      },
+      {
+       "x": 55,
+       "y": 40,
+       "label": "Gegner"
+      },
+      {
+       "x": 68,
+       "y": 30,
+       "label": "Gegner"
+      },
+      {
+       "x": 50,
+       "y": 4,
+       "label": "Geg. TW"
+      }
+     ],
+     "start": [
+      {
+       "name": "TW",
+       "x": 50,
+       "y": 92,
+       "cls": "tb-tw",
+       "role": "TW",
+       "locked": false
+      },
+      {
+       "name": "Flitzer L",
+       "x": 20,
+       "y": 62,
+       "cls": "tb-fl",
+       "role": "Flitzer L",
+       "locked": true
+      },
+      {
+       "name": "Flitzer R",
+       "x": 62,
+       "y": 62,
+       "cls": "tb-fl",
+       "role": "Flitzer R",
+       "locked": false
+      },
+      {
+       "name": "Jäger",
+       "x": 50,
+       "y": 48,
+       "cls": "tb-jaeg",
+       "role": "Jäger",
+       "locked": false
+      }
+     ],
+     "targets": {
+      "Flitzer R": {
+       "x": 88,
+       "y": 42,
+       "r": 14
+      },
+      "Jäger": {
+       "x": 50,
+       "y": 24,
+       "r": 14
+      },
+      "TW": {
+       "x": 50,
+       "y": 74,
+       "r": 12
+      }
+     },
+     "explain": {
+      "correct": "🦅 ADLER perfekt! Flitzer breit, Jäger vorne, und der Torwart ist hinter dem Ball anspielbar.",
+      "wrong": "Tipp: Im 3+1 spielt der Torwart mit. Er kommt raus auf den Platz des Aufpassers. Flitzer R ganz nach rechts, Jäger ganz nach vorne."
+     }
+    },
+    {
+     "feld": "3+1",
+     "title": "3+1 – Igel: die Flitzer schließen die Lücke",
+     "desc": "Der Gegner dribbelt durch die Mitte auf euer Tor zu. Zeit für den IGEL!",
+     "task": "Wer läuft den Gegner an, und wohin gehen die Flitzer?",
+     "hint": "Der Jäger läuft als Erster an. Die Flitzer kommen eng vor das eigene Tor – tiefer als sonst, weil kein Aufpasser hinter ihnen steht.",
+     "ball": {
+      "from": {
+       "x": 50,
+       "y": 30
+      },
+      "to": {
+       "x": 50,
+       "y": 42
+      }
+     },
+     "opps": [
+      {
+       "x": 50,
+       "y": 30,
+       "label": "Gegner",
+       "to": {
+        "x": 50,
+        "y": 42
+       }
+      },
+      {
+       "x": 25,
+       "y": 35,
+       "label": "Gegner"
+      },
+      {
+       "x": 75,
+       "y": 35,
+       "label": "Gegner"
+      },
+      {
+       "x": 50,
+       "y": 4,
+       "label": "Geg. TW"
+      }
+     ],
+     "start": [
+      {
+       "name": "TW",
+       "x": 50,
+       "y": 92,
+       "cls": "tb-tw",
+       "role": "TW",
+       "locked": true
+      },
+      {
+       "name": "Flitzer L",
+       "x": 12,
+       "y": 40,
+       "cls": "tb-fl",
+       "role": "Flitzer L",
+       "locked": false
+      },
+      {
+       "name": "Flitzer R",
+       "x": 88,
+       "y": 40,
+       "cls": "tb-fl",
+       "role": "Flitzer R",
+       "locked": false
+      },
+      {
+       "name": "Jäger",
+       "x": 50,
+       "y": 25,
+       "cls": "tb-jaeg",
+       "role": "Jäger",
+       "locked": false
+      }
+     ],
+     "targets": {
+      "Jäger": {
+       "x": 50,
+       "y": 50,
+       "r": 12
+      },
+      "Flitzer L": {
+       "x": 38,
+       "y": 72,
+       "r": 13
+      },
+      "Flitzer R": {
+       "x": 62,
+       "y": 72,
+       "r": 13
+      }
+     },
+     "explain": {
+      "correct": "🦔 Stark! Der Jäger stört den Gegner, und die Flitzer machen vor dem Tor die Lücke zu.",
+      "wrong": "Tipp: Im 3+1 fehlt der Aufpasser. Deshalb stehen die Flitzer im IGEL eng vor dem eigenen Tor. Der Jäger läuft den Gegner mit dem Ball an."
+     }
+    },
+    {
+     "feld": "3+1",
+     "title": "3+1 – Igel: Gegner kommt über eure linke Seite",
+     "desc": "Der Gegner dribbelt auf eurer linken Seite nach vorne. Der Ball ist links!",
+     "task": "Verschiebe Jäger und Flitzer zur Ballseite!",
+     "hint": "Der Jäger läuft von innen an. Flitzer L geht vor das Tor auf der linken Seite, Flitzer R rückt zur Mitte.",
+     "ball": {
+      "from": {
+       "x": 20,
+       "y": 35
+      },
+      "to": {
+       "x": 22,
+       "y": 52
+      }
+     },
+     "opps": [
+      {
+       "x": 20,
+       "y": 35,
+       "label": "Gegner",
+       "to": {
+        "x": 22,
+        "y": 52
+       }
+      },
+      {
+       "x": 50,
+       "y": 40,
+       "label": "Gegner"
+      },
+      {
+       "x": 75,
+       "y": 38,
+       "label": "Gegner"
+      },
+      {
+       "x": 50,
+       "y": 4,
+       "label": "Geg. TW"
+      }
+     ],
+     "start": [
+      {
+       "name": "TW",
+       "x": 50,
+       "y": 92,
+       "cls": "tb-tw",
+       "role": "TW",
+       "locked": true
+      },
+      {
+       "name": "Flitzer L",
+       "x": 15,
+       "y": 62,
+       "cls": "tb-fl",
+       "role": "Flitzer L",
+       "locked": false
+      },
+      {
+       "name": "Flitzer R",
+       "x": 85,
+       "y": 55,
+       "cls": "tb-fl",
+       "role": "Flitzer R",
+       "locked": false
+      },
+      {
+       "name": "Jäger",
+       "x": 60,
+       "y": 30,
+       "cls": "tb-jaeg",
+       "role": "Jäger",
+       "locked": false
+      }
+     ],
+     "targets": {
+      "Jäger": {
+       "x": 31,
+       "y": 50,
+       "r": 13
+      },
+      "Flitzer L": {
+       "x": 35,
+       "y": 73,
+       "r": 13
+      },
+      "Flitzer R": {
+       "x": 57,
+       "y": 75,
+       "r": 13
+      }
+     },
+     "explain": {
+      "correct": "💪 Klasse! Alle schieben zum Ball – der Gegner kommt weder durch die Mitte noch aufs Tor.",
+      "wrong": "Tipp: Der Jäger läuft den Gegner von innen an, damit er außen bleibt. Flitzer L schützt die linke Seite vor dem Tor, Flitzer R kommt in die Mitte."
+     }
+    },
+    {
+     "feld": "3+1",
+     "title": "3+1 – Ball weg: Jäger jagt, Flitzer zurück",
+     "desc": "Ihr habt den Ball in der gegnerischen Hälfte verloren. Jetzt schnell umschalten!",
+     "task": "Schiebe den Jäger zum Gegner mit dem Ball und die Flitzer zurück!",
+     "hint": "Der Jäger, der am nächsten dran ist, stört sofort. Die Flitzer laufen eng vor das eigene Tor.",
+     "ball": {
+      "from": {
+       "x": 40,
+       "y": 30
+      },
+      "to": {
+       "x": 40,
+       "y": 30
+      }
+     },
+     "opps": [
+      {
+       "x": 40,
+       "y": 30,
+       "label": "Gegner"
+      },
+      {
+       "x": 65,
+       "y": 35,
+       "label": "Gegner"
+      },
+      {
+       "x": 25,
+       "y": 42,
+       "label": "Gegner"
+      },
+      {
+       "x": 50,
+       "y": 4,
+       "label": "Geg. TW"
+      }
+     ],
+     "start": [
+      {
+       "name": "TW",
+       "x": 50,
+       "y": 92,
+       "cls": "tb-tw",
+       "role": "TW",
+       "locked": true
+      },
+      {
+       "name": "Flitzer L",
+       "x": 15,
+       "y": 25,
+       "cls": "tb-fl",
+       "role": "Flitzer L",
+       "locked": false
+      },
+      {
+       "name": "Flitzer R",
+       "x": 85,
+       "y": 25,
+       "cls": "tb-fl",
+       "role": "Flitzer R",
+       "locked": false
+      },
+      {
+       "name": "Jäger",
+       "x": 55,
+       "y": 22,
+       "cls": "tb-jaeg",
+       "role": "Jäger",
+       "locked": false
+      }
+     ],
+     "targets": {
+      "Jäger": {
+       "x": 42,
+       "y": 38,
+       "r": 12
+      },
+      "Flitzer L": {
+       "x": 38,
+       "y": 70,
+       "r": 14
+      },
+      "Flitzer R": {
+       "x": 62,
+       "y": 70,
+       "r": 14
+      }
+     },
+     "explain": {
+      "correct": "⚡ Blitzschnell! Der Jäger stört sofort, die Flitzer sichern vor dem Tor.",
+      "wrong": "Tipp: Nach dem Ballverlust jagt der Jäger den Gegner, die Flitzer sprinten zurück vor das eigene Tor. Keiner bleibt vorne stehen."
+     }
+    },
+    {
+     "feld": "3+1",
+     "title": "3+1 – Der Torwart hilft mit",
+     "desc": "Flitzer L hat den Ball, aber ein Gegner drängt ihn. Nach vorne ist alles zu.",
+     "task": "Wo bietet sich der Torwart an, damit Flitzer L zurückspielen kann?",
+     "hint": "Der Torwart kommt ein Stück raus, schräg hinter den Ball. Er spielt den Ball mit dem Fuß weiter, nicht mit der Hand.",
+     "ball": {
+      "from": {
+       "x": 18,
+       "y": 55
+      },
+      "to": {
+       "x": 18,
+       "y": 55
+      }
+     },
+     "opps": [
+      {
+       "x": 22,
+       "y": 47,
+       "label": "Gegner"
+      },
+      {
+       "x": 50,
+       "y": 22,
+       "label": "Gegner"
+      },
+      {
+       "x": 75,
+       "y": 44,
+       "label": "Gegner"
+      },
+      {
+       "x": 50,
+       "y": 4,
+       "label": "Geg. TW"
+      }
+     ],
+     "start": [
+      {
+       "name": "TW",
+       "x": 50,
+       "y": 92,
+       "cls": "tb-tw",
+       "role": "TW",
+       "locked": false
+      },
+      {
+       "name": "Flitzer L",
+       "x": 18,
+       "y": 55,
+       "cls": "tb-fl",
+       "role": "Flitzer L",
+       "locked": true
+      },
+      {
+       "name": "Flitzer R",
+       "x": 80,
+       "y": 52,
+       "cls": "tb-fl",
+       "role": "Flitzer R",
+       "locked": true
+      },
+      {
+       "name": "Jäger",
+       "x": 50,
+       "y": 30,
+       "cls": "tb-jaeg",
+       "role": "Jäger",
+       "locked": true
+      }
+     ],
+     "targets": {
+      "TW": {
+       "x": 36,
+       "y": 78,
+       "r": 13
+      }
+     },
+     "explain": {
+      "correct": "🧤 Klug! Der Torwart ist anspielbar und spielt mit dem Fuß weiter – so bleibt der Ball bei euch.",
+      "wrong": "Tipp: Der Torwart kommt raus und stellt sich schräg hinter Flitzer L. Zurückspielen ist klug, und der Torwart nimmt den Ball dann mit dem Fuß."
+     }
+    },
+    {
+     "feld": "3+1",
+     "title": "3+1 – Schießen erst in der gegnerischen Hälfte",
+     "desc": "Flitzer L hat den Ball noch in der eigenen Hälfte. Ein Tor zählt nur, wenn aus der gegnerischen Hälfte geschossen wird.",
+     "task": "Bring Jäger und Flitzer R in die gegnerische Hälfte, damit sie nach dem Pass schießen dürfen!",
+     "hint": "Über die Mittellinie laufen und frei stehen – weg von den Gegnern.",
+     "ball": {
+      "from": {
+       "x": 20,
+       "y": 56
+      },
+      "to": {
+       "x": 20,
+       "y": 56
+      }
+     },
+     "opps": [
+      {
+       "x": 38,
+       "y": 38,
+       "label": "Gegner"
+      },
+      {
+       "x": 64,
+       "y": 42,
+       "label": "Gegner"
+      },
+      {
+       "x": 50,
+       "y": 4,
+       "label": "Geg. TW"
+      }
+     ],
+     "start": [
+      {
+       "name": "TW",
+       "x": 50,
+       "y": 92,
+       "cls": "tb-tw",
+       "role": "TW",
+       "locked": true
+      },
+      {
+       "name": "Flitzer L",
+       "x": 20,
+       "y": 56,
+       "cls": "tb-fl",
+       "role": "Flitzer L",
+       "locked": true
+      },
+      {
+       "name": "Flitzer R",
+       "x": 80,
+       "y": 60,
+       "cls": "tb-fl",
+       "role": "Flitzer R",
+       "locked": false
+      },
+      {
+       "name": "Jäger",
+       "x": 50,
+       "y": 58,
+       "cls": "tb-jaeg",
+       "role": "Jäger",
+       "locked": false
+      }
+     ],
+     "targets": {
+      "Jäger": {
+       "x": 50,
+       "y": 28,
+       "r": 14
+      },
+      "Flitzer R": {
+       "x": 80,
+       "y": 32,
+       "r": 14
+      }
+     },
+     "explain": {
+      "correct": "⚽ Richtig! In der gegnerischen Hälfte dürft ihr schießen – jetzt kann der Pass kommen.",
+      "wrong": "Tipp: Aus der eigenen Hälfte zählt kein Tor. Jäger und Flitzer R laufen über die Mittellinie in den freien Raum."
+     }
+    },
+    {
+     "feld": "3+1",
+     "title": "3+1 – Drei Tore hinten: der Aufpasser kommt dazu",
+     "desc": "Ihr liegt drei Tore hinten. Jetzt darf ein vierter Feldspieler aufs Feld – bis es nur noch ein Tor Unterschied ist. Der Torwart hat den Ball.",
+     "task": "Bring den Aufpasser an seinen Platz in der Raute!",
+     "hint": "Jetzt steht die volle Raute: Aufpasser hinten in der Mitte vor dem Torwart, Flitzer außen, Jäger vorne.",
+     "ball": {
+      "from": {
+       "x": 50,
+       "y": 90
+      },
+      "to": {
+       "x": 50,
+       "y": 90
+      }
+     },
+     "opps": [
+      {
+       "x": 30,
+       "y": 40,
+       "label": "Gegner"
+      },
+      {
+       "x": 70,
+       "y": 40,
+       "label": "Gegner"
+      },
+      {
+       "x": 50,
+       "y": 30,
+       "label": "Gegner"
+      },
+      {
+       "x": 50,
+       "y": 4,
+       "label": "Geg. TW"
+      }
+     ],
+     "start": [
+      {
+       "name": "TW",
+       "x": 50,
+       "y": 92,
+       "cls": "tb-tw",
+       "role": "TW",
+       "locked": true
+      },
+      {
+       "name": "Aufpasser",
+       "x": 4,
+       "y": 50,
+       "cls": "tb-auf",
+       "role": "Aufpasser",
+       "locked": false
+      },
+      {
+       "name": "Flitzer L",
+       "x": 35,
+       "y": 55,
+       "cls": "tb-fl",
+       "role": "Flitzer L",
+       "locked": false
+      },
+      {
+       "name": "Flitzer R",
+       "x": 85,
+       "y": 50,
+       "cls": "tb-fl",
+       "role": "Flitzer R",
+       "locked": true
+      },
+      {
+       "name": "Jäger",
+       "x": 50,
+       "y": 30,
+       "cls": "tb-jaeg",
+       "role": "Jäger",
+       "locked": true
+      }
+     ],
+     "targets": {
+      "Aufpasser": {
+       "x": 50,
+       "y": 72,
+       "r": 12
+      },
+      "Flitzer L": {
+       "x": 16,
+       "y": 62,
+       "r": 13
+      }
+     },
+     "explain": {
+      "correct": "🦅 Die volle Raute steht! Mit einem mehr auf dem Feld seid ihr überall anspielbar.",
+      "wrong": "Tipp: Der Aufpasser kommt an der Mittellinie rein und läuft in die Mitte vor den Torwart. Flitzer L geht breit nach links."
+     }
+    },
+    {
+     "feld": "3+1",
+     "title": "3+1 – Zwei Anspielstationen",
+     "desc": "Flitzer R hat den Ball, ein Gegner steht vor ihm. Der Jäger steht genau dahinter auf einer Linie – dorthin geht kein Pass.",
+     "task": "Schiebe Jäger und Torwart so, dass Flitzer R zwei Anspielstationen hat!",
+     "hint": "Bildet ein Dreieck: der Jäger schräg nach vorne innen, der Torwart schräg nach hinten.",
+     "ball": {
+      "from": {
+       "x": 80,
+       "y": 62
+      },
+      "to": {
+       "x": 80,
+       "y": 62
+      }
+     },
+     "opps": [
+      {
+       "x": 80,
+       "y": 53,
+       "label": "Gegner"
+      },
+      {
+       "x": 45,
+       "y": 40,
+       "label": "Gegner"
+      },
+      {
+       "x": 30,
+       "y": 55,
+       "label": "Gegner"
+      },
+      {
+       "x": 50,
+       "y": 4,
+       "label": "Geg. TW"
+      }
+     ],
+     "start": [
+      {
+       "name": "TW",
+       "x": 50,
+       "y": 92,
+       "cls": "tb-tw",
+       "role": "TW",
+       "locked": false
+      },
+      {
+       "name": "Flitzer L",
+       "x": 15,
+       "y": 50,
+       "cls": "tb-fl",
+       "role": "Flitzer L",
+       "locked": true
+      },
+      {
+       "name": "Flitzer R",
+       "x": 80,
+       "y": 62,
+       "cls": "tb-fl",
+       "role": "Flitzer R",
+       "locked": true
+      },
+      {
+       "name": "Jäger",
+       "x": 85,
+       "y": 40,
+       "cls": "tb-jaeg",
+       "role": "Jäger",
+       "locked": false
+      }
+     ],
+     "targets": {
+      "Jäger": {
+       "x": 60,
+       "y": 42,
+       "r": 14
+      },
+      "TW": {
+       "x": 60,
+       "y": 80,
+       "r": 12
+      }
+     },
+     "explain": {
+      "correct": "🔺 Dreieck! Flitzer R kann nach vorne zum Jäger oder zurück zum Torwart spielen.",
+      "wrong": "Tipp: Steht ihr auf einer Linie, ist der Pass zugestellt. Der Jäger geht schräg nach innen, der Torwart kommt schräg hinter den Ball."
+     }
+    }
+   ]
+  },
+  {
+   "name": "FUNiño – Dreieck ohne Jäger",
+   "icon": "ti-triangle",
+   "col": "#16a34a",
+   "feld": "funino",
+   "szenarien": [
+    {
+     "feld": "funino",
+     "title": "FUNiño – Toraus: raus aus der Schusszone",
+     "desc": "Toraus – der Gegner dribbelt von seiner Torauslinie ein. Dabei darf keiner von euch in seiner Schusszone stehen.",
+     "task": "Schiebe alle aus der Schusszone des Gegners in eine gute Stellung!",
+     "hint": "Die Flitzer bleiben knapp vor der Schusszone, der Aufpasser steht in der Mitte dahinter.",
+     "ball": {
+      "from": {
+       "x": 30,
+       "y": 2
+      },
+      "to": {
+       "x": 30,
+       "y": 2
+      }
+     },
+     "opps": [
+      {
+       "x": 30,
+       "y": 2,
+       "label": "Gegner"
+      },
+      {
+       "x": 70,
+       "y": 10,
+       "label": "Gegner"
+      },
+      {
+       "x": 50,
+       "y": 14,
+       "label": "Gegner"
+      }
+     ],
+     "start": [
+      {
+       "name": "Aufpasser",
+       "x": 50,
+       "y": 40,
+       "cls": "tb-auf",
+       "role": "Aufpasser",
+       "locked": false
+      },
+      {
+       "name": "Flitzer L",
+       "x": 25,
+       "y": 15,
+       "cls": "tb-fl",
+       "role": "Flitzer L",
+       "locked": false
+      },
+      {
+       "name": "Flitzer R",
+       "x": 75,
+       "y": 15,
+       "cls": "tb-fl",
+       "role": "Flitzer R",
+       "locked": false
+      }
+     ],
+     "targets": {
+      "Flitzer L": {
+       "x": 30,
+       "y": 33,
+       "r": 12
+      },
+      "Flitzer R": {
+       "x": 70,
+       "y": 35,
+       "r": 13
+      },
+      "Aufpasser": {
+       "x": 50,
+       "y": 56,
+       "r": 13
+      }
+     },
+     "explain": {
+      "correct": "⚽ Genau! Keiner steht in der Schusszone, und ihr seid bereit, den Ball zu holen.",
+      "wrong": "Tipp: Beim Toraus des Gegners verlasst ihr seine Schusszone. Die Flitzer warten knapp davor, der Aufpasser bleibt in der Mitte dahinter."
+     }
+    },
+    {
+     "feld": "funino",
+     "title": "FUNiño – Adler: Flitzer greifen die Tore außen an",
+     "desc": "Euer Aufpasser hat den Ball an der Mittellinie. Beim FUNiño gibt es keinen Jäger – die Flitzer greifen die beiden Tore außen an.",
+     "task": "Schiebe Flitzer L und Flitzer R nach vorne zu den Toren!",
+     "hint": "Flitzer L läuft zum linken Tor, Flitzer R zum rechten – bis in die Schusszone.",
+     "ball": {
+      "from": {
+       "x": 50,
+       "y": 55
+      },
+      "to": {
+       "x": 50,
+       "y": 55
+      }
+     },
+     "opps": [
+      {
+       "x": 40,
+       "y": 35,
+       "label": "Gegner"
+      },
+      {
+       "x": 60,
+       "y": 35,
+       "label": "Gegner"
+      },
+      {
+       "x": 50,
+       "y": 15,
+       "label": "Gegner"
+      }
+     ],
+     "start": [
+      {
+       "name": "Aufpasser",
+       "x": 50,
+       "y": 55,
+       "cls": "tb-auf",
+       "role": "Aufpasser",
+       "locked": true
+      },
+      {
+       "name": "Flitzer L",
+       "x": 32,
+       "y": 56,
+       "cls": "tb-fl",
+       "role": "Flitzer L",
+       "locked": false
+      },
+      {
+       "name": "Flitzer R",
+       "x": 68,
+       "y": 56,
+       "cls": "tb-fl",
+       "role": "Flitzer R",
+       "locked": false
+      }
+     ],
+     "targets": {
+      "Flitzer L": {
+       "x": 24,
+       "y": 20,
+       "r": 14
+      },
+      "Flitzer R": {
+       "x": 76,
+       "y": 20,
+       "r": 14
+      }
+     },
+     "explain": {
+      "correct": "🦅 ADLER! Zwei Flitzer an zwei Toren – der Aufpasser kann links oder rechts spielen.",
+      "wrong": "Tipp: Die Tore stehen außen, also laufen die Flitzer außen nach vorne. Flitzer L zum linken Tor, Flitzer R zum rechten, bis in die Schusszone."
+     }
+    },
+    {
+     "feld": "funino",
+     "title": "FUNiño – Der Aufpasser rückt mit",
+     "desc": "Flitzer L ist mit dem Ball vorne links. Der Aufpasser steht noch vor den eigenen Toren – viel zu weit weg!",
+     "task": "Wohin rücken Aufpasser und Flitzer R?",
+     "hint": "Der Aufpasser bleibt in der Mitte hinter dem Ball, rückt aber mit – auch über die Mittellinie. Flitzer R greift das andere Tor an.",
+     "ball": {
+      "from": {
+       "x": 20,
+       "y": 30
+      },
+      "to": {
+       "x": 20,
+       "y": 30
+      }
+     },
+     "opps": [
+      {
+       "x": 25,
+       "y": 20,
+       "label": "Gegner"
+      },
+      {
+       "x": 55,
+       "y": 30,
+       "label": "Gegner"
+      },
+      {
+       "x": 70,
+       "y": 42,
+       "label": "Gegner"
+      }
+     ],
+     "start": [
+      {
+       "name": "Aufpasser",
+       "x": 50,
+       "y": 82,
+       "cls": "tb-auf",
+       "role": "Aufpasser",
+       "locked": false
+      },
+      {
+       "name": "Flitzer L",
+       "x": 20,
+       "y": 30,
+       "cls": "tb-fl",
+       "role": "Flitzer L",
+       "locked": true
+      },
+      {
+       "name": "Flitzer R",
+       "x": 78,
+       "y": 55,
+       "cls": "tb-fl",
+       "role": "Flitzer R",
+       "locked": false
+      }
+     ],
+     "targets": {
+      "Aufpasser": {
+       "x": 44,
+       "y": 45,
+       "r": 14
+      },
+      "Flitzer R": {
+       "x": 76,
+       "y": 22,
+       "r": 14
+      }
+     },
+     "explain": {
+      "correct": "👏 Perfekt! Der Aufpasser ist hinter dem Ball anspielbar, und Flitzer R wartet am zweiten Tor.",
+      "wrong": "Tipp: Der Aufpasser steht nie lange vor den eigenen Toren. Er rückt mit und bleibt in der Mitte hinter dem Ball. Flitzer R läuft zum rechten Tor."
+     }
+    },
+    {
+     "feld": "funino",
+     "title": "FUNiño – Links oder rechts?",
+     "desc": "Links ist alles zugestellt. Flitzer L spielt zurück zum Aufpasser – der entscheidet: links oder rechts.",
+     "task": "Wohin muss Flitzer R, damit der Aufpasser auf die andere Seite spielen kann?",
+     "hint": "Rechts ist Platz! Flitzer R geht breit nach rechts, weg vom Gegner.",
+     "ball": {
+      "from": {
+       "x": 18,
+       "y": 30
+      },
+      "to": {
+       "x": 50,
+       "y": 48
+      }
+     },
+     "opps": [
+      {
+       "x": 22,
+       "y": 24,
+       "label": "Gegner"
+      },
+      {
+       "x": 30,
+       "y": 34,
+       "label": "Gegner"
+      },
+      {
+       "x": 56,
+       "y": 30,
+       "label": "Gegner"
+      }
+     ],
+     "start": [
+      {
+       "name": "Aufpasser",
+       "x": 50,
+       "y": 48,
+       "cls": "tb-auf",
+       "role": "Aufpasser",
+       "locked": true
+      },
+      {
+       "name": "Flitzer L",
+       "x": 18,
+       "y": 30,
+       "cls": "tb-fl",
+       "role": "Flitzer L",
+       "locked": true
+      },
+      {
+       "name": "Flitzer R",
+       "x": 60,
+       "y": 31,
+       "cls": "tb-fl",
+       "role": "Flitzer R",
+       "locked": false
+      }
+     ],
+     "targets": {
+      "Flitzer R": {
+       "x": 82,
+       "y": 30,
+       "r": 14
+      }
+     },
+     "explain": {
+      "correct": "🔄 Klasse! Der Aufpasser spielt rüber, und rechts ist das Tor frei.",
+      "wrong": "Tipp: Der Aufpasser ist in der Mitte und kann in beide Richtungen spielen. Flitzer R muss dafür breit rechts stehen, nicht beim Gegner."
+     }
+    },
+    {
+     "feld": "funino",
+     "title": "FUNiño – Einer drängt, zwei schützen die Tore",
+     "desc": "Der Gegner dribbelt auf eurer linken Seite auf euer Tor zu.",
+     "task": "Wer drängt den Gegner, und wer schützt welches Tor?",
+     "hint": "Flitzer L drängt den Gegner nach außen. Der Aufpasser geht vor das linke Tor, Flitzer R vor das rechte.",
+     "ball": {
+      "from": {
+       "x": 25,
+       "y": 40
+      },
+      "to": {
+       "x": 25,
+       "y": 55
+      }
+     },
+     "opps": [
+      {
+       "x": 25,
+       "y": 40,
+       "label": "Gegner",
+       "to": {
+        "x": 25,
+        "y": 55
+       }
+      },
+      {
+       "x": 55,
+       "y": 45,
+       "label": "Gegner"
+      },
+      {
+       "x": 75,
+       "y": 45,
+       "label": "Gegner"
+      }
+     ],
+     "start": [
+      {
+       "name": "Aufpasser",
+       "x": 50,
+       "y": 40,
+       "cls": "tb-auf",
+       "role": "Aufpasser",
+       "locked": false
+      },
+      {
+       "name": "Flitzer L",
+       "x": 25,
+       "y": 30,
+       "cls": "tb-fl",
+       "role": "Flitzer L",
+       "locked": false
+      },
+      {
+       "name": "Flitzer R",
+       "x": 80,
+       "y": 35,
+       "cls": "tb-fl",
+       "role": "Flitzer R",
+       "locked": false
+      }
+     ],
+     "targets": {
+      "Flitzer L": {
+       "x": 33,
+       "y": 62,
+       "r": 12
+      },
+      "Aufpasser": {
+       "x": 30,
+       "y": 86,
+       "r": 12
+      },
+      "Flitzer R": {
+       "x": 70,
+       "y": 86,
+       "r": 12
+      }
+     },
+     "explain": {
+      "correct": "🦔 So geht IGEL beim FUNiño: einer drängt, zwei schützen die Tore!",
+      "wrong": "Tipp: Der Flitzer auf der Ballseite drängt den Gegner nach außen. Der Aufpasser schützt das Tor auf der Ballseite, der andere Flitzer das zweite Tor."
+     }
+    },
+    {
+     "feld": "funino",
+     "title": "FUNiño – Gegner wechselt die Seite",
+     "desc": "Der Gegner spielt den Ball auf eure rechte Seite. Jetzt ist der Ball rechts!",
+     "task": "Verschiebt euch: einer drängt, zwei schützen die Tore – jetzt auf der anderen Seite!",
+     "hint": "Jetzt drängt Flitzer R. Der Aufpasser geht vor das rechte Tor, Flitzer L vor das linke.",
+     "ball": {
+      "from": {
+       "x": 25,
+       "y": 55
+      },
+      "to": {
+       "x": 75,
+       "y": 55
+      }
+     },
+     "opps": [
+      {
+       "x": 25,
+       "y": 55,
+       "label": "Gegner"
+      },
+      {
+       "x": 72,
+       "y": 45,
+       "label": "Gegner",
+       "to": {
+        "x": 75,
+        "y": 55
+       }
+      },
+      {
+       "x": 50,
+       "y": 42,
+       "label": "Gegner"
+      }
+     ],
+     "start": [
+      {
+       "name": "Aufpasser",
+       "x": 30,
+       "y": 86,
+       "cls": "tb-auf",
+       "role": "Aufpasser",
+       "locked": false
+      },
+      {
+       "name": "Flitzer L",
+       "x": 33,
+       "y": 62,
+       "cls": "tb-fl",
+       "role": "Flitzer L",
+       "locked": false
+      },
+      {
+       "name": "Flitzer R",
+       "x": 70,
+       "y": 86,
+       "cls": "tb-fl",
+       "role": "Flitzer R",
+       "locked": false
+      }
+     ],
+     "targets": {
+      "Flitzer R": {
+       "x": 67,
+       "y": 62,
+       "r": 12
+      },
+      "Aufpasser": {
+       "x": 70,
+       "y": 86,
+       "r": 12
+      },
+      "Flitzer L": {
+       "x": 30,
+       "y": 86,
+       "r": 12
+      }
+     },
+     "explain": {
+      "correct": "💪 Stark verschoben! Der Ball ist rechts, und beide Tore sind wieder geschützt.",
+      "wrong": "Tipp: Wechselt der Ball die Seite, wechseln auch die Aufgaben. Flitzer R drängt, der Aufpasser geht vor das rechte Tor, Flitzer L vor das linke."
+     }
+    },
+    {
+     "feld": "funino",
+     "title": "FUNiño – Ballgewinn: sofort breit",
+     "desc": "Der Aufpasser hat vor dem eigenen Tor den Ball erobert. Die Flitzer stehen noch hinten vor den Toren.",
+     "task": "Schiebe die Flitzer nach vorne und nach außen!",
+     "hint": "Ball gewonnen = ADLER. Weg von den eigenen Toren, breit nach vorne.",
+     "ball": {
+      "from": {
+       "x": 40,
+       "y": 78
+      },
+      "to": {
+       "x": 40,
+       "y": 78
+      }
+     },
+     "opps": [
+      {
+       "x": 45,
+       "y": 66,
+       "label": "Gegner"
+      },
+      {
+       "x": 25,
+       "y": 55,
+       "label": "Gegner"
+      },
+      {
+       "x": 70,
+       "y": 58,
+       "label": "Gegner"
+      }
+     ],
+     "start": [
+      {
+       "name": "Aufpasser",
+       "x": 40,
+       "y": 78,
+       "cls": "tb-auf",
+       "role": "Aufpasser",
+       "locked": true
+      },
+      {
+       "name": "Flitzer L",
+       "x": 28,
+       "y": 88,
+       "cls": "tb-fl",
+       "role": "Flitzer L",
+       "locked": false
+      },
+      {
+       "name": "Flitzer R",
+       "x": 66,
+       "y": 88,
+       "cls": "tb-fl",
+       "role": "Flitzer R",
+       "locked": false
+      }
+     ],
+     "targets": {
+      "Flitzer L": {
+       "x": 16,
+       "y": 46,
+       "r": 14
+      },
+      "Flitzer R": {
+       "x": 84,
+       "y": 46,
+       "r": 14
+      }
+     },
+     "explain": {
+      "correct": "🦅 Super umgeschaltet! Jetzt hat der Aufpasser zwei Anspielstationen weit vorne.",
+      "wrong": "Tipp: Nach dem Ballgewinn bleibt keiner vor den eigenen Toren stehen. Die Flitzer laufen breit nach vorne, links und rechts."
+     }
+    },
+    {
+     "feld": "funino",
+     "title": "FUNiño – Tor nur aus der Schusszone",
+     "desc": "Flitzer R hat den Ball rechts vor der Schusszone. Ein Tor zählt nur, wenn aus der Schusszone geschossen wird.",
+     "task": "Wohin laufen Flitzer L und Aufpasser?",
+     "hint": "Flitzer L läuft in die Schusszone vor das linke Tor. Der Aufpasser rückt in der Mitte hinter dem Ball nach.",
+     "ball": {
+      "from": {
+       "x": 75,
+       "y": 32
+      },
+      "to": {
+       "x": 75,
+       "y": 32
+      }
+     },
+     "opps": [
+      {
+       "x": 70,
+       "y": 20,
+       "label": "Gegner"
+      },
+      {
+       "x": 46,
+       "y": 24,
+       "label": "Gegner"
+      },
+      {
+       "x": 30,
+       "y": 38,
+       "label": "Gegner"
+      }
+     ],
+     "start": [
+      {
+       "name": "Aufpasser",
+       "x": 50,
+       "y": 80,
+       "cls": "tb-auf",
+       "role": "Aufpasser",
+       "locked": false
+      },
+      {
+       "name": "Flitzer L",
+       "x": 25,
+       "y": 48,
+       "cls": "tb-fl",
+       "role": "Flitzer L",
+       "locked": false
+      },
+      {
+       "name": "Flitzer R",
+       "x": 75,
+       "y": 32,
+       "cls": "tb-fl",
+       "role": "Flitzer R",
+       "locked": true
+      }
+     ],
+     "targets": {
+      "Flitzer L": {
+       "x": 26,
+       "y": 15,
+       "r": 12
+      },
+      "Aufpasser": {
+       "x": 52,
+       "y": 46,
+       "r": 14
+      }
+     },
+     "explain": {
+      "correct": "⚽ Richtig! Flitzer L steht in der Schusszone und darf nach dem Pass schießen.",
+      "wrong": "Tipp: Von außerhalb der Schusszone zählt kein Tor. Flitzer L läuft hinein, der Aufpasser rückt hinter dem Ball nach."
+     }
+    },
+    {
+     "feld": "funino",
+     "title": "FUNiño – Drei Tore hinten: der Jäger kommt dazu",
+     "desc": "Ihr liegt drei Tore hinten. Jetzt darf ein vierter Spieler aufs Feld – bis es nur noch ein Tor Unterschied ist.",
+     "task": "Wo spielt der Jäger, der neu reinkommt?",
+     "hint": "Der Jäger geht vorne in die Mitte, zwischen die beiden Tore des Gegners. Jetzt steht die volle Raute.",
+     "ball": {
+      "from": {
+       "x": 50,
+       "y": 62
+      },
+      "to": {
+       "x": 50,
+       "y": 62
+      }
+     },
+     "opps": [
+      {
+       "x": 35,
+       "y": 36,
+       "label": "Gegner"
+      },
+      {
+       "x": 65,
+       "y": 36,
+       "label": "Gegner"
+      },
+      {
+       "x": 50,
+       "y": 48,
+       "label": "Gegner"
+      }
+     ],
+     "start": [
+      {
+       "name": "Aufpasser",
+       "x": 50,
+       "y": 62,
+       "cls": "tb-auf",
+       "role": "Aufpasser",
+       "locked": true
+      },
+      {
+       "name": "Flitzer L",
+       "x": 18,
+       "y": 45,
+       "cls": "tb-fl",
+       "role": "Flitzer L",
+       "locked": true
+      },
+      {
+       "name": "Flitzer R",
+       "x": 82,
+       "y": 45,
+       "cls": "tb-fl",
+       "role": "Flitzer R",
+       "locked": true
+      },
+      {
+       "name": "Jäger",
+       "x": 4,
+       "y": 50,
+       "cls": "tb-jaeg",
+       "role": "Jäger",
+       "locked": false
+      }
+     ],
+     "targets": {
+      "Jäger": {
+       "x": 50,
+       "y": 26,
+       "r": 13
+      }
+     },
+     "explain": {
+      "correct": "🦅 Volle Raute! Aufpasser hinten, Flitzer außen, Jäger vorne in der Mitte.",
+      "wrong": "Tipp: Der Jäger kommt an der Mittellinie rein und läuft vorne in die Mitte, zwischen die beiden Tore des Gegners."
+     }
+    },
+    {
+     "feld": "funino",
+     "title": "FUNiño – Eingewechselt: welche Rolle hast du?",
+     "desc": "Flitzer R ist gerade ausgewechselt worden. Du kommst an der Mittellinie für ihn rein.",
+     "task": "Wohin läufst du als neuer Flitzer R?",
+     "hint": "Wer eingewechselt wird, übernimmt die Rolle, die frei geworden ist. Rechts vorne fehlt jemand!",
+     "ball": {
+      "from": {
+       "x": 50,
+       "y": 60
+      },
+      "to": {
+       "x": 50,
+       "y": 60
+      }
+     },
+     "opps": [
+      {
+       "x": 30,
+       "y": 35,
+       "label": "Gegner"
+      },
+      {
+       "x": 55,
+       "y": 38,
+       "label": "Gegner"
+      },
+      {
+       "x": 40,
+       "y": 50,
+       "label": "Gegner"
+      }
+     ],
+     "start": [
+      {
+       "name": "Aufpasser",
+       "x": 50,
+       "y": 60,
+       "cls": "tb-auf",
+       "role": "Aufpasser",
+       "locked": true
+      },
+      {
+       "name": "Flitzer L",
+       "x": 20,
+       "y": 42,
+       "cls": "tb-fl",
+       "role": "Flitzer L",
+       "locked": true
+      },
+      {
+       "name": "Flitzer R",
+       "x": 96,
+       "y": 50,
+       "cls": "tb-fl",
+       "role": "Flitzer R",
+       "locked": false
+      }
+     ],
+     "targets": {
+      "Flitzer R": {
+       "x": 80,
+       "y": 40,
+       "r": 14
+      }
+     },
+     "explain": {
+      "correct": "👍 Genau! Du übernimmst die freie Rolle – rechts vorne bist du sofort anspielbar.",
+      "wrong": "Tipp: Beim FUNiño wandern die Rollen. Wer reinkommt, spielt dort, wo jemand fehlt – hier als Flitzer R rechts vorne."
+     }
+    }
+   ]
+  }
+ ]
+}

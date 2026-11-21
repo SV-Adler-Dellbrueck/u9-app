@@ -1,0 +1,260 @@
+{
+ "schema": "adler-taktikquiz-korrektur/1",
+ "stand": "2026-11-21-1",
+ "hinweis": "Zuordnung über nr UND title (alter Titel). Pfade: feld, feld.unterfeld, targets.<Rolle>, start.<Rolle> (x/y überschreiben), ball.to.",
+ "korrekturen": [
+  {
+   "nr": 7,
+   "title": "Raute kompakt nach hinten",
+   "grund": "Strafraum: Felder mit Jugendtoren haben nur eine Mittellinie (Durchführungsbestimmungen Kreis Köln 2.5)",
+   "set": {
+    "explain.wrong": "Tipp: Alle zurückziehen, aber die Raute-Form bewahren. Jäger geht auf Mittellinie zurück, Flitzer in eigene Hälfte, Aufpasser nah vor dem eigenen Tor."
+   }
+  },
+  {
+   "nr": 12,
+   "title": "ADLER – Aufpasser spielt auf Flitzer L",
+   "grund": "Flanke/Pfosten: Großfeld-Sprache",
+   "set": {
+    "hint": "Jäger bietet sich vor dem Tor an. Flitzer R rückt etwas ein – Absicherung dahinter!",
+    "explain.correct": "⚽ Super! Jäger zum Tor, Flitzer R auf die andere Seite vor das Tor, Aufpasser sichert ab!",
+    "explain.wrong": "Tipp: Jäger muss Richtung Tor laufen – dorthin kommt der Querpass! Flitzer R geht leicht nach innen. Aufpasser bleibt dahinter als Absicherung."
+   }
+  },
+  {
+   "nr": 13,
+   "title": "ADLER – Flitzer L dribbelt nach vorne",
+   "grund": "Pfosten/Flanke: Großfeld-Sprache",
+   "set": {
+    "hint": "Jäger vor das Tor, Flitzer R auf die andere Seite vor das Tor. Aufpasser sichert!",
+    "explain.correct": "👏 Perfekt! Jäger vorne am Tor, Flitzer R auf der anderen Seite, Aufpasser sichert dahinter!",
+    "explain.wrong": "Tipp: Der Jäger läuft vor das Tor, dort kommt der Querpass zuerst an. Flitzer R geht auf die andere Seite vor das Tor. Aufpasser hält Abstand und sichert gegen Konter."
+   }
+  },
+  {
+   "nr": 16,
+   "title": "IGEL aktivieren – eng zusammen!",
+   "grund": "Ziel liegt genau auf dem Ballführenden – Steine und Lösungskreis verdecken den Gegner",
+   "set": {
+    "targets.Jäger": {
+     "x": 50,
+     "y": 47,
+     "r": 12
+    }
+   }
+  },
+  {
+   "nr": 19,
+   "title": "IGEL – Durchbruch verhindern",
+   "grund": "Strafraum",
+   "aufnahme": true,
+   "set": {
+    "task": "Schützt euer Tor! Alle zurück – aber nicht klumpen!",
+    "explain.wrong": "Tipp: Im Notfall alle zurück, aber NICHT auf einem Haufen! Jäger verzögert, Aufpasser sichert Mitte, Flitzer decken die Seiten vor dem Tor ab."
+   }
+  },
+  {
+   "nr": 20,
+   "title": "IGEL – Ecke gegen uns",
+   "grund": "Pfosten/Rückraum",
+   "set": {
+    "explain.wrong": "Tipp: Bei einer Ecke gegen euch ALLE zurück vors Tor! Flitzer R geht zum Eindribbler, Aufpasser sichert die Mitte, Flitzer L die andere Seite vor dem Tor, Jäger den Raum davor."
+   }
+  },
+  {
+   "nr": 38,
+   "title": "Rückpass zum TW",
+   "grund": "Rückpässe ohne Hände (Durchführungsbestimmungen 4.12)",
+   "set": {
+    "explain.correct": "Klug! Sicherer Rückpass statt Risiko – Ballerhalt ist wichtiger! Der Torwart spielt den Ball mit dem Fuß weiter, nicht mit der Hand."
+   }
+  },
+  {
+   "nr": 42,
+   "title": "Flügelspiel: Flitzer L gewinnt das 1gg1",
+   "grund": "Flanke/Pfosten/Strafraum",
+   "aufnahme": true,
+   "set": {
+    "desc": "Flitzer L hat seinen Gegenspieler geschlagen und hat jetzt freie Bahn Richtung Torauslinie!",
+    "task": "Flitzer L ist durch – wo müssen die anderen für den Querpass stehen?",
+    "hint": "Jäger vor das Tor, Flitzer R auf die andere Seite vor das Tor, Aufpasser dahinter in die Mitte!",
+    "explain.correct": "⚽ Top! Jäger vorne am Tor, Flitzer R auf der anderen Seite – bereit für den Querpass!",
+    "explain.wrong": "Tipp: Der Jäger läuft vor das Tor. Flitzer R kommt auf der anderen Seite rein. Der Aufpasser bleibt dahinter in der Mitte für zweite Bälle."
+   }
+  },
+  {
+   "nr": 43,
+   "title": "Flügelspiel: Flanke kommt!",
+   "grund": "Flanke/Strafraum/Pfosten",
+   "aufnahme": true,
+   "set": {
+    "title": "Flügelspiel: Querpass kommt!",
+    "desc": "Flitzer L spielt von der Torauslinie flach vor das Tor!",
+    "task": "Der Querpass kommt! Zeige, wo sich Jäger und Flitzer R zum Ball bewegen!",
+    "explain.correct": "⏱️ Perfektes Timing! Jäger vor den Verteidiger, Flitzer R kommt auf der anderen Seite!",
+    "explain.wrong": "Tipp: Der Jäger muss VOR seinen Gegenspieler laufen. Flitzer R startet auf der anderen Seite – er sieht den Ball kommen."
+   }
+  },
+  {
+   "nr": 52,
+   "title": "Standard: Seitenaus gegnerische Hälfte",
+   "grund": "Pfosten/Flanke/Strafraum",
+   "set": {
+    "hint": "Nahe am gegnerischen Tor: Jäger vor das Tor, Flitzer L rückt ein, Aufpasser sichert!",
+    "explain.correct": "⚽ Offensiv! Jäger vor das Tor, Flitzer L rückt ein – Aufpasser sichert!",
+    "explain.wrong": "Tipp: Wer eindribbelt, darf selbst aufs Tor schießen – oder passt quer. Jäger geht vor das Tor. Flitzer L rückt ein für die zweite Welle. Aufpasser sichert ab."
+   }
+  },
+  {
+   "nr": 54,
+   "title": "Standard: Ecke für uns",
+   "grund": "Strafraum/Pfosten",
+   "aufnahme": true,
+   "set": {
+    "task": "Wie stellt sich das Team vor dem Tor auf?",
+    "hint": "Jäger und Flitzer R vor das Tor! Aufpasser etwas dahinter für Abpraller.",
+    "explain.wrong": "Tipp: Jäger vorne am Tor, Flitzer R auf der anderen Seite, Aufpasser dahinter für Abpraller. So habt ihr drei Optionen – und wer eindribbelt, darf auch selbst aufs Tor schießen!"
+   }
+  },
+  {
+   "nr": 55,
+   "title": "Standard: Toraus gegen uns",
+   "grund": "Jäger startet schon im Ziel (Abstand 1, Radius 9) – Punkt ohne Zug",
+   "set": {
+    "start.Jäger": {
+     "x": 62,
+     "y": 74
+    },
+    "targets.Jäger": {
+     "x": 50,
+     "y": 54,
+     "r": 12
+    }
+   }
+  },
+  {
+   "nr": 57,
+   "title": "Spiel: Führung verteidigen",
+   "grund": "Ergebnis halten widerspricht den Durchführungsbestimmungen 4.11 (keine Ergebnisse, Ausbildung im Vordergrund); Trainer coacht im Spiel nur wenig (4.10)",
+   "aufnahme": true,
+   "set": {
+    "title": "Spiel: Gegner drängt – kompakt bleiben",
+    "desc": "Der Gegner greift mit allen an und kommt immer wieder vor euer Tor.",
+    "task": "Steht kompakt und tief – aber haltet die Form!",
+    "hint": "IGEL! Tief stehen, Räume eng machen.",
+    "explain.correct": "Gut! Tief und kompakt. Die Raute steht in der eigenen Hälfte, der Jäger fällt bis zur Mittellinie zurück.",
+    "explain.wrong": "Tipp: Wenn der Gegner drängt, steht ihr TIEF: Jäger an der Mittellinie, Flitzer in der eigenen Hälfte, Aufpasser nah vor dem Tor. Kompakt bleiben!"
+   }
+  },
+  {
+   "nr": 59,
+   "title": "Spiel: Überzahl nutzen – 5 gegen 4",
+   "grund": "Überzahl entsteht nach der Drei-Tore-Regel (4.8), nicht durch Verletzung; Jäger-Ziel lag auf einem Gegner",
+   "aufnahme": true,
+   "set": {
+    "desc": "Ihr liegt drei Tore hinten, aber euer Trainer hat keinen Wechselspieler. Deshalb nimmt der Gegner einen Spieler vom Feld – ihr spielt 5 gegen 4!",
+    "targets.Jäger": {
+     "x": 50,
+     "y": 22,
+     "r": 12
+    }
+   }
+  },
+  {
+   "nr": 60,
+   "title": "Spiel: Unterzahl – 4 gegen 5",
+   "grund": "Unterzahl entsteht nach der Drei-Tore-Regel (4.8), nicht durch Verletzung",
+   "aufnahme": true,
+   "set": {
+    "desc": "Der Gegner liegt drei Tore hinten und hat keinen Wechselspieler. Deshalb geht euer Jäger vom Feld – ihr spielt 4 gegen 5, drei Feldspieler und TW."
+   }
+  },
+  {
+   "nr": 63,
+   "title": "TW kommt heraus!",
+   "grund": "Strafraum",
+   "aufnahme": true,
+   "set": {
+    "desc": "Ein hoher Ball fliegt vor euer Tor! Darf dein TW herauskommen?"
+   }
+  },
+  {
+   "nr": 68,
+   "title": "TW – Flanke klären",
+   "grund": "Hohe Flanke und „bevor der Gegner köpfen kann“ – Kopfball wird bis U11 nicht geübt (Ausbildungskonzept 11)",
+   "aufnahme": true,
+   "set": {
+    "title": "TW – Querpass abfangen",
+    "desc": "Von links kommt ein flacher Querpass vor euer Tor! Kommt der TW raus oder bleibt er?",
+    "task": "Schiebe den TW richtig – raus zum Ball!",
+    "explain.correct": "Mutig! Raus zum Ball und ihn sichern, bevor der Gegner schießen kann!",
+    "explain.wrong": "Tipp: Kommt der Ball vor das Tor und kein Gegner ist direkt dran, läuft der TW mutig raus. Nicht auf der Linie warten."
+   }
+  },
+  {
+   "nr": 73,
+   "title": "Tempo des Spiels lesen",
+   "grund": "Jäger-Ziel 3,6 neben einem Gegner",
+   "set": {
+    "targets.Jäger": {
+     "x": 50,
+     "y": 52,
+     "r": 13
+    }
+   }
+  },
+  {
+   "nr": 79,
+   "title": "Ball sichern – Körper einsetzen",
+   "grund": "Ziel lag auf dem Gegner (3,6 entfernt) statt zwischen Ball und Gegner",
+   "set": {
+    "ball.to": {
+     "x": 24,
+     "y": 58
+    },
+    "targets.Flitzer L": {
+     "x": 24,
+     "y": 58,
+     "r": 12
+    },
+    "start.Flitzer L": {
+     "x": 12,
+     "y": 76
+    }
+   }
+  },
+  {
+   "nr": 88,
+   "title": "Rückzugslauf",
+   "grund": "Ziel genau auf dem Ballführenden",
+   "set": {
+    "targets.Jäger": {
+     "x": 50,
+     "y": 46,
+     "r": 15
+    }
+   }
+  },
+  {
+   "nr": 89,
+   "title": "Herausschieben aus der Defensive",
+   "grund": "Strafraum",
+   "aufnahme": true,
+   "set": {
+    "desc": "Der Gegner steht direkt vor eurem Tor! Aktiv herausschieben!"
+   }
+  },
+  {
+   "nr": 96,
+   "title": "Pressing: Seitliches Pressing",
+   "grund": "Ziel genau auf dem Ballführenden",
+   "set": {
+    "targets.Flitzer R": {
+     "x": 80,
+     "y": 39,
+     "r": 12
+    }
+   }
+  }
+ ]
+}
