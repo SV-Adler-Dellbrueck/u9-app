@@ -87,12 +87,14 @@ Minitore bei x 28 und 72, Schusszonen bis y 24 (Gegner) und ab y 76 (eigene).
    Medaille und Sticker im Verhältnis zu `tqTotal` bzw. Blockgröße (≥ 90 / 70 / 50 %, Sticker
    ab 70 %). Beschriftung der Lösungskreise mindestens 11,5 px, notfalls Kurzform der Rolle
    (TW, Auf, FL, FR, Jä) statt Verkleinerung.
-6. **Aufnahmen.** Neue Sprechtexte brauchen neue Dateien unter `audio/quiz/` (Name aus
-   `ttsHash(ttsSprechtext(desc+" "+task))`): die 20 neuen Szenarien und die Korrekturen mit
-   `aufnahme: true` (19, 42, 43, 54, 57, 59, 60, 63, 68, 89), zusammen 30. Die Aufnahmen
-   kommen erst nach Charles' Freigabe der Texte (ElevenLabs, Stimme „Ava“ wie die Serie vom
-   15.09.); bis dahin liest die Gerätestimme. Schritt 7 darf deshalb erst nach den Aufnahmen
-   grün sein – oder die Aufnahmepflicht für 101–120 wird bis dahin ausdrücklich ausgesetzt.
+6. **Ohne Aufnahmen (Charles 21.11.).** Für die neuen und die geänderten Sprechtexte werden
+   vorerst **keine** Aufnahmen gemacht; es zählt nur der Text in der App. Betroffen sind die
+   20 neuen Szenarien und die Korrekturen mit `aufnahme: true` (19, 42, 43, 54, 57, 59, 60,
+   63, 68, 89). Der Vorlese-Knopf fällt dort wie vorgesehen auf die Gerätestimme zurück. Die
+   alten MP3 dieser zehn Szenarien werden gelöscht (ihr Name passt nicht mehr). Die
+   Aufnahmepflicht in `v567-quiz-audio.js` bekommt eine ausdrückliche, kommentierte
+   Ausnahmeliste für genau diese 30 Szenarien (über den Titel, nicht über die Nummer), damit
+   jedes weitere Szenario ohne Aufnahme weiter rot wird.
 7. **Prüffälle.** `v566-eltern-durchsicht.js` um diese Invarianten über **alle** Szenarien
    erweitern: kein Ziel ist am Start (nach `anim`) schon erreicht; kein Wort Strafraum,
    Pfosten, Flanke, köpf; im `feld: "3+1"` kein Aufpasser und im `feld: "funino"` kein
@@ -101,9 +103,16 @@ Minitore bei x 28 und 72, Schusszonen bis y 24 (Gegner) und ab y 76 (eigene).
 8. Hilfe-Eintrag zum Taktik-Quiz und Funktionsübersicht nachziehen, `node tests/run.js` grün,
    `sw.js` hochzählen.
 
-**Nicht Teil dieses Pakets, nur auf Charles' Wort:** `FORMATIONS['3+1']` in `data.js` steht
-noch auf dem am 16.09. verworfenen 1-2 (Aufpasser plus zwei Flitzer). Laut Beschluss wäre es
-Torwart, zwei Flitzer, Jäger. Betrifft Taktikbrett und Mini-Feld am Spieltag, nicht das Quiz.
+9. **3+1 im Taktikbrett und Mini-Feld (Charles 21.11.: mit ins Paket).** `FORMATIONS['3+1']`
+   in `data.js` steht noch auf dem am 16.09. verworfenen 1-2 (Aufpasser plus zwei Flitzer).
+   Neu laut Beschluss: Torwart, Flitzer L, Flitzer R, Jäger – Vorschlag `TW 50/92`,
+   `Flitzer L 20/52`, `Flitzer R 80/52`, `Jäger 50/30` (Klassen und `rk` wie im 4+1). Vorher
+   alle Leser von `FORMATIONS` und `rk` suchen (Taktikbrett `md-brett.js`, Mini-Feld am
+   Spieltag, Rollen-Erfahrung/„Vorschlag“, Rollen-Matrix, `kind_rolle_heute`) und im PR
+   aufführen, was sich dadurch ändert – insbesondere, ob gespeicherte 3+1-Aufstellungen mit
+   Slot „Aufpasser“ danach falsch gezählt oder angezeigt werden. Bestehende Daten nicht
+   umschreiben; wenn alte Aufstellungen betroffen sind, erst Charles fragen. Die FUNiño-Formation
+   bleibt in diesem Paket unverändert.
 
 ## Abnahmekriterien
 
@@ -121,7 +130,9 @@ Torwart, zwei Flitzer, Jäger. Betrifft Taktikbrett und Mini-Feld am Spieltag, n
 6. Ergebnisbildschirm nach einem 3+1-Block nennt das 3+1, nicht die Raute; 7 von 10 ergibt
    dieselbe Medaille wie bisher.
 7. Lösungskreise sind bei 360 px Breite lesbar (Schrift ≥ 11,5 px), hell und dunkel.
-8. Ganze Prüfreihe grün.
+8. Taktikbrett „3+1“ zeigt Torwart, zwei Flitzer und Jäger, keinen Aufpasser; ein gespeichertes
+   3+1-Brett auf dem Gerät öffnet ohne Fehler.
+9. Ganze Prüfreihe grün.
 
 ## Testfälle
 
@@ -133,4 +144,4 @@ Torwart, zwei Flitzer, Jäger. Betrifft Taktikbrett und Mini-Feld am Spieltag, n
   ziehen; Ablegen bei x > 97 wird wie bisher auf 97 begrenzt.
 - Szenario „3+1 – Drei Tore hinten“: der Aufpasser startet an der Mittellinie außen und ist
   der einzige Aufpasser-Stein im 3+1-Block.
-- Vorlesen-Knopf bei Szenario 101 ohne Aufnahme → Gerätestimme, kein Fehler.
+- Vorlesen-Knopf bei Szenario 101 und bei Szenario 43 ohne Aufnahme → Gerätestimme, kein Fehler.
