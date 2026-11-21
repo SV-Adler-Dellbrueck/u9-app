@@ -18,7 +18,7 @@
 const fs = require("fs"), path = require("path");
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
-  const weit = h.tagePlus(60);
+  const weit = h.tagePlus(20);   // v924: innerhalb der 6-Wochen-Grenze der Automatik (vorher 60)
   const dienste = [
     { termin_id: 7, datum: weit, uhrzeit: "10:15", gegner: "Kinderfestival", dienst_id: 21, status: "eingeteilt", name: null, eigene: false, kann_uebernehmen: false, platz: 1, plaetze: 2 },
     { termin_id: 7, datum: weit, uhrzeit: "10:15", gegner: "Kinderfestival", dienst_id: 22, status: "eingeteilt", name: null, eigene: true, kann_uebernehmen: false, platz: 2, plaetze: 2 }
@@ -49,9 +49,9 @@ module.exports = async function (h) {
     kader: h.kaderZeilen(),
     team_config: [{ id: 1, dienst_plaetze: 2 }],
     termine: [{ id: 7, datum: weit, uhrzeit: "10:15", gegner: "Kinderfestival", typ: "turnier", heim: true },
-              { id: 8, datum: h.tagePlus(80), uhrzeit: "10:00", gegner: "Gastverein B", typ: "spiel", heim: true }],
+              { id: 8, datum: h.tagePlus(30), uhrzeit: "10:00", gegner: "Gastverein B", typ: "spiel", heim: true }],
     dienst_einteilung: [{ id: 21, termin_id: 7, kind_id: 1, status: "eingeteilt", uebernommen_von: null, platz: 1 }],
-    dienst_sperre: [{ id: 5, kind_id: 11, datum: h.tagePlus(80) }],
+    dienst_sperre: [{ id: 5, kind_id: 11, datum: h.tagePlus(30) }],
     profiles: [], rpc: { dienst_einteilen: 3 }
   }) });
   const rt = await t.page.evaluate(async () => {

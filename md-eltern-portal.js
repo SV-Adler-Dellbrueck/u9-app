@@ -2021,7 +2021,7 @@ async function terminDetailOpen(id){
   // nach der Endzeit ins Archiv, dort würde die Smiley-Frage niemand mehr finden).
   if(t.typ==="event"&&t.mitbringen)tdMitbringLoad(t); // Mitbringliste nur, wenn der Trainer sie eingeschaltet hat (v566)
   if(t.typ==="event"&&t.eltern_turnier)mitspielerLoad(t.id,"td-mitspieler"); // v825: Kinder-Eltern-Turnier
-  if(document.getElementById("td-feier")&&typeof feierLoad==="function")feierLoad("td-feier",t); // v828: Beitragsliste (Welle 2, deshalb geprüft)
+  if(document.getElementById("td-feier")&&typeof feierLoad==="function")feierLoad("td-feier",t); // v828: Mitbringliste (Welle 2, deshalb geprüft)
 }
 /* v901: Spielplan im Termin. Der Block selbst kommt aus md-turnierplan.js (htTerminBlockHtml, Welle 2 – geprüft).
    heimturnier ist öffentlich lesbar; gezeigt wird nur, wenn der Trainer „Spielplan im Termin“ eingeschaltet hat. */

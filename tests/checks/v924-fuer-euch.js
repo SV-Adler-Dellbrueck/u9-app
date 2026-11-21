@@ -1,16 +1,16 @@
 /* v924 · Charles 21.11. (Bild der Eltern-Startseite): „Ich sehe keine Info für die neue Abfrage … Würde oben vielleicht
-   eine Art Karussell machen mit wichtigen To-dos wie Beitragsliste für die Weihnachtsfeier. Daneben könnte man die neue
+   eine Art Karussell machen mit wichtigen To-dos wie Mitbringliste für die Weihnachtsfeier. Daneben könnte man die neue
    Abfrage oder auch zukünftige Themen platzieren … Wenn man sich eingetragen hat, sollte man es ausblenden können. Die
    Liste sollte aber im Termin immer aufrufbar sein.“ – Bild freigegeben.
    a) „📌 Für euch“ steht ganz oben vor der Terminkarte: Weihnachtsfeier und Steckbrief als Karten einer Bahn,
       „1 von 2“ und zwei Punkte; die nächste Karte schaut hervor (Karte schmaler als die Bahn); kein Querscrollen der Seite.
    b) „✕“ an der Feier: Karte weg, Meldung mit „Rückgängig“, gemerkt am Gerät; „Rückgängig“ holt sie zurück.
       Danach eine Karte: kein Zähler, volle Breite.
-   c) Im Termin „Weihnachtsfeier“ steht die Beitragsliste weiter (td-feier), auch wenn die Karte ausgeblendet ist.
+   c) Im Termin „Weihnachtsfeier“ steht die Mitbringliste weiter (td-feier), auch wenn die Karte ausgeblendet ist.
    d) Nichts zu tun → „Für euch“ unsichtbar. */
 "use strict";
 module.exports = async function (h) {
-  const titel = "v924 „Für euch“: Karussell oben mit Feier und Steckbrief, ✕ mit Rückgängig, Beitragsliste bleibt im Termin";
+  const titel = "v924 „Für euch“: Karussell oben mit Feier und Steckbrief, ✕ mit Rückgängig, Mitbringliste bleibt im Termin";
   const probleme = [], zeilen = [];
   const datum = h.tagePlus(9);
   const feier = { id: 112, datum, uhrzeit: "18:15", uhrzeit_ende: "20:00", typ: "event", titel: "Weihnachtsfeier", ort: "Vereinsheim", mitbringen: false, eltern_turnier: false, trainer_status: {}, platz_status: null };
@@ -54,7 +54,7 @@ module.exports = async function (h) {
     const undo = document.querySelector("#undo-toast button"); if (undo) undo.click();
     for (let i = 0; i < 20 && !document.querySelector("#feier-slot .feier-karte"); i++) await w(100);
     out.nachUndo = { feier: !!document.querySelector("#feier-slot .feier-karte"), gemerkt: localStorage.getItem("adler_feier_weg_weihnachten-2026"), zahl: document.getElementById("fe-zahl").textContent };
-    /* c) Termin: ausgeblendet, trotzdem Beitragsliste */
+    /* c) Termin: ausgeblendet, trotzdem Mitbringliste */
     localStorage.setItem("adler_feier_weg_weihnachten-2026", "1"); await feierObenLoad(window._elternKids);
     if (typeof terminDetailOpen === "function") { await terminDetailOpen(112); for (let i = 0; i < 30 && !document.getElementById("td-feier"); i++) await w(100); }
     out.imTermin = !!document.getElementById("td-feier");
@@ -71,12 +71,12 @@ module.exports = async function (h) {
   if (!(r.erste < r.bahnBreite - 20) || r.querScroll) probleme.push(`a) nächste Karte schaut nicht hervor (${r.erste}/${r.bahnBreite} px) oder Seite scrollt quer (${r.querScroll})`);
   if (r.xHoch < 44 || !/Termin/.test(r.xName) || r.knopfHoch < 56) probleme.push(`b) ✕ ${r.xHoch} px „${r.xName}“, Hauptknopf ${r.knopfHoch} px`);
   const n = r.nachX;
-  if (n.feier || n.gemerkt !== "1" || !/Beitragsliste steht im Termin/.test(n.toast) || !/Rückgängig/.test(n.toast) || n.zahl !== "" || !n.einzeln || n.breite !== r.bahnBreite) probleme.push(`b) nach ✕: ${JSON.stringify(n)}`);
+  if (n.feier || n.gemerkt !== "1" || !/Mitbringliste steht im Termin/.test(n.toast) || !/Rückgängig/.test(n.toast) || n.zahl !== "" || !n.einzeln || n.breite !== r.bahnBreite) probleme.push(`b) nach ✕: ${JSON.stringify(n)}`);
   if (r.nachNeuLaden) probleme.push("b) ausgeblendete Karte kommt beim Neuladen wieder");
   if (!r.nachUndo.feier || r.nachUndo.gemerkt || r.nachUndo.zahl !== "1 von 2") probleme.push(`b) Rückgängig: ${JSON.stringify(r.nachUndo)}`);
-  if (!r.imTermin) probleme.push("c) Beitragsliste fehlt im Termin");
+  if (!r.imTermin) probleme.push("c) Mitbringliste fehlt im Termin");
   if (!r.leer) probleme.push("d) „Für euch“ bleibt sichtbar, obwohl nichts offen ist");
-  zeilen.push(`a) „Für euch“ vor der Terminkarte, „${r.zahl}“, Karte ${r.erste} von ${r.bahnBreite} px · b) ✕ ${r.xHoch} px → weg, gemerkt, „Rückgängig“ holt zurück · c) Beitragsliste im Termin · d) nichts offen → unsichtbar`);
+  zeilen.push(`a) „Für euch“ vor der Terminkarte, „${r.zahl}“, Karte ${r.erste} von ${r.bahnBreite} px · b) ✕ ${r.xHoch} px → weg, gemerkt, „Rückgängig“ holt zurück · c) Mitbringliste im Termin · d) nichts offen → unsichtbar`);
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
   return h.ergebnis(titel, !probleme.length, probleme.length ? probleme.concat(zeilen) : zeilen);
 };

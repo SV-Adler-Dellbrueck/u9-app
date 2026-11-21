@@ -1,4 +1,4 @@
-/* v828 · Beitragsliste für die Weihnachtsfeier (Auftrag Charles 10.11.2026).
+/* v828 · Mitbringliste für die Weihnachtsfeier (Auftrag Charles 10.11.2026).
    Eltern tragen im Termin „Weihnachtsfeier“ ein, was sie mitbringen: 14 feste Plätze
    (13 Kategorien, Salat doppelt mit Sorte) plus eigene Beiträge im Abschnitt „Zusätzlich“.
    Die Datenbank-Regeln (Unique, RLS, Trigger) prüft die Probe gegen die echte Datenbank – hier
@@ -17,7 +17,7 @@
    h) Andere Termine zeigen keine Liste. */
 "use strict";
 module.exports = async function (h) {
-  const titel = "v828 Beitragsliste Weihnachtsfeier: 14 Plätze, Eintragen/Ändern/Entfernen, Doppelbelegung, Freitext, 360 px";
+  const titel = "v828 Mitbringliste Weihnachtsfeier: 14 Plätze, Eintragen/Ändern/Entfernen, Doppelbelegung, Freitext, 360 px";
   const probleme = [], zeilen = [];
   const FEIER = { id: 70, datum: "2026-12-07", uhrzeit: "18:15", uhrzeit_ende: "20:00", typ: "event", titel: "Weihnachtsfeier", ort: "Vereinsheim", mitbringen: false, eltern_turnier: false, trainer_status: {} };
   const ANDERES = { ...FEIER, id: 71, titel: "Elternaustausch" };
@@ -148,7 +148,7 @@ module.exports = async function (h) {
   const gesendet = db.log.slice();
   const f = e.fehler(); await e.schliessen();
   if (f.length) probleme.push("Konsole (Eltern): " + f.slice(0, 2).join(" | "));
-  if (r.alt) return h.ergebnis(titel, false, ["keine Beitragsliste (Stand vor v828)"]);
+  if (r.alt) return h.ergebnis(titel, false, ["keine Mitbringliste (Stand vor v828)"]);
   if (r.fehler) return h.ergebnis(titel, false, ["Fehler im Ablauf: " + r.fehler]);
   if (r.abbruch) probleme.push("Block fehlt: " + r.abbruch);
   if (r.andereListe) probleme.push("h) ein anderer Termin zeigt die Liste");

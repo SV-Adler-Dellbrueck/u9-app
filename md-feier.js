@@ -205,14 +205,14 @@ async function feierEntfernen(id,key){
 function feierTrainerOeffnen(t){
   if(typeof t!=="object")t=(typeof TM_TERMINE!=="undefined"&&(TM_TERMINE||[]).find(x=>Number(x.id)===Number(t)))||null;
   if(!t){ toast("Termin nicht gefunden","err"); return; }
-  if(!feierFuerTermin(t)){ toast("Für diesen Termin gibt es keine Beitragsliste","err"); return; }
+  if(!feierFuerTermin(t)){ toast("Für diesen Termin gibt es keine Mitbringliste","err"); return; }
   document.getElementById("feier-modal")?.remove();
   const modal=document.createElement("div");
-  modal.id="feier-modal"; modal.setAttribute("role","dialog"); modal.setAttribute("aria-modal","true"); modal.setAttribute("aria-label","Beitragsliste");
+  modal.id="feier-modal"; modal.setAttribute("role","dialog"); modal.setAttribute("aria-modal","true"); modal.setAttribute("aria-label","Mitbringliste");
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;flex-direction:column;padding:14px;overflow-y:auto;z-index:"+(typeof zOben==="function"?zOben(10010):10010);
   modal.onclick=e=>{ if(e.target===modal)modal.remove(); };
   modal.innerHTML=`<div style="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
-    ${typeof mdlHead==="function"?mdlHead("feier-modal","🎄","Beitragsliste",esc(t.titel||"Feier"),"#15803d"):""}
+    ${typeof mdlHead==="function"?mdlHead("feier-modal","🎄","Mitbringliste",esc(t.titel||"Feier"),"#15803d"):""}
     <div id="feier-trainer-box"></div>
     <button class="btn" type="button" onclick="document.getElementById('feier-modal')?.remove()" style="width:100%;min-height:48px;margin-top:12px;font-size:var(--s-text);justify-content:center">Schließen</button>
   </div>`;
@@ -222,7 +222,7 @@ function feierTrainerOeffnen(t){
 
 /* v830 · Karte ganz oben im Dashboard (Charles 10.11.2026): Die Weihnachtsfeier steht oben, solange
    a) noch nicht zu- oder abgesagt wurde (für mindestens eines der Kinder fehlt die Antwort), oder
-   b) zugesagt wurde, aber die Familie noch nichts in die Beitragsliste eingetragen hat.
+   b) zugesagt wurde, aber die Familie noch nichts in die Mitbringliste eingetragen hat.
    Abgesagt, abgesagt-von-der-Mannschaft (fällt aus), vorbei oder eingetragen: keine Karte.
    Genau eine Hauptaktion; sie öffnet das Termin-Fenster (dort wird geantwortet bzw. eingetragen). */
 async function feierObenLoad(kids){
@@ -255,25 +255,25 @@ async function feierObenLoad(kids){
   if(offen)modus="antwort";
   else if(zu&&!eigene)modus="eintragen";
   if(!modus){ leer(); return; }
-  /* v924: „✕“ blendet die Karte aus (Charles 21.11.) – die Beitragsliste bleibt im Termin */
+  /* v924: „✕“ blendet die Karte aus (Charles 21.11.) – die Mitbringliste bleibt im Termin */
   let weg=false; try{ weg=localStorage.getItem("adler_feier_weg_"+f.key)==="1"; }catch(e){}
   if(weg){ leer(); return; }
   const d=new Date(t.datum+"T00:00:00");
   const wann=d.toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"})+(t.uhrzeit?" · "+String(t.uhrzeit).slice(0,5)+" Uhr":"");
-  const text=modus==="antwort"?"Seid ihr dabei? Bitte kurz zu- oder absagen.":"Ihr seid dabei – was bringt ihr mit? Tragt euch in die Beitragsliste ein.";
+  const text=modus==="antwort"?"Seid ihr dabei? Bitte kurz zu- oder absagen.":"Ihr seid dabei – was bringt ihr mit? Tragt euch in die Mitbringliste ein.";
   slot.innerHTML=`<div class="feier-karte" style="background:var(--surface);color:var(--text);border-radius:14px;padding:16px;margin-bottom:12px;border-left:4px solid var(--green);box-shadow:0 2px 10px rgba(0,0,0,.05);display:flex;flex-direction:column">
-    <button type="button" class="fe-x feier-weg" onclick="feierObenWeg('${esc(f.key)}')" aria-label="Ausblenden – die Beitragsliste steht im Termin">✕</button>
-    <div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;padding-right:44px">${modus==="antwort"?"Rückmeldung fehlt":"Beitragsliste"}</div>
+    <button type="button" class="fe-x feier-weg" onclick="feierObenWeg('${esc(f.key)}')" aria-label="Ausblenden – die Mitbringliste steht im Termin">✕</button>
+    <div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;padding-right:44px">${modus==="antwort"?"Rückmeldung fehlt":"Mitbringliste"}</div>
     <div style="font-size:var(--s-teil);font-weight:800;margin-top:2px;padding-right:44px">🎄 ${esc(t.titel||f.titel)}</div>
     <div style="font-size:var(--s-text);color:var(--text2);margin-top:2px">${esc(wann)}${t.ort?" · "+esc(t.ort):""}</div>
     <div style="font-size:var(--s-text);margin-top:8px;margin-bottom:12px;line-height:1.5">${text}</div>
-    <button type="button" class="feier-karte-knopf btn btn-p" onclick="feierObenOeffnen(${Number(t.id)},'${modus}')" style="width:100%;min-height:56px;margin-top:auto;font-size:var(--s-karte);justify-content:center">${modus==="antwort"?"Jetzt antworten":"Beitragsliste öffnen"}</button>
+    <button type="button" class="feier-karte-knopf btn btn-p" onclick="feierObenOeffnen(${Number(t.id)},'${modus}')" style="width:100%;min-height:56px;margin-top:auto;font-size:var(--s-karte);justify-content:center">${modus==="antwort"?"Jetzt antworten":"Mitbringliste öffnen"}</button>
   </div>`;
 }
 function feierObenWeg(key){
   try{ localStorage.setItem("adler_feier_weg_"+key,"1"); }catch(e){}
   const sl=document.getElementById("feier-slot"); if(sl)sl.innerHTML="";
-  if(typeof toastUndo==="function")toastUndo("Ausgeblendet – die Beitragsliste steht im Termin.",()=>{ try{ localStorage.removeItem("adler_feier_weg_"+key); }catch(e){} feierObenLoad(); });
+  if(typeof toastUndo==="function")toastUndo("Ausgeblendet – die Mitbringliste steht im Termin.",()=>{ try{ localStorage.removeItem("adler_feier_weg_"+key); }catch(e){} feierObenLoad(); });
 }
 function _feierUid(){ try{ return (typeof _sbUid==="function"?_sbUid():sbUserId())||""; }catch(e){ return ""; } }
 async function feierObenOeffnen(terminId,modus){

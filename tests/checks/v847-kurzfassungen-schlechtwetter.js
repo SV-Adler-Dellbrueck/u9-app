@@ -14,7 +14,7 @@ module.exports = async function (h) {
   const soll = ["Startseite", "Kader", "Übungen", "Trainingsblock", "Spieltag", "Spieler bewerten", "Heimspiel & Festival planen",
     "Benachrichtigungen einschalten", "Rückmelde-Verhalten", "Nest-Ausgaben", "Termine", "Tagebuch", "Trainermeeting", "Teamkasse",
     /* v848: zweiter Block */
-    "Beitragsliste Weihnachtsfeier", "Grillhütte", "Trainingsturnier", "Wissen & Nachschlagen", "Adler-Coach (KI)", "Taktikboard", "Trainerkreislauf",
+    "Mitbringliste Weihnachtsfeier", "Grillhütte", "Trainingsturnier", "Wissen & Nachschlagen", "Adler-Coach (KI)", "Taktikboard", "Trainerkreislauf",
     "Adler Nest als PDF und Hörlink", "Wer ist dabei? (Training)", "Federn – wofür es sie gibt", "Kinder-App", "Wie war's? – einmal erzählen", "Material"];
   let ok = 0;
   for (const t of soll) {
