@@ -32,3 +32,6 @@ doku/*.html
 tools/node_modules/
 tools/package-lock.json
 tools/package.json
+
+# v926: auch als Verknüpfung (Symlink) nie einchecken – eine solche brach am 21.11. die Pages-Veröffentlichung
+node_modules
