@@ -1,6 +1,6 @@
 {
  "schema": "adler-kinderfragen/1",
- "stand": "2026-11-21-2",
+ "stand": "2026-11-21-3",
  "fragen": [
   {
    "id": "lf1-01",
@@ -3857,6 +3857,193 @@
     "Ausbildungskonzept U9 Fassung 3, Leitfrage 6",
     "entscheidungen.md 16.09.2026 (Jäger läuft als Erster an)"
    ]
+  }
+ ],
+ "merkkarten": [
+  {
+   "id": "mk1-1",
+   "leitfrage": 1,
+   "bild_aus": "lf1-01",
+   "bild_index": 1,
+   "merksatz": "Ist ein Gegner nah, bleibt der Ball ganz eng am Fuß.",
+   "adler_pose": "dribbelt, Ball klebt am Fuß, Blick nach vorn"
+  },
+  {
+   "id": "mk1-2",
+   "leitfrage": 1,
+   "bild_aus": "lf1-02",
+   "bild_index": 1,
+   "merksatz": "Körper dazwischen: erst du, dann der Ball, dann der Gegner.",
+   "adler_pose": "schirmt den Ball mit dem Rücken ab, Arme leicht seitlich"
+  },
+  {
+   "id": "mk1-3",
+   "leitfrage": 1,
+   "bild_aus": "lf1-06",
+   "bild_index": 1,
+   "merksatz": "Wechsel die Richtung, bevor du beim Gegner bist.",
+   "adler_pose": "macht einen Haken, Staubwolke am Fuß"
+  },
+  {
+   "id": "mk1-4",
+   "leitfrage": 1,
+   "bild_aus": "lf1-09",
+   "bild_index": 1,
+   "merksatz": "Der erste Kontakt geht dahin, wo Platz ist.",
+   "adler_pose": "nimmt den Ball mit der Innenseite seitlich mit"
+  },
+  {
+   "id": "mk2-1",
+   "leitfrage": 2,
+   "bild_aus": "lf2-03",
+   "bild_index": 1,
+   "merksatz": "Haken – und danach Gas geben!",
+   "adler_pose": "sprintet nach einem Haken los, Speedlinien"
+  },
+  {
+   "id": "mk2-2",
+   "leitfrage": 2,
+   "bild_aus": "lf2-04",
+   "bild_index": 1,
+   "merksatz": "Führ den Ball mit dem Fuß, der weiter weg vom Gegner ist.",
+   "adler_pose": "dribbelt seitlich, Ball am äußeren Fuß"
+  },
+  {
+   "id": "mk2-3",
+   "leitfrage": 2,
+   "bild_aus": "lf2-05",
+   "merksatz": "Schau, wo der Verteidiger nicht steht – da geht es vorbei.",
+   "adler_pose": "zeigt mit dem Flügel auf die freie Seite"
+  },
+  {
+   "id": "mk2-4",
+   "leitfrage": 2,
+   "bild_aus": "lf2-10",
+   "merksatz": "Ball verloren? Zurückholen – und wieder probieren!",
+   "adler_pose": "steht auf, ballt die Faust, lächelt"
+  },
+  {
+   "id": "mk3-1",
+   "leitfrage": 3,
+   "bild_aus": "lf3-01",
+   "merksatz": "Schieß dahin, wo der Torwart nicht steht.",
+   "adler_pose": "zielt mit einem Auge, Ball vor dem Fuß"
+  },
+  {
+   "id": "mk3-2",
+   "leitfrage": 3,
+   "bild_aus": "lf3-03",
+   "bild_index": 1,
+   "merksatz": "Große Tore: Treffer nur aus der gegnerischen Hälfte.",
+   "adler_pose": "steht an der Mittellinie und zeigt nach vorn"
+  },
+  {
+   "id": "mk3-3",
+   "leitfrage": 3,
+   "bild_aus": "lf3-04",
+   "bild_index": 1,
+   "merksatz": "FUNiño: Treffer nur aus der Schusszone.",
+   "adler_pose": "steht in der Schusszone vor einem Minitor"
+  },
+  {
+   "id": "mk3-4",
+   "leitfrage": 3,
+   "bild_aus": "lf3-08",
+   "bild_index": 1,
+   "merksatz": "Nach dem Schuss nachlaufen – vielleicht prallt er ab.",
+   "adler_pose": "läuft Richtung Tor, Ball springt vom Torwart"
+  },
+  {
+   "id": "mk4-1",
+   "leitfrage": 4,
+   "bild_aus": "lf4-01",
+   "merksatz": "Spiel den an, bei dem kein Gegner steht.",
+   "adler_pose": "passt mit der Innenseite, Blick zum Mitspieler"
+  },
+  {
+   "id": "mk4-2",
+   "leitfrage": 4,
+   "bild_aus": "lf4-02",
+   "bild_index": 1,
+   "merksatz": "Steht ein Gegner im Weg, kommt der Pass nicht an.",
+   "adler_pose": "schaut über den Ball, Hand an der Stirn wie ein Fernrohr"
+  },
+  {
+   "id": "mk4-3",
+   "leitfrage": 4,
+   "bild_aus": "lf4-03",
+   "merksatz": "Spiel in den Lauf – dahin, wo dein Mitspieler hinläuft.",
+   "adler_pose": "spielt einen Pass nach vorn, Pfeil in den Raum"
+  },
+  {
+   "id": "mk4-4",
+   "leitfrage": 4,
+   "bild_aus": "lf4-10",
+   "merksatz": "Nach dem Pass nicht stehen bleiben – weiterlaufen!",
+   "adler_pose": "läuft nach dem Pass los"
+  },
+  {
+   "id": "mk5-1",
+   "leitfrage": 5,
+   "bild_aus": "lf5-02",
+   "bild_index": 1,
+   "merksatz": "Neben dem Gegner bist du anspielbar, nicht dahinter.",
+   "adler_pose": "winkt mit einem Flügel, steht frei"
+  },
+  {
+   "id": "mk5-2",
+   "leitfrage": 5,
+   "bild_aus": "lf5-04",
+   "bild_index": 1,
+   "merksatz": "Breit verteilt – das ist ADLER.",
+   "adler_pose": "breitet die Flügel weit aus"
+  },
+  {
+   "id": "mk5-3",
+   "leitfrage": 5,
+   "bild_aus": "lf5-09",
+   "bild_index": 1,
+   "merksatz": "Bildet ein Dreieck – dann gibt es zwei Wege.",
+   "adler_pose": "zeigt mit beiden Flügeln ein Dreieck"
+  },
+  {
+   "id": "mk5-4",
+   "leitfrage": 5,
+   "bild_aus": "lf5-06",
+   "bild_index": 1,
+   "merksatz": "Halb offen stehen: Ball und Tor im Blick.",
+   "adler_pose": "steht seitlich, schaut über die Schulter"
+  },
+  {
+   "id": "mk6-1",
+   "leitfrage": 6,
+   "bild_aus": "lf6-01",
+   "bild_index": 1,
+   "merksatz": "Eine Armlänge Abstand, leicht seitlich.",
+   "adler_pose": "steht seitlich und tief, Flügel als Armlänge ausgestreckt"
+  },
+  {
+   "id": "mk6-2",
+   "leitfrage": 6,
+   "bild_aus": "lf6-02",
+   "bild_index": 1,
+   "merksatz": "Bleib zwischen Gegner und eigenem Tor.",
+   "adler_pose": "steht vor dem Tor, Blick zum Gegner"
+  },
+  {
+   "id": "mk6-3",
+   "leitfrage": 6,
+   "bild_aus": "lf6-06",
+   "bild_index": 0,
+   "merksatz": "Stell dich innen hin – dann muss er nach außen.",
+   "adler_pose": "zeigt mit dem Flügel zur Seitenlinie"
+  },
+  {
+   "id": "mk6-4",
+   "leitfrage": 6,
+   "bild_aus": "lf6-04",
+   "merksatz": "Springt der Ball zu weit weg: zupacken!",
+   "adler_pose": "schnappt sich den Ball mit dem Fuß"
   }
  ]
 }

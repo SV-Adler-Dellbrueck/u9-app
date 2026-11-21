@@ -83,6 +83,27 @@ Primärquelle und ist von Charles bestätigt.
 8. Hilfe, Rundgang der Kabine, Funktionsübersicht; `node tests/run.js` grün; `sw.js` hoch.
    Eltern sehen eine Neuerung → Adlerschmiede-Zeile erst nach Charles' Freigabe.
 
+## Merkkarten (Charles 21.11.: „Ja, ins Paket“)
+
+Neben dem Quiz Karten zum Anschauen, je Leitfrage vier, zusammen 24, im selben JSON unter
+`merkkarten`: `id`, `leitfrage`, `bild_aus` (Frage-ID, deren Bild die Karte zeigt – bei `ab`
+das richtige Bild über `bild_index`, bei `tippen` mit Lösungskreis bzw. markiertem Stein, bei
+`szene` das Endbild der Animation), `merksatz` (ein Satz, kindgerecht) und `adler_pose`
+(Beschreibung für ein späteres Bild des Comic-Adlers; bis dahin bleibt der Platz leer bzw.
+zeigt das Standardbild des Maskottchens – kein Platzhaltertext).
+
+Einsatz: (a) in jedem Block der Adler-Schule oben „Anschauen“ vor „Los geht's“ – die vier
+Karten zum Wischen; (b) nach einer falschen Antwort „Zeig's mir“, wenn eine Karte dieselbe
+Frage als `bild_aus` hat, sonst die erste Karte der Leitfrage; (c) für Trainer: Karte als Bild
+teilen bzw. im Live-Vollbild am Platz zeigen (vorhandene Wege prüfen, nichts Neues bauen,
+wenn es nicht passt – dann im PR sagen). Ins Adler Nest kommt eine Karte über den Projekt-Chat,
+nicht automatisch. Merkkarten geben keine Federn. Vorlesen später mit Lennart (Merksatz).
+
+Abnahme: Block „Wie hole ich mir den Ball zurück?“ zeigt „Anschauen“ mit vier Karten; `mk6-1`
+zeigt das richtige Bild B aus `lf6-01` und den Merksatz; nach falscher Antwort auf `lf6-01`
+öffnet „Zeig's mir“ genau diese Karte. Prüffall: jede `bild_aus` verweist auf eine vorhandene
+Frage derselben Leitfrage, `bild_index` passt zu `richtig`.
+
 ## Abnahmekriterien
 
 1. In der Kabine öffnet „Adler-Schule“ sechs Blöcke, je Leitfrage einer mit 10 Fragen und der
