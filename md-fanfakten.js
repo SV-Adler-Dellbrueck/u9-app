@@ -142,16 +142,17 @@ async function steckbriefKarte(kids){
     const k=(kids||[]).find(x=>Number(x.spieler_id)===sid), vn=((k&&k.kader&&k.kader.name)||"eurem Kind").split(" ")[0];
     const anteil=Math.round(((n/12)*0.7+(Math.min(nf,3)/3)*0.3)*100);
     return `<div class="sb-karte" role="region" aria-label="Steckbrief">
+      <button type="button" class="fe-x sb-karte-spaeter" onclick="steckbriefSpaeter(${sid})" aria-label="Später – eine Woche ausblenden">✕</button>
       <div class="sb-karte-titel">📸 Erzählt uns von ${esc(vn)}</div>
       <div class="sb-karte-text">Ein paar Fotos und Antworten – damit wir euer Kind noch besser kennenlernen. Alles bleibt in der Adler-App.</div>
       <div class="sb-karte-fort"><div class="sb-balken" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${anteil}" aria-label="Steckbrief ${anteil} Prozent"><i style="width:${anteil}%"></i></div><span>${n} von 12 · ${nf} von 4 Fotos</span></div>
-      <button type="button" class="btn sb-karte-los" onclick="elternFanfactsOpen(${sid},'${esc(vn).replace(/'/g,"")}')">${n?"Weiter ergänzen":"Jetzt ausfüllen"} (2 Minuten)</button>
-      <button type="button" class="btn btn-link sb-karte-spaeter" onclick="steckbriefSpaeter(${sid})">Später</button></div>`;
+      <button type="button" class="btn sb-karte-los" onclick="elternFanfactsOpen(${sid},'${esc(vn).replace(/'/g,"")}')">${n?"Weiter ergänzen":"Jetzt ausfüllen"} (2 Minuten)</button></div>`;
   }).join("");
 }
 function steckbriefSpaeter(sid){
   try{ localStorage.setItem("adler_steckbrief_spaeter_"+Number(sid),String(Date.now()+7*864e5)); }catch(e){}
   if(typeof steckbriefKarte==="function")steckbriefKarte(window._elternKids||[]);
+  if(typeof toastUndo==="function")toastUndo("Für eine Woche ausgeblendet.",()=>{ try{ localStorage.removeItem("adler_steckbrief_spaeter_"+Number(sid)); }catch(e){} steckbriefKarte(window._elternKids||[]); });   // v924
 }
 /* Trainer: wer wie weit ist, und eine Erinnerung an die offenen Familien (Adler-Rufe, privater Raum). */
 async function steckbriefUebersichtOpen(){

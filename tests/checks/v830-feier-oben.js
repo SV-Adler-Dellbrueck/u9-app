@@ -43,14 +43,16 @@ module.exports = async function (h) {
     const karte = () => slot() && slot().querySelector(".feier-karte");
     const out = {};
     // Reihenfolge im Dashboard
-    const root = slot() && slot().parentElement;
+    /* seit v924 steht der Slot im Karussell „Für euch“ – gemessen wird dessen Platz im Dashboard */
+    const oben = document.getElementById("fuer-euch") || slot();
+    const root = oben && oben.parentElement;
     const kinder = root ? [...root.children] : [];
     const posKarte = kinder.findIndex(c => /Nächster Termin/i.test(c.innerText || ""));
-    out.vorTerminkarte = kinder.indexOf(slot()) >= 0 && posKarte > kinder.indexOf(slot());
-    out.erstesKind = kinder.indexOf(slot()) <= 1;
+    out.vorTerminkarte = kinder.indexOf(oben) >= 0 && posKarte > kinder.indexOf(oben);
+    out.erstesKind = kinder.indexOf(oben) <= 1;
     const zustand = async (name, kidsStatus) => {
       await window.__setze(name, kidsStatus); await feierObenLoad(window._elternKids); await w(400);
-      return karte() ? { text: karte().innerText.replace(/\s+/g, " "), hoeheKnopf: Math.round(karte().querySelector("button").getBoundingClientRect().height) } : null;
+      return karte() ? { text: karte().innerText.replace(/\s+/g, " "), hoeheKnopf: Math.round(karte().querySelector(".feier-karte-knopf").getBoundingClientRect().height) } : null;
     };
     out.a = await zustand("a"); out.b = await zustand("b"); out.c = await zustand("c"); out.d = await zustand("d"); out.e = await zustand("e"); out.f = await zustand("f");
     // Kachel: Zellen für den Tag mit zwei Terminen
