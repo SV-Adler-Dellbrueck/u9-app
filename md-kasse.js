@@ -571,11 +571,11 @@ function grillTrainerRender(){
   const kid=k=>(typeof kaderId==="function")?kaderId(k):k.id;
   const P0=_ghTr.plaetze||2, Pt=t=>Number(t.grill_plaetze)||P0;   // v912: je Termin einstellbar
   const jeTermin=t=>_ghTr.dienste.filter(x=>x.termin_id===t.id);
-  const ohne=_ghTr.termine.reduce((a,t)=>a+Math.max(0,Pt(t)-jeTermin(t).length),0);
+  const ohne=_ghTr.termine.filter(ghImFenster).reduce((a,t)=>a+Math.max(0,Pt(t)-jeTermin(t).length),0);   // v924: nur die nächsten 6 Wochen
   const famOpt=`<option value="">– Familie wählen –</option>`+kids.map(k=>`<option value="${esc(String(kid(k)))}">${esc(k.name)}s Familie</option>`).join("");
   const sel="width:100%;min-height:44px;margin-top:2px;border:1px solid var(--rand-bedien);border-radius:8px;font:inherit;background:var(--surface2);color:var(--text)";
   box.innerHTML=`<button class="btn" id="gh-einteilen" style="width:100%" onclick="grillEinteilen()" ${ohne?"":"disabled"}>Grillhütte einteilen${ohne?` (${ohne} ${ohne===1?"Platz":"Plätze"} offen)`:""}</button>
-    <div style="font-size:var(--s-klein);color:var(--text2);margin:6px 0 12px">Die App teilt neue Heimtermine von selbst ein – reihum, wer in dieser Saison am seltensten dran war, zuerst; gesperrte Tage werden übersprungen, Bestehendes bleibt stehen. Je Termin 1 oder 2 Familien.</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin:6px 0 12px">Die App teilt Heimtermine 6 Wochen vorher von selbst ein – reihum, wer in dieser Saison am seltensten dran war, zuerst; gesperrte Tage werden übersprungen, Bestehendes bleibt stehen. Je Termin 1 oder 2 Familien.</div>
     ${_ghTr.termine.length?_ghTr.termine.map(t=>{ const ds=jeTermin(t);
       const sp=(_ghTr.sperren||[]).filter(x=>x.datum===t.datum);
       const fam=ds.filter(x=>x.kind_id!=null);
@@ -583,7 +583,7 @@ function grillTrainerRender(){
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>${esc(ghTag(t.datum,t.uhrzeit))}</b><span style="color:var(--text2)">${esc(t.gegner||t.titel||"")}</span></div>
         <div class="gh-anzahl" role="group" aria-label="Familien an diesem Termin" style="display:flex;gap:6px;align-items:center;margin:6px 0 2px"><span style="color:var(--text2);font-size:var(--s-klein)">Familien:</span>${[1,2].map(n=>`<button type="button" class="btn btn-sm" aria-pressed="${Pt(t)===n}" onclick="grillPlaetzeSetzen(${Number(t.id)},${n})" style="min-width:48px;justify-content:center">${n}</button>`).join("")}</div>
         ${Array.from({length:Pt(t)},(_,i)=>{ const d=ds.find(x=>Number(x.platz||1)===i+1);
-          return `<div style="margin:4px 0 2px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="min-width:4.5em;color:var(--text2)">Familie ${i+1}</span>${d?`<span>${_ghTrZeile(d)}</span>${ghChip(d.status)}`:ghChip("offen")}</div>
+          return `<div style="margin:4px 0 2px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="min-width:4.5em;color:var(--text2)">Familie ${i+1}</span>${d?`<span>${_ghTrZeile(d)}</span>${ghChip(d.status)}`:(ghImFenster(t)?ghChip("offen"):`<span class="gh-spaeter" style="color:var(--text2);font-size:var(--s-klein)">wird ab ${esc(ghAbDatum(t.datum))} eingeteilt</span>`)}</div>
           <label style="font-size:var(--s-klein);color:var(--text2)">Umbuchen auf<select onchange="grillUmbuchen(${Number(t.id)},this.value,${i+1})" style="${sel}">${famOpt}</select></label>`; }).join("")}
         ${fam.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn btn-sm gh-push" onclick="grillPush(${Number(t.id)})"><i class="ti ti-bell"></i>Erinnern (Push)</button><button class="btn btn-sm gh-ruf" onclick="grillRufOpen(${Number(t.id)})"><i class="ti ti-message"></i>Nachricht an die Familien</button></div>`:""}
         <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">${sp.length?`Kann an dem Tag nicht: ${sp.map(x=>`${esc(_ghKindName(x.kind_id)||"Kind")}s Familie <button class="btn btn-sm" onclick="grillSperreWeg(${Number(x.id)})" aria-label="Sperre für ${esc(_ghKindName(x.kind_id)||"Kind")}s Familie aufheben">aufheben</button>`).join(" ")}`:""}</div>
@@ -629,13 +629,20 @@ async function grillBefreitWeg(kindId){
    am seltensten dran war, zuerst) und schickt den frisch eingeteilten Familien sofort einen Push. Läuft nach dem Speichern
    eines Heimtermins, einmal am Tag beim Öffnen der Trainer-App und beim Ändern der Familienzahl; der Knopf bleibt für
    „jetzt sofort“. still: keine Meldung, wenn nichts zu tun war. */
+/* v924 (Charles 21.11.): Die Automatik teilt erst 6 Wochen vor einem Heimtermin ein – sonst bekämen Familien beim
+   Anlegen der Rückrunde schon im November einen Push für einen Dienst im Mai. Dieselbe Grenze steht in der
+   Datenbankfunktion dienst_einteilen (Migration 20261121_v924_grill_sechs_wochen.sql), so gilt sie auch für alte App-Stände. */
+const GH_AUTO_TAGE=42;
+function ghAutoBis(){ return isoLokal(new Date(Date.now()+GH_AUTO_TAGE*864e5)); }
+function ghImFenster(t){ return !!t&&String(t.datum)<=ghAutoBis(); }
+function ghAbDatum(datum){ try{ const d=new Date(String(datum)+"T12:00:00"); d.setDate(d.getDate()-GH_AUTO_TAGE); return d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}); }catch(e){ return ""; } }
 async function ghAutoEinteilen(opt){
   opt=opt||{};
   /* Ist das Fenster offen, sind die Daten gerade geladen – kein zweiter Umlauf vor dem Einteilen */
   const st=(document.getElementById("gh-tr-inhalt")&&_ghTr)?_ghTr:((await ghTrainerDaten())||{}), vorherD=st.dienste||[];
   const vorher=new Set(vorherD.map(d=>d.termin_id+"_"+d.kind_id));
   /* Nichts offen → nichts schreiben (der tägliche Lauf fragt sonst bei jedem Öffnen die Datenbank an) */
-  const P0=st.plaetze||2, offen=(st.termine||[]).some(t=>vorherD.filter(d=>d.termin_id===t.id).length<(Number(t.grill_plaetze)||P0));
+  const P0=st.plaetze||2, offen=(st.termine||[]).filter(ghImFenster).some(t=>vorherD.filter(d=>d.termin_id===t.id).length<(Number(t.grill_plaetze)||P0));
   if(!offen){ if(!opt.still)toast("Grillhütte: alles ist schon eingeteilt"); return {n:0,fam:0}; }
   let n=0;
   try{

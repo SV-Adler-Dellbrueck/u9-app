@@ -1146,7 +1146,13 @@ async function elternDashLoad(){
      oben (v830). Die Zonen sind flach gebaut – Überschrift und Slots sind Geschwister –, und eine
      Überschrift zeigt sich nur, wenn in ihrer Zone etwas steht (elternZonenPruefen). */
   const zone=(id,titel)=>`<div class="el-zone" data-zone="${id}" hidden style="font-size:var(--s-klein);font-weight:800;letter-spacing:.3px;color:#475569;margin:14px 2px 8px">${titel}</div>`;
-  html+='<div id="feier-slot"></div>';        // v830: Weihnachtsfeier ganz oben, solange Antwort oder Beitragsliste fehlt
+  /* v924 (Charles 21.11., Bild freigegeben): „Für euch“ – ein Karussell ganz oben mit allem, was Eltern gerade tun sollen.
+     Die Karten bleiben in ihren Slots (Porträt-Bogen mit Frist zuerst, dann Weihnachtsfeier, dann Steckbrief); die Slots
+     sind display:contents, so werden ihre Karten zu Gliedern der Bahn. fuerEuchSync zählt, blendet ein und aus. */
+  html+=`<section id="fuer-euch" class="fe" aria-label="Für euch" hidden>
+    <div class="fe-kopf"><span class="fe-titel">📌 Für euch</span><span id="fe-zahl" class="fe-zahl" aria-live="polite"></span></div>
+    <div id="fe-bahn" class="fe-bahn" tabindex="-1"><div id="nest-bogen-slot"></div><div id="feier-slot"></div><div id="steckbrief-slot"></div></div>
+    <div id="fe-punkte" class="fe-punkte" aria-hidden="true"></div></section>`;
   html+='<div id="eltern-live-slot"></div>';
   html+='<div id="ansage-slot"></div>'; // H1: ungelesene Trainer-Ansagen als Banner
   html+='<div id="eltern-top-slot"></div>';        // hier landet die Terminkarte (s. u.)
@@ -1165,8 +1171,7 @@ async function elternDashLoad(){
     <span style="font-size:var(--s-teil);color:var(--text3)">›</span>
   </button>`;
   html+='<div id="push-hinweis-slot"></div>';   // v698 – seit v838 in „Noch offen“: Benachrichtigungen, solange sie aus sind
-  html+='<div id="nest-bogen-slot"></div>';
-  html+='<div id="steckbrief-slot"></div>';       // v922: „Erzählt uns von …“ – Steckbrief für alle Kinder       // v734: „Euer Kind ist im nächsten Adler Nest“ – nur während eines Porträts
+  /* v734 Porträt-Bogen und v922 Steckbrief stehen seit v924 oben in „Für euch“ */
   html+=zone("neu","Neu");
   html+='<div id="rufe-hinweis"></div>';          // v673: neue Adler-Rufe – nur wenn es welche gibt
   // 📣 Adler News: eigener Button (News ≠ To-Do); Panel #cat-news; roter Badge bei Ungelesenem.
@@ -1434,7 +1439,8 @@ async function elternDashLoad(){
   if(typeof elternKasseRolleLoad==="function")elternKasseRolleLoad();      // v664: Kasse verwalten
   if(typeof rufeBadgeLoad==="function")rufeBadgeLoad();                    // v670: neue Adler-Rufe
   if(typeof nestBogenKarte==="function")nestBogenKarte(kids);
-  if(typeof steckbriefKarte==="function")steckbriefKarte(kids);             // v922: Steckbrief-Karte (md-fanfakten.js, Welle 2)               // v734: Porträt-Bogen fürs Adler Nest
+  if(typeof steckbriefKarte==="function")steckbriefKarte(kids);             // v922: Steckbrief-Karte (md-fanfakten.js, Welle 2)
+  fuerEuchStart();                             // v924: Karussell „Für euch“ beobachtet seine Slots
   window._elternKids=kids;   // v699: die Mannschaftskasse zeigt den Stand der eigenen Kinder beim Öffnen
   elternKasseKachelStand(kids, kasse);   // v716: „Beitrag bezahlt / offen“ direkt auf der Kachel
   elternGenesungLoad(kids);                    // I-A: Genesungsgrüße für pausierte Teamkinder
@@ -2015,7 +2021,7 @@ async function terminDetailOpen(id){
   // nach der Endzeit ins Archiv, dort würde die Smiley-Frage niemand mehr finden).
   if(t.typ==="event"&&t.mitbringen)tdMitbringLoad(t); // Mitbringliste nur, wenn der Trainer sie eingeschaltet hat (v566)
   if(t.typ==="event"&&t.eltern_turnier)mitspielerLoad(t.id,"td-mitspieler"); // v825: Kinder-Eltern-Turnier
-  if(document.getElementById("td-feier")&&typeof feierLoad==="function")feierLoad("td-feier",t); // v828: Beitragsliste (Welle 2, deshalb geprüft)
+  if(document.getElementById("td-feier")&&typeof feierLoad==="function")feierLoad("td-feier",t); // v828: Mitbringliste (Welle 2, deshalb geprüft)
 }
 /* v901: Spielplan im Termin. Der Block selbst kommt aus md-turnierplan.js (htTerminBlockHtml, Welle 2 – geprüft).
    heimturnier ist öffentlich lesbar; gezeigt wird nur, wenn der Trainer „Spielplan im Termin“ eingeschaltet hat. */
@@ -3279,4 +3285,28 @@ async function elternPushHinweis(){
   if(typeof pushKarteRender==="function")return pushKarteRender("push-hinweis-slot","parent");
 }
 function elternPushHinweisAn(){ if(typeof pushKarteAn==="function")return pushKarteAn("push-hinweis-slot","parent"); }
+/* ═══ v924 · „Für euch“ – Karussell oben auf der Eltern-Startseite ═══ */
+function fuerEuchKarten(){ const b=document.getElementById("fe-bahn"); if(!b)return []; return [...b.children].flatMap(sl=>[...sl.children]).filter(k=>k.nodeType===1&&!k.hidden); }
+function fuerEuchSync(){
+  const sek=document.getElementById("fuer-euch"), b=document.getElementById("fe-bahn"); if(!sek||!b)return;
+  const karten=fuerEuchKarten(), n=karten.length;
+  sek.hidden=!n; sek.classList.toggle("fe-einzeln",n===1);
+  karten.forEach((k,i)=>{ k.classList.add("fe-karte"); k.setAttribute("aria-roledescription","Karte"); k.setAttribute("aria-label",(i+1)+" von "+n); });
+  /* Kommt eine Karte dazu oder fällt eine weg, zurück an den Anfang – sonst bleibt der Browser an der bisher
+     sichtbaren Karte eingerastet, und die wichtigste (vorn) wäre verdeckt */
+  const sig=karten.map(k=>k.className.split(" ")[0]+":"+(k.parentElement&&k.parentElement.id)).join("|");
+  if(b._feSig!==sig){ b._feSig=sig; b.scrollLeft=0; }
+  const zahl=document.getElementById("fe-zahl"), punkte=document.getElementById("fe-punkte");
+  let akt=0; if(n>1){ const w=b.clientWidth||1; akt=Math.min(n-1,Math.round(b.scrollLeft/(karten[0].offsetWidth+10||w))); }
+  if(zahl)zahl.textContent=n>1?`${akt+1} von ${n}`:"";
+  if(punkte)punkte.innerHTML=n>1?karten.map((_,i)=>`<i class="${i===akt?"an":""}"></i>`).join(""):"";
+}
+function fuerEuchStart(){
+  const b=document.getElementById("fe-bahn"); if(!b||b._feBeob)return;
+  b._feBeob=true;
+  try{ new MutationObserver(()=>fuerEuchSync()).observe(b,{childList:true,subtree:true}); }catch(e){}
+  b.addEventListener("scroll",()=>{ clearTimeout(b._feT); b._feT=setTimeout(fuerEuchSync,80); },{passive:true});
+  fuerEuchSync();
+}
+
 function elternPushHinweisWeg(){ if(typeof pushKarteWeg==="function")pushKarteWeg("push-hinweis-slot"); }

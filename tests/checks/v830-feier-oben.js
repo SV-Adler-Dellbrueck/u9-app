@@ -2,7 +2,7 @@
    1) „Die Weihnachtsfeier sollte direkt ganz oben angezeigt werden, solange noch nicht zu- oder abgesagt wurde,
       und bei Zusage, wenn nichts in der Mitbringliste eingetragen wurde.“
       a) keine Antwort → Karte „Rückmeldung fehlt“, ganz oben vor der Terminkarte, Hauptknopf 56 px
-      b) zugesagt, nichts eingetragen → Karte „Beitragsliste“
+      b) zugesagt, nichts eingetragen → Karte „Mitbringliste“
       c) zugesagt und eingetragen → keine Karte
       d) abgesagt → keine Karte; e) Termin fällt aus → keine Karte
       f) Antwortstand nicht ladbar → keine Karte (lieber keine als eine falsche)
@@ -11,7 +11,7 @@
       Namen für Screenreader, und der Tipp öffnet eine Auswahl mit beiden Terminen (Zeilen ≥ 48 px). */
 "use strict";
 module.exports = async function (h) {
-  const titel = "v830 Weihnachtsfeier ganz oben solange Antwort oder Beitragsliste fehlt; Kachel zeigt alle Termine des Tages";
+  const titel = "v830 Weihnachtsfeier ganz oben solange Antwort oder Mitbringliste fehlt; Kachel zeigt alle Termine des Tages";
   const probleme = [], zeilen = [];
   const datum = h.tagePlus(9);
   const feier = { id: 112, datum, uhrzeit: "18:15", uhrzeit_ende: "20:00", typ: "event", titel: "Weihnachtsfeier", ort: "Vereinsheim", mitbringen: false, eltern_turnier: false, trainer_status: {}, platz_status: null };
@@ -43,14 +43,16 @@ module.exports = async function (h) {
     const karte = () => slot() && slot().querySelector(".feier-karte");
     const out = {};
     // Reihenfolge im Dashboard
-    const root = slot() && slot().parentElement;
+    /* seit v924 steht der Slot im Karussell „Für euch“ – gemessen wird dessen Platz im Dashboard */
+    const oben = document.getElementById("fuer-euch") || slot();
+    const root = oben && oben.parentElement;
     const kinder = root ? [...root.children] : [];
     const posKarte = kinder.findIndex(c => /Nächster Termin/i.test(c.innerText || ""));
-    out.vorTerminkarte = kinder.indexOf(slot()) >= 0 && posKarte > kinder.indexOf(slot());
-    out.erstesKind = kinder.indexOf(slot()) <= 1;
+    out.vorTerminkarte = kinder.indexOf(oben) >= 0 && posKarte > kinder.indexOf(oben);
+    out.erstesKind = kinder.indexOf(oben) <= 1;
     const zustand = async (name, kidsStatus) => {
       await window.__setze(name, kidsStatus); await feierObenLoad(window._elternKids); await w(400);
-      return karte() ? { text: karte().innerText.replace(/\s+/g, " "), hoeheKnopf: Math.round(karte().querySelector("button").getBoundingClientRect().height) } : null;
+      return karte() ? { text: karte().innerText.replace(/\s+/g, " "), hoeheKnopf: Math.round(karte().querySelector(".feier-karte-knopf").getBoundingClientRect().height) } : null;
     };
     out.a = await zustand("a"); out.b = await zustand("b"); out.c = await zustand("c"); out.d = await zustand("d"); out.e = await zustand("e"); out.f = await zustand("f");
     // Kachel: Zellen für den Tag mit zwei Terminen
@@ -75,7 +77,7 @@ module.exports = async function (h) {
   if (!r.erstesKind) probleme.push("1) die Karte steht nicht ganz oben");
   if (!r.a || !/Rückmeldung fehlt/i.test(r.a.text) || !/Weihnachtsfeier/.test(r.a.text) || !/Jetzt antworten/i.test(r.a.text)) probleme.push("a) keine Antwort: " + JSON.stringify(r.a));
   if (r.a && r.a.hoeheKnopf !== 56) probleme.push("a) Hauptknopf " + r.a.hoeheKnopf + " px statt 56");
-  if (!r.b || !/Beitragsliste/i.test(r.b.text) || !/Beitragsliste öffnen/i.test(r.b.text)) probleme.push("b) zugesagt ohne Eintrag: " + JSON.stringify(r.b));
+  if (!r.b || !/Mitbringliste/i.test(r.b.text) || !/Mitbringliste öffnen/i.test(r.b.text)) probleme.push("b) zugesagt ohne Eintrag: " + JSON.stringify(r.b));
   if (r.c) probleme.push("c) Karte trotz Eintrag: " + r.c.text);
   if (r.d) probleme.push("d) Karte trotz Absage: " + r.d.text);
   if (r.e) probleme.push("e) Karte, obwohl der Termin ausfällt: " + r.e.text);
@@ -86,6 +88,6 @@ module.exports = async function (h) {
   if (r.wahl && r.wahl.some(x => x.h < 48)) probleme.push("2) Zeilen der Auswahl unter 48 px: " + r.wahl.map(x => x.h).join("/"));
   if (r.wahl && r.wahl.length >= 2 && !(r.wahl[0].t.indexOf("Turnier") >= 0)) probleme.push("2) Reihenfolge nach Uhrzeit: " + r.wahl[0].t);
   if (!/terminDetailOpen\(112\)/.test(r.einzelnOnclick || "")) probleme.push("2) ein Termin am Tag öffnet nicht direkt: " + r.einzelnOnclick);
-  zeilen.push("Karte: Rückmeldung fehlt / Beitragsliste / weg bei Eintrag, Absage, Ausfall, fehlendem Stand · Kachel zeigt 🎄 und ⚽, Auswahl mit beiden");
+  zeilen.push("Karte: Rückmeldung fehlt / Mitbringliste / weg bei Eintrag, Absage, Ausfall, fehlendem Stand · Kachel zeigt 🎄 und ⚽, Auswahl mit beiden");
   return h.ergebnis(titel, !probleme.length, probleme.concat(zeilen));
 };

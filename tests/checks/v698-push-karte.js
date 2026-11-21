@@ -40,7 +40,7 @@ module.exports = async function (h) {
     const out = {};
     const slot = document.getElementById("push-hinweis-slot");
     const nach = id => { const x = document.getElementById(id); return !!(slot && x && (slot.compareDocumentPosition(x) & Node.DOCUMENT_POSITION_FOLLOWING)); };
-    out.a = { slot: !!slot, vorRufe: nach("rufe-hinweis"), direktDavor: slot && slot.nextElementSibling && slot.nextElementSibling.id, davor: slot && slot.previousElementSibling ? slot.previousElementSibling.id || "?" : "" };
+    out.a = { slot: !!slot, vorRufe: nach("rufe-hinweis"), direktDavor: slot && slot.nextElementSibling && (slot.nextElementSibling.id || (slot.nextElementSibling.dataset && slot.nextElementSibling.dataset.zone ? "zone-" + slot.nextElementSibling.dataset.zone : "")),   /* seit v924 folgt die Zone „Neu“ – der Porträt-Slot steht oben in „Für euch“ */ davor: slot && slot.previousElementSibling ? slot.previousElementSibling.id || "?" : "" };
     const karte = () => document.getElementById("push-hinweis");
     const h = id => { const e = document.getElementById(id); return e ? Math.round(e.getBoundingClientRect().height) : 0; };
     const txt = e => e ? e.textContent.replace(/\s+/g, " ").trim() : "";
@@ -93,7 +93,7 @@ module.exports = async function (h) {
   if (ft.length) probleme.push("Konsole Trainer: " + ft.slice(0, 2).join(" | "));
   /* v838 (Charles 17.11., drei Zonen): Bei den Eltern steht die Karte nicht mehr ganz oben, sondern in „Noch offen“ –
      nach „Zu erledigen“, vor dem Porträt-Bogen und vor den Adler-Rufen. Im Trainerbereich bleibt sie ganz oben. */
-  if (!r.a.slot || !r.a.vorRufe || r.a.direktDavor !== "nest-bogen-slot" || r.a.davor !== "eltern-todo-btn") probleme.push(`a) Reihenfolge: ${JSON.stringify(r.a)}`);
+  if (!r.a.slot || !r.a.vorRufe || !/^(nest-bogen-slot|zone-neu)$/.test(r.a.direktDavor) || r.a.davor !== "eltern-todo-btn") probleme.push(`a) Reihenfolge: ${JSON.stringify(r.a)}`);
   if (r.b.fall !== "aus" || !/Keine Nachricht vom Team verpassen/.test(r.b.text) || !/Wenn du künftig alle neuen Nachrichten/.test(r.b.text) || r.b.knopf < 48 || r.b.sogehts < 44) probleme.push(`b) Karte: ${JSON.stringify(r.b)}`);
   if (!r.b.weg || r.b.an !== 1 || r.b.rolle !== "parent" || r.b.test !== 1) probleme.push(`b) Einschalten: ${JSON.stringify(r.b)}`);
   if (r.c.fall !== "ios" || !/Home-Bildschirm/.test(r.c.text) || !/So geht/.test(r.c.knopf)) probleme.push(`c) iPhone-Karte: ${JSON.stringify(r.c)}`);
