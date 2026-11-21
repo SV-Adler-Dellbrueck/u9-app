@@ -469,8 +469,9 @@ function ghDienstHtml(d){
   if(d.eigene&&d.status==="uebernommen")return `<div style="font-size:var(--s-text);line-height:1.5">Ihr habt diesen Dienst übernommen – danke!</div>`;
   if(d.kann_uebernehmen)return `<div style="font-size:var(--s-text);line-height:1.5">Die eingeteilte Familie sucht Ersatz. Könnt ihr?</div>
       <button class="gh-uebernehmen btn" onclick="ghUebernehmen(${Number(d.dienst_id)})" style="${GH_KNOPF}">Übernehmen</button>`;
-  if(d.status==="uebernommen")return `<div style="font-size:var(--s-text)">Übernommen von ${esc(d.name||"einer anderen Familie")} – ihr müsst nichts tun.</div>`;
-  if(d.status==="eingeteilt")return `<div style="font-size:var(--s-text)">Eine andere Familie ist dran – ihr müsst nichts tun.</div>`;
+  // v934 (Charles 21.11.: „Mit Namen und Zählung“): die Familie steht mit Namen da, wie in „Grillhütte & Helfen“
+  if(d.status==="uebernommen")return `<div style="font-size:var(--s-text)">Übernommen von ${d.familie?"Familie "+esc(d.familie):esc(d.name||"einer anderen Familie")} – ihr müsst nichts tun.</div>`;
+  if(d.status==="eingeteilt")return `<div style="font-size:var(--s-text)">${d.familie?"Familie "+esc(d.familie)+" ist dran":"Eine andere Familie ist dran"} – ihr müsst nichts tun.</div>`;
   return `<div style="font-size:var(--s-text);color:var(--text2)">Das Trainerteam teilt noch ein.</div>`;
 }
 /* Startseite: der eigene Dienst in den nächsten 14 Tagen und offene Dienste zum Übernehmen.
@@ -488,7 +489,7 @@ async function elternBuedchenLoad(){
   slot.innerHTML=zeigen.map(d=>`<div class="gh-karte" style="background:var(--surface);border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05);border:2px solid ${d.eigene?"var(--green)":"var(--amber)"}">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px"><b>🔥 Grillhütte</b>${ghElternChip(d)}</div>
       <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:8px">${d.eigene&&d.status==="eingeteilt"?"Eure Familie ist eingeteilt: ":""}Heimspiel am ${esc(ghTag(d.datum,d.uhrzeit))}${d.gegner?" · "+esc(d.gegner):""}${Number(d.plaetze)>1?` · ${Number(d.plaetze)} Familien`:""}</div>
-      ${ghDienstHtml(d)}
+      ${ghDienstHtml(d)}${ghVorlaeufig(d.datum)?`<div class="gh-vorl" style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">ℹ️ Termin noch vorläufig – der Spielplan der Rückrunde kann sich ändern.</div>`:""}
     </div>`).join("");
   if(typeof elternTodoSync==="function")elternTodoSync();
 }
@@ -515,9 +516,74 @@ async function ghUebernehmen(id){
   ghNeuLaden();
 }
 function ghNeuLaden(){
+  _ghHelfen=null;
   elternBuedchenLoad();
+  if(document.getElementById("helfen-fenster"))elternHelfenOpen();
   const t=window._tdTermin;
   if(t&&document.getElementById("td-buedchen")&&typeof tdBuedchenLoad==="function")tdBuedchenLoad(t);
+}
+
+/* ═══ v934 · „🔥 Grillhütte & Helfen“ für Eltern (Charles 21.11.2026, Bild freigegeben: „Mit Namen und Zählung“) ═══
+   Kommende Heimspiele mit der eingeteilten Familie (eigene grün, „Ersatz gesucht“ mit „Übernehmen“) und je Familie, wie
+   oft sie in dieser Saison geholfen hat: 🔥 Grillhütte · 🫖 Tee · 🥅 Aufbau (Tore, Aufbau) · 🧹 Abbau · 👀 Betreuung
+   (beim Training geblieben, am Spieltag betreut). Alphabetisch, keine Rangliste; unten die Summe fürs Team. Quelle:
+   rpc/helfer_uebersicht (Migration v934) – Familie = Vornamen der Kinder, gezählt wird, was schon war. */
+/* v934 (Charles 21.11.: „Der Spielplan für die Rückrunde ab Februar 2027 ist noch nicht final und kann sich noch
+   ändern“): Heimspiele ab diesem Tag tragen „vorläufig“. Steht der Spielplan, die Konstante auf "" setzen. */
+const GH_VORLAEUFIG_AB="2027-02-01";
+function ghVorlaeufig(datum){ return !!GH_VORLAEUFIG_AB&&String(datum||"").slice(0,10)>=GH_VORLAEUFIG_AB; }
+const GH_VORLAEUFIG_TEXT="Der Spielplan der Rückrunde ab Februar 2027 ist noch nicht endgültig – Heimspiele und Grillhütten-Termine können sich noch ändern.";
+let _ghHelfen=null;
+async function ghHelfenDaten(){
+  if(_ghHelfen)return _ghHelfen;
+  try{ const r=await fetch(`${SB_URL}/rest/v1/rpc/helfer_uebersicht`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"});
+    if(r.ok)_ghHelfen=await r.json(); }catch(e){}
+  return _ghHelfen;
+}
+async function ghFamilieZu(dienstId){
+  const d=await ghHelfenDaten(); if(!d)return "";
+  for(const h of d.heimspiele||[])for(const x of h.dienste||[])if(Number(x.dienst_id)===Number(dienstId))return x.familie||"";
+  return "";
+}
+async function elternHelfenOpen(){
+  const {grund,karte}=fensterAuf("helfen-fenster",{aussen:true,breite:560});
+  grund.setAttribute("aria-label","Grillhütte und Helfen");
+  karte.innerHTML=`${mdlHead("helfen-fenster","🔥","Grillhütte &amp; Helfen","Wer ist wann dran · wer hat wie oft geholfen","#b45309")}<div id="helfen-inhalt" style="font-size:var(--s-text);color:var(--text2)">Lädt …</div>`;
+  const d=await ghHelfenDaten();
+  const box=document.getElementById("helfen-inhalt"); if(!box)return;
+  if(!d){ box.innerHTML=`<div style="color:var(--text2)">Die Übersicht braucht Netz und eine Anmeldung. Bitte später noch einmal versuchen.</div>`; return; }
+  const plan=(typeof GH_AUTO_TAGE!=="undefined"?GH_AUTO_TAGE:42);
+  const heim=(d.heimspiele||[]).map(h=>{
+    const dt=new Date(String(h.datum).slice(0,10)+"T00:00:00");
+    const tag=`<div class="hf-dat" aria-hidden="true" style="flex:none;width:46px;text-align:center;font-weight:900;font-size:var(--s-karte);line-height:1.05;border-radius:10px;background:var(--surface2);padding:3px 0"><small style="display:block;font-size:var(--s-klein);font-weight:700">${["SO","MO","DI","MI","DO","FR","SA"][dt.getDay()]}</small>${String(dt.getDate()).padStart(2,"0")}<small style="display:block;font-size:var(--s-klein);font-weight:700">${dt.toLocaleDateString("de-DE",{month:"short"}).replace(".","")}</small></div>`;
+    const wann=`${esc(ghTag(h.datum,h.uhrzeit))}${h.gegner?" · "+esc(h.gegner):""}${ghVorlaeufig(h.datum)?` · <span class="hf-vorl" style="font-weight:800;color:var(--amber)">vorläufig</span>`:""}`;
+    const ds=h.dienste||[];
+    if(!ds.length){
+      const ab=new Date(dt.getTime()-plan*864e5);
+      return `<div class="hf-heim" style="background:var(--surface);border:1px solid var(--rand-bedien);border-radius:14px;padding:10px 12px;margin-bottom:8px;display:flex;gap:10px;align-items:center">${tag}<div style="flex:1;min-width:0"><div style="color:var(--text2)">wird ab ${ab.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})} eingeteilt</div><div style="font-size:var(--s-klein);color:var(--text3)">${wann}</div></div></div>`;
+    }
+    const eigen=ds.some(x=>x.eigene);
+    const zeilen=ds.map(x=>{
+      const knopf=x.eigene&&x.status==="eingeteilt"?`<button class="gh-ersatz btn" onclick="ghErsatzSuchen(${Number(x.dienst_id)})" style="${GH_KNOPF}">Ersatz suchen</button>`
+        :x.kann_uebernehmen?`<button class="gh-uebernehmen btn" onclick="ghUebernehmen(${Number(x.dienst_id)})" style="${GH_KNOPF}">Übernehmen</button>`:"";
+      return `<div style="margin-top:2px"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b style="color:var(--text);font-size:var(--s-karte)">Familie ${esc(x.familie||"?")}</b>${ghElternChip(x)}</div>${knopf}</div>`;
+    }).join("");
+    return `<div class="hf-heim${eigen?" hf-eigen":""}" style="background:var(--surface);border:${eigen?"2px solid var(--green)":"1px solid var(--rand-bedien)"};border-radius:14px;padding:10px 12px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start">${tag}<div style="flex:1;min-width:0">${zeilen}<div style="font-size:var(--s-klein);color:var(--text3);margin-top:2px">${wann}</div></div></div>`;
+  }).join("")||`<div style="color:var(--text2);margin-bottom:8px">Kein Heimspiel in Sicht.</div>`;
+  const fam=d.familien||[], zahl=n=>n?String(n):"–";
+  const sum=k=>fam.reduce((a,f)=>a+(Number(f[k])||0),0);
+  const SP=[["grill","🔥","Grillhütte"],["tee","🫖","Tee mitgebracht"],["aufbau","🥅","Aufgebaut (Tore, Aufbau)"],["abbau","🧹","Abgebaut"],["betreuung","👀","Betreut (beim Training geblieben, am Spieltag)"]];
+  const ab=new Date(String(d.saison_ab||"").slice(0,10)+"T00:00:00");
+  const saison=isNaN(ab)?"diese Saison":`Saison ${ab.getFullYear()}/${String(ab.getFullYear()+1).slice(2)}`;
+  const tabelle=`<table class="hf-tabelle" style="width:100%;border-collapse:collapse;font-size:var(--s-text);background:var(--surface);border:1px solid var(--rand-bedien);border-radius:14px;overflow:hidden">
+    <caption style="text-align:left;font-size:var(--s-klein);color:var(--text2);padding:0 2px 6px">${SP.map(s=>s[1]+" "+s[2]).join(" · ")}</caption>
+    <thead><tr style="background:var(--surface2)"><th scope="col" style="text-align:left;padding:7px 10px">Familie</th>${SP.map(s=>`<th scope="col" title="${s[2]}" style="padding:7px 2px;font-size:var(--s-karte)"><span aria-hidden="true">${s[1]}</span><span class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">${s[2]}</span></th>`).join("")}</tr></thead>
+    <tbody>${fam.map(f=>`<tr class="${f.eigene?"hf-ihr":""}" style="${f.eigene?"background:var(--green-bg);font-weight:800":""}"><th scope="row" style="text-align:left;padding:7px 10px;border-top:1px solid var(--rand-bedien);font-weight:700">${esc(f.familie)}${f.eigene?" · ihr":""}</th>${SP.map(s=>`<td style="text-align:center;padding:7px 2px;border-top:1px solid var(--rand-bedien)">${zahl(f[s[0]])}</td>`).join("")}</tr>`).join("")}
+      <tr class="hf-summe" style="background:var(--surface2);font-weight:900"><th scope="row" style="text-align:left;padding:7px 10px;border-top:1px solid var(--rand-bedien)">Team</th>${SP.map(s=>`<td style="text-align:center;padding:7px 2px;border-top:1px solid var(--rand-bedien)">${sum(s[0])}</td>`).join("")}</tr></tbody></table>`;
+  const vorl=(d.heimspiele||[]).some(h=>ghVorlaeufig(h.datum))?`<div class="hf-hinweis" role="note" style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:12px;padding:8px 10px;margin:0 0 8px;color:var(--text);line-height:1.4">ℹ️ ${GH_VORLAEUFIG_TEXT}</div>`:"";
+  box.innerHTML=`<div style="font-size:var(--s-karte);font-weight:800;color:var(--text);margin:4px 2px 8px">🔥 Nächste Heimspiele</div>${vorl}${heim}
+    <div style="font-size:var(--s-karte);font-weight:800;color:var(--text);margin:16px 2px 8px">🙌 ${esc(saison)} – danke!</div>${tabelle}
+    <div style="font-size:var(--s-klein);color:var(--text2);line-height:1.45;margin-top:8px">Sortiert nach Namen, nicht nach Anzahl. Gezählt wird, was schon war, ab Saisonbeginn. „Betreut“ zählt die Zusage „ich bleibe beim Training“ und die Betreuung am Spieltag. Helfen ohne Eintrag in der App kennt die Liste nicht.</div>`;
 }
 
 /* ── Trainerbereich: einteilen und umbuchen ──────────────────────────────────── */

@@ -1327,6 +1327,8 @@ async function elternDashLoad(){
   html+='<div class="el-gitter">';
   html+=catBtn('kontakt','🗣️','Trainerteam','Frage oder Elterngespräch','');
   html+=`<button type="button" id="alle-termine-kachel" onclick="elternTermineOpen()" class="btn btn-zeile"><span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("📅")}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Alle Termine</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Ganze Saison, im eigenen Kalender abonnieren</span></span><span aria-hidden="true" style="font-size:var(--s-teil);opacity:.85">›</span></button>`;
+  /* v934 (Charles 21.11., Bild freigegeben): Grillhütte & Helfen – wer ist wann dran, wer hat wie oft geholfen. */
+  html+=`<button type="button" id="helfen-kachel" onclick="if(typeof elternHelfenOpen==='function')elternHelfenOpen()" class="btn btn-zeile el-breit" style="border:2px solid var(--amber)"><span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:var(--amber-bg);display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1">🔥</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Grillhütte &amp; Helfen</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Wer ist wann dran · wer hat wie oft geholfen</span></span><span style="font-size:var(--s-teil);color:#64748b">›</span></button>`;
   html+=catBtn('mehr','📰','Mehr vom Team','Nest, Galerie, Kasse, Börse, Fundbüro','');
   html+=catBtn('regeln','📋','Regeln &amp; Freigaben','Vereinbarung, Quiz, Fotos, Notfallkarte','');
   html+='</div>';
@@ -2783,9 +2785,10 @@ async function tdBuedchenLoad(t){
   const ds=(await ghDienste(366)).filter(x=>Number(x.termin_id)===Number(t.id));
   const d=ds.find(x=>x.eigene)||ds.find(x=>x.kann_uebernehmen)||ds[0];
   if(!d){ box.innerHTML=""; return; }
+  if(typeof ghFamilieZu==="function"&&!d.familie)d.familie=await ghFamilieZu(d.dienst_id);   // v934: Name der Familie
   box.innerHTML=`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px"><b style="font-size:var(--s-text)">🔥 Grillhütte</b>${(typeof ghElternChip==="function"?ghElternChip(d):ghChip(d.status))}</div>
-    ${ghDienstHtml(d)}</div>`;
+    ${ghDienstHtml(d)}${(typeof ghVorlaeufig==="function"&&ghVorlaeufig(d.datum))?`<div class="gh-vorl" style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">ℹ️ Termin noch vorläufig – der Spielplan der Rückrunde kann sich ändern.</div>`:""}</div>`;
 }
 // Alle kommenden Termine als Dialog + Kalender-Export (.ics) – gleiche Quelle wie die Liste.
 let ELTERN_TERMINE=[];
