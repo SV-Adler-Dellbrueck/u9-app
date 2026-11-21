@@ -437,6 +437,17 @@ const GH_STATUS={
 };
 function ghChip(status){ const s=GH_STATUS[status]||GH_STATUS.offen;
   return `<span class="gh-chip" style="display:inline-block;font-size:var(--s-klein);font-weight:700;color:${s.f};background:${s.bg};border:1px solid ${s.f};border-radius:999px;padding:1px 9px">${s.t}</span>`; }
+/* v931 (Rückfragen von Eltern 21.11.: „Heißt eingeteilt, dass wir eingeteilt wurden?“): Eltern sehen das Etikett aus
+   IHRER Sicht – „🔥 Ihr seid dran“ nur bei der eigenen Familie; ist eine andere Familie dran, grau „vergeben“. Grün und
+   „eingeteilt“ las sich bei allen wie „ihr seid dran“. Das Trainerteam behält ghChip mit den Zuständen. */
+function ghElternChip(d){
+  const st=d&&d.status, eigen=!!(d&&d.eigene);
+  const c=(t,f,bg,stark)=>`<span class="gh-chip" style="display:inline-block;font-size:var(--s-klein);font-weight:${stark?800:700};color:${f};background:${bg};border:1px solid ${f};border-radius:999px;padding:1px 9px">${t}</span>`;
+  if(eigen&&(st==="eingeteilt"||st==="uebernommen"))return c("🔥 Ihr seid dran","var(--green)","var(--green-bg)",true);
+  if(st==="freigegeben")return c("Ersatz gesucht","var(--amber)","var(--amber-bg)");
+  if(st==="eingeteilt"||st==="uebernommen")return c("vergeben","var(--text2)","var(--surface2)");
+  return c("noch nicht eingeteilt","var(--text2)","var(--surface2)");
+}
 function ghTag(datum,uhrzeit){
   const d=new Date(String(datum).slice(0,10)+"T00:00:00");
   const wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
@@ -452,14 +463,14 @@ async function ghDienste(tage){
 const GH_KNOPF="width:100%;min-height:48px;margin-top:8px;justify-content:center;font-size:var(--s-text)";
 /* Ein Dienst aus Sicht der Eltern – dieselbe Zeile auf der Startseite und im Termin. */
 function ghDienstHtml(d){
-  if(d.eigene&&d.status==="eingeteilt")return `<div style="font-size:var(--s-text);line-height:1.5">Ihr seid dran. Könnt ihr nicht, sucht Ersatz – bis eine andere Familie übernimmt, bleibt der Dienst bei euch.</div>
+  if(d.eigene&&d.status==="eingeteilt")return `<div style="font-size:var(--s-text);line-height:1.5">Eure Familie ist für die Grillhütte eingeteilt. Könnt ihr nicht, sucht Ersatz – bis eine andere Familie übernimmt, bleibt der Dienst bei euch.</div>
       <button class="gh-ersatz btn" onclick="ghErsatzSuchen(${Number(d.dienst_id)})" style="${GH_KNOPF}">Ersatz suchen</button>`;
   if(d.eigene&&d.status==="freigegeben")return `<div style="font-size:var(--s-text);line-height:1.5">Ersatz wird gesucht. Bis eine andere Familie übernimmt, bleibt der Dienst bei euch.</div>`;
   if(d.eigene&&d.status==="uebernommen")return `<div style="font-size:var(--s-text);line-height:1.5">Ihr habt diesen Dienst übernommen – danke!</div>`;
   if(d.kann_uebernehmen)return `<div style="font-size:var(--s-text);line-height:1.5">Die eingeteilte Familie sucht Ersatz. Könnt ihr?</div>
       <button class="gh-uebernehmen btn" onclick="ghUebernehmen(${Number(d.dienst_id)})" style="${GH_KNOPF}">Übernehmen</button>`;
-  if(d.status==="uebernommen")return `<div style="font-size:var(--s-text)">Übernommen von ${esc(d.name||"einer anderen Familie")}.</div>`;
-  if(d.status==="eingeteilt")return `<div style="font-size:var(--s-text)">Eine Familie ist eingeteilt.</div>`;
+  if(d.status==="uebernommen")return `<div style="font-size:var(--s-text)">Übernommen von ${esc(d.name||"einer anderen Familie")} – ihr müsst nichts tun.</div>`;
+  if(d.status==="eingeteilt")return `<div style="font-size:var(--s-text)">Eine andere Familie ist dran – ihr müsst nichts tun.</div>`;
   return `<div style="font-size:var(--s-text);color:var(--text2)">Das Trainerteam teilt noch ein.</div>`;
 }
 /* Startseite: der eigene Dienst in den nächsten 14 Tagen und offene Dienste zum Übernehmen.
@@ -475,7 +486,7 @@ async function elternBuedchenLoad(){
   const grenze=new Date(Date.now()+GH_FENSTER_OFFEN*864e5).toISOString().slice(0,10);
   const zeigen=alle.filter(d=>d.eigene||(d.kann_uebernehmen&&String(d.datum)<=grenze));
   slot.innerHTML=zeigen.map(d=>`<div class="gh-karte" style="background:var(--surface);border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05);border:2px solid ${d.eigene?"var(--green)":"var(--amber)"}">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px"><b>🔥 Grillhütte${d.eigene?": Ihr seid dran":""}</b>${ghChip(d.status)}</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px"><b>🔥 Grillhütte</b>${ghElternChip(d)}</div>
       <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:8px">${d.eigene&&d.status==="eingeteilt"?"Eure Familie ist eingeteilt: ":""}Heimspiel am ${esc(ghTag(d.datum,d.uhrzeit))}${d.gegner?" · "+esc(d.gegner):""}${Number(d.plaetze)>1?` · ${Number(d.plaetze)} Familien`:""}</div>
       ${ghDienstHtml(d)}
     </div>`).join("");
@@ -801,9 +812,10 @@ function elternGespraechOpen(){
   const kidSel=(kids.length>1)?`<label style="font-size:var(--s-klein);color:var(--text3);display:block;margin-bottom:8px">Um welches Kind geht es?<select id="eg-kid" style="width:100%;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-karte);margin-top:2px">${kids.map(k=>`<option value="${k.spieler_id}">${esc((k.kader&&k.kader.name)||"Kind")}</option>`).join("")}</select></label>`:"";
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);max-width:380px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
     ${mdlHead("eg-modal","🗣️","Elterngespräch anfragen","","#475569")}
-    <div style="font-size:var(--s-text);color:var(--text3);margin-bottom:12px">Der Trainer bekommt deinen Wunsch und meldet sich zur Terminabstimmung.</div>
+    <div style="font-size:var(--s-text);color:var(--text3);margin-bottom:8px">Für ein persönliches Gespräch: Der Trainer bekommt deinen Wunsch und meldet sich mit Terminvorschlägen.</div>
+    <button type="button" class="btn btn-link" id="eg-zur-frage" onclick="document.getElementById('eg-modal').remove();rufePrivatEinstieg()" style="margin-bottom:10px;min-height:44px;font-size:var(--s-text)">Nur eine kurze Frage? Im Chat stellen ›</button>
     ${kidSel}
-    <label style="font-size:var(--s-klein);color:var(--text3)">Worum geht es? (optional)<textarea id="eg-thema" rows="3" placeholder="z. B. Entwicklung, Position, eine Frage …" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-karte);margin-top:2px;resize:vertical"></textarea></label>
+    <label style="font-size:var(--s-klein);color:var(--text3)">Worum geht es? (optional)<textarea id="eg-thema" rows="3" placeholder="z. B. Entwicklung, Position, Wohlbefinden …" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-karte);margin-top:2px;resize:vertical"></textarea></label>
     <div style="display:flex;gap:8px;margin-top:12px">
       <button class="btn btn-p" onclick="elternGespraechSave(this)" style="flex:1;min-height:44px;font-size:var(--s-karte);justify-content:center">Anfrage senden</button>
       <button class="btn" onclick="document.getElementById('eg-modal').remove()" style="min-height:44px;font-size:var(--s-karte);justify-content:center">Abbrechen</button>

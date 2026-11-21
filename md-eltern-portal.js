@@ -1400,7 +1400,9 @@ async function elternDashLoad(){
   html+=`</div>`; // /cat-regeln (v926: mit den Freigaben)
   html+=`<div id="cat-kontakt" class="el-cat-panel" style="display:none">`;
   html+=`<div id="eg-slot"></div>`; // Status einer laufenden Elterngespräch-Anfrage
-  html+=elRow("🗣️","Elterngespräch anfragen","Kurz Bescheid sagen – der Trainer meldet sich zur Terminabstimmung","elternGespraechOpen()","#334155");
+  /* v931: Eine Frage gehört in den privaten Chat, nicht in die Terminanfrage – vorher stand hier nur „Elterngespräch“. */
+  html+=elRow("💬","Frage ans Trainerteam","Privat – nur ihr und das Trainerteam, im Chat","rufePrivatEinstieg()","#334155");
+  html+=elRow("🗓️","Persönliches Gespräch vereinbaren","Der Trainer meldet sich mit Terminvorschlägen","elternGespraechOpen()","#334155");
   html+=`<div id="eltern-poll-info-slot"></div>`; // Elterngespräch-Terminfindung: beantwortet/entschieden (offene Abstimmungen leben im To-Do-Fenster)
   html+=elRow("🔔","Benachrichtigungen","An/aus, Ruhezeit und Sonntags-Neuigkeiten – unter „Mein Konto“","elternKontoOpen()","#334155");   // v860
   html+=`</div>`; // /cat-kontakt
@@ -2782,7 +2784,7 @@ async function tdBuedchenLoad(t){
   const d=ds.find(x=>x.eigene)||ds.find(x=>x.kann_uebernehmen)||ds[0];
   if(!d){ box.innerHTML=""; return; }
   box.innerHTML=`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px"><b style="font-size:var(--s-text)">🔥 Grillhütte${d.eigene?": Ihr seid dran":""}</b>${ghChip(d.status)}</div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px"><b style="font-size:var(--s-text)">🔥 Grillhütte</b>${(typeof ghElternChip==="function"?ghElternChip(d):ghChip(d.status))}</div>
     ${ghDienstHtml(d)}</div>`;
 }
 // Alle kommenden Termine als Dialog + Kalender-Export (.ics) – gleiche Quelle wie die Liste.
