@@ -65,7 +65,8 @@ module.exports = async function (h) {
   const zugBank = await s.page.evaluate(({ n }) => ({ aufBank: rotBench.includes(n), feld: rotField.length, sel: rotSel }), { n: b2.n });
   const fehler = s.fehler(); await s.schliessen();
   if (r.rollen.funino.join("|") !== "Aufpasser|Flitzer L|Flitzer R") probleme.push(`FUNiño-Rollen: ${r.rollen.funino.join(", ")}`);
-  if (r.rollen.dreiEins.join("|") !== "TW|Aufpasser|Flitzer L|Flitzer R") probleme.push(`3+1-Rollen: ${r.rollen.dreiEins.join(", ")}`);
+  /* v927: 3+1 ist die Raute ohne Aufpasser (Beschluss 16.09.2026) – Torwart, zwei Flitzer, Jäger. */
+  if (r.rollen.dreiEins.join("|") !== "TW|Flitzer L|Flitzer R|Jäger") probleme.push(`3+1-Rollen: ${r.rollen.dreiEins.join(", ")}`);
   if (!/Aufpasser/.test(r.rollenAmFeld.join(",")) || !/Jäger/.test(r.rollenAmFeld.join(","))) probleme.push(`Rollennamen fehlen am Mini-Feld: ${r.rollenAmFeld.join(", ")}`);
   if (r.gewaehlt !== K[1] || r.markiert !== 1) probleme.push(`Erster Tipp wählt nicht (${r.gewaehlt}, markiert ${r.markiert})`);
   if (r.nachTausch[0] !== K[3] || r.nachTausch[2] !== K[1]) probleme.push(`Zwei Tipps tauschen die Positionen nicht: ${r.nachTausch.join(", ")}`);

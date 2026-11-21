@@ -43,7 +43,7 @@ function _brFeld(form){
     h:[[18,24,"y"],[162,24,"y"],[18,256,"y"],[162,256,"y"]]};
   if(form==="funino"){
     spec.tor=[[46,16,"h",28],[106,16,"h",28],[46,256,"h",28],[106,256,"h",28]];
-    spec.li.push([18,92,162,92,"sz"],[18,188,162,188,"sz"]);
+    spec.li.push([18,80,162,80,"sz"],[18,200,162,200,"sz"]);   // v927: Schusszone bei 24/76 % wie im Quiz (Charles 21.11.)
   }else spec.tor=[[68,14,"h",44,"j"],[68,256,"h",44,"j"]];
   return spec;
 }

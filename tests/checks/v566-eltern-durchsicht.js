@@ -7,7 +7,10 @@
       Abstoß des Gegners die halbe Raute – beides verbietet die Regel („Gegner hinter die
       Mittellinie"). Dazu Einwürfe, Eckstöße und Rote Karten, die es in unserer Spielform
       nicht gibt, ein Freilaufen mit dem Ziel neben dem Gegner, gerade Anführungszeichen.
-      Geprüft werden hier die Regeln als Invarianten über ALLE 100 Szenarien.
+      Geprüft werden hier die Regeln als Invarianten über ALLE Szenarien (seit v927: 120).
+      v927 dazu: kein Ziel ist nach der Einlauf-Animation schon erreicht; keine Wörter vom Großfeld (Strafraum,
+      Pfosten, Flanke, köpfen); im 3+1 kein Aufpasser, im FUNiño weder Torwart noch Jäger – außer der Titel nennt
+      „Drei Tore“ (Drei-Tore-Regel, 4.8).
    3. Vorlesen: Stimme nach Qualität statt nach Namensliste, Sprechtext statt Bildschirmtext
       („Torwart" statt „TW"), satzweise mit natürlicher Tonhöhe.
    4. Schiri: in der U9 gibt es keinen – raus aus Fairplay-Regeln, Kinder-Codex, Eltern-Quiz
@@ -43,6 +46,17 @@ module.exports = async function (h) {
         else if (p.locked) out.quiz.push(`${n}: Ziel für ${role}, der gesperrt ist`);
         alts(t).forEach(z => { if (z.x < 2 || z.x > 98 || z.y < 2 || z.y > 98 || !(z.r > 0)) out.quiz.push(`${n}: Ziel ${role} außerhalb des Feldes`); });
       });
+      // v927: Großfeld-Sprache – in unseren Spielformen gibt es keinen Strafraum, keine Flanke, keinen Kopfball
+      if (/Strafraum|Pfosten|Flanke|köpf/i.test(tx)) out.quiz.push(n + ": Wort vom Großfeld (Strafraum/Pfosten/Flanke/köpfen)");
+      // v927: Rollen je Spielform
+      const rollen = new Set(sc.start.map(t => t.role)), dreiTore = /Drei Tore/.test(sc.title);
+      if (sc.feld === "3+1" && rollen.has("Aufpasser") && !dreiTore) out.quiz.push(n + ": 3+1 mit Aufpasser");
+      if (sc.feld === "funino" && (rollen.has("TW") || rollen.has("Jäger")) && !dreiTore) out.quiz.push(n + ": FUNiño mit Torwart oder Jäger");
+      // v927: nach der Animation darf kein Ziel schon erreicht sein (Punkt ohne Zug, früher Szenario 55)
+      const stand = sc.start.map(t => { const a = (sc.anim || []).find(x => x.role === t.role); return a ? { ...t, x: a.to.x, y: a.to.y } : t; });
+      const ziele = Object.entries(sc.targets || {});
+      if (ziele.length && ziele.every(([role, t]) => { const p = stand.find(x => x.role === role); return p && alts(t).some(z => Math.hypot(p.x - z.x, p.y - z.y) <= z.r); }))
+        out.quiz.push(n + ": schon nach der Animation gelöst – Punkt ohne Zug");
       // Eine Animation darf kein Ziel schenken
       (sc.anim || []).forEach(a => {
         const p = sc.start.find(x => x.role === a.role);
