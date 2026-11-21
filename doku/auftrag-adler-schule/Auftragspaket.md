@@ -1,4 +1,4 @@
-# Auftragspaket: Kinderfragen nach Leitfragen – Leitfrage 6 und 2
+# Auftragspaket: Kinderfragen nach Leitfragen – „Adler-Schule“, Leitfragen 1–6
 
 Repo `SV-Adler-Dellbrueck/u9-app`, Stand 21.11.2026. Gilt zusammen mit `CLAUDE.md` und dem
 Paket `doku/auftrag-taktikquiz-3plus1-funino` (Feld je Spielform, Schritt 1, wird hier
@@ -8,6 +8,8 @@ Charles 21.11.: Neben dem Taktik-Quiz sollen die Kinder auch Grundsätzliches ü
 stelle ich mich als Verteidiger, wie komme ich an einem vorbei. Ausgewählt (Kachel): zuerst
 Leitfrage 6 „Wie hole ich mir den Ball zurück?“ und Leitfrage 2 „Wie komme ich an einem
 vorbei?“ aus dem Ausbildungskonzept U9 Fassung 3, je 10 Fragen, dazu zwei neue Fragearten.
+Nachtrag 21.11. (Charles: „Weiter geht's. Passt so“): Leitfragen 1, 3, 4 und 5 mit je 10 Fragen
+ergänzt – zusammen **60 Fragen**. Kachelname **„Adler-Schule“** bestätigt, `lf2-07` bestätigt.
 
 ## Warum neue Fragearten
 
@@ -22,17 +24,20 @@ aber nicht Abstand, Stellung zum Gegner oder der richtige Moment. Drei Arten dec
 
 ## Was geliefert wird
 
-`kinderfragen-nachtrag.json`, Schema `adler-kinderfragen/1`, 20 Fragen (`lf6-01` … `lf6-10`,
-`lf2-01` … `lf2-10`). Gemeinsame Felder: `id` (stabil, nie umbenennen – Fortschritt und Federn
+`kinderfragen-nachtrag.json`, Schema `adler-kinderfragen/1`, Stand `2026-11-21-2`, 60 Fragen (`lf1-01` … `lf6-10`,
+je Leitfrage 10, alle drei Fragearten gemischt). Gemeinsame Felder: `id` (stabil, nie umbenennen – Fortschritt und Federn
 hängen daran), `leitfrage` (1–6), `stufe` (`U8` | `U9` | `U10`), `typ`, `feld`
 (`3+1` | `funino` | `4+1`, Zeichnung wie im Quiz-Paket), `frage`, `erklaerung.richtig`,
 `erklaerung.falsch`, `quelle` (Liste, nur für Trainer sichtbar).
 
 - `ab`: `bilder` (genau 2), je `spieler` (`seite: "wir" | "gegner"`, `x`, `y`, optional
   `rolle`), `ball`, optional `pfeile` (`art: "dribbel" | "lauf" | "pass"`, `von`, `nach`,
-  optional `ueber` als Knickpunkt) und `ausschnitt` (`x`, `y`, `w`, `h` in Feldprozent –
+  optional `ueber` als Knickpunkt; `art: "blick"` = kurzer Blickpfeil am Stein für die
+  Körperstellung, siehe `lf5-06`) und `ausschnitt` (`x`, `y`, `w`, `h` in Feldprozent –
   vergrößerter Ausschnitt fürs 1 gegen 1); `richtig` 0 oder 1.
-- `tippen`: `spieler`, `ball`, `ziele` (Kreise `x`, `y`, `r`). Treffer = Tipp im Kreis.
+- `tippen`: `spieler`, `ball` und **entweder** `ziele` (Kreise `x`, `y`, `r`; Treffer = Tipp in
+  einem der Kreise) **oder** `ziel_spieler` (Index in `spieler`; Treffer = Tipp auf diesen
+  Stein, Trefferfläche mindestens 48 px).
 - `szene`: `spieler`, `ball`, `anim` (`ball.nach`, `gegner[i].nach`, optional `wir[i].nach`),
   `optionen` (genau 3), `richtig` (Index).
 
@@ -41,7 +46,7 @@ Vorschau gerendert und angesehen; die Darstellung im echten Bau bitte selbst pr�
 
 Fachliche Grundlage je Frage steht in `quelle` (DFB-Trainingseinheiten, Ausbildungskonzept,
 Beschlüsse vom 16.09.). `lf2-07` (Zeitpunkt des Hakens) beruht auf Trainerwissen ohne
-Primärquelle und ist so markiert – **vor dem Einspielen Charles fragen**.
+Primärquelle und ist von Charles bestätigt.
 
 ## Schritte
 
@@ -60,7 +65,7 @@ Primärquelle und ist so markiert – **vor dem Einspielen Charles fragen**.
    „Nochmal ansehen“, dann drei große Antwortknöpfe; Reihenfolge der Antworten gemischt.
    Feedback, Vibration, Konfetti und Ergebnisbildschirm wie im Taktik-Quiz (dort nach Paket
    Taktik-Quiz Schritt 5 schon anteilig und mit Blocknamen).
-4. **Einstieg in der Kabine.** Neue Kachel neben „Taktik-Quiz“, Arbeitstitel „Adler-Schule“
+4. **Einstieg in der Kabine.** Neue Kachel „Adler-Schule“ neben „Taktik-Quiz“
    (Name mit Charles klären, Kachel-Frage im Chat). Darin Blöcke je Leitfrage mit der Frage
    als Überschrift („Wie hole ich mir den Ball zurück?“). Liegt für die aktuelle Woche eine
    Trainingsvorlage mit Leitfrage im Plan, steht dieser Block oben. `stufe` steuert nur die
@@ -72,7 +77,7 @@ Primärquelle und ist so markiert – **vor dem Einspielen Charles fragen**.
    Maskottchen-Stimme „Lennart“ vertonen). Bis dahin Gerätestimme; Sprechtext = `frage`, bei
    `szene` zusätzlich die drei Antworten.
 7. **Prüffall** `tests/checks/v9xx-kinderfragen.js`: Schema je Typ (2 Bilder, 3 Optionen,
-   `richtig` im Bereich, Ziele im Feld, kein Stein im Zielkreis), keine geraden Anführungszeichen,
+   `richtig` im Bereich, Ziele im Feld, kein Stein im Zielkreis, `ziel_spieler` zeigt auf einen eigenen Stein), keine geraden Anführungszeichen,
    keine Großfeld-Wörter (Strafraum, Pfosten, Flanke, Einwurf, Eckstoß, Schiri), `id` eindeutig,
    `stufe` nirgends in der Kinderoberfläche sichtbar.
 8. Hilfe, Rundgang der Kabine, Funktionsübersicht; `node tests/run.js` grün; `sw.js` hoch.
@@ -80,14 +85,15 @@ Primärquelle und ist so markiert – **vor dem Einspielen Charles fragen**.
 
 ## Abnahmekriterien
 
-1. In der Kabine öffnet die neue Kachel die Blöcke „Wie hole ich mir den Ball zurück?“ und
-   „Wie komme ich an einem vorbei?“ mit je 10 Fragen.
+1. In der Kabine öffnet „Adler-Schule“ sechs Blöcke, je Leitfrage einer mit 10 Fragen und der
+   Leitfrage als Überschrift.
 2. `lf6-01` zeigt zwei vergrößerte 1-gegen-1-Bilder; „B“ ist richtig und wird nach dem Tippen
    mit ✓ und Rahmen markiert.
 3. `lf6-03`: Tipp links außen = richtig, Tipp in die Mitte = falsch mit Lösungskreis.
 4. `lf6-04`: die Szene spielt den zu weit springenden Ball ab, „Nochmal ansehen“ wiederholt sie,
    danach drei Antworten in wechselnder Reihenfolge.
-5. Alle drei Fragearten sind bei 360 px Breite ohne Scrollen innerhalb einer Frage bedienbar,
+5. `lf4-01`: Tipp auf den freien Mitspieler rechts = richtig, auf den gedeckten = falsch.
+6. Alle drei Fragearten sind bei 360 px Breite ohne Scrollen innerhalb einer Frage bedienbar,
    Antwortflächen ≥ 56 px, Schrift ≥ 11,5 px, hell und dunkel.
-6. Eine bereits richtig beantwortete Frage bringt beim zweiten Mal keine weiteren Federn.
-7. Ganze Prüfreihe grün.
+7. Eine bereits richtig beantwortete Frage bringt beim zweiten Mal keine weiteren Federn.
+8. Ganze Prüfreihe grün.
