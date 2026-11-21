@@ -478,14 +478,18 @@ function tqStart(){
     html+=`</div>${extern?"":'<button class="btn btn-sm" onclick="tqStop()" style="margin-top:8px"><i class="ti ti-x"></i>Abbrechen</button>'}`;
   } else {
     html+=`🧑 ${tqPlayer}${tqPlayerRole?" – "+tqPlayerRole:""}</div>
-      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px">Wähle ein Quiz!</div>`;
+      <div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:2px">🎓 Adler-Schule</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:2px">Heute auf dem Stundenplan: Sport, Sport, Sport ❤️</div>`;
     // Nur bei Geschwistern: ein dezenter Weg zurück zur Namenswahl.
     if(TQ_EIGENE_KINDER&&TQ_EIGENE_KINDER.length>1)
       html+=`<button onclick="tqVergissKind()" style="border:none;background:none;color:var(--text3);font-size:11px;text-decoration:underline;cursor:pointer;padding:0 0 8px;min-height:44px">Nicht ${esc(tqPlayer)}? Name ändern</button>`;
     else html+=`<div style="margin-bottom:8px"></div>`;
-    html+=tqRenderTaktikLauncher(pp); // Taktik-Quiz hinter Button (aufgeräumt, wie das Wissensquiz)
-    html+=wqRenderLauncher();         // Fußball-Wissensquiz
-    html+=kfRenderLauncher();         // v928: Adler-Schule (Leitfragen 1–6)
+    /* v936 (Charles 21.11.): Alles Lernen unter „Adler-Schule“ – oben die drei Sport-Stunden,
+       darunter das Adler-Zeugnis mit dem echten Stand in Sport und Augenzwinkern bei den anderen Fächern. */
+    html+=kfRenderLauncher();         // v928: Training verstehen (Leitfragen 1–6)
+    html+=tqRenderTaktikLauncher(pp); // Taktik
+    html+=wqRenderLauncher();         // Fußball-Wissen
+    html+=schuleZeugnisHtml(pp);      // v936
     html+=`<div id="tq-challenge"></div>`;
     if(!extern)html+=`<div style="display:flex;margin-top:10px">
         <button class="btn btn-sm" onclick="tqStop()" style="margin-left:auto"><i class="ti ti-x"></i>Schließen</button>
@@ -502,8 +506,8 @@ function tqRenderTaktikLauncher(pp){
   const pct=Math.round(done/total*100);
   return `<div class="card" role="button" tabindex="0" style="padding:0;margin-top:10px;overflow:hidden;cursor:pointer" onclick="tqBlocksShow()">
     <div style="background:linear-gradient(135deg,#7c3aed,#2563eb);padding:12px 14px;color:#fff">
-      <div style="font-size:14px;font-weight:800;margin-bottom:2px">🎯 Taktik-Quiz</div>
-      <div style="font-size:11px;opacity:.95;margin-bottom:8px">3+1, FUNiño und Raute – ${total} Blöcke Spielverständnis</div>
+      <div style="font-size:15px;font-weight:800;margin-bottom:2px">🎯 Taktik</div>
+      <div style="font-size:13px;opacity:.95;margin-bottom:8px">3+1, FUNiño und Raute – ${total} Blöcke Spielverständnis</div>
       <div style="height:8px;background:rgba(255,255,255,.25);border-radius:4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:#fbbf24;border-radius:4px;transition:width .4s"></div></div>
       <div style="font-size:10px;margin-top:5px;opacity:.9">${done}/${total} Blöcke gemeistert</div>
     </div>
@@ -555,7 +559,7 @@ function tqBlocksShow(){
   html+=`</div>`;
   html+=tqRenderBarometer();
   html+=tqRenderStickers(pp);
-  html+=`<button class="btn btn-sm" style="margin-top:12px" onclick="tqStart()"><i class="ti ti-arrow-left"></i>Zurück zur Quiz-Auswahl</button>`;
+  html+=`<button class="btn btn-sm" style="margin-top:12px" onclick="tqStart()"><i class="ti ti-arrow-left"></i>Zurück zur Adler-Schule</button>`;
   html+=`</div>`;
   panel.innerHTML=html;
   quizRefreshFromServer("blocks"); // Server-Fortschritt nachziehen + neu zeichnen
@@ -629,7 +633,7 @@ function tqSelectPlayer(name){
   const mode=window._quizMode; window._quizMode=null; // aus der Kabine direkt ins gewählte Quiz
   if(mode==="taktik"){tqBlocksShow();return;}
   if(mode==="wissen"){wqStart();return;}
-  if(mode==="schule"){kfStart();return;}   // v928: Kachel „Adler-Schule“ in der Kabine
+  if(mode==="schule"){tqStart();return;}   // v936: Kachel „Adler-Schule“ öffnet die Schule selbst (Stunden + Zeugnis)
   tqStart();
 }
 
@@ -1339,7 +1343,7 @@ function wqRenderCats(){
     });
   });
   html+=`</div>
-    <button class="btn btn-sm" style="margin-top:12px" onclick="wqExit()"><i class="ti ti-arrow-left"></i>Zurück zur Quiz-Auswahl</button>
+    <button class="btn btn-sm" style="margin-top:12px" onclick="wqExit()"><i class="ti ti-arrow-left"></i>Zurück zur Adler-Schule</button>
   </div>`;
   panel.innerHTML=html;
 }
@@ -1573,12 +1577,42 @@ function kfSvg(feld,bild,o){
 }
 
 /* ── Einstieg ── */
+/* v936: Das Adler-Zeugnis. Sport zeigt den echten Stand (Trainingsfragen und Taktik-Blöcke, gemeistert
+   ab 70 %), die anderen Fächer sind ein Augenzwinkern. Keine Noten, keine Prozente – Kinder sehen bei uns
+   keine Bewertungszahlen. */
+const SCHULE_FAECHER=[["🔢","Mathe","Bis 3 zählen klappt: 3 gegen 1","✓ erledigt"],["📖","Deutsch","Kann „Toooor!“ schreiben","✓ erledigt"],
+  ["🎵","Musik","„Adler Dellbrück!“ sitzt","✓ erledigt"],["🌍","Erdkunde","Weiß, wo das Tor steht","✓ erledigt"],["🧪","Chemie","Kommt erst in Klasse 7","😴 gähn"]];
+function schuleHalbjahr(d){ d=d||new Date(); const m=d.getMonth(); return (m>=7&&m<=10?"Herbst":m>=2&&m<=4?"Frühling":m>=5&&m<=6?"Sommer":"Winter")+" "+(m===0||m===1?d.getFullYear()-1:d.getFullYear()); }
+function schuleSportStand(pp){
+  pp=pp||{};
+  const kf=[1,2,3,4,5,6].filter(lf=>tqGemeistert(kfBlockStand(lf))).length;
+  const tk=TQ_BLOCKS.filter((b,i)=>tqGemeistert(pp[i])).length;
+  const anteil=(kf+tk)/(6+TQ_BLOCKS.length);
+  const chip=anteil>=1?"🏆 Adler-Profi":anteil>=.4?"🥇 läuft super":anteil>0?"💪 wird immer besser":"🌱 geht gleich los";
+  return {kf,tk,chip};
+}
+function schuleZeugnisHtml(pp){
+  if(!tqPlayer)return "";
+  const s=schuleSportStand(pp);
+  const zeile=(emo,fach,unter,chip,gaehn)=>`<div class="sz-fach" style="display:flex;align-items:center;gap:10px;padding:9px 2px;border-top:1px dashed #d1d5db">
+      <span aria-hidden="true" style="font-size:22px;width:28px;text-align:center">${emo}</span>
+      <span style="flex:1;min-width:0"><b style="display:block;font-size:15px">${fach}</b><span style="display:block;font-size:13px;color:#4b5563">${unter}</span></span>
+      <span style="font-size:13px;font-weight:700;border-radius:999px;padding:2px 9px;white-space:nowrap;${gaehn?"color:#4b5563;background:#f3f4f6":"color:#065f46;background:#d1fae5"}">${chip}</span></div>`;
+  return `<section id="schule-zeugnis" aria-label="Mein Adler-Zeugnis" style="position:relative;margin-top:14px;background:#fffdf5;color:#1f2937;border:1px solid #e5e7eb;border-radius:18px;padding:14px 14px 8px;box-shadow:0 4px 16px rgba(0,0,0,.12)">
+    <div aria-hidden="true" style="position:absolute;right:12px;top:10px;transform:rotate(9deg);border:3px solid #dc2626;color:#dc2626;border-radius:10px;padding:2px 8px;font-weight:900;font-size:12px;text-align:center;line-height:1.15">LIEBLINGS-<br>FACH:<br>SPORT ⚽</div>
+    <div style="font-family:Georgia,serif;font-size:17px;font-weight:700">Mein Adler-Zeugnis</div>
+    <div style="font-size:13px;color:#4b5563;margin-bottom:8px">${esc(tqPlayer)} · ${schuleHalbjahr()}</div>
+    <span style="position:absolute;left:-9999px">Lieblingsfach: Sport</span>
+    ${zeile("⚽","Sport",`${s.kf} von 6 Trainings-Fragen · ${s.tk} von ${TQ_BLOCKS.length} Taktik-Blöcken`,s.chip,false)}
+    ${SCHULE_FAECHER.map(f=>zeile(f[0],f[1],f[2],f[3],f[3].indexOf("gähn")>=0)).join("")}
+  </section>`;
+}
 function kfRenderLauncher(){
   if(!tqPlayer)return "";
   const fertig=[1,2,3,4,5,6].filter(lf=>tqGemeistert(kfBlockStand(lf))).length;
   return `<div class="card" role="button" tabindex="0" id="kf-launcher" style="padding:0;margin-top:10px;overflow:hidden;cursor:pointer" onclick="kfStart()">
     <div style="background:linear-gradient(135deg,#047857,#0369a1);padding:12px 14px;color:#fff">
-      <div style="font-size:15px;font-weight:800;margin-bottom:2px">🎓 Adler-Schule</div>
+      <div style="font-size:15px;font-weight:800;margin-bottom:2px">🎓 Training verstehen</div>
       <div style="font-size:13px;margin-bottom:8px">Wie behalte ich den Ball? Wie komme ich vorbei? – 6 Fragen aus dem Training</div>
       <div style="height:8px;background:rgba(255,255,255,.25);border-radius:4px;overflow:hidden"><div style="height:100%;width:${Math.round(fertig/6*100)}%;background:#fbbf24;border-radius:4px"></div></div>
       <div style="font-size:12px;margin-top:5px">${fertig}/6 Blöcke geschafft</div>
@@ -1604,7 +1638,7 @@ async function kfStart(){
       fertig:tqGemeistert(bp), pct:bp?Math.round(bp.score/bp.total*100):0, col:"#047857",
       sub:bp?`${bp.score}/${bp.total} richtig`:`${n} Fragen`, onclick:`kfBlock(${lf})`});
   });
-  html+=`</div><button class="btn btn-sm" style="margin-top:12px" onclick="kfExit()"><i class="ti ti-arrow-left"></i>Zurück zur Quiz-Auswahl</button>`;
+  html+=`</div><button class="btn btn-sm" style="margin-top:12px" onclick="kfExit()"><i class="ti ti-arrow-left"></i>Zurück zur Adler-Schule</button>`;
   kfPanel(html);
 }
 function kfExit(){ document.body.classList.remove("kf-active"); kfStopp(); document.getElementById("kf-karten")?.remove(); tqStart(); }

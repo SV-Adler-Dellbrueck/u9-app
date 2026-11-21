@@ -68,7 +68,7 @@ module.exports = async function (h) {
     await s.schliessen();
     if (r.vorn.length > 8) probleme.push(`f) vorn stehen ${r.vorn.length} Kacheln`);
     if (!r.mehr || !r.zu) probleme.push("f) kein zugeklapptes „Mehr entdecken“");
-    for (const fn of ["kabineQuiz('taktik')", "kabineMyCard()", "kabineCodex()", "kabineShowGallery()", "kabineReporter()", "kabineAlbum()", "kabineStaerken()"])
+    for (const fn of ["kabineQuiz('schule')", "kabineMyCard()", "kabineCodex()", "kabineShowGallery()", "kabineReporter()", "kabineAlbum()", "kabineStaerken()"])
       if (!r.fn.includes(fn)) probleme.push("f) Kachel verloren: " + fn);
     if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
     zeilen.push(`f) Kabine: ${r.vorn.length} vorn (${r.vorn.join(", ")}), ${r.alle - r.vorn.length} unter „Mehr entdecken“`);
