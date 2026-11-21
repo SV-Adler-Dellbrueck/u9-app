@@ -1568,6 +1568,16 @@ function rufeEinstieg(raumId){
     if(++n>40){ clearInterval(t); toast("Adler-Rufe konnten nicht geladen werden – bitte neu laden","err"); }
   },250);
 }
+/* v931: direkt in den privaten Raum mit dem Trainerteam (Eltern: kind leer) bzw. mit einer Familie (Trainer: kind = Kind-ID).
+   Eltern fanden den Raum nur über „Chats“ → „🔒 Trainerteam“ und schickten eine Frage zur App deshalb als Gesprächswunsch. */
+function rufePrivatEinstieg(kind){
+  rufeEinstieg();
+  let n=0; const t=setInterval(()=>{
+    const bereit=typeof rufePrivat==="function"&&typeof _rf!=="undefined"&&_rf&&Array.isArray(_rf.raeume)&&_rf.raeume.length;
+    if(bereit){ clearInterval(t); rufePrivat(kind==null?null:kind); return; }
+    if(++n>80)clearInterval(t);
+  },150);
+}
 /* v873 (Bestandsaufnahme 4.4): Fachwörter wie „Leitfrage“, „Nominierung“, „Zusatzregel“
    bekommen an ihrer ersten Stelle je Seite ein ⓘ. Aufgebaut wie der Tipp im Trainingsplan
    (tpTipp, v473): ein zugeklapptes <details> – per Tastatur erreichbar, ohne eigenes Skript,

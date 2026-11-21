@@ -69,7 +69,8 @@ module.exports = async function (h) {
      Familie für den Grillhüttendienst am Datum zugewiesen wurde.“ Der eigene Dienst in 30 Tagen
      (Gastverein C) steht deshalb jetzt auch dort; fremde besetzte Dienste weiter nicht. */
   if (r.karten !== 3 || !/Gastverein A/.test(r.text) || !/Gastverein B/.test(r.text) || !/Gastverein C/.test(r.text) || /Gastverein D/.test(r.text)) probleme.push(`a) Startseite zeigt ${r.karten} Karten: ${r.text.slice(0, 200)}`);
-  if (!r.chips.includes("eingeteilt") || !r.chips.includes("Ersatz gesucht")) probleme.push(`a) Status-Chips: ${JSON.stringify(r.chips)}`);
+  // v931: Eltern sehen das Etikett aus ihrer Sicht – die eigene Familie „🔥 Ihr seid dran“ statt „eingeteilt“
+  if (!r.chips.includes("🔥 Ihr seid dran") || !r.chips.includes("Ersatz gesucht")) probleme.push(`a) Status-Chips: ${JSON.stringify(r.chips)}`);
   if (!r.ersatz || r.ersatz[0] !== "Ersatz suchen" || r.ersatz[1] < 48) probleme.push(`c) Knopf Ersatz suchen: ${JSON.stringify(r.ersatz)}`);
   if (!r.ueb || r.ueb[0] !== "Übernehmen" || r.ueb[1] < 48) probleme.push(`c) Knopf Übernehmen: ${JSON.stringify(r.ueb)}`);
   if (!r.frageErsatz || !r.frageUeb || r.sys) probleme.push(`b) Rückfragen: eigenes Fenster ${r.frageErsatz}/${r.frageUeb}, Systemdialoge ${r.sys}`);
