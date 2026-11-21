@@ -1165,7 +1165,8 @@ async function elternDashLoad(){
     <span style="font-size:var(--s-teil);color:var(--text3)">›</span>
   </button>`;
   html+='<div id="push-hinweis-slot"></div>';   // v698 – seit v838 in „Noch offen“: Benachrichtigungen, solange sie aus sind
-  html+='<div id="nest-bogen-slot"></div>';       // v734: „Euer Kind ist im nächsten Adler Nest“ – nur während eines Porträts
+  html+='<div id="nest-bogen-slot"></div>';
+  html+='<div id="steckbrief-slot"></div>';       // v922: „Erzählt uns von …“ – Steckbrief für alle Kinder       // v734: „Euer Kind ist im nächsten Adler Nest“ – nur während eines Porträts
   html+=zone("neu","Neu");
   html+='<div id="rufe-hinweis"></div>';          // v673: neue Adler-Rufe – nur wenn es welche gibt
   // 📣 Adler News: eigener Button (News ≠ To-Do); Panel #cat-news; roter Badge bei Ungelesenem.
@@ -1354,7 +1355,7 @@ async function elternDashLoad(){
         ${elRow("🃏","Adler-Karte ansehen","Die Karte deines Kindes – Stärken, Spiele, Trainings, ohne Bewertungszahlen",`elternCardOpen(${k.spieler_id})`,"#5b21b6")}
         ${elRow("🎖️","Technik-Abzeichen","Übungen zu Hause abhaken – Federn sammeln",`abzeichenOpen(${k.spieler_id},'${nn}')`,"#6d28d9")}
         ${elRow("🎧","Sprachlob anhören","Alle Lobe vom Trainerteam nach Datum – antippen zum Abhören",`lobListeOpen(${k.spieler_id},'${nn}')`,"#7c3aed")}
-        ${elRow("✏️","Fan-Fakten &amp; Foto","Lieblingsverein, Spitzname, Porträt-Fragen &amp; Kartenfoto pflegen",`elternFanfactsOpen(${k.spieler_id},'${nn}')`,"#8b5cf6")}
+        ${elRow("📸","Steckbrief &amp; Fotos","Lieblingsposition, Freundebuch-Fragen, Fotos – nur fürs Team",`elternFanfactsOpen(${k.spieler_id},'${nn}')`,"#8b5cf6")}
         ${(typeof WRAPPED_SICHTBAR!=="undefined"&&WRAPPED_SICHTBAR)?elRow("📊","Saison-Statistik","Spiele, Einsätze &amp; Highlights – ansehen, auf Wunsch teilen",`childWrappedOpen(${k.spieler_id})`,"#a855f7"):""}
       </div>`;}).join("")}
     <div id="cat-mehr" class="el-cat-panel" style="display:none">`;
@@ -1432,7 +1433,8 @@ async function elternDashLoad(){
   elternTeamAnsprechLoad();                    // v663: Elternbeirat, Kasse, Beitrag
   if(typeof elternKasseRolleLoad==="function")elternKasseRolleLoad();      // v664: Kasse verwalten
   if(typeof rufeBadgeLoad==="function")rufeBadgeLoad();                    // v670: neue Adler-Rufe
-  if(typeof nestBogenKarte==="function")nestBogenKarte(kids);               // v734: Porträt-Bogen fürs Adler Nest
+  if(typeof nestBogenKarte==="function")nestBogenKarte(kids);
+  if(typeof steckbriefKarte==="function")steckbriefKarte(kids);             // v922: Steckbrief-Karte (md-fanfakten.js, Welle 2)               // v734: Porträt-Bogen fürs Adler Nest
   window._elternKids=kids;   // v699: die Mannschaftskasse zeigt den Stand der eigenen Kinder beim Öffnen
   elternKasseKachelStand(kids, kasse);   // v716: „Beitrag bezahlt / offen“ direkt auf der Kachel
   elternGenesungLoad(kids);                    // I-A: Genesungsgrüße für pausierte Teamkinder
@@ -2215,7 +2217,7 @@ async function elternChecklistLoad(kids){
     {done:committed,  icon:"🤝", label:"Unsere Vereinbarung bestätigen",  act:`vereinbarungOpen()`},
     {done:angabenOk,  icon:"👤", label:"Deine Angaben eintragen",         act:`elternAngabenOpen()`},
     {done:gebAll,     icon:"🎂", label:kids.length===1?`Geburtstag von ${esc((k0.kader&&k0.kader.name)||"deinem Kind")}`:"Geburtstage deiner Kinder", act:`elternAngabenOpen()`},
-    {done:fanAll,     icon:"✏️", label:`Fan-Fakten von ${esc((kFan.kader&&kFan.kader.name)||"deinem Kind")}`, act:`elternFanfactsOpen(${kFan.spieler_id},'${nFan}')`}
+    {done:fanAll,     icon:"✏️", label:`Steckbrief von ${esc((kFan.kader&&kFan.kader.name)||"deinem Kind")}`, act:`elternFanfactsOpen(${kFan.spieler_id},'${nFan}')`}
   ];
   const open=items.filter(i=>!i.done).length;
   if(open===0){ slot.innerHTML=""; return; }

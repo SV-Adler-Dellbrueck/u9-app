@@ -801,7 +801,12 @@ function kaderEditOpen(){
    „Neue Spieler speichern“ nie einen alten Stand zurückschreibt. Neue Kinder entstehen weiter in der Liste. */
 const KP_FANFAKTEN=[["spitzname","Spitzname"],["lieblingsverein","Lieblingsverein"],["lieblingsspieler","Lieblingsspieler"],["hobby","Hobby"],["kann_gut","Kann richtig gut"],
   ["adler_seit","Adler seit"],["nummer_grund","Warum diese Nummer"],["lieblingsessen","Lieblingsessen"],["lieblingstier","Lieblingstier"],["lieblingsmusik","Lieblingsmusik"],
-  ["lieblingsfilm","Lieblingsfilm"],["fussball_erlebnis","Schönstes Fußball-Erlebnis"],["gross_werden","Wenn ich groß bin"],["saisonziel","Saisonziel"],["weiterer_sport","Weiterer Sport"],["weiterer_sport_team","Team im weiteren Sport"]];
+  ["lieblingsfilm","Lieblingsfilm"],["fussball_erlebnis","Schönstes Fußball-Erlebnis"],["gross_werden","Wenn ich groß bin"],["saisonziel","Saisonziel"],["weiterer_sport","Weiterer Sport"],["weiterer_sport_team","Team im weiteren Sport"],
+  /* v922: Steckbrief – Rauten-Position, Freundebuch, Kreativ und cool */
+  ["lieblingsposition","Lieblingsposition"],["schoenster_moment","Schönster Moment bei den Adlern"],["torjubel","Torjubel"],["stolz_auf","Darauf ist es stolz"],
+  ["lieblingsfarbe","Lieblingsfarbe"],["lieblingsbuch","Lieblingsbuch"],["lieblingsspiel","Lieblingsspiel"],["lieblingsfach","Lieblingsfach"],["mag_nicht","Mag gar nicht"],["groesster_wunsch","Größter Wunsch"],
+  ["superkraft","Superkraft"],["zaubern","Wenn es zaubern könnte"],["lieblingswitz","Lieblingswitz"],["geheimes_talent","Geheimes Talent"],["star_spielen","Mit diesem Star spielen"],["traumstadion","Traumstadion"],["satz_an_team","Satz an das Team"]];
+const KP_POSITION={jaeger:"Jäger",flitzer_links:"linker Flitzer",flitzer_rechts:"rechter Flitzer",aufpasser:"Aufpasser",torwart:"Torwart",alle:"alle",alle_ausser_tw:"alle außer Torwart"};
 let _kp=null;
 function _kpAlter(geb){ if(!geb)return ""; const g=new Date(geb+"T00:00:00"), h=new Date(); let a=h.getFullYear()-g.getFullYear(); if(h<new Date(h.getFullYear(),g.getMonth(),g.getDate()))a--; return `Jahrgang ${g.getFullYear()} · ${a} Jahre`; }
 function _kpInit(name){ return String(name||"?").split(/\s+/).map(x=>x[0]||"").join("").slice(0,2).toUpperCase(); }
@@ -835,7 +840,7 @@ function kinderProfilRender(nachgeladen){
   const seg=(feld,opts,wert)=>`<div class="kp-seg" role="group" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${opts.map(([v,t])=>`<button type="button" class="kp-seg-btn" data-feld="${feld}" data-wert="${v}" aria-pressed="${String(wert)===String(v)}" onclick="kinderProfilSetze('${feld}','${v}')" style="flex:1;min-width:88px;min-height:44px;padding:6px 10px;border-radius:12px;border:1.5px solid ${String(wert)===String(v)?"#1e3a8a":"var(--rand-bedien)"};background:${String(wert)===String(v)?"#1e3a8a":"var(--surface2)"};color:${String(wert)===String(v)?"#fff":"var(--text)"};font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${String(wert)===String(v)?"✓ ":""}${t}</button>`).join("")}</div>`;
   const twWert=!k.tw?"feld":(k.twPrio===1?"tw1":k.twPrio===2?"tw2":"tw0");
   const chips=[k.aktiv===false?"🚫 nicht im Kader":"👥 im Kader",k.tw?"🥅 Torwart":"",k.alias?`Kind ${esc(k.alias)} im Tagebuch`:""].filter(Boolean).map(t=>`<span style="font-size:var(--s-klein);font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.18);white-space:nowrap">${t}</span>`).join(" ");
-  const fanZeilen=KP_FANFAKTEN.filter(([f])=>ff[f]).map(([f,t])=>`<div style="padding:8px 0;border-bottom:1px solid var(--surface2)"><div style="font-size:var(--s-klein);color:var(--text2)">${t}</div><div style="font-size:var(--s-text);font-weight:600">${esc(ff[f])}</div></div>`).join("");
+  const fanZeilen=KP_FANFAKTEN.filter(([f])=>ff[f]).map(([f,t])=>`<div style="padding:8px 0;border-bottom:1px solid var(--surface2)"><div style="font-size:var(--s-klein);color:var(--text2)">${t}</div><div style="font-size:var(--s-text);font-weight:600">${esc(f==="lieblingsposition"?(KP_POSITION[ff[f]]||ff[f]):ff[f])}</div></div>`).join("");
   const frei=(an,t)=>`<span style="display:inline-flex;align-items:center;gap:4px;font-size:var(--s-klein);font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid ${an?"var(--green)":"var(--rand-bedien)"};color:${an?"var(--green)":"var(--text2)"}">${an?"✓":"✗"} ${t}</span>`;
   const quelle=ff.foto_path?"Foto von den Eltern (hat Vorrang)":k.foto_path?"Foto vom Trainerteam":"Noch kein Foto";
   m.innerHTML=`<div style="width:100%;max-width:520px;min-height:100vh;background:var(--bg,#f1f5f9);display:flex;flex-direction:column">
@@ -883,7 +888,7 @@ function kinderProfilRender(nachgeladen){
         <div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-top:14px">Fotoalbum <span style="font-weight:400">· bis 6 Fotos, eines davon das Kartenfoto</span></div>
         <div id="ka-box-${_kp.id}" class="ka-box" style="margin-top:6px"><span style="font-size:var(--s-klein);color:var(--text3)">Lädt …</span></div>
         <label style="display:flex;align-items:center;gap:12px;min-height:48px;margin-top:8px;cursor:pointer"><input id="kp-fotook" type="checkbox" ${k.foto_stadionheft_ok?"checked":""} onchange="kinderProfilSetze('foto_stadionheft_ok',this.checked)" style="width:24px;height:24px;flex:none;accent-color:#1e3a8a"><span style="font-size:var(--s-text)">Foto für Adler Nest &amp; Team-Galerie freigegeben <span style="display:block;font-size:var(--s-klein);color:var(--text2)">Nur mit Einwilligung der Eltern.</span></span></label>`)}
-      ${karte("⭐","Fan-Fakten der Eltern",nachgeladen?(fanZeilen?`<div style="margin-top:4px">${fanZeilen}</div>`:`<div style="font-size:var(--s-text);color:var(--text2);margin-top:8px">Die Eltern haben noch nichts eingetragen.</div>`):`<div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px">Lädt …</div>`)}
+      ${karte("⭐","Steckbrief von den Eltern",nachgeladen?(fanZeilen?`<div style="margin-top:4px">${fanZeilen}</div>`:`<div style="font-size:var(--s-text);color:var(--text2);margin-top:8px">Die Eltern haben noch nichts eingetragen.</div>`):`<div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px">Lädt …</div>`)}
       ${karte("⚕️","Gesundheit",`${lbl("Hinweis für das Trainerteam",`<textarea id="kp-medical" rows="2" placeholder="z. B. Asthma, Allergie, Brille" oninput="kinderProfilSetze('medical',this.value)" style="${inp};resize:vertical">${esc(k.medical||"")}</textarea>`)}<div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">Sehen nur Trainer.</div>`)}
       ${karte("➕","Mehr",`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
         <button type="button" class="btn btn-sm" style="min-height:48px" onclick="kontakteEditOpen(${_kp.id})"><i class="ti ti-address-book"></i>Kontakte &amp; Login</button>
@@ -6071,6 +6076,7 @@ async function renderHome(){
     <div id="la-trainer"></div>
     <div id="eg-trainer"></div>
     <div id="home-wiewars"></div>
+    <div id="home-nest-heimspiel"></div>
     <div id="home-heimspiel"></div>
     <div id="trainer-todo-slot"></div>
     <div id="home-kindideen"></div>
@@ -6092,6 +6098,7 @@ async function renderHome(){
   loeschantraegeTrainerLoad();   // v644: offene Löschanträge (Frist ein Monat → ganz oben)
   trainerTodoLoad();             // To-Do-Banner (leer = unsichtbar)
   if(typeof kindTrainingHomeKarte==="function")kindTrainingHomeKarte("home-kindideen");   // v751: Trainingsideen der Kinder (md-kindtraining.js, Welle 2)
+  if(typeof nestHeimspielKarte==="function")nestHeimspielKarte();   // v922: nach dem Heimspiel das nächste Porträtkind (md-nest.js, Welle 2)
   if(typeof wieWarsKarte==="function")wieWarsKarte();   // v679: „Wie war's?“ / „Noch zu bestätigen“ (md-tagebuch.js, Welle 2)
   homeWocheLoad();               // Diese Woche: Termine mit Zusagen, Trainern, Plan-Stand
   homeHeimspielLoad();           // v702: Heimspiel in den nächsten sechs Tagen
