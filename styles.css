@@ -1748,3 +1748,36 @@ details.htp-info .inhalt{padding:0 16px 16px;white-space:pre-wrap;line-height:1.
 .nb-erg-chip{min-height:44px;padding:6px 12px;border:1px solid var(--rand-bedien);border-radius:999px;background:var(--surface);color:var(--text);font:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer}
 .nb-erg-chip[aria-pressed="true"]{border:2px solid var(--blue);background:var(--blue-bg)}
 .nb-erg-chip.schwach[aria-pressed="true"]{border:2px solid var(--amber);background:var(--amber-bg)}
+
+/* v922 · Steckbrief: Bogen, Eltern-Karte, Trainer-Überblick */
+.sb-schutz{background:var(--green-bg);border:1px solid var(--green);border-radius:12px;padding:10px;font-size:var(--s-text);line-height:1.45;margin:8px 0;color:var(--text)}
+.sb-fort{font-size:var(--s-klein);font-weight:800;color:var(--text2);margin:4px 0 2px}
+.sb-sek{font-size:var(--s-karte);font-weight:900;margin:16px 0 6px;color:var(--text)}
+.sb-chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
+.sb-chip{min-height:44px;padding:8px 12px;border-radius:999px;border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text);font:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer}
+.sb-chip[aria-pressed="true"]{border:2px solid var(--blue);background:var(--blue-bg,#eff6ff)}
+.sb-fotos{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:4px 0 10px}
+.sb-foto{position:relative;aspect-ratio:4/3;border:2px dashed var(--rand-bedien);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:var(--s-klein);font-weight:700;color:var(--text2);text-align:center;cursor:pointer;overflow:hidden;background:var(--surface)}
+.sb-foto:focus-within{outline:3px solid var(--blue);outline-offset:2px}
+.sb-foto.voll{border:2px solid var(--green);cursor:default}
+.sb-foto.voll .sb-bild{position:absolute;inset:0}
+.sb-foto.voll span{position:relative;z-index:1;background:rgba(0,0,0,.6);color:#fff;padding:2px 8px;border-radius:999px;margin-top:auto;margin-bottom:6px}
+.sb-plus{color:var(--blue-text)}
+.sb-klappe{border:1px solid var(--rand-bedien);border-radius:12px;padding:0 12px;margin:10px 0;background:var(--surface)}
+.sb-klappe summary{min-height:48px;display:flex;align-items:center;gap:8px;font-weight:800;font-size:var(--s-text);cursor:pointer}
+.sb-zahl{margin-left:auto;font-size:var(--s-klein);color:var(--text2);font-weight:700}
+.sb-unter{font-size:var(--s-klein);color:var(--text2);margin-bottom:8px;line-height:1.45}
+.sb-karte{border-radius:16px;background-color:#5b21b6;background-image:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;padding:14px;margin:10px 0}
+.sb-karte-titel{font-size:var(--s-karte);font-weight:900}
+.sb-karte-text{font-size:var(--s-text);line-height:1.45;margin:6px 0 10px}
+.sb-karte-fort{display:flex;gap:10px;align-items:center;font-size:var(--s-klein);font-weight:700}
+.sb-balken{flex:1;height:8px;border-radius:4px;background:rgba(255,255,255,.3);overflow:hidden}
+.sb-balken i{display:block;height:100%;background:#fff}
+.sb-karte .btn.sb-karte-los{width:100%;min-height:48px;margin-top:10px;justify-content:center;background:#fff;color:#4c1d95;border:none;font-weight:800}
+.sb-karte .btn.sb-karte-spaeter{width:100%;min-height:44px;margin-top:4px;justify-content:center;background:transparent;color:#fff;border:none;text-decoration:underline}
+.sb-tab{width:100%;border-collapse:collapse;font-size:var(--s-text);margin-top:6px}
+.sb-tab th{text-align:left;font-size:var(--s-klein);color:var(--text2);padding:6px 4px;border-bottom:2px solid var(--rand-bedien)}
+.sb-tab td{padding:8px 4px;border-bottom:1px solid var(--surface2)}
+.sb-ok{color:var(--green);font-weight:800}
+.sb-ok::after{content:" ✓"}
+.sb-of{color:var(--orange-text);font-weight:800}

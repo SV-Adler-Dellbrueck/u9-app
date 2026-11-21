@@ -1177,5 +1177,52 @@ if(typeof location!=="undefined"&&new URLSearchParams(location.search).get("nest
     if(typeof sbToken==="function"&&sbToken()&&app&&app.style.display!=="none"){ clearInterval(_nestT); nestEditorOpen(); }
     else if(_nestVersuche>240)clearInterval(_nestT); },500);
 }
+/* v922 · Nach dem letzten Heimspiel fragt die Startseite, wer ins nächste Adler Nest kommt (Charles 21.11.).
+   Erscheint bis 7 Tage nach einem Heimspiel, solange kein Porträt läuft und keines nach diesem Spiel angelegt wurde.
+   Vorschlag reihum (heftPortraetNaechster), Bestätigen legt über portraet_anfragen das Porträt zum nächsten Heimspiel an. */
+async function nestHeimspielKarte(){
+  const box=document.getElementById("home-nest-heimspiel"); if(!box)return;
+  const heute=isoLokal(), vor7=isoLokal(new Date(Date.now()-7*864e5));
+  let letztes=null, naechstes=null, offen=[];
+  try{
+    const [a,b,c]=await Promise.all([
+      fetch(`${SB_URL}/rest/v1/termine?select=id,datum,titel,gegner,heim&heim=eq.true&typ=in.(spiel,turnier)&datum=gte.${vor7}&datum=lt.${heute}&order=datum.desc&limit=1`,{headers:sbAuthHeaders()}),
+      fetch(`${SB_URL}/rest/v1/termine?select=id,datum,titel,gegner,heim&heim=eq.true&typ=in.(spiel,turnier)&datum=gte.${heute}&order=datum.asc&limit=1`,{headers:sbAuthHeaders()}),
+      fetch(`${SB_URL}/rest/v1/portraet_einreichung?select=id,created_at,status&order=created_at.desc&limit=1`,{headers:sbAuthHeaders()})]);
+    if(a.ok)letztes=(await a.json())[0]||null; if(b.ok)naechstes=(await b.json())[0]||null; if(c.ok)offen=await c.json();
+  }catch(e){ box.innerHTML=""; return; }
+  /* Datum und Heimspiel auch hier prüfen – nicht allein der Abfrage vertrauen */
+  if(letztes&&(letztes.heim!==true||!(letztes.datum>=vor7&&letztes.datum<heute)))letztes=null;
+  if(naechstes&&(naechstes.heim!==true||!(naechstes.datum>=heute)))naechstes=null;
+  const e=(offen||[])[0];
+  let weg=""; try{ weg=localStorage.getItem("adler_nest_heimspiel_weg")||""; }catch(x){}
+  if(!letztes||!naechstes||weg===String(letztes.id)||(e&&(e.status!=="uebernommen"||String(e.created_at).slice(0,10)>=letztes.datum))){ box.innerHTML=""; return; }
+  const [kader,verlauf]=await Promise.all([
+    fetch(`${SB_URL}/rest/v1/kader?select=id,name,nr,aktiv&order=name`,{headers:sbAuthHeaders()}).then(r=>r.ok?r.json():[]).catch(()=>[]),
+    (typeof heftPortraetVerlauf==="function")?heftPortraetVerlauf():Promise.resolve([])]);
+  const aktiv=(kader||[]).filter(k=>k.aktiv!==false); if(!aktiv.length){ box.innerHTML=""; return; }
+  const v=(typeof heftPortraetNaechster==="function")?heftPortraetNaechster(aktiv,verlauf):null, vk=(v&&v.kind)||aktiv[0];
+  const sel="width:100%;min-height:48px;padding:8px;margin-top:6px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)";
+  window._nestHeim={termin:Number(naechstes.id), spiel:Number(letztes.id)};
+  box.innerHTML=`<div class="nest-heim-karte" role="region" aria-label="Nächstes Porträt" style="border:2px solid var(--blue);border-radius:var(--r);padding:12px;margin:10px 0;background:var(--surface)">
+    <div style="font-size:var(--s-karte);font-weight:800">🏠 Heimspiel vorbei – wer kommt ins nächste Adler Nest?</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin:4px 0">Vorschlag reihum: <b>${esc(vk.name)}</b>. Die Ausgabe erscheint nach dem nächsten Heimspiel am ${esc(_nestDatum(naechstes.datum))}; die Familie bekommt den Bogen mit Frist.</div>
+    <select id="nest-heim-kind" aria-label="Porträtkind" style="${sel}">${aktiv.map(k=>`<option value="${Number(k.id)}"${k.id===vk.id?" selected":""}>${k.nr!=null?esc(k.nr)+" · ":""}${esc(k.name)}${k.id===vk.id?" – dran ist reihum":""}</option>`).join("")}</select>
+    <button type="button" class="btn btn-p" id="nest-heim-bestaetigen" onclick="nestHeimspielBestaetigen()" style="width:100%;min-height:56px;margin-top:8px;justify-content:center">Porträtkind bestätigen</button>
+    <div style="display:flex;gap:8px;margin-top:6px">
+      <button type="button" class="btn" onclick="steckbriefUebersichtOpen()" style="flex:1;min-height:48px;justify-content:center">📖 Steckbriefe</button>
+      <button type="button" class="btn" onclick="nestHeimspielSpaeter()" style="flex:1;min-height:48px;justify-content:center">Später</button></div></div>`;
+}
+async function nestHeimspielBestaetigen(){
+  const h=window._nestHeim, sid=Number(document.getElementById("nest-heim-kind")?.value||0); if(!h||!sid)return;
+  const r=await _nestRpc("portraet_anfragen",{p_spieler:sid,p_termin:h.termin});
+  if(!r){ toast("Nicht angelegt – für diesen Spieltag oder dieses Kind läuft schon ein Porträt","err"); return; }
+  toast("Porträtkind bestätigt – Eltern und Trainer werden benachrichtigt");
+  const box=document.getElementById("home-nest-heimspiel"); if(box)box.innerHTML="";
+}
+function nestHeimspielSpaeter(){
+  const h=window._nestHeim; try{ if(h)localStorage.setItem("adler_nest_heimspiel_weg",String(h.spiel)); }catch(e){}
+  const box=document.getElementById("home-nest-heimspiel"); if(box)box.innerHTML="";
+}
 /* Wache für die MODUL_WACHE – muss die letzte Definition der Datei bleiben. */
 function nestModulDa(){ return true; }

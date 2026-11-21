@@ -21,7 +21,8 @@ module.exports = async function (h) {
   if (/Aushänge|Aushang/.test(r.d)) probleme.push("Text nennt noch Aushänge (gibt es nicht, PO 28.09.)");
   if (!/für alle sichtbar/.test(r.d)) probleme.push("Text sagt nicht mehr, dass die Website für alle sichtbar ist");
   if (/Social Media|Instagram|Facebook|TikTok/i.test(r.d)) probleme.push("Text nennt noch Social Media: " + r.d.slice(0, 120));
-  const app = fs.readdirSync(h.REPO).filter(f => /\.(js|html)$/.test(f)).filter(f => /Social Media|Instagram/i.test(fs.readFileSync(path.join(h.REPO, f), "utf8")));
+  const app = fs.readdirSync(h.REPO).filter(f => /\.(js|html)$/.test(f)).filter(f => /Social Media|Instagram/i.test(fs.readFileSync(path.join(h.REPO, f), "utf8").replace(/Nichts kommt auf Social Media oder ins Internet\./g, "")));
+  /* v922: Ausnahme ist der Datenschutz-Satz des Steckbriefs, den Charles am 21.11. wörtlich freigegeben hat – er verneint. */
   if (app.length) probleme.push("Social Media steht noch in: " + app.join(", "));
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
   return h.ergebnis("v649 Fotofreigabe „Öffentlich“ ohne Social Media", !probleme.length, probleme.concat([r.d.slice(0, 110) + " …"]));

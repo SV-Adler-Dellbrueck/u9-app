@@ -64,7 +64,7 @@ module.exports = async function (h) {
     const kaderSchreib = s.gesendet.filter(x => /\/rest\/v1\/kader$/.test(x.pfad));
     const f = s.fehler();
     await s.schliessen();
-    for (const t of ["Deine Angaben eintragen", "Geburtstag von Kind A", "Fan-Fakten von Kind A"])
+    for (const t of ["Deine Angaben eintragen", "Geburtstag von Kind A", "Steckbrief von Kind A"])
       if (!r.vorher.includes(t)) probleme.push(`a) „Erste Schritte“ nennt „${t}“ nicht`);
     if (!r.dialog) probleme.push("d) Dialog nicht als role=dialog/aria-modal gekennzeichnet");
     if (r.feldHoehen.some(x => x < 48)) probleme.push("d) Eingabefelder unter 48 px: " + r.feldHoehen.join("/"));
