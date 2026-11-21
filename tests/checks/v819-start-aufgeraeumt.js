@@ -76,7 +76,9 @@ module.exports = async function (h) {
   if (r.offen.exp !== "true" || r.offen.drin.some(x => x < 44)) probleme.push(`b) Menü offen: aria-expanded ${r.offen.exp}, Maße ${r.offen.drin.join("/")}`);
   if (r.zu.exp !== "false" || r.zu.drin) probleme.push(`b) Menü schließt nicht: aria-expanded ${r.zu.exp}, ${r.zu.drin} Knöpfe sichtbar`);
   if (r.kacheln) probleme.push("c) die Bereichs-Kacheln stehen wieder auf der Startseite");
-  if (r.wocheOben < 0 || r.wocheOben > 320 || r.wocheHoehe < 60) probleme.push(`c) „Diese Woche“ beginnt bei ${r.wocheOben} px (Höhe ${r.wocheHoehe})`);
+  /* v929: Darüber steht jetzt das Karussell „Für dich“ (Charles 21.11., Bild freigegeben) – „Diese Woche“ muss weiter im
+     ersten Bildschirm beginnen, mit Platz für ihre erste Zeile (844 px Höhe, Leiste unten). */
+  if (r.wocheOben < 0 || r.wocheOben > 560 || r.wocheHoehe < 60) probleme.push(`c) „Diese Woche“ beginnt bei ${r.wocheOben} px (Höhe ${r.wocheHoehe})`);
   for (const n of ["Training", "Spieltag", "Team", "Taktik", "Eltern", "Orga"]) if (!r.leiste.some(t => t.indexOf(n) >= 0)) probleme.push("c) Leiste unten ohne „" + n + "“");
   if (!r.schriftAllein) probleme.push("d) Schriftfrage erscheint nicht, obwohl kein anderer Hinweis steht");
   if (!r.beide.push || r.beide.schrift) probleme.push(`d) Push-Karte ${r.beide.push}, Schriftfrage daneben ${r.beide.schrift}`);
