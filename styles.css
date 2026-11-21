@@ -1767,7 +1767,7 @@ details.htp-info .inhalt{padding:0 16px 16px;white-space:pre-wrap;line-height:1.
 .sb-klappe summary{min-height:48px;display:flex;align-items:center;gap:8px;font-weight:800;font-size:var(--s-text);cursor:pointer}
 .sb-zahl{margin-left:auto;font-size:var(--s-klein);color:var(--text2);font-weight:700}
 .sb-unter{font-size:var(--s-klein);color:var(--text2);margin-bottom:8px;line-height:1.45}
-.sb-karte{border-radius:16px;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;padding:14px;margin:10px 0}
+.sb-karte{border-radius:16px;background-color:#5b21b6;background-image:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;padding:14px;margin:10px 0}
 .sb-karte-titel{font-size:var(--s-karte);font-weight:900}
 .sb-karte-text{font-size:var(--s-text);line-height:1.45;margin:6px 0 10px}
 .sb-karte-fort{display:flex;gap:10px;align-items:center;font-size:var(--s-klein);font-weight:700}

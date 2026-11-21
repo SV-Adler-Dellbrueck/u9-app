@@ -1186,11 +1186,14 @@ async function nestHeimspielKarte(){
   let letztes=null, naechstes=null, offen=[];
   try{
     const [a,b,c]=await Promise.all([
-      fetch(`${SB_URL}/rest/v1/termine?select=id,datum,titel,gegner&heim=eq.true&typ=in.(spiel,turnier)&datum=gte.${vor7}&datum=lt.${heute}&order=datum.desc&limit=1`,{headers:sbAuthHeaders()}),
-      fetch(`${SB_URL}/rest/v1/termine?select=id,datum,titel,gegner&heim=eq.true&typ=in.(spiel,turnier)&datum=gte.${heute}&order=datum.asc&limit=1`,{headers:sbAuthHeaders()}),
+      fetch(`${SB_URL}/rest/v1/termine?select=id,datum,titel,gegner,heim&heim=eq.true&typ=in.(spiel,turnier)&datum=gte.${vor7}&datum=lt.${heute}&order=datum.desc&limit=1`,{headers:sbAuthHeaders()}),
+      fetch(`${SB_URL}/rest/v1/termine?select=id,datum,titel,gegner,heim&heim=eq.true&typ=in.(spiel,turnier)&datum=gte.${heute}&order=datum.asc&limit=1`,{headers:sbAuthHeaders()}),
       fetch(`${SB_URL}/rest/v1/portraet_einreichung?select=id,created_at,status&order=created_at.desc&limit=1`,{headers:sbAuthHeaders()})]);
     if(a.ok)letztes=(await a.json())[0]||null; if(b.ok)naechstes=(await b.json())[0]||null; if(c.ok)offen=await c.json();
   }catch(e){ box.innerHTML=""; return; }
+  /* Datum und Heimspiel auch hier prüfen – nicht allein der Abfrage vertrauen */
+  if(letztes&&(letztes.heim!==true||!(letztes.datum>=vor7&&letztes.datum<heute)))letztes=null;
+  if(naechstes&&(naechstes.heim!==true||!(naechstes.datum>=heute)))naechstes=null;
   const e=(offen||[])[0];
   let weg=""; try{ weg=localStorage.getItem("adler_nest_heimspiel_weg")||""; }catch(x){}
   if(!letztes||!naechstes||weg===String(letztes.id)||(e&&(e.status!=="uebernommen"||String(e.created_at).slice(0,10)>=letztes.datum))){ box.innerHTML=""; return; }

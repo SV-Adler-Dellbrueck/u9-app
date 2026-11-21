@@ -69,7 +69,7 @@ module.exports = async function (h) {
     const raeume = [];
     const s = await h.starten({ hoehe: 1600, supabase: h.supabaseAttrappe({
       kader: h.kaderZeilen(), profiles: [{ name: "Charles", rolle: "trainer" }],
-      termine: u => /heim=eq\.true/.test(u.search) ? (/datum=lt\./.test(u.search) ? [{ id: 40, datum: h.tagePlus(-1), titel: "Heimspiel", gegner: "SC X" }] : [{ id: 41, datum: h.tagePlus(13), titel: "Heimspiel 2", gegner: "SC Y" }]) : [],
+      termine: u => /heim=eq\.true/.test(u.search) ? (/datum=lt\./.test(u.search) ? [{ id: 40, datum: h.tagePlus(-1), titel: "Heimspiel", gegner: "SC X", heim: true }] : [{ id: 41, datum: h.tagePlus(13), titel: "Heimspiel 2", gegner: "SC Y", heim: true }]) : [],
       portraet_einreichung: laufend ? [{ id: 9, created_at: "2026-11-01T10:00:00Z", status: "angefragt" }] : [],
       kind_fanfacts: [{ spieler_id: 1, lieblingsposition: "jaeger", lieblingsspieler: "a", lieblingsverein: "b", schoenster_moment: "c", torjubel: "d", saisonziel: "e", hobby: "f", kann_gut: "g", lieblingsessen: "h", lieblingstier: "i", gross_werden: "j", stolz_auf: "k", superkraft: "x" }],
       kind_foto: [{ spieler_id: 1, zweck: "aktion" }, { spieler_id: 1, zweck: "sport" }, { spieler_id: 1, zweck: "gemalt" }],
