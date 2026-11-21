@@ -48,6 +48,8 @@ module.exports = async function (h) {
       });
       // v927: Großfeld-Sprache – in unseren Spielformen gibt es keinen Strafraum, keine Flanke, keinen Kopfball
       if (/Strafraum|Pfosten|Flanke|köpf/i.test(tx)) out.quiz.push(n + ": Wort vom Großfeld (Strafraum/Pfosten/Flanke/köpfen)");
+      // v930: kein Spielstand, keine Restzeit, kein „Trainer ruft“ (Durchführungsbestimmungen 4.10/4.11)
+      if (/\b\d+:\d+\b|Minute|Rückstand|Führung|\bführt \d|liegt \d+:\d+ zurück|verliert \d|Endspurt|Trainer ruft/i.test(tx)) out.quiz.push(n + ": nennt Spielstand, Restzeit oder Trainerruf");
       // v927: Rollen je Spielform
       const rollen = new Set(sc.start.map(t => t.role)), dreiTore = /Drei Tore/.test(sc.title);
       if (sc.feld === "3+1" && rollen.has("Aufpasser") && !dreiTore) out.quiz.push(n + ": 3+1 mit Aufpasser");

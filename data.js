@@ -385,7 +385,7 @@ const TQ_SCENARIOS=[
 },
 {
   title:"Raute kompakt nach vorne",
-  desc:"Ihr führt 1:0! Der Gegner spielt den Ball hinten hin und her. Jetzt wollt ihr pressen!",
+  desc:"Der Gegner spielt den Ball hinten hin und her. Jetzt wollt ihr ihn früh stören!",
   task:"Schiebe die ganze Raute kompakt nach vorne – Pressing!",
   hint:"Die Abstände bleiben eng, aber alles verschiebt sich Richtung gegnerisches Tor. Auch der Aufpasser rückt weit auf.",
   ball:{from:{x:50,y:15},to:{x:50,y:15}},
@@ -1593,8 +1593,8 @@ const TQ_SCENARIOS=[
   }
 },
 {
-  title:"Spiel: Rückstand – offensiver werden!",
-  desc:"Ihr liegt 0:1 zurück! Noch 5 Minuten. Der Trainer ruft: „Alles nach vorne!“",
+  title:"Spiel: Gegner steht tief – mutig angreifen!",
+  desc:"Der Gegner verteidigt mit allen vor seinem Tor. Jetzt mutig angreifen!",
   task:"Maximaler Angriff! Wie stellt sich die Raute offensiv auf?",
   hint:"Auch der Aufpasser rückt weit auf. Risiko eingehen! TW steht höher.",
   ball:{from:{x:50,y:65},to:{x:50,y:65}},
@@ -1613,8 +1613,8 @@ const TQ_SCENARIOS=[
     "Jäger":{x:50,y:12,r:14}
   },
   explain:{
-    correct:"Voller Angriff! Aufpasser rückt bis Mittellinie auf. Flitzer ganz tief und breit. Jäger nah am Tor. Riskant – aber bei Rückstand nötig!",
-    wrong:"Tipp: Bei Rückstand: Aufpasser muss HOCH stehen (Mittellinie). Flitzer extrem breit UND tief. Jäger fast auf Höhe des TW. Maximum Druck!"
+    correct:"Voller Angriff! Aufpasser rückt bis Mittellinie auf. Flitzer ganz tief und breit. Jäger nah am Tor. Mutig – so kommt ihr gegen einen tief stehenden Gegner zu Chancen!",
+    wrong:"Tipp: Steht der Gegner tief, muss der Aufpasser HOCH stehen (Mittellinie). Flitzer extrem breit UND tief. Jäger fast auf Höhe des TW. Viel Druck!"
   }
 },
 {
@@ -1961,10 +1961,10 @@ const TQ_SCENARIOS=[
   }
 },
 {
-  title:"Tempo rausnehmen",
-  desc:"Ihr führt 2:0 und habt noch 5 Minuten! Jetzt Ball halten!",
+  title:"Ball in Ruhe halten",
+  desc:"Der Gegner stürmt wild nach vorne. Jetzt den Ball in Ruhe halten!",
   task:"Schiebe alle in sichere, tiefe Positionen!",
-  hint:"Führung halten = Ball behalten. Tief stehen, kurze Pässe!",
+  hint:"Ruhe reinbringen = Ball behalten. Tief stehen, kurze Pässe!",
   ball:{from:{x:50,y:72},to:{x:50,y:72}},
   opps:[{x:50,y:45,label:"Gegner"},{x:35,y:55,label:"Gegner"},{x:65,y:55,label:"Gegner"}],
   start:[
@@ -1981,8 +1981,8 @@ const TQ_SCENARIOS=[
     "Jäger":{x:50,y:52,r:14}
   },
   explain:{
-    correct:"Kluge Entscheidung! Alle tief, enge Abstände, kurze Pässe – die Führung wird gehalten!",
-    wrong:"Tipp: Bei Führung tief stehen! Alle zurückkommen, kurze sichere Pässe."
+    correct:"Kluge Entscheidung! Alle tief, enge Abstände, kurze Pässe – so bringt ihr Ruhe ins Spiel!",
+    wrong:"Tipp: Rennt der Gegner wild an, tief stehen! Alle zurückkommen, kurze sichere Pässe."
   }
 },
 {
@@ -2598,10 +2598,10 @@ const TQ_SCENARIOS=[
   }
 },
 {
-  title:"Endspurt – alles geben!",
-  desc:"Ihr verliert 0:1, nur noch 2 Minuten! Vollangriff!",
+  title:"Ballgewinn vorne – alle greifen an!",
+  desc:"Ihr erobert den Ball weit vorne – jetzt greifen alle an, auch der Aufpasser!",
   task:"Alle nach vorne! Voller Angriff – auch der Aufpasser!",
-  hint:"Wenn ihr unbedingt ein Tor braucht: alle nach vorne!",
+  hint:"Ball weit vorne gewonnen: jetzt alle nach vorne!",
   ball:{from:{x:50,y:70},to:{x:50,y:70}},
   opps:[{x:50,y:25,label:"Gegner"},{x:35,y:35,label:"Gegner"},{x:65,y:35,label:"Gegner"}],
   start:[
@@ -2618,8 +2618,8 @@ const TQ_SCENARIOS=[
     "Jäger":{x:50,y:15,r:14}
   },
   explain:{
-    correct:"Alles nach vorne! Risiko erlaubt – wir brauchen das Tor!",
-    wrong:"Tipp: Letzte Minute = alle nach vorne! Aufpasser rückt auf, Flitzer ganz hoch, Jäger vorne!"
+    correct:"Alles nach vorne! Der Gegner ist noch nicht sortiert – jetzt schnell aufs Tor!",
+    wrong:"Tipp: Ballgewinn vorne = alle nach vorne! Aufpasser rückt auf, Flitzer ganz hoch, Jäger vorne!"
   }
 },
 // ══════ Block 11: 3+1 – Raute ohne Aufpasser (Szenarien 101–110, v927, Auftragspaket 21.11.) ══════

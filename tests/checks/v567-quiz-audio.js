@@ -26,6 +26,8 @@ const OHNE_AUFNAHME = [
   "IGEL – Durchbruch verhindern", "Flügelspiel: Flitzer L gewinnt das 1gg1", "Flügelspiel: Querpass kommt!",
   "Standard: Ecke für uns", "Spiel: Gegner drängt – kompakt bleiben", "Spiel: Überzahl nutzen – 5 gegen 4",
   "Spiel: Unterzahl – 4 gegen 5", "TW kommt heraus!", "TW – Querpass abfangen", "Herausschieben aus der Defensive",
+  // v930: ohne Spielstand und Restzeit umformuliert (Durchführungsbestimmungen 4.10/4.11, Charles 21.11.)
+  "Raute kompakt nach vorne", "Spiel: Gegner steht tief – mutig angreifen!", "Ball in Ruhe halten", "Ballgewinn vorne – alle greifen an!",
   // Block „3+1 – Raute ohne Aufpasser“
   "3+1 – Grundstellung beim Toraus des Gegners", "3+1 – Torwart eröffnet flach", "3+1 – Adler: der Torwart kommt raus",
   "3+1 – Igel: die Flitzer schließen die Lücke", "3+1 – Igel: Gegner kommt über eure linke Seite",

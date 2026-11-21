@@ -1587,7 +1587,7 @@ function kfRenderLauncher(){
 function kfPanel(html){ const p=document.getElementById("tq-panel"); if(!p)return null; p.style.display="block"; p.innerHTML=`<div class="tq-panel kf-panel">${html}</div>`; return p; }
 async function kfStart(){
   if(!tqPlayer){tqStart();return;}
-  if("speechSynthesis" in window)speechSynthesis.cancel();
+  kfStopp();
   document.body.classList.add("kf-active");
   kfPanel(`<div style="font-size:13px;color:var(--text2)">Die Adler-Schule lädt …</div>`);
   const d=await kfLaden();
@@ -1606,7 +1606,7 @@ async function kfStart(){
   html+=`</div><button class="btn btn-sm" style="margin-top:12px" onclick="kfExit()"><i class="ti ti-arrow-left"></i>Zurück zur Quiz-Auswahl</button>`;
   kfPanel(html);
 }
-function kfExit(){ document.body.classList.remove("kf-active"); if("speechSynthesis" in window)speechSynthesis.cancel(); document.getElementById("kf-karten")?.remove(); tqStart(); }
+function kfExit(){ document.body.classList.remove("kf-active"); kfStopp(); document.getElementById("kf-karten")?.remove(); tqStart(); }
 const KF_STUFE={U8:0,U9:1,U10:2};
 function kfBlock(lf){
   if(!KF_DATEN){kfStart();return;}
@@ -1627,7 +1627,7 @@ function kfLos(lf){
 function kfMischen(n){ const a=[...Array(n).keys()]; for(let i=n-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 function kfFrage(){
   const f=kfFragen[kfIdx]; if(!f){kfErgebnis();return;}
-  if("speechSynthesis" in window)speechSynthesis.cancel();
+  kfStopp();
   kfFertig=false; kfTipp=null;
   let inhalt="";
   if(f.typ==="ab"){
@@ -1654,16 +1654,49 @@ function kfFrage(){
     ${inhalt}<div id="kf-feedback"></div>`);
   if(f.typ==="szene")setTimeout(kfSzeneSpielen,350);
 }
+/* Vorlesen (v930): zuerst die Aufnahme mit Lennarts Stimme aus audio/schule/ – benannt wie im Taktik-Quiz nach dem Hash
+   des Sprechtexts (tools/quiz-audio-namen.js --liste). Eine Frage ist ein Stück, bei Szenen folgen die drei Antworten
+   einzeln in der Reihenfolge, in der sie gerade stehen (die App mischt sie). Fehlt eine Datei oder ist kein Netz da,
+   liest ab dort die Gerätestimme. Zweiter Tipp hält an. */
+let _kfAudio=null;
+function kfAudioUrl(text){ return kfBasis()+"audio/schule/"+ttsHash(ttsSprechtext(text))+".mp3"; }
+function kfStopp(btn){ if(_kfAudio){ try{_kfAudio.pause&&_kfAudio.pause();}catch(e){} _kfAudio=null; } if("speechSynthesis" in window)speechSynthesis.cancel(); if(btn)btn.textContent="🔊"; }
+function kfVorlesen(stuecke,btn,geraetText){
+  // stuecke: Sprechtexte in Reihenfolge; geraetText(i): was die Gerätestimme ab Stück i liest
+  if(_kfAudio||(("speechSynthesis" in window)&&(speechSynthesis.speaking||speechSynthesis.pending))){ kfStopp(btn); return; }
+  const lauf={}; _kfAudio=lauf;
+  if(btn)btn.textContent="⏹️";
+  const geraet=i=>{
+    if(_kfAudio!==lauf)return; _kfAudio=null;
+    if(!("speechSynthesis" in window)){ if(btn)btn.textContent="🔊"; toast("Vorlesen wird auf diesem Gerät nicht unterstützt"); return; }
+    const text=geraetText(i), v=(typeof ttsGermanVoice==="function")?ttsGermanVoice():null, saetze=(typeof ttsSaetze==="function")?ttsSaetze(text):[text];
+    saetze.forEach((st,k)=>{ const u=new SpeechSynthesisUtterance(st); u.lang="de-DE"; u.rate=.95; u.pitch=1; if(v)u.voice=v; if(k===saetze.length-1)u.onend=()=>{if(btn)btn.textContent="🔊";}; speechSynthesis.speak(u); });
+    if(btn)btn.textContent="⏹️";
+  };
+  const spiele=i=>{
+    if(_kfAudio!==lauf)return;
+    if(i>=stuecke.length){ _kfAudio=null; if(btn)btn.textContent="🔊"; return; }
+    let a=null; try{ a=new Audio(kfAudioUrl(stuecke[i])); }catch(e){ a=null; }
+    if(!a){ geraet(i); return; }
+    lauf.a=a; let weg=false; const fehler=()=>{ if(weg)return; weg=true; geraet(i); };
+    a.onended=()=>{ if(weg)return; weg=true; spiele(i+1); };
+    a.onerror=fehler;
+    try{ const p=a.play(); if(p&&p.catch)p.catch(fehler); }catch(e){ fehler(); }
+  };
+  lauf.pause=()=>{ try{lauf.a&&lauf.a.pause();}catch(e){} };
+  spiele(0);
+}
 function kfSpeak(btn){
   const f=kfFragen[kfIdx]; if(!f)return;
-  if(!("speechSynthesis" in window)){toast("Vorlesen wird auf diesem Gerät nicht unterstützt");return;}
-  if(speechSynthesis.speaking||speechSynthesis.pending){speechSynthesis.cancel();if(btn)btn.textContent="🔊";return;}
-  let text=f.frage;
-  if(f.typ==="szene")text+=" "+kfOptOrdnung.map((i,k)=>`Antwort ${k+1}: ${f.optionen[i]}.`).join(" ");
-  if(f.typ==="ab")text+=" Bild A oder Bild B?";
-  const v=(typeof ttsGermanVoice==="function")?ttsGermanVoice():null, saetze=(typeof ttsSaetze==="function")?ttsSaetze(text):[text];
-  saetze.forEach((s,i)=>{ const u=new SpeechSynthesisUtterance(s); u.lang="de-DE"; u.rate=.95; u.pitch=1; if(v)u.voice=v; if(i===saetze.length-1)u.onend=()=>{if(btn)btn.textContent="🔊";}; speechSynthesis.speak(u); });
-  if(btn)btn.textContent="⏹️";
+  const frage=f.frage+(f.typ==="ab"?" Bild A oder Bild B?":"");
+  const antworten=f.typ==="szene"?kfOptOrdnung.map(i=>f.optionen[i]):[];
+  kfVorlesen([frage,...antworten],btn,i=>i===0
+    ?frage+(antworten.length?" "+antworten.map((t,k)=>`Antwort ${k+1}: ${t}.`).join(" "):"")
+    :antworten.slice(i-1).map((t,k)=>`Antwort ${i+k}: ${t}.`).join(" "));
+}
+function kfMerksatzSpeak(btn,id){
+  const m=((KF_DATEN&&KF_DATEN.merkkarten)||[]).find(x=>x.id===id); if(!m)return;
+  kfVorlesen([m.merksatz],btn,()=>m.merksatz);
 }
 /* tippen */
 function kfFeldPunkt(ev){
@@ -1763,7 +1796,7 @@ function kfAuswerten(ok){
   const sc=document.querySelector(".kf-panel .tq-score"); if(sc)sc.textContent=`⭐ ${kfScore}/${kfTotal}`;
   setTimeout(()=>document.getElementById("kf-weiter")?.scrollIntoView({block:"nearest",behavior:"smooth"}),50);
 }
-function kfWeiter(){ kfIdx++; kfFrage(); }
+function kfWeiter(){ kfStopp(); kfIdx++; kfFrage(); }
 function kfErgebnis(){
   if(tqPlayer)tqSaveProgress(tqPlayer,KF_BLOCK_BASIS+kfLf,kfScore,kfTotal);
   const pct=kfTotal?Math.round(kfScore/kfTotal*100):0, m=tqMedaille(kfScore,kfTotal);
@@ -1801,7 +1834,8 @@ function kfKarten(lf,startId){
     <div id="kf-karten-bahn" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:10px;scrollbar-width:none">
       ${karten.map((m,i)=>`<div class="kf-karte" data-id="${esc(m.id)}" aria-roledescription="Karte" aria-label="Karte ${i+1} von ${karten.length}" style="flex:0 0 100%;scroll-snap-align:center;box-sizing:border-box">
         ${kfKarteBild(m)}
-        <div class="kf-merksatz" style="font-size:17px;font-weight:800;color:var(--text);line-height:1.35;text-align:center;margin:10px 4px 4px">${esc(m.merksatz)}</div></div>`).join("")}
+        <div style="display:flex;align-items:center;gap:8px;margin:10px 4px 4px"><div class="kf-merksatz" style="flex:1;font-size:17px;font-weight:800;color:var(--text);line-height:1.35;text-align:center">${esc(m.merksatz)}</div>
+          <button type="button" onclick="kfMerksatzSpeak(this,'${jsq(m.id)}')" aria-label="Merksatz vorlesen" style="flex:none;min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:var(--r);background:var(--surface);font-size:20px;cursor:pointer">🔊</button></div></div>`).join("")}
     </div>
     <div style="font-size:12px;color:var(--text2);text-align:center;margin-top:6px">${karten.length>1?"Wische für die nächste Karte":""}</div></div>`;
   document.body.appendChild(ov);

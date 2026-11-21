@@ -12,7 +12,7 @@ Stimme: Maskottchen-Stimme „Lennart – Energetic“ (ElevenLabs, eleven_v4), 
 | 3 | Raute nach rechts verschieben | 32228eb5.mp3 | Der Ball wandert jetzt auf die rechte Seite! Ein Gegner dribbelt dort nach vorne. Verschiebe die Raute nach rechts! |
 | 4 | Ball zum rechten Flitzer | ac3e3625.mp3 | Euer Team hat den Ball. Der Aufpasser spielt einen Pass zum rechten Flitzer. Wohin bewegen sich die anderen Spieler? Verschiebe Flitzer links, Aufpasser und Jäger! |
 | 5 | Gegner spielt nach rechts | 141c4c9f.mp3 | Der Gegner hat den Ball und spielt ihn auf seine rechte Seite (eure linke!). Schaltet auf IGEL um! Wohin muss die Raute verschieben? Bewege alle Feldspieler! |
-| 6 | Raute kompakt nach vorne | 9e29ac38.mp3 | Ihr führt 1 zu 0! Der Gegner spielt den Ball hinten hin und her. Jetzt wollt ihr pressen! Schiebe die ganze Raute kompakt nach vorne – Pressing! |
+| 6 | Raute kompakt nach vorne | 8df5ff1f.mp3 | Der Gegner spielt den Ball hinten hin und her. Jetzt wollt ihr ihn früh stören! Schiebe die ganze Raute kompakt nach vorne – Pressing! |
 | 7 | Raute kompakt nach hinten | 856d7dd0.mp3 | Der Gegner hat starke Stürmer! Ihr zieht euch zurück und verteidigt kompakt. Ziehe die Raute tief in die eigene Hälfte – aber halte die Form! |
 | 8 | Dreieck bilden | a929dfe2.mp3 | Beim Ballbesitz brauchen wir immer zwei Anspielstationen! Das nennt man ein Dreieck. Schiebe Flitzer links und Jäger so, dass sie mit dem Aufpasser ein Dreieck bilden! |
 | 9 | Freilaufen für den Pass | 1a3b6fe0.mp3 | Aufpasser hat den Ball. Jäger steht direkt beim Gegner – so kommt kein Pass an! Schiebe Jäger weg vom Gegner in den freien Raum! |
@@ -62,7 +62,7 @@ Stimme: Maskottchen-Stimme „Lennart – Energetic“ (ElevenLabs, eleven_v4), 
 | 53 | Standard: Freistoß Mittelfeld | 53d5120d.mp3 | Freistoß für euch im Mittelfeld! Aufpasser führt aus. Freistoß aus dem Mittelfeld – wie positioniert sich das Team? |
 | 54 | Standard: Ecke für uns | 3ae804bb.mp3 | Ecke für euch! Flitzer links dribbelt von links ein oder passt kurz. Wie stellt sich das Team vor dem Tor auf? |
 | 55 | Standard: Toraus gegen uns | 0197f5a7.mp3 | Toraus beim Gegner! Sein Torwart eröffnet flach – ein Abschlag ist nicht erlaubt. Ihr geht hinter die Mittellinie. Wie stellt sich die Raute auf die Eröffnung des Gegners ein? |
-| 56 | Spiel: Rückstand – offensiver werden! | 73bbc07f.mp3 | Ihr liegt 0 zu 1 zurück! Noch 5 Minuten. Der Trainer ruft: „Alles nach vorne!“ Maximaler Angriff! Wie stellt sich die Raute offensiv auf? |
+| 56 | Spiel: Gegner steht tief – mutig angreifen! | f7988917.mp3 | Der Gegner verteidigt mit allen vor seinem Tor. Jetzt mutig angreifen! Maximaler Angriff! Wie stellt sich die Raute offensiv auf? |
 | 57 | Spiel: Gegner drängt – kompakt bleiben | 1f3fc728.mp3 | Der Gegner greift mit allen an und kommt immer wieder vor euer Tor. Steht kompakt und tief – aber haltet die Form! |
 | 58 | Spiel: Gegner mit schnellem Stürmer | b41e856b.mp3 | Der Gegner hat einen superschnellen Stürmer! Er steht links und wartet auf lange Bälle. Wie stellt sich die Raute auf diesen schnellen Gegner ein? |
 | 59 | Spiel: Überzahl nutzen – 5 gegen 4 | e372e832.mp3 | Ihr liegt drei Tore hinten, aber euer Trainer hat keinen Wechselspieler. Deshalb nimmt der Gegner einen Spieler vom Feld – ihr spielt 5 gegen 4! Wie nutzt ihr den Vorteil? Positioniert euch! |
@@ -78,7 +78,7 @@ Stimme: Maskottchen-Stimme „Lennart – Energetic“ (ElevenLabs, eleven_v4), 
 | 69 | TW – Nach Parade aufbauen | 588cb7f3.mp3 | Super Parade! Jetzt schnell und klug aufbauen. Schiebe Aufpasser und Flitzer rechts frei – der Torwart braucht Optionen! |
 | 70 | TW – Kurz oder weit spielen? | 82881190.mp3 | Dein Torwart hat den Ball. Vorne steht der Jäger frei – aber es ist weit! Biete Aufpasser kurz an – kurz und sicher ist fast immer besser! |
 | 71 | Geduld – nicht hetzen! | 80b37f42.mp3 | Drei Gegner sind in der Nähe. Trotzdem: kein Stress, geduldig bleiben! Schiebe alle Mitspieler in freie Räume – dann findet ihr die Lücke! |
-| 72 | Tempo rausnehmen | 3daadbb7.mp3 | Ihr führt 2 zu 0 und habt noch 5 Minuten! Jetzt Ball halten! Schiebe alle in sichere, tiefe Positionen! |
+| 72 | Ball in Ruhe halten | b06904e4.mp3 | Der Gegner stürmt wild nach vorne. Jetzt den Ball in Ruhe halten! Schiebe alle in sichere, tiefe Positionen! |
 | 73 | Tempo des Spiels lesen | 15af024a.mp3 | Alle sind müde. Was ist jetzt klug? Schiebe alle in eine ruhige, kompakte Ballhalte-Formation! |
 | 74 | Überzahl schaffen | 463518f4.mp3 | Rechts stehen Flitzer rechts und ein Gegner. Bring den Jäger dazu – 2 gegen 1! Schiebe Jäger auf rechts für die Überzahl! |
 | 75 | Spiel verlagern | de46fe43.mp3 | Links ist alles eng! Die rechte Seite ist frei. Verlagere das Spiel – schiebe Flitzer rechts maximal breit auf rechts! |
@@ -106,7 +106,7 @@ Stimme: Maskottchen-Stimme „Lennart – Energetic“ (ElevenLabs, eleven_v4), 
 | 97 | Zweikampf gewinnen | ed3516ca.mp3 | Flitzer rechts läuft auf den Gegner zu! Wie stellt er sich richtig hin? Schiebe Flitzer rechts halbseitig – den Gegner nach außen drängen! |
 | 98 | Tor vor Augen – Abschluss! | f9f6264d.mp3 | Jäger hat den Ball nahe am Tor – frei! Schiebe Jäger in die beste Schussposition! |
 | 99 | Anführer auf dem Platz | 4d847d3e.mp3 | Flitzer links steht am falschen Platz – in der Mitte statt auf links! Schiebe Flitzer links auf die richtige Raute-Position! |
-| 100 | Endspurt – alles geben! | 400af690.mp3 | Ihr verliert 0 zu 1, nur noch 2 Minuten! Vollangriff! Alle nach vorne! Voller Angriff – auch der Aufpasser! |
+| 100 | Ballgewinn vorne – alle greifen an! | d3c7c89a.mp3 | Ihr erobert den Ball weit vorne – jetzt greifen alle an, auch der Aufpasser! Alle nach vorne! Voller Angriff – auch der Aufpasser! |
 | 101 | 3+1 – Grundstellung beim Toraus des Gegners | 06a06fbc.mp3 | Toraus – der Gegner dribbelt von seiner Torauslinie ein. Im 3+1 fehlt der Aufpasser, der Torwart spielt mit. Bringe Jäger und Flitzer in die Grundstellung – alle in der eigenen Hälfte! |
 | 102 | 3+1 – Torwart eröffnet flach | 4636633c.mp3 | Toraus für euch! Euer Torwart hat den Ball. Bei uns gibt es keinen weiten Abschlag – er spielt flach zu einem Mitspieler. Wohin laufen Jäger und Flitzer, damit der Torwart sie anspielen kann? |
 | 103 | 3+1 – Adler: der Torwart kommt raus | a2d8e117.mp3 | Flitzer links hat den Ball in der eigenen Hälfte erobert. Sofort ADLER – macht das Feld groß! Schiebe Flitzer rechts, Jäger und Torwart in die ADLER-Stellung! |
