@@ -1223,7 +1223,7 @@ function nbErgebnisOpen(erg){
 }
 function nbErgebnisZeichnen(){
   const k = document.getElementById("nb-ergebnis-karte"); if(!k) return;
-  k.innerHTML = `${mdlHead("nb-ergebnis","✅","Nachbewertung", _nbErg && _nbErg.art==="training" ? "Training" : "Spieltag","#15803d")}
+  k.innerHTML = `${mdlHead("nb-ergebnis","✅","Nachbereitung", _nbErg && _nbErg.art==="training" ? "Training" : "Spieltag","#15803d")}
     ${nbErgebnisBlock()}
     <button type="button" class="btn btn-p" onclick="nbErgebnisZu()" style="width:100%;min-height:56px;margin-top:14px;justify-content:center;font-size:var(--s-karte)"><i class="ti ti-check"></i>Fertig</button>`;
 }

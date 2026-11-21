@@ -1370,7 +1370,7 @@ function tbPruefenZeichnen(){
   const kannHoeren = typeof diktatMoeglich==="function" && diktatMoeglich();
   /* v921: Nach der Nachbewertung steht oben das Ergebnis (gespeichert) mit den Kindern, darunter der Tagebuch-Vorschlag. */
   const erg = _TBP.ergebnis && typeof nbErgebnisBlock==="function" ? nbErgebnisBlock(_TBP.ergebnis) : "";
-  c.innerHTML = `${mdlHead("tb-pruefen",erg?"✅":"✨",erg?"Nachbewertung":"Vorschlag prüfen", tbNr(e.id)+esc(e.ausloeser||tbDatumDe(e.datum)),erg?"#15803d":"#7c3aed")}
+  c.innerHTML = `${mdlHead("tb-pruefen",erg?"✅":"✨",erg?"Nachbereitung":"Vorschlag prüfen", tbNr(e.id)+esc(e.ausloeser||tbDatumDe(e.datum)),erg?"#15803d":"#7c3aed")}
     ${erg?erg+`<div class="nb-erg-sek">Tagebuch-Vorschlag</div>`:""}
     <div style="font-size:var(--s-text);color:var(--text2);line-height:1.5">Deine Worte, sortiert – nichts dazu erfunden. Was nicht passt, änderst du direkt hier.</div>
     <label id="tbp-aha-block" style="display:block;font-size:var(--s-teil);font-weight:800;margin-top:12px;background:var(--purple-bg);border-radius:12px;padding:10px 12px">💡 Aha – das gehört dir${e.aha?"":' <span style="display:block;font-size:var(--s-klein);font-weight:500;color:var(--text2)">Nichts gefunden, das du selbst so gesagt hast – schreib es hier oder beantworte die Rückfrage unten.</span>'}
