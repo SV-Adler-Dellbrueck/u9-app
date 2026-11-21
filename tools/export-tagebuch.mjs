@@ -153,7 +153,11 @@ export const namensHinweis = (v) => v.length ? `${v.length} Stelle(n) mit einem 
 
 export async function lade(client) {
   const d = {};
-  for (const v of Object.keys(WHITELIST)) d[v] = (await client.query(spaltenAuswahl(v))).rows;
+  for (const v of Object.keys(WHITELIST)) {
+    /* v925: fehlt die View export.steckbrief noch (Migration nicht eingespielt), bricht nicht der ganze Export ab */
+    if (v === "steckbrief") { try { d[v] = (await client.query(spaltenAuswahl(v))).rows; } catch { d[v] = []; } continue; }
+    d[v] = (await client.query(spaltenAuswahl(v))).rows;
+  }
   const verdacht = (await client.query('select tabelle, id, feld, anzahl from export."namen_verdacht" order by 1, 2, 3')).rows;
   let auto = [];
   try { auto = (await client.query('select tabelle, id, feld, anzahl from export."namen_auto" order by 1, 2, 3')).rows; } catch { auto = []; }   // vor Migration v808
