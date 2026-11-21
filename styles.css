@@ -582,6 +582,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .tq-block-done{opacity:.6}
 /* Fußball-Wissensquiz (Multiple-Choice, kein Taktik-Feld) */
 body.wq-active .tb-wrap{display:none}
+body.kf-active .tb-wrap{display:none} /* v928 Adler-Schule zeichnet eigene Felder */
 /* Kinder-Quiz-App: Taktikfeld nur zeigen, wenn ein Szenario läuft (tq-playing) – sonst aufgeräumte Auswahl */
 body.quiz-extern .tb-wrap{display:none}
 body.quiz-extern.tq-playing .tb-wrap{display:block}

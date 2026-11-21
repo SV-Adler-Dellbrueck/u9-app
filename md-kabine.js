@@ -1122,12 +1122,14 @@ function kabineHome(){
       ${lbl("Spielen & Lernen")}
       ${tile("kabineQuiz('taktik')","🎯","Taktik-Quiz","rgba(56,189,248,.44)","rgba(2,132,199,.30)")}
       ${tile("kabineQuiz('wissen')","🧠","Fußball-Wissen","rgba(14,165,233,.44)","rgba(3,105,161,.30)")}
+      ${/* v928: Adler-Schule – Fragen zu den sechs Leitfragen aus dem Training. Damit vorn acht Kacheln bleiben,
+            wartet „Meine Mission“ hinter „Mehr entdecken“ (Charles 21.11.2026). */""}
+      ${tile("kabineQuiz('schule')","🎓","Adler-Schule","rgba(16,185,129,.46)","rgba(4,120,87,.32)",true)}
       ${lbl("Meine Sachen")}
       ${tile("kabineMyCard()","🃏","Meine Karte","rgba(168,85,247,.50)","rgba(124,58,237,.32)")}
-      ${tile("kabineMission()","⭐","Meine Mission","rgba(139,92,246,.46)","rgba(91,33,182,.32)")}
       ${/* v755: alle Sprachlobe vom Trainerteam nach Datum, „Neu“-Punkt bis zum ersten Anhören – bewusst nicht unter „Mehr entdecken“.
             v761 (PO 05.10.: acht Kacheln vorn): steht jetzt bei „Meine Sachen“ – es ist das Lob für mich –, „Skill der Woche“ wartet hinter „Mehr entdecken“. */""}
-      ${tile("kabineLobWahl()","🎧","Lob vom Trainer","rgba(219,39,119,.50)","rgba(157,23,77,.34)",true)}
+      ${tile("kabineLobWahl()","🎧","Lob vom Trainer","rgba(219,39,119,.50)","rgba(157,23,77,.34)")}
       ${lbl("Challenges")}
       ${tile("kabineShowQuests()","🏆","Team-Missionen","rgba(245,158,11,.52)","rgba(217,119,6,.32)",true)}
       ${lbl("Team & Spaß")}
@@ -1143,6 +1145,7 @@ function kabineHome(){
         ${tile("kabineBrett()","✏️","Mein Taktikbrett","rgba(56,189,248,.46)","rgba(2,132,199,.30)",true)}
         ${/* v751: ein Training planen wie ein Trainer – und es dem Trainer schicken (md-kindtraining.js) */""}
         ${tile("if(typeof kabineMeinTraining==='function')kabineMeinTraining()","📋","Mein Training","rgba(34,197,94,.48)","rgba(21,128,61,.32)",true)}
+        ${tile("kabineMission()","⭐","Meine Mission","rgba(139,92,246,.46)","rgba(91,33,182,.32)")}
         ${tile("kabineSkillWoche()","🎬","Skill der Woche","rgba(251,146,60,.48)","rgba(234,88,12,.30)")}
         ${tile("kabineShowGallery()","🖼️","Team-Galerie","rgba(16,185,129,.48)","rgba(5,150,105,.30)")}
         ${tile("kabineAbzeichen()","🎖️","Abzeichen","rgba(147,51,234,.46)","rgba(109,40,217,.30)")}
@@ -1184,9 +1187,11 @@ const KABINE_TOUR=[
    d:"Hier sagst du, wo du hinlaufen würdest. Für richtige Antworten gibt es Federn 🪶."},
   {emo:"🧠", t:"Fußball-Wissen", sel:['#kabine-body button[onclick="kabineQuiz(\'wissen\')"]'],
    d:"Fragen rund um Fußball. Wie viele weißt du schon?"},
+  {emo:"🎓", t:"Adler-Schule", sel:['#kabine-body button[onclick="kabineQuiz(\'schule\')"]'],
+   d:"Hier übst du, was wir im Training lernen: Wie komme ich vorbei? Wie hole ich mir den Ball? Erst anschauen, dann raten."},
   {emo:"🃏", t:"Deine Karte", sel:['#kabine-body button[onclick="kabineMyCard()"]'],
    d:"Deine eigene Spielerkarte mit Foto und deiner Rolle im Team."},
-  {emo:"⭐", t:"Deine Mission", sel:['#kabine-body button[onclick="kabineMission()"]'],
+  {emo:"⭐", t:"Deine Mission", sel:['#kabine-body button[onclick="kabineMission()"]'], vor:()=>{ const d=document.getElementById("kab-mehr"); if(d){ d.open=true; window._kabMehrOffen=true; } },
    d:"Eine kleine Aufgabe nur für dich. Schaffst du sie?"},
   {emo:"🏆", t:"Team-Missionen", sel:['#kabine-body button[onclick="kabineShowQuests()"]'],
    d:"Aufgaben für das ganze Team. Zusammen schafft ihr mehr!"},
