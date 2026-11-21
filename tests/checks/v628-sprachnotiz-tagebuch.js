@@ -47,6 +47,9 @@ module.exports = async function (h) {
     const out = {};
     document.getElementById("nb-text").value = "Heute war es hektisch, Kind C hat sich zurückgezogen. Ich habe zu viel reingerufen.";
     _nbText = document.getElementById("nb-text").value;
+    /* v921: Das kleine Feld speichert nach dem Auswerten sofort und schließt den Bogen (Ergebniskarte). Hier geht es um
+       das Eintragen in den offenen Bogen – den Abschluss prüfen v813 und v921. */
+    window.nbSchnellAbschluss = async () => {};
     await nbAuswerten("training"); await warte(50);
     out.status = document.getElementById("nb-status").textContent;
     await einheitSave(); await warte(200);

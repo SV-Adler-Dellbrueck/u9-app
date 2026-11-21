@@ -1296,7 +1296,7 @@ async function tbPruefenOpen(id, opt){
   }catch(x){}
   if(!e){ toast("Vorschlag nicht gefunden","err"); return; }
   const kons = punkte.filter(p=>p.art==="konsequenz");
-  _TBP = { e, bewertung:opt.bewertung||[], termine: await tbEigeneTermine(),
+  _TBP = { e, bewertung:opt.bewertung||[], ergebnis:opt.ergebnis||null, termine: await tbEigeneTermine(),
     kons: kons.length ? kons.map(p=>({id:p.id,text:p.text,bis:p.bis||"",dauerhaft:!!p.dauerhaft})) : (e.konsequenz ? String(e.konsequenz).split("\n").filter(Boolean).map(t=>({id:null,text:t,bis:e.konsequenz_bis||""})) : []),
     todos: punkte.filter(p=>p.art==="todo").map(p=>({id:p.id,text:p.text,bis:p.bis||"",zustaendig:p.zustaendig,weg:false})),
     fragen: (Array.isArray(e.rueckfragen)?e.rueckfragen:[]).map(f=>({frage:f.frage||String(f),feld:f.feld||"beobachtung",antwort:""})),
@@ -1368,12 +1368,15 @@ function tbPruefenZeichnen(){
   const fld = "width:100%;box-sizing:border-box;min-height:48px;padding:10px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);resize:vertical";
   const kopf = t => `<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:14px 0 6px">${t}</div>`;
   const kannHoeren = typeof diktatMoeglich==="function" && diktatMoeglich();
-  c.innerHTML = `${mdlHead("tb-pruefen","✨","Vorschlag prüfen", tbNr(e.id)+esc(e.ausloeser||tbDatumDe(e.datum)),"#7c3aed")}
+  /* v921: Nach der Nachbewertung steht oben das Ergebnis (gespeichert) mit den Kindern, darunter der Tagebuch-Vorschlag. */
+  const erg = _TBP.ergebnis && typeof nbErgebnisBlock==="function" ? nbErgebnisBlock(_TBP.ergebnis) : "";
+  c.innerHTML = `${mdlHead("tb-pruefen",erg?"✅":"✨",erg?"Nachbewertung":"Vorschlag prüfen", tbNr(e.id)+esc(e.ausloeser||tbDatumDe(e.datum)),erg?"#15803d":"#7c3aed")}
+    ${erg?erg+`<div class="nb-erg-sek">Tagebuch-Vorschlag</div>`:""}
     <div style="font-size:var(--s-text);color:var(--text2);line-height:1.5">Deine Worte, sortiert – nichts dazu erfunden. Was nicht passt, änderst du direkt hier.</div>
     <label id="tbp-aha-block" style="display:block;font-size:var(--s-teil);font-weight:800;margin-top:12px;background:var(--purple-bg);border-radius:12px;padding:10px 12px">💡 Aha – das gehört dir${e.aha?"":' <span style="display:block;font-size:var(--s-klein);font-weight:500;color:var(--text2)">Nichts gefunden, das du selbst so gesagt hast – schreib es hier oder beantworte die Rückfrage unten.</span>'}
       <textarea id="tbp-aha" class="wachsen" rows="3" style="${fld};margin-top:6px;font-size:var(--s-karte);line-height:1.5">${esc(e.aha||"")}</textarea></label>
     ${tbKontextHtml(e)}
-    ${_TBP.bewertung.length?`${kopf("Bewertung · gespeichert")}<div style="font-size:var(--s-text);line-height:1.6;background:var(--surface2);border-radius:10px;padding:8px 10px">${_TBP.bewertung.map(z=>`<div>${esc(z)}</div>`).join("")}</div>`:""}
+    ${(!erg&&_TBP.bewertung.length)?`${kopf("Bewertung · gespeichert")}<div style="font-size:var(--s-text);line-height:1.6;background:var(--surface2);border-radius:10px;padding:8px 10px">${_TBP.bewertung.map(z=>`<div>${esc(z)}</div>`).join("")}</div>`:""}
     ${kopf("Tagebuch")}
     <div style="display:flex;gap:6px;flex-wrap:wrap">${TB_BAUSTEINE.map(b=>{const an=_TBP.baustein===b.key;
       return `<button type="button" onclick="tbpBaustein('${b.key}')" aria-pressed="${an}" style="flex:1 1 46%;min-height:44px;font-size:var(--s-klein);border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;background:${an?"var(--blue)":"var(--surface2)"};color:${an?"#fff":"var(--text2)"};font-weight:${an?"800":"600"}">${an?"✓ ":""}${b.label}</button>`;}).join("")}</div>

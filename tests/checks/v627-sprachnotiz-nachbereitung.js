@@ -56,6 +56,9 @@ module.exports = async function (h) {
     out.a = { box: !!box, davor: !!(box && kopf && (box.compareDocumentPosition(kopf) & 4)) };
     // e) zu kurz
     document.getElementById("nb-text").value = "gut";
+    /* v921: Das kleine Feld speichert nach dem Auswerten sofort und schließt den Bogen (Ergebniskarte). Hier geht es um
+       das Eintragen in den offenen Bogen – den Abschluss prüfen v813 und v921. */
+    window.nbSchnellAbschluss = async () => {};
     await nbAuswerten("training");
     out.e = document.getElementById("nb-status").textContent;
     // c) Training
@@ -106,7 +109,7 @@ module.exports = async function (h) {
   if (!c.skip) probleme.push("c) „übersprungen“ nicht gesetzt");
   /* v795: Die Kinder-Skala startet bei 2 („gut“); nur das von der KI genannte Kind weicht ab (3). */
   const k2 = c.kindSterne[1];
-  if (!k2 || k2[1] !== 3 || c.kindSterne.filter(x => x[1] !== 2).length !== 1) probleme.push("c) Kinder-Sterne: " + JSON.stringify(c.kindSterne));
+  if (!k2 || k2[1] !== 3 || c.kindSterne.filter(x => x[1] !== 0).length !== 1)   /* v921: ohne Vorbelegung – nur das Kind, das die KI nennt, hat Sterne */ probleme.push("c) Kinder-Sterne: " + JSON.stringify(c.kindSterne));
   if (!/Im Bogen prüfen, ändern und speichern/.test(c.status))   /* v638: neuer Wortlaut, Korrektur-Knopf dahinter */ probleme.push("c) Rückmeldung: " + c.status);
   const d = r.d, t1 = (d.wert.teams || {})["1"] || {};
   if (t1.ordnung !== 1 || t1.pass !== 3 || t1.spass !== 3 || "zweikampf" in t1) probleme.push("d) Mannschaft: " + JSON.stringify(t1));
