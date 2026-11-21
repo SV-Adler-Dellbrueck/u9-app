@@ -95,6 +95,10 @@ Minitore bei x 28 und 72, Schusszonen bis y 24 (Gegner) und ab y 76 (eigene).
    Aufnahmepflicht in `v567-quiz-audio.js` bekommt eine ausdrückliche, kommentierte
    Ausnahmeliste für genau diese 30 Szenarien (über den Titel, nicht über die Nummer), damit
    jedes weitere Szenario ohne Aufnahme weiter rot wird.
+   **Stimme (Beschluss 21.11.):** Die App spricht mit der Maskottchen-Stimme „Lennart –
+   Energetic“ (ElevenLabs, eleven_v4), soweit nicht anders festgelegt. Keine Nachaufnahmen mit
+   „Ava“. Wenn die Inhalte fertig sind, wird das ganze Quiz (120 Szenarien) in einem Durchgang
+   mit Lennart neu vertont; dann entfällt die Ausnahmeliste wieder.
 7. **Prüffälle.** `v566-eltern-durchsicht.js` um diese Invarianten über **alle** Szenarien
    erweitern: kein Ziel ist am Start (nach `anim`) schon erreicht; kein Wort Strafraum,
    Pfosten, Flanke, köpf; im `feld: "3+1"` kein Aufpasser und im `feld: "funino"` kein
