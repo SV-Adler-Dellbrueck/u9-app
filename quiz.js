@@ -1503,7 +1503,8 @@ const KF_LEITFRAGEN={1:"Wie behalte ich den Ball, wenn einer kommt?",2:"Wie komm
 const KF_ICON={1:"🛡️",2:"💨",3:"🥅",4:"🎯",5:"📍",6:"🦅"};
 const KF_DATEN_KEY="adler_kf_daten", KF_RICHTIG_KEY="adler_kf_richtig", KF_BLOCK_BASIS=100;
 let KF_DATEN=null, kfLf=0, kfFragen=[], kfIdx=0, kfScore=0, kfTotal=0, kfFertig=false, kfTipp=null, kfOptOrdnung=[];
-function kfBasis(){ return /\/(trainer|eltern|kinder)\/[^/]*$/.test(location.pathname)?"../":""; }
+/* v935: absolut wie appRoot() – die Seiten setzen <base href="../">, ein zusätzliches „../“ führte auf GitHub Pages aus /u9-app/ hinaus (404). */
+function kfBasis(){ return location.origin+location.pathname.replace(/(?:trainer|eltern|kinder)\/[^/]*$/,""); }   // auch kinder/ – appRoot() kennt nur trainer/ und eltern/
 function kfFrageGueltig(f){
   if(!f||typeof f.id!=="string"||!(f.leitfrage>=1&&f.leitfrage<=6)||!f.frage||!f.erklaerung)return false;
   if(f.typ==="ab")return Array.isArray(f.bilder)&&f.bilder.length===2&&(f.richtig===0||f.richtig===1);

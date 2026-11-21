@@ -60,11 +60,11 @@ module.exports = async function (h) {
   const sollChips = ["Jäger", "linker Flitzer", "rechter Flitzer", "Aufpasser", "Torwart", "alle", "alle außer Torwart"];
   if (r.chips.map(c => c.replace(/ ✓$/, "")).join("|") !== sollChips.join("|")) probleme.push(`b) Positionen: ${r.chips.join(", ")}`);
   if (r.fotos.length !== 4 || r.fotos.filter(f => /voll/.test(f)).length !== 1 || !/Beim Fußball ✓/.test(r.fotos[0]) || !/Selbst gemalt/.test(r.fotos[3])) probleme.push(`b) Foto-Kacheln: ${r.fotos.join(" | ")}`);
-  if (!r.klappen.some(x => /Freundebuch.*0 von 9/.test(x)) || !r.klappen.some(x => /Kreativ und cool.*0 von 8/.test(x))) probleme.push(`b) Klappen: ${r.klappen.join(" | ")}`);
+  if (!r.klappen.some(x => /Freundebuch.*0 von 9/.test(x)) || !r.klappen.some(x => /Kreativ und cool.*0 von 7/.test(x))) probleme.push(`b) Klappen: ${r.klappen.join(" | ")}`);
   if (!/Kernfragen 2 von 12/.test(r.fortVor || "") || !/Kernfragen 4 von 12/.test(r.fortNach || "") || r.twGedrueckt !== "true") probleme.push(`b) Fortschritt ${r.fortVor} → ${r.fortNach}, Torwart ${r.twGedrueckt}`);
   const body = post && post.body;
   if (!body || body.lieblingsposition !== "torwart" || body.torjubel !== "Flugzeug" || body.superkraft !== "fliegen" || body.lieblingsspieler !== "Ein Star") probleme.push(`b) Speichern: ${JSON.stringify(body || null).slice(0, 200)}`);
-  zeilen.push(`a) „${r.karte.slice(0, 60)}…“, Später gemerkt · b) 7 Positionen, 4 Foto-Kacheln, Klappen 9 + 8, Fortschritt ${r.fortVor} → ${r.fortNach}, gespeichert mit lieblingsposition „torwart“`);
+  zeilen.push(`a) „${r.karte.slice(0, 60)}…“, Später gemerkt · b) 7 Positionen, 4 Foto-Kacheln, Klappen 9 + 7 (v935: ohne Lieblingswitz), Fortschritt ${r.fortVor} → ${r.fortNach}, gespeichert mit lieblingsposition „torwart“`);
 
   /* ── c) + d) Trainer ── */
   const lauf = async (laufend) => {

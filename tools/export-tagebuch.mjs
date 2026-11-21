@@ -123,7 +123,7 @@ const SB_GRUPPEN = [
   ["Auf dem Platz", [["lieblingsspieler", "Lieblingsspieler"], ["lieblingsverein", "Lieblingsverein"], ["schoenster_moment", "Schönster Moment bei den Adlern"], ["torjubel", "Torjubel"], ["saisonziel", "Will diese Saison lernen"], ["adler_seit", "Adler seit"], ["fussball_erlebnis", "Größtes Fußball-Erlebnis"]]],
   ["Neben dem Platz", [["hobby", "Hobby"], ["kann_gut", "Kann außer Fußball richtig gut"], ["lieblingsessen", "Lieblingsessen"], ["lieblingstier", "Lieblingstier"], ["gross_werden", "Wenn ich groß bin"], ["stolz_auf", "Darauf ist es stolz"], ["weiterer_sport", "Weiterer Sport"]]],
   ["Freundebuch", [["lieblingsfarbe", "Lieblingsfarbe"], ["lieblingsbuch", "Lieblingsbuch"], ["lieblingsfilm", "Lieblingsfilm oder -serie"], ["lieblingsmusik", "Lieblingslied oder Kabinen-Song"], ["lieblingsspiel", "Lieblingsspiel"], ["lieblingsfach", "Lieblingsfach"], ["mag_nicht", "Mag gar nicht"], ["groesster_wunsch", "Größter Wunsch"]]],
-  ["Kreativ und cool", [["superkraft", "Superkraft"], ["zaubern", "Wenn es zaubern könnte"], ["lieblingswitz", "Lieblingswitz"], ["geheimes_talent", "Geheimes Talent"], ["star_spielen", "Mit diesem Star spielen"], ["traumstadion", "Traumstadion"], ["satz_an_team", "Satz an das Team"]]]];
+  ["Kreativ und cool", [["superkraft", "Superkraft"], ["zaubern", "Wenn es zaubern könnte"], ["geheimes_talent", "Geheimes Talent"], ["star_spielen", "Mit diesem Star spielen"], ["traumstadion", "Traumstadion"], ["satz_an_team", "Satz an das Team"]]]];
 export function renderSteckbrief(d, stand) {
   const zeilen = d.steckbrief || [];
   let o = kopf("Steckbriefe der Kinder", stand, "App-Datenbank (Export-Rolle), Angaben der Eltern – freiwillig");
