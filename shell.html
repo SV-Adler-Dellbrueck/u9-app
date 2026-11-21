@@ -213,7 +213,11 @@
 <!-- KADER -->
 <div id="view-kader" class="view">
   <div class="sl nt"><i class="ti ti-users"></i>Kader</div>
-  <button class="btn btn-p" onclick="kaderEditOpen()" style="display:flex;width:100%;justify-content:center;align-items:center;gap:8px;min-height:48px;margin-bottom:10px;font-size:var(--s-karte)"><i class="ti ti-users"></i>Spieler verwalten</button>
+  <div style="display:flex;gap:8px;margin-bottom:10px">
+    <button class="btn btn-p" onclick="kaderEditOpen()" style="display:flex;flex:1;justify-content:center;align-items:center;gap:8px;min-height:48px;font-size:var(--s-karte)"><i class="ti ti-users"></i>Spieler verwalten</button>
+    <!-- v936 (Charles 21.11.): fester Einstieg in die Steckbrief-Übersicht – vorher nur in der Heimspiel-Karte des Adler Nest -->
+    <button class="btn" id="kader-steckbriefe" onclick="if(typeof steckbriefUebersichtOpen==='function')steckbriefUebersichtOpen()" style="display:flex;flex:1;justify-content:center;align-items:center;gap:8px;min-height:48px;font-size:var(--s-karte)">📖 Steckbriefe</button>
+  </div>
   <div class="frow">
     <button class="ftag active" aria-pressed="true" onclick="setF('all',this)">Alle</button>
     <button class="ftag" aria-pressed="false" onclick="setF('tw',this)">🥅 TW-Option</button>

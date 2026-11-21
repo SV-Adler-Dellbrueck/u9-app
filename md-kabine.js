@@ -1120,8 +1120,7 @@ function kabineHome(){
             gespielt. Vorn stehen acht, der Rest wartet hinter „Mehr entdecken". Ob das Kind
             aufgeklappt hat, merkt sich die Kabine, solange sie offen ist. */""}
       ${lbl("Spielen & Lernen")}
-      ${tile("kabineQuiz('taktik')","🎯","Taktik-Quiz","rgba(56,189,248,.44)","rgba(2,132,199,.30)")}
-      ${tile("kabineQuiz('wissen')","🧠","Fußball-Wissen","rgba(14,165,233,.44)","rgba(3,105,161,.30)")}
+      ${/* v936 (Charles 21.11.): Taktik-Quiz und Fußball-Wissen stecken jetzt in der Adler-Schule. */""}
       ${/* v928: Adler-Schule – Fragen zu den sechs Leitfragen aus dem Training. Damit vorn acht Kacheln bleiben,
             wartet „Meine Mission“ hinter „Mehr entdecken“ (Charles 21.11.2026). */""}
       ${tile("kabineQuiz('schule')","🎓","Adler-Schule","rgba(16,185,129,.46)","rgba(4,120,87,.32)",true)}
@@ -1183,12 +1182,8 @@ const KABINE_TOUR=[
    d:"Das hier ist deine Kabine. Ich zeige dir kurz, was du hier alles machen kannst."},
   {emo:"⏰", t:"Wann ist das nächste Spiel?", sel:["#kab-countdown"],
    d:"Hier siehst du, wie oft du noch schlafen musst bis zum nächsten Spiel."},
-  {emo:"🎯", t:"Taktik-Quiz", sel:['#kabine-body button[onclick="kabineQuiz(\'taktik\')"]'],
-   d:"Hier sagst du, wo du hinlaufen würdest. Für richtige Antworten gibt es Federn 🪶."},
-  {emo:"🧠", t:"Fußball-Wissen", sel:['#kabine-body button[onclick="kabineQuiz(\'wissen\')"]'],
-   d:"Fragen rund um Fußball. Wie viele weißt du schon?"},
   {emo:"🎓", t:"Adler-Schule", sel:['#kabine-body button[onclick="kabineQuiz(\'schule\')"]'],
-   d:"Hier übst du, was wir im Training lernen: Wie komme ich vorbei? Wie hole ich mir den Ball? Erst anschauen, dann raten."},
+   d:"Training, Taktik und Fußball-Wissen an einem Ort. Dein Zeugnis zeigt, was du schon kannst. Richtige Antworten bringen Federn 🪶."},
   {emo:"🃏", t:"Deine Karte", sel:['#kabine-body button[onclick="kabineMyCard()"]'],
    d:"Deine eigene Spielerkarte mit Foto und deiner Rolle im Team."},
   {emo:"⭐", t:"Deine Mission", sel:['#kabine-body button[onclick="kabineMission()"]'], vor:()=>{ const d=document.getElementById("kab-mehr"); if(d){ d.open=true; window._kabMehrOffen=true; } },
