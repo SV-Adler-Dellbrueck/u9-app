@@ -17,9 +17,9 @@
    doku/vertonung-lennart/sprechtexte.md ab. Die Namen der Adler-Schule folgen derselben Regel wie im Quiz
    (Hash des Sprechtexts unter audio/schule/): ändert sich ein Text, passt der Name nicht mehr.
 
-   Die Aufnahmen entstanden am 15.09.2026 mit ElevenLabs (Modell eleven_multilingual_v2,
-   Stimme „Ava – youthful and expressive German“) und wurden von Hand hierher gelegt; das
-   Skript selbst ruft keinen Dienst auf und braucht keinen Schlüssel. */
+   Seit 21.11.2026 (v933) stammen alle Aufnahmen aus der Action „Vertonung Lennart“ (ElevenLabs, Modell eleven_v4,
+   Stimme „Lennart – Energetic“, tools/vertonung-lennart.mjs). Dieses Skript selbst ruft keinen Dienst auf und braucht
+   keinen Schlüssel. */
 const vm = require("vm"), fs = require("fs"), path = require("path");
 const WURZEL = path.join(__dirname, "..");
 const ctx = { window: {}, document: {}, navigator: {}, console };
