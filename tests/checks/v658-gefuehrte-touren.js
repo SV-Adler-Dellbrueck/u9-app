@@ -104,7 +104,7 @@ module.exports = async function (h) {
     window._kabTourGeprueft=true; kabineHome(); kabineTourStart();`, key: "adler_kinder_tour" });
   const kinderText = await sk.page.evaluate(() => KABINE_TOUR.map(s => s.t + " " + s.d));
   const fk = sk.fehler().filter(x => !/Failed to load resource/.test(x)); await sk.schliessen();
-  pruef("Kinder", rk, 11, 8, true);
+  pruef("Kinder", rk, 12, 8, true);   // seit v928 mit „Adler-Schule“
   const lang = kinderText.filter(t => t.split(/\s+/).length > 26);
   if (lang.length) probleme.push("Kinder: zu lange Schritte: " + lang.map(t => t.slice(0, 30)).join(" | "));
   const erwachsen = kinderText.filter(t => /Modul|App-Zeit|Datenschutz|Einwilligung|Bewertung|Trainingsplan|KI\b/i.test(t));

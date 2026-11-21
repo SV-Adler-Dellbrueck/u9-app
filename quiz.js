@@ -485,6 +485,7 @@ function tqStart(){
     else html+=`<div style="margin-bottom:8px"></div>`;
     html+=tqRenderTaktikLauncher(pp); // Taktik-Quiz hinter Button (aufgeräumt, wie das Wissensquiz)
     html+=wqRenderLauncher();         // Fußball-Wissensquiz
+    html+=kfRenderLauncher();         // v928: Adler-Schule (Leitfragen 1–6)
     html+=`<div id="tq-challenge"></div>`;
     if(!extern)html+=`<div style="display:flex;margin-top:10px">
         <button class="btn btn-sm" onclick="tqStop()" style="margin-left:auto"><i class="ti ti-x"></i>Schließen</button>
@@ -628,6 +629,7 @@ function tqSelectPlayer(name){
   const mode=window._quizMode; window._quizMode=null; // aus der Kabine direkt ins gewählte Quiz
   if(mode==="taktik"){tqBlocksShow();return;}
   if(mode==="wissen"){wqStart();return;}
+  if(mode==="schule"){kfStart();return;}   // v928: Kachel „Adler-Schule“ in der Kabine
   tqStart();
 }
 
@@ -1479,6 +1481,336 @@ function wqExit(){
   document.body.classList.remove("wq-active");
   if("speechSynthesis" in window)speechSynthesis.cancel();
   tqStart();
+}
+
+/* ═══════════════════════════════════
+   ADLER-SCHULE (v928) – Kinderfragen nach den Leitfragen 1–6 des Ausbildungskonzepts
+   Auftragspaket doku/auftrag-adler-schule (Charles 21.11.2026). Drei Fragearten neben dem Steine-Schieben
+   des Taktik-Quiz: „tippen“ (Stelle oder Mitspieler antippen), „ab“ (zwei Bilder, A oder B), „szene“
+   (kurze Animation, drei Antworten). Dazu je Leitfrage vier Merkkarten zum Anschauen.
+
+   Daten: uebungen/kinderfragen.json – wie bibliothek.json eine Datei, die beim Öffnen frisch geholt wird
+   (der Service Worker lässt uebungen/*.json immer ans Netz). Nachträge brauchen so keine Codeänderung und
+   keinen Versionssprung. Die letzte gute Fassung liegt im Gerät (localStorage), damit die Adler-Schule auch
+   ohne Netz geht; jede Frage wird beim Laden gegen das Schema geprüft, Kaputtes fällt still heraus.
+   Gezeichnet mit _skz (wie die Übungsskizzen), Feld je Spielform wie im Taktik-Quiz.
+   `stufe` (U8/U9/U10) sortiert nur – sie erscheint nie in der Oberfläche. `quelle` ist nur für Trainer.
+   Fortschritt: je Block im bestehenden Quiz-Fortschritt (Blocknummer 100 + Leitfrage, also auch in
+   quiz_progress – keine neue Tabelle); Federn je Frage einmal über quelle „wissensquiz“ mit der Kennung
+   „as-<id>“ (der Server schreibt je Kennung genau einmal gut). Merkkarten geben keine Federn. */
+const KF_LEITFRAGEN={1:"Wie behalte ich den Ball, wenn einer kommt?",2:"Wie komme ich an einem vorbei?",3:"Wie mache ich ein Tor?",
+  4:"Wie kriege ich den Ball zu einem, der frei ist?",5:"Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",6:"Wie hole ich mir den Ball zurück?"};
+const KF_ICON={1:"🛡️",2:"💨",3:"🥅",4:"🎯",5:"📍",6:"🦅"};
+const KF_DATEN_KEY="adler_kf_daten", KF_RICHTIG_KEY="adler_kf_richtig", KF_BLOCK_BASIS=100;
+let KF_DATEN=null, kfLf=0, kfFragen=[], kfIdx=0, kfScore=0, kfTotal=0, kfFertig=false, kfTipp=null, kfOptOrdnung=[];
+function kfBasis(){ return /\/(trainer|eltern|kinder)\/[^/]*$/.test(location.pathname)?"../":""; }
+function kfFrageGueltig(f){
+  if(!f||typeof f.id!=="string"||!(f.leitfrage>=1&&f.leitfrage<=6)||!f.frage||!f.erklaerung)return false;
+  if(f.typ==="ab")return Array.isArray(f.bilder)&&f.bilder.length===2&&(f.richtig===0||f.richtig===1);
+  if(f.typ==="szene")return Array.isArray(f.optionen)&&f.optionen.length===3&&f.richtig>=0&&f.richtig<3&&!!f.anim&&Array.isArray(f.spieler);
+  if(f.typ==="tippen")return Array.isArray(f.spieler)&&(Array.isArray(f.ziele)&&f.ziele.length>0||(f.ziel_spieler!=null&&!!f.spieler[f.ziel_spieler]&&f.spieler[f.ziel_spieler].seite==="wir"));
+  return false;
+}
+function kfDatenPruefen(j){
+  if(!j||j.schema!=="adler-kinderfragen/1"||!Array.isArray(j.fragen))return null;
+  const fragen=j.fragen.filter(kfFrageGueltig), ids=new Set(fragen.map(f=>f.id));
+  const merkkarten=(j.merkkarten||[]).filter(m=>m&&m.id&&m.merksatz&&ids.has(m.bild_aus));
+  return fragen.length?{stand:j.stand||"",fragen,merkkarten}:null;
+}
+async function kfLaden(){
+  if(KF_DATEN)return KF_DATEN;
+  try{ const r=await fetch(kfBasis()+"uebungen/kinderfragen.json",{cache:"no-store"});
+    if(r.ok){ const d=kfDatenPruefen(await r.json()); if(d){ KF_DATEN=d; try{localStorage.setItem(KF_DATEN_KEY,JSON.stringify(d));}catch(e){} return d; } } }catch(e){}
+  try{ const d=kfDatenPruefen(Object.assign({schema:"adler-kinderfragen/1"},JSON.parse(localStorage.getItem(KF_DATEN_KEY)||"null")||{})); if(d)KF_DATEN=d; }catch(e){}
+  return KF_DATEN;
+}
+function kfRichtigeIds(){ try{ return (JSON.parse(localStorage.getItem(KF_RICHTIG_KEY)||"{}")[tqPlayer])||{}; }catch(e){ return {}; } }
+function kfRichtigMerken(id){ try{ const a=JSON.parse(localStorage.getItem(KF_RICHTIG_KEY)||"{}"); (a[tqPlayer]=a[tqPlayer]||{})[id]=1; localStorage.setItem(KF_RICHTIG_KEY,JSON.stringify(a)); }catch(e){} }
+function kfBlockStand(lf){ const p=(tqGetProgress()[tqPlayer])||{}; return p[KF_BLOCK_BASIS+lf]||null; }
+
+/* ── Zeichnen ── Feld 18..162 × 24..256 im Hochformat von _skz (wie das Taktikbrett) */
+const kfX=x=>18+x*1.44, kfY=y=>24+y*2.32;
+function kfFeldSpec(feld){
+  const spec={hoch:true,z:[[18,24,144,232]],li:[[18,140,162,140,"m"]]};
+  if(feld==="funino"){ spec.tor=[[44.3,16,"h",28],[107.7,16,"h",28],[44.3,256,"h",28],[107.7,256,"h",28]]; spec.li.push([18,80,162,80,"sz"],[18,200,162,200,"sz"]); }
+  else spec.tor=[[72,14,"h",36,"j"],[72,256,"h",36,"j"]];
+  return spec;
+}
+/* bild: {spieler, ball, pfeile, ausschnitt}; o: {loesung:frage, stand:"ende", tipp:{x,y}, kennung} */
+function kfSvg(feld,bild,o){
+  o=o||{}; const P=skzPalette(false);
+  let svg=_skz(kfFeldSpec(feld));
+  const teile=[], an=o.stand==="ende"&&o.anim?o.anim:null;
+  let gi=0, wi=0;
+  (bild.pfeile||[]).forEach(p=>{
+    const typ=p.art==="dribbel"?"d":p.art==="lauf"?"l":"p", farbe=P.pfeil[typ]||"#fff";
+    const pts=[p.von,p.ueber,p.nach].filter(Boolean).map(q=>[kfX(q.x),kfY(q.y)]);
+    for(let i=0;i<pts.length-1;i++){
+      const [x1,y1]=pts[i],[x2,y2]=pts[i+1], ende=i===pts.length-2?` marker-end="url(#arr-${typ})"`:"";
+      if(typ==="d"&&typeof _skzWelle==="function")teile.push(`<path d="${_skzWelle(x1,y1,x2,y2)}" fill="none" stroke="${farbe}" stroke-width="2" stroke-linecap="round"${ende}/>`);
+      else teile.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${farbe}" stroke-width="${p.art==="blick"?2.5:2}"${typ==="l"?' stroke-dasharray="5,3"':""}${ende}/>`);
+    }
+  });
+  if(o.loesung&&o.loesung.ziele)o.loesung.ziele.forEach(z=>teile.push(`<ellipse class="kf-loes" cx="${kfX(z.x)}" cy="${kfY(z.y)}" rx="${z.r*1.44}" ry="${z.r*2.32}" fill="rgba(34,197,94,.22)" stroke="#4ade80" stroke-width="2.5" stroke-dasharray="6,4"/>`));
+  (bild.spieler||[]).forEach((s,i)=>{
+    let x=s.x,y=s.y;
+    if(an){ const liste=s.seite==="gegner"?an.gegner:an.wir, k=s.seite==="gegner"?gi++:wi++; const z=liste&&liste[k]&&liste[k].nach; if(z){x=z.x;y=z.y;} }
+    const ziel=o.loesung&&o.loesung.ziel_spieler===i;
+    const kurz=s.rolle?(TQ_ROLLE_KURZ[s.rolle]||""):"";
+    teile.push(`<g class="kf-stein" data-i="${i}" data-seite="${s.seite}" style="transition:transform 1.4s ease-in-out">`
+      +(ziel?`<circle cx="${kfX(x)}" cy="${kfY(y)}" r="13" fill="none" stroke="#4ade80" stroke-width="3"/>`:"")
+      +`<circle cx="${kfX(x)}" cy="${kfY(y)}" r="8.5" fill="${s.seite==="gegner"?P.F.r:P.F.b}" stroke="${s.seite==="gegner"?"#7f1d1d":"#1e3a8a"}" stroke-width="1.5"/>`
+      +(kurz?`<text x="${kfX(x)}" y="${kfY(y)+3.3}" text-anchor="middle" font-size="9.5" font-weight="700" fill="rgba(0,0,0,.8)" font-family="sans-serif">${esc(kurz)}</text>`:"")+`</g>`);
+  });
+  if(bild.ball){ let b=bild.ball; if(an&&an.ball&&an.ball.nach)b=an.ball.nach;
+    teile.push(`<g class="kf-ball" style="transition:transform 1.4s ease-in-out"><circle cx="${kfX(b.x)}" cy="${kfY(b.y)}" r="4.5" fill="${P.ball}" stroke="${P.ballRand}" stroke-width="1.2"/></g>`); }
+  if(o.tipp)teile.push(`<g class="kf-tipp"><circle cx="${kfX(o.tipp.x)}" cy="${kfY(o.tipp.y)}" r="7" fill="none" stroke="#fde047" stroke-width="3"/><circle cx="${kfX(o.tipp.x)}" cy="${kfY(o.tipp.y)}" r="2" fill="#fde047"/></g>`);
+  svg=svg.replace(/<\/svg>\s*$/,teile.join("")+"</svg>");
+  const a=bild.ausschnitt;
+  if(a)svg=svg.replace(/viewBox="[^"]*"/,`viewBox="${kfX(a.x)} ${kfY(a.y)} ${a.w*1.44} ${a.h*2.32}"`);
+  return svg.replace(/^<svg /,`<svg role="img" aria-label="Spielfeld"${o.kennung?` data-kf="${o.kennung}"`:""} `).replace(/max-width:\d+px;display:block;margin:8px auto/,`max-width:${o.breite||230}px;display:block;margin:0 auto`);
+}
+
+/* ── Einstieg ── */
+function kfRenderLauncher(){
+  if(!tqPlayer)return "";
+  const fertig=[1,2,3,4,5,6].filter(lf=>tqGemeistert(kfBlockStand(lf))).length;
+  return `<div class="card" role="button" tabindex="0" id="kf-launcher" style="padding:0;margin-top:10px;overflow:hidden;cursor:pointer" onclick="kfStart()">
+    <div style="background:linear-gradient(135deg,#047857,#0369a1);padding:12px 14px;color:#fff">
+      <div style="font-size:15px;font-weight:800;margin-bottom:2px">🎓 Adler-Schule</div>
+      <div style="font-size:13px;margin-bottom:8px">Wie behalte ich den Ball? Wie komme ich vorbei? – 6 Fragen aus dem Training</div>
+      <div style="height:8px;background:rgba(255,255,255,.25);border-radius:4px;overflow:hidden"><div style="height:100%;width:${Math.round(fertig/6*100)}%;background:#fbbf24;border-radius:4px"></div></div>
+      <div style="font-size:12px;margin-top:5px">${fertig}/6 Blöcke geschafft</div>
+    </div>
+  </div>`;
+}
+function kfPanel(html){ const p=document.getElementById("tq-panel"); if(!p)return null; p.style.display="block"; p.innerHTML=`<div class="tq-panel kf-panel">${html}</div>`; return p; }
+async function kfStart(){
+  if(!tqPlayer){tqStart();return;}
+  if("speechSynthesis" in window)speechSynthesis.cancel();
+  document.body.classList.add("kf-active");
+  kfPanel(`<div style="font-size:13px;color:var(--text2)">Die Adler-Schule lädt …</div>`);
+  const d=await kfLaden();
+  if(!d){ kfPanel(`<div style="font-size:14px;font-weight:800;margin-bottom:6px">🎓 Adler-Schule</div><div style="font-size:13px;color:var(--text2);margin-bottom:10px">Die Fragen brauchen einmal Internet. Danach gehen sie auch ohne.</div><button class="btn btn-sm" onclick="kfExit()"><i class="ti ti-arrow-left"></i>Zurück</button>`); return; }
+  let html=`<div style="font-size:12px;font-weight:700;color:var(--green-text,#15803d);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">🎓 Adler-Schule · ${esc(tqPlayer)}</div>
+    <div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:2px">Was wollen wir heute lernen?</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Jede richtige Antwort bringt beim ersten Mal ${XP_ICON} Federn.</div>
+    <div id="kf-bloecke" style="display:flex;flex-direction:column;gap:8px">`;
+  [1,2,3,4,5,6].forEach(lf=>{
+    const n=d.fragen.filter(f=>f.leitfrage===lf).length; if(!n)return;
+    const bp=kfBlockStand(lf), m=bp?tqMedaille(bp.score,bp.total):"";
+    html+=quizChoiceCard({icon:`<span style="font-size:22px" aria-hidden="true">${KF_ICON[lf]}</span>`, titel:`${esc(KF_LEITFRAGEN[lf])}${m?" "+m:""}`,
+      fertig:tqGemeistert(bp), pct:bp?Math.round(bp.score/bp.total*100):0, col:"#047857",
+      sub:bp?`${bp.score}/${bp.total} richtig`:`${n} Fragen`, onclick:`kfBlock(${lf})`});
+  });
+  html+=`</div><button class="btn btn-sm" style="margin-top:12px" onclick="kfExit()"><i class="ti ti-arrow-left"></i>Zurück zur Quiz-Auswahl</button>`;
+  kfPanel(html);
+}
+function kfExit(){ document.body.classList.remove("kf-active"); if("speechSynthesis" in window)speechSynthesis.cancel(); document.getElementById("kf-karten")?.remove(); tqStart(); }
+const KF_STUFE={U8:0,U9:1,U10:2};
+function kfBlock(lf){
+  if(!KF_DATEN){kfStart();return;}
+  kfLf=lf;
+  const karten=KF_DATEN.merkkarten.filter(m=>m.leitfrage===lf);
+  kfPanel(`<div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">🎓 Adler-Schule</div>
+    <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:12px">${KF_ICON[lf]} ${esc(KF_LEITFRAGEN[lf])}</div>
+    ${karten.length?`<button class="btn" id="kf-anschauen" style="width:100%;min-height:56px;justify-content:center;font-size:15px;margin-bottom:8px" onclick="kfKarten(${lf})">👀 Anschauen (${karten.length} Karten)</button>`:""}
+    <button class="btn btn-p" id="kf-los" style="width:100%;min-height:56px;justify-content:center;font-size:15px" onclick="kfLos(${lf})">Los geht's! ⚽</button>
+    <button class="btn btn-sm" style="margin-top:12px" onclick="kfStart()"><i class="ti ti-arrow-left"></i>Andere Fragen</button>`);
+}
+function kfLos(lf){
+  kfLf=lf;
+  kfFragen=KF_DATEN.fragen.filter(f=>f.leitfrage===lf).slice().sort((a,b)=>(KF_STUFE[a.stufe]??1)-(KF_STUFE[b.stufe]??1)||a.id.localeCompare(b.id));
+  kfIdx=0; kfScore=0; kfTotal=0;
+  kfFrage();
+}
+function kfMischen(n){ const a=[...Array(n).keys()]; for(let i=n-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function kfFrage(){
+  const f=kfFragen[kfIdx]; if(!f){kfErgebnis();return;}
+  if("speechSynthesis" in window)speechSynthesis.cancel();
+  kfFertig=false; kfTipp=null;
+  let inhalt="";
+  if(f.typ==="ab"){
+    inhalt=`<div class="kf-ab" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${f.bilder.map((b,i)=>`
+      <button type="button" class="kf-wahl" data-i="${i}" onclick="kfAbWahl(${i})" aria-label="Bild ${"AB"[i]}" style="border:2px solid var(--rand-bedien,#94a3b8);border-radius:12px;background:var(--surface);padding:6px;cursor:pointer;min-height:56px;display:flex;flex-direction:column;gap:6px;align-items:stretch">
+        ${kfSvg(f.feld,b,{breite:200,kennung:f.id+"-"+i})}
+        <span class="kf-wahl-text" style="font-size:20px;font-weight:900;color:var(--text);min-height:32px;display:flex;align-items:center;justify-content:center">${"AB"[i]}</span></button>`).join("")}</div>`;
+  }else if(f.typ==="tippen"){
+    inhalt=`<div id="kf-feld" role="application" tabindex="0" aria-label="Spielfeld: tippe auf die Stelle – mit der Tastatur Pfeiltasten und Enter" onclick="kfTippen(event)" onkeydown="kfTippTaste(event)" style="cursor:crosshair;touch-action:manipulation;border-radius:8px">${kfSvg(f.feld,f,{kennung:f.id})}</div>
+      <button class="btn btn-p" id="kf-pruefen" style="width:100%;min-height:56px;justify-content:center;margin-top:8px" disabled onclick="kfTippPruefen()"><i class="ti ti-check"></i>Prüfen</button>`;
+  }else{
+    kfOptOrdnung=kfMischen(3);
+    inhalt=`<div id="kf-feld">${kfSvg(f.feld,f,{kennung:f.id,breite:180})}</div>
+      <button class="btn btn-sm" id="kf-nochmal" style="margin:6px auto 0;display:flex" onclick="kfSzeneSpielen()">🔁 Nochmal ansehen</button>
+      <div id="kf-optionen" style="display:flex;flex-direction:column;gap:6px;margin-top:6px;visibility:hidden">${kfOptOrdnung.map(i=>`<button type="button" class="btn kf-opt" data-i="${i}" onclick="kfSzeneWahl(${i})" style="min-height:56px;justify-content:center;font-size:14px;white-space:normal">${esc(f.optionen[i])}</button>`).join("")}</div>`;
+  }
+  kfPanel(`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">${KF_ICON[kfLf]} ${kfIdx+1}/${kfFragen.length}</div>
+      <div class="tq-score">⭐ ${kfScore}/${kfTotal}</div></div>
+    <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px">
+      <div class="kf-frage" style="flex:1;font-size:15px;font-weight:700;color:var(--text);line-height:1.35">${esc(f.frage)}</div>
+      <button onclick="kfSpeak(this)" title="Vorlesen" aria-label="Frage vorlesen" style="flex:none;min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:var(--r);background:var(--surface);font-size:20px;cursor:pointer">🔊</button>
+      <button onclick="kfStart()" aria-label="Beenden" style="flex:none;min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:var(--r);background:var(--surface);font-size:16px;cursor:pointer"><i class="ti ti-x"></i></button></div>
+    ${inhalt}<div id="kf-feedback"></div>`);
+  if(f.typ==="szene")setTimeout(kfSzeneSpielen,350);
+}
+function kfSpeak(btn){
+  const f=kfFragen[kfIdx]; if(!f)return;
+  if(!("speechSynthesis" in window)){toast("Vorlesen wird auf diesem Gerät nicht unterstützt");return;}
+  if(speechSynthesis.speaking||speechSynthesis.pending){speechSynthesis.cancel();if(btn)btn.textContent="🔊";return;}
+  let text=f.frage;
+  if(f.typ==="szene")text+=" "+kfOptOrdnung.map((i,k)=>`Antwort ${k+1}: ${f.optionen[i]}.`).join(" ");
+  if(f.typ==="ab")text+=" Bild A oder Bild B?";
+  const v=(typeof ttsGermanVoice==="function")?ttsGermanVoice():null, saetze=(typeof ttsSaetze==="function")?ttsSaetze(text):[text];
+  saetze.forEach((s,i)=>{ const u=new SpeechSynthesisUtterance(s); u.lang="de-DE"; u.rate=.95; u.pitch=1; if(v)u.voice=v; if(i===saetze.length-1)u.onend=()=>{if(btn)btn.textContent="🔊";}; speechSynthesis.speak(u); });
+  if(btn)btn.textContent="⏹️";
+}
+/* tippen */
+function kfFeldPunkt(ev){
+  const svg=document.querySelector("#kf-feld svg"); if(!svg||!svg.getScreenCTM)return null;
+  const pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY;
+  const m=svg.getScreenCTM(); if(!m)return null;
+  const q=pt.matrixTransform(m.inverse());
+  return {x:(q.x-18)/1.44, y:(q.y-24)/2.32, cx:ev.clientX, cy:ev.clientY};
+}
+function kfTippen(ev){
+  if(kfFertig)return;
+  const p=kfFeldPunkt(ev); if(!p)return;
+  kfTippSetzen(p.x,p.y);
+}
+function kfTippSetzen(x,y){
+  const f=kfFragen[kfIdx]; x=Math.max(0,Math.min(100,x)); y=Math.max(0,Math.min(100,y));
+  const feld=document.getElementById("kf-feld"); if(!feld)return;
+  feld.innerHTML=kfSvg(f.feld,f,{kennung:f.id,tipp:{x,y}});
+  const svg=feld.querySelector("svg"), m=svg&&svg.getScreenCTM&&svg.getScreenCTM();   // Bildschirmpunkt für die 48-px-Trefferfläche
+  let cx=0, cy=0; if(m){ const pt=svg.createSVGPoint(); pt.x=kfX(x); pt.y=kfY(y); const c=pt.matrixTransform(m); cx=c.x; cy=c.y; }
+  kfTipp={x,y,cx,cy};
+  const b=document.getElementById("kf-pruefen"); if(b)b.disabled=false;
+}
+/* Tastatur: Pfeiltasten verschieben die Markierung (Start in der Mitte), Enter oder Leertaste prüft. */
+function kfTippTaste(ev){
+  if(kfFertig)return;
+  const d={ArrowLeft:[-4,0],ArrowRight:[4,0],ArrowUp:[0,-4],ArrowDown:[0,4]}[ev.key];
+  if(d){ ev.preventDefault(); const p=kfTipp||{x:50,y:50}; kfTippSetzen(kfTipp?p.x+d[0]:50,kfTipp?p.y+d[1]:50); document.getElementById("kf-feld")?.focus(); return; }
+  if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); if(kfTipp)kfTippPruefen(); else kfTippSetzen(50,50); }
+}
+function kfTippTreffer(f,p){
+  if(!p)return false;
+  if(Array.isArray(f.ziele)&&f.ziele.length)return f.ziele.some(z=>Math.hypot(p.x-z.x,p.y-z.y)<=z.r);   // in Feldprozent, wie die Ziele im Taktik-Quiz
+  const s=f.spieler[f.ziel_spieler], svg=document.querySelector("#kf-feld svg");
+  if(!s||!svg)return false;
+  const m=svg.getScreenCTM(), pt=svg.createSVGPoint(); pt.x=kfX(s.x); pt.y=kfY(s.y);
+  const c=pt.matrixTransform(m), pxJeEinheit=Math.hypot(m.a,m.b)||1;
+  return Math.hypot(p.cx-c.x,p.cy-c.y)<=Math.max(24,8.5*pxJeEinheit);   // Trefferfläche mindestens 48 px
+}
+function kfTippPruefen(){
+  if(kfFertig||!kfTipp)return;
+  const f=kfFragen[kfIdx], ok=kfTippTreffer(f,kfTipp);
+  document.getElementById("kf-feld").innerHTML=kfSvg(f.feld,f,{kennung:f.id,tipp:kfTipp,loesung:f});
+  const b=document.getElementById("kf-pruefen"); if(b)b.remove();
+  kfAuswerten(ok);
+}
+/* A oder B */
+function kfAbWahl(i){
+  if(kfFertig)return;
+  const f=kfFragen[kfIdx], ok=i===f.richtig;
+  document.querySelectorAll(".kf-wahl").forEach(el=>{
+    const j=Number(el.dataset.i), t=el.querySelector(".kf-wahl-text");
+    el.disabled=true; el.setAttribute("aria-pressed",j===i?"true":"false");
+    if(j===f.richtig){ el.style.border="4px solid #16a34a"; el.classList.add("kf-richtig"); if(t)t.textContent=`✓ ${"AB"[j]} richtig`; }
+    else if(j===i){ el.style.border="4px dashed #dc2626"; if(t)t.textContent=`✗ ${"AB"[j]}`; }
+    else el.style.opacity=".6";
+  });
+  kfAuswerten(ok);
+}
+/* Szene */
+function kfSzeneSpielen(){
+  const f=kfFragen[kfIdx]; if(!f||f.typ!=="szene")return;
+  const feld=document.getElementById("kf-feld"); if(!feld)return;
+  feld.innerHTML=kfSvg(f.feld,f,{kennung:f.id,breite:180});
+  const an=f.anim||{}; let gi=0, wi=0;
+  const steine=[...feld.querySelectorAll(".kf-stein")], ball=feld.querySelector(".kf-ball");
+  const ziele=[];
+  steine.forEach(g=>{ const s=f.spieler[Number(g.dataset.i)], liste=s.seite==="gegner"?an.gegner:an.wir, k=s.seite==="gegner"?gi++:wi++;
+    const z=liste&&liste[k]&&liste[k].nach; if(z)ziele.push([g,(z.x-s.x)*1.44,(z.y-s.y)*2.32]); });
+  if(ball&&an.ball&&an.ball.nach&&f.ball)ziele.push([ball,(an.ball.nach.x-f.ball.x)*1.44,(an.ball.nach.y-f.ball.y)*2.32]);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>ziele.forEach(([g,dx,dy])=>{ g.style.transform=`translate(${dx}px,${dy}px)`; })));
+  setTimeout(()=>{ const o=document.getElementById("kf-optionen"); if(o)o.style.visibility="visible"; },1500);
+}
+function kfSzeneWahl(i){
+  if(kfFertig)return;
+  const f=kfFragen[kfIdx], ok=i===f.richtig;
+  document.querySelectorAll(".kf-opt").forEach(b=>{ const j=Number(b.dataset.i); b.disabled=true;
+    if(j===f.richtig){ b.style.border="3px solid #16a34a"; b.classList.add("kf-richtig"); b.textContent="✓ "+f.optionen[j]; }
+    else if(j===i){ b.style.border="3px dashed #dc2626"; b.textContent="✗ "+f.optionen[j]; } else b.style.opacity=".6"; });
+  kfAuswerten(ok);
+}
+/* Auswertung */
+function kfAuswerten(ok){
+  const f=kfFragen[kfIdx]; kfFertig=true; kfTotal++;
+  const fb=document.getElementById("kf-feedback"); if(!fb)return;
+  if(ok){
+    kfScore++; tqVibrate([30,40,30]);
+    if(tqPlayer&&!kfRichtigeIds()[f.id]){ kfRichtigMerken(f.id);
+      xpAwardByName(tqPlayer,"wissensquiz","as-"+f.id).then(d=>{ if(d>0)toast(`${XP_ICON} +${d} ${XP_LABEL} für ${tqPlayer}!`); }).catch(()=>{}); }
+    fb.innerHTML=`<div class="wq-fb wq-fb-ok">${esc(f.erklaerung.richtig)}</div>`;
+  }else{
+    tqVibrate(80);
+    const karte=kfKarteZu(f);
+    fb.innerHTML=`<div class="wq-fb wq-fb-no">${esc(f.erklaerung.falsch)}</div>${karte?`<button class="btn btn-sm" id="kf-zeig" style="margin-top:8px;width:100%;min-height:48px;justify-content:center" onclick="kfKarten(${f.leitfrage},'${jsq(karte.id)}')">👀 Zeig's mir</button>`:""}`;
+  }
+  fb.innerHTML+=`<button class="btn btn-p btn-sm" id="kf-weiter" style="margin-top:8px;width:100%;min-height:48px;justify-content:center" onclick="kfWeiter()"><i class="ti ti-arrow-right"></i>Weiter</button>`;
+  const sc=document.querySelector(".kf-panel .tq-score"); if(sc)sc.textContent=`⭐ ${kfScore}/${kfTotal}`;
+  setTimeout(()=>document.getElementById("kf-weiter")?.scrollIntoView({block:"nearest",behavior:"smooth"}),50);
+}
+function kfWeiter(){ kfIdx++; kfFrage(); }
+function kfErgebnis(){
+  if(tqPlayer)tqSaveProgress(tqPlayer,KF_BLOCK_BASIS+kfLf,kfScore,kfTotal);
+  const pct=kfTotal?Math.round(kfScore/kfTotal*100):0, m=tqMedaille(kfScore,kfTotal);
+  const msg=pct>=80?{e:"🏆🦅🏆",t:"SUPER GEMACHT!"}:pct>=60?{e:"🌟⚽🌟",t:"RICHTIG GUT!"}:pct>=40?{e:"💪⚡💪",t:"GUTER START!"}:{e:"🦅🔥🦅",t:"WEITER SO!"};
+  kfPanel(`<div id="kf-ergebnis" style="text-align:center;position:relative;overflow:hidden">
+    <div style="font-size:36px;margin-bottom:4px">${msg.e}</div>
+    <div style="font-size:20px;font-weight:800;color:var(--text);margin-bottom:2px">${m?m+" ":""}${msg.t}</div>
+    <div style="font-size:16px;font-weight:600;color:var(--text)">${kfScore} von ${kfTotal} richtig!</div>
+    <div style="font-size:13px;color:var(--text2);margin:4px 0 12px">${KF_ICON[kfLf]} ${esc(KF_LEITFRAGEN[kfLf])}</div>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-p btn-sm" onclick="kfLos(${kfLf})"><i class="ti ti-refresh"></i>Nochmal</button>
+      <button class="btn btn-sm" onclick="kfStart()"><i class="ti ti-layout-grid"></i>Andere Fragen</button>
+      <button class="btn btn-sm" onclick="kfExit()">Fertig</button></div></div>`);
+  tqVibrate([30,50,30,50,120]);
+  if(pct>=70)confetti(document.getElementById("kf-ergebnis"));
+}
+/* Merkkarten */
+function kfKarteZu(f){ const k=(KF_DATEN&&KF_DATEN.merkkarten)||[]; return k.find(m=>m.bild_aus===f.id)||k.find(m=>m.leitfrage===f.leitfrage)||null; }
+function kfKarteBild(m){
+  const f=KF_DATEN.fragen.find(x=>x.id===m.bild_aus); if(!f)return "";
+  if(f.typ==="ab")return kfSvg(f.feld,f.bilder[m.bild_index!=null?m.bild_index:f.richtig],{breite:220,kennung:"mk-"+m.id});
+  if(f.typ==="tippen")return kfSvg(f.feld,f,{breite:220,loesung:f,kennung:"mk-"+m.id});
+  return kfSvg(f.feld,f,{breite:220,stand:"ende",anim:f.anim,kennung:"mk-"+m.id});
+}
+function kfKarten(lf,startId){
+  const karten=KF_DATEN.merkkarten.filter(m=>m.leitfrage===lf); if(!karten.length)return;
+  document.getElementById("kf-karten")?.remove();
+  const ov=document.createElement("div");
+  ov.id="kf-karten"; ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-label","Merkkarten: "+KF_LEITFRAGEN[lf]);
+  ov.style.cssText="position:fixed;inset:0;z-index:10001;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center;padding:12px";
+  ov.innerHTML=`<div style="background:var(--surface);border-radius:18px;max-width:420px;width:100%;max-height:96vh;overflow:auto;padding:12px;box-sizing:border-box">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="flex:1;font-size:13px;font-weight:800;color:var(--text)">${KF_ICON[lf]} ${esc(KF_LEITFRAGEN[lf])}</div>
+      <span id="kf-karten-zahl" style="font-size:12px;font-weight:700;color:var(--text2)"></span>
+      <button class="btn btn-sm" onclick="document.getElementById('kf-karten').remove()" aria-label="Schließen" style="min-width:44px;min-height:44px">✕</button></div>
+    <div id="kf-karten-bahn" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:10px;scrollbar-width:none">
+      ${karten.map((m,i)=>`<div class="kf-karte" data-id="${esc(m.id)}" aria-roledescription="Karte" aria-label="Karte ${i+1} von ${karten.length}" style="flex:0 0 100%;scroll-snap-align:center;box-sizing:border-box">
+        ${kfKarteBild(m)}
+        <div class="kf-merksatz" style="font-size:17px;font-weight:800;color:var(--text);line-height:1.35;text-align:center;margin:10px 4px 4px">${esc(m.merksatz)}</div></div>`).join("")}
+    </div>
+    <div style="font-size:12px;color:var(--text2);text-align:center;margin-top:6px">${karten.length>1?"Wische für die nächste Karte":""}</div></div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener("click",e=>{ if(e.target===ov)ov.remove(); });
+  const bahn=ov.querySelector("#kf-karten-bahn"), zahl=ov.querySelector("#kf-karten-zahl");
+  const sync=()=>{ const w=bahn.clientWidth||1, i=Math.round(bahn.scrollLeft/w); if(zahl)zahl.textContent=`${i+1} von ${karten.length}`; };
+  bahn.addEventListener("scroll",()=>{ clearTimeout(bahn._t); bahn._t=setTimeout(sync,60); },{passive:true});
+  const s=startId?karten.findIndex(m=>m.id===startId):0;
+  requestAnimationFrame(()=>{ if(s>0)bahn.scrollLeft=s*bahn.clientWidth; sync(); });
 }
 
 // Einmaliger Willkommens-/Erklär-Overlay im Kids-Modus: Adler-Federn + Karten-System.
