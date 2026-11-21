@@ -2,7 +2,7 @@
 # (ElevenLabs, Modell eleven_v4; Beschluss 21.11.2026) und öffnet einen Pull Request mit den MP3.
 # Nur von Hand: Actions → „Vertonung Lennart“ → Run workflow. Texte und Dateinamen kommen aus
 # tools/quiz-audio-namen.js (dieselbe Liste wie doku/vertonung-lennart/sprechtexte.md).
-# Der Schlüssel steht nur im Secret ELEVENLABS_API_KEY – nie im Repo, nie im Log.
+# Der Schlüssel steht nur im Secret ADLERAPPELEVENLABS (oder ELEVENLABS_API_KEY) – nie im Repo, nie im Log.
 name: Vertonung Lennart
 
 on:
@@ -36,7 +36,8 @@ jobs:
       - name: Aufnahmen erzeugen
         id: erzeugen
         env:
-          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          # v932: Das Secret heißt im Repo ADLERAPPELEVENLABS (Charles 21.11.); der übliche Name geht weiter.
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY || secrets.ADLERAPPELEVENLABS }}
           MODUS: ${{ inputs.modus }}
         run: node tools/vertonung-lennart.mjs
 

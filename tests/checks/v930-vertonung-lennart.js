@@ -83,7 +83,7 @@ module.exports = async function (h) {
   const on = (wf.match(/\non:\n([\s\S]*?)\n\S/) || [])[1] || "";
   if (!/workflow_dispatch/.test(on) || /\b(push|pull_request|schedule|workflow_run):/.test(on)) probleme.push("c) Action startet nicht nur von Hand");
   if (!/options: \[fehlend, alle\]/.test(wf)) probleme.push("c) Eingabe modus fehlend|alle fehlt");
-  if (!/ELEVENLABS_API_KEY: \$\{\{ secrets\.ELEVENLABS_API_KEY \}\}/.test(wf)) probleme.push("c) Schlüssel kommt nicht aus dem Secret");
+  if (!/ELEVENLABS_API_KEY: \$\{\{ secrets\.ELEVENLABS_API_KEY \|\| secrets\.ADLERAPPELEVENLABS \}\}/.test(wf)) probleme.push("c) Schlüssel kommt nicht aus dem Secret");
   if (/console\.(log|error)\([^)]*schluessel|summary\([^)]*schluessel|writeFileSync\([^)]*schluessel/.test(sk)) probleme.push("c) das Skript gibt den Schlüssel aus");
   if (!/GRENZE = 60000/.test(sk) || !/MODELL = "eleven_v4"/.test(sk) || !/STIMME = "HxvFDONerAuYFCkD1hBR"/.test(sk) || !/\/models/.test(sk)) probleme.push("c) Grenze, Modell, Stimme oder Modellprüfung fehlen im Skript");
   // kein Schlüssel im Repo (ElevenLabs-Schlüssel beginnen mit sk_)
