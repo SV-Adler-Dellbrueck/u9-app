@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* v804 · Nächtlicher, lesender Export für den Claude-Projekt-Chat (Charles 08.11.2026).
    Dieses Skript liegt im öffentlichen Repo und enthält KEINE Daten. Es läuft als GitHub Action im PRIVATEN Repo adler-u9-wissen
-   (.github/workflows/export.yml) und schreibt nach export/: tagebuch.md, einheiten.md, uebungen.md, plaene.md und stand.json.
+   (.github/workflows/export.yml) und schreibt nach export/: tagebuch.md, einheiten.md, uebungen.md, plaene.md, steckbrief.md (seit v925) und stand.json.
 
    Verbindung: Umgebungsvariable EXPORT_DB_URL (GitHub Secret im privaten Repo) – Zugang der Rolle adler_export_lese: nur SELECT auf die
    Whitelist-Views im Schema export (Migration 20261111_v804_export_lese.sql), mit Aliassen statt Klarnamen. Die Spaltenauswahl steht hier
@@ -11,7 +11,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
-export const SKRIPT_VERSION = 2;   // v808: namen_auto in stand.json
+export const SKRIPT_VERSION = 3;   // v808: namen_auto in stand.json · v925: steckbrief.md
 export const PROJEKT_REF = "wgbcibqcqidudoksfkcv";
 export const WHITELIST = {
   tagebuch_eintrag: ["id", "datum", "quelle", "anlass", "baustein", "status", "ki_vorschlag", "bestaetigt", "autor", "ausloeser", "beobachtung", "aha", "konsequenz", "konsequenz_bis", "konsequenz_erledigt_am", "beleg", "anschluss", "schlagworte", "durchgefuehrt", "anwesend_alias", "termin_id"],
@@ -25,8 +25,13 @@ export const WHITELIST = {
   trainingsformen: ["id", "name", "kat", "kurz", "ablauf", "varianten", "coaching", "spieler", "feld", "dauer", "spass", "diff", "custom", "focus", "dims", "tags", "spieler_min", "spieler_max", "mit_torwart", "ablauf_lang"],   // v919: ganze Beschreibung (v917)
   trainingsvorlagen: ["id", "name", "leitfrage", "folge_nr", "tags", "dauer_min", "netto_spielform_min", "skalierung", "beobachtung", "bloecke", "stand", "ordnung", "ziel_kinder"],
   trainingsblock: ["id", "leitfrage", "ziel", "von", "bis", "vorlagen"],
+  /* v925: Steckbrief (Charles 21.11. freigegeben) – ohne Spitzname, Rückennummer, Verein der weiteren Sportart, Schuhgröße, Fotos */
+  steckbrief: ["kind", "lieblingsposition", "starker_fuss", "lieblingsspieler", "lieblingsverein", "schoenster_moment", "torjubel", "saisonziel", "adler_seit",
+    "hobby", "kann_gut", "lieblingsessen", "lieblingstier", "gross_werden", "stolz_auf", "weiterer_sport",
+    "lieblingsfarbe", "lieblingsbuch", "lieblingsfilm", "lieblingsmusik", "lieblingsspiel", "lieblingsfach", "mag_nicht", "groesster_wunsch",
+    "superkraft", "zaubern", "lieblingswitz", "geheimes_talent", "star_spielen", "traumstadion", "fussball_erlebnis", "satz_an_team", "foto_zwecke"],
 };
-const ORDER = { tagebuch_eintrag: "datum, id", tagebuch_punkt: "datum, id", einheit_bewertung: "datum, autor", termine: "datum, id", event_bewertung: "datum, termin_id", trainingsplan: "datum", trainings_eval: "datum", anwesenheit: "datum", trainingsformen: "id", trainingsvorlagen: "id", trainingsblock: "id" };
+const ORDER = { tagebuch_eintrag: "datum, id", tagebuch_punkt: "datum, id", einheit_bewertung: "datum, autor", termine: "datum, id", event_bewertung: "datum, termin_id", trainingsplan: "datum", trainings_eval: "datum", anwesenheit: "datum", trainingsformen: "id", trainingsvorlagen: "id", trainingsblock: "id" , steckbrief: "kind" };
 
 const tag = (d) => (d instanceof Date ? d.toISOString().slice(0, 10) : String(d ?? "").slice(0, 10));
 const de = (d) => { const s = tag(d); return /^\d{4}-\d{2}-\d{2}$/.test(s) ? `${s.slice(8)}.${s.slice(5, 7)}.${s.slice(0, 4)}` : "–"; };
@@ -111,6 +116,32 @@ export function renderPlaene(d, stand) {
   for (const a of d.anwesenheit) o += `- ${de(a.datum)}${a.termin_id ? ` (Termin ${a.termin_id})` : ""}: ${json(a.data)}\n`;
   return o;
 }
+/* v925 · Steckbrief der Eltern, je Kind mit Alias. Für Porträt, Geburtstag, Weihnachtsfeier, Saisonabschluss – nur fürs Trainerteam. */
+const SB_POS = { jaeger: "Jäger", flitzer_links: "linker Flitzer", flitzer_rechts: "rechter Flitzer", aufpasser: "Aufpasser", torwart: "Torwart", alle: "alle", alle_ausser_tw: "alle außer Torwart" };
+const SB_FOTO = { aktion: "Beim Fußball", sport: "Beim Sport", alltag: "Aus dem Alltag", gemalt: "Selbst gemalt", portraet: "Porträt", jubel: "Jubel", team: "Mit dem Team", frei: "Frei" };
+const SB_GRUPPEN = [
+  ["Auf dem Platz", [["lieblingsspieler", "Lieblingsspieler"], ["lieblingsverein", "Lieblingsverein"], ["schoenster_moment", "Schönster Moment bei den Adlern"], ["torjubel", "Torjubel"], ["saisonziel", "Will diese Saison lernen"], ["adler_seit", "Adler seit"], ["fussball_erlebnis", "Größtes Fußball-Erlebnis"]]],
+  ["Neben dem Platz", [["hobby", "Hobby"], ["kann_gut", "Kann außer Fußball richtig gut"], ["lieblingsessen", "Lieblingsessen"], ["lieblingstier", "Lieblingstier"], ["gross_werden", "Wenn ich groß bin"], ["stolz_auf", "Darauf ist es stolz"], ["weiterer_sport", "Weiterer Sport"]]],
+  ["Freundebuch", [["lieblingsfarbe", "Lieblingsfarbe"], ["lieblingsbuch", "Lieblingsbuch"], ["lieblingsfilm", "Lieblingsfilm oder -serie"], ["lieblingsmusik", "Lieblingslied oder Kabinen-Song"], ["lieblingsspiel", "Lieblingsspiel"], ["lieblingsfach", "Lieblingsfach"], ["mag_nicht", "Mag gar nicht"], ["groesster_wunsch", "Größter Wunsch"]]],
+  ["Kreativ und cool", [["superkraft", "Superkraft"], ["zaubern", "Wenn es zaubern könnte"], ["lieblingswitz", "Lieblingswitz"], ["geheimes_talent", "Geheimes Talent"], ["star_spielen", "Mit diesem Star spielen"], ["traumstadion", "Traumstadion"], ["satz_an_team", "Satz an das Team"]]]];
+export function renderSteckbrief(d, stand) {
+  const zeilen = d.steckbrief || [];
+  let o = kopf("Steckbriefe der Kinder", stand, "App-Datenbank (Export-Rolle), Angaben der Eltern – freiwillig");
+  o += "> Nur fürs Trainerteam: für Porträt im Adler Nest, Geburtstage, Weihnachtsfeier und Saisonabschluss. Nichts davon gehört auf Social Media oder ins Internet. Die Angaben stammen von den Eltern über ihr Kind. Spitzname, Schuhgröße, Fotos und Foto-Freigaben stehen bewusst nicht hier. Im Adler Nest steht ein Kind nur mit Vornamen – den setzt die App ein, nicht dieser Export.\n\n";
+  o += `## Kinder mit Angaben (${zeilen.length})\n\n`;
+  for (const s of zeilen) {
+    o += `### ${text(s.kind)}\n\n`;
+    o += `- **Lieblingsposition:** ${s.lieblingsposition ? SB_POS[s.lieblingsposition] || s.lieblingsposition : "–"} · **Starker Fuß:** ${text(s.starker_fuss)}\n`;
+    for (const [titel, felder] of SB_GRUPPEN) {
+      const da = felder.filter(([k]) => s[k] != null && String(s[k]).trim() !== "");
+      if (!da.length) continue;
+      o += `- **${titel}:**\n` + da.map(([k, l]) => `  - ${l}: ${text(s[k])}\n`).join("");
+    }
+    const f = (s.foto_zwecke || []).map((z) => SB_FOTO[z] || z);
+    o += `- **Fotos in der App:** ${f.length ? f.join(", ") : "keine"}\n\n`;
+  }
+  return o;
+}
 export function baueStand(d, verdacht, jetzt = new Date(), auto = []) {
   return { erzeugt: jetzt.toISOString(), projekt: PROJEKT_REF, skript_version: SKRIPT_VERSION, zeilen: Object.fromEntries(Object.keys(WHITELIST).map((k) => [k, (d[k] || []).length])),
     namens_verdacht: verdacht.map((v) => ({ tabelle: v.tabelle, id: v.id, feld: v.feld, anzahl: v.anzahl })),
@@ -122,7 +153,11 @@ export const namensHinweis = (v) => v.length ? `${v.length} Stelle(n) mit einem 
 
 export async function lade(client) {
   const d = {};
-  for (const v of Object.keys(WHITELIST)) d[v] = (await client.query(spaltenAuswahl(v))).rows;
+  for (const v of Object.keys(WHITELIST)) {
+    /* v925: fehlt die View export.steckbrief noch (Migration nicht eingespielt), bricht nicht der ganze Export ab */
+    if (v === "steckbrief") { try { d[v] = (await client.query(spaltenAuswahl(v))).rows; } catch { d[v] = []; } continue; }
+    d[v] = (await client.query(spaltenAuswahl(v))).rows;
+  }
   const verdacht = (await client.query('select tabelle, id, feld, anzahl from export."namen_verdacht" order by 1, 2, 3')).rows;
   let auto = [];
   try { auto = (await client.query('select tabelle, id, feld, anzahl from export."namen_auto" order by 1, 2, 3')).rows; } catch { auto = []; }   // vor Migration v808
@@ -131,7 +166,7 @@ export async function lade(client) {
 export async function schreibe(ordner, d, verdacht, jetzt = new Date(), auto = []) {
   const stand = tag(jetzt);
   await mkdir(ordner, { recursive: true });
-  const dateien = { "tagebuch.md": renderTagebuch(d, stand, verdacht), "einheiten.md": renderEinheiten(d, stand), "uebungen.md": renderUebungen(d, stand), "plaene.md": renderPlaene(d, stand), "stand.json": JSON.stringify(baueStand(d, verdacht, jetzt, auto), null, 2) + "\n" };
+  const dateien = { "tagebuch.md": renderTagebuch(d, stand, verdacht), "einheiten.md": renderEinheiten(d, stand), "uebungen.md": renderUebungen(d, stand), "plaene.md": renderPlaene(d, stand), "steckbrief.md": renderSteckbrief(d, stand), "stand.json": JSON.stringify(baueStand(d, verdacht, jetzt, auto), null, 2) + "\n" };
   for (const [n, inhalt] of Object.entries(dateien)) await writeFile(`${ordner}/${n}`, inhalt, "utf8");
   return Object.keys(dateien);
 }

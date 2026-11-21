@@ -9,7 +9,8 @@
    das Trainerteam liest und freigibt. */
 const FF_PORTRAET=[
   ["adler_seit","Bei den Adlern seit","z. B. Saison 2025/26"],
-  ["nummer_grund","Warum genau diese Rückennummer?","z. B. Die trägt mein Lieblingsspieler"],
+  /* v925: „Warum genau diese Rückennummer?“ entfällt – die Nummern wurden zugewiesen, nicht gewählt (Charles 21.11.).
+     Eine vorhandene Antwort bleibt in der Datenbank; beim Speichern wird sie nicht angefasst. */
   ["hobby","Hobby neben dem Fußball","z. B. Schwimmen, Lego"],
   ["kann_gut","Was ich außer Fußball richtig gut kann","z. B. Witze erzählen"],
   ["lieblingsessen","Lieblingsessen","z. B. Pfannkuchen"],
@@ -80,9 +81,9 @@ async function elternFanfactsOpen(spielerId,kindName){
     ${klappe("📖 Freundebuch","Freiwillig – wer Lust hat, macht weiter.",SB_FREUNDE)}
     ${klappe("🌟 Kreativ und cool","Darüber freuen sich auch die anderen Kinder.",SB_KREATIV)}
     <details class="sb-klappe"><summary>🦅 Fürs Adler Nest und den Verein</summary>
-      <div class="sb-unter">Reihum stellt das Adler Nest ein Kind vor. Aus diesen Angaben und den Antworten im Kabinen-Reporter entsteht ein kurzer Text, den das Trainerteam vor dem Druck liest. Der Grund für die Rückennummer bleibt beim Trainerteam.</div>
+      <div class="sb-unter">Reihum stellt das Adler Nest ein Kind vor. Aus diesen Angaben und den Antworten im Kabinen-Reporter entsteht ein kurzer Text, den das Trainerteam vor dem Druck liest.</div>
       ${ausgabe}
-      ${FF_PORTRAET.filter(([k])=>k==="adler_seit"||k==="nummer_grund").map(feld).join("")}
+      ${FF_PORTRAET.filter(([k])=>k==="adler_seit").map(feld).join("")}
       <label for="ff-starker_fuss" style="${lab}">Starker Fuß</label>
       <select id="ff-starker_fuss" style="${inp}">${[["","– bitte wählen –"],["rechts","rechts"],["links","links"],["beide","beide"]].map(([v,l])=>`<option value="${v}"${(f.starker_fuss||"")===v?" selected":""}>${l}</option>`).join("")}</select>
       ${FF_STECKBRIEF.filter(([k])=>k!=="saisonziel").map(feld).join("")}

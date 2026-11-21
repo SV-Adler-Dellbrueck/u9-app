@@ -69,7 +69,7 @@ module.exports = async function (h) {
   if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
   if (r.fehler) { probleme.push(r.fehler); return h.ergebnis(titel, false, probleme); }
   const p1 = posts.fanfacts[0] || {};
-  if (r.felder !== 10 || r.hobbyVorbelegt !== "Lego" || p1.kann_gut !== "Witze erzählen" || p1.hobby !== "Lego") probleme.push("a) " + JSON.stringify({ felder: r.felder, vor: r.hobbyVorbelegt, post: p1 }));
+  if (r.felder !== 9 || r.hobbyVorbelegt !== "Lego" || p1.kann_gut !== "Witze erzählen" || p1.hobby !== "Lego") probleme.push("a) " + JSON.stringify({ felder: r.felder, vor: r.hobbyVorbelegt, post: p1 }));   // v925: 9 statt 10 – die Rückennummer-Frage entfällt (Nummern wurden zugewiesen)
   else zeilen.push("a) zehn Porträt-Felder, vorbelegt und mitgespeichert");
   const fb = posts.fanfacts.slice(vorher);
   if (fb.length !== 2 || !("hobby" in fb[0]) || ("hobby" in fb[1]) || fb[1].spitzname !== "Flitzi" || r2 !== true) probleme.push("a) Rückfall: " + JSON.stringify({ fb, r2 }));

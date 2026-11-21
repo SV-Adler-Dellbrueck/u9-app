@@ -93,7 +93,7 @@ module.exports = async function (h) {
   if (Object.values(pf).includes(false)) probleme.push("f) Migration: " + JSON.stringify(pf));
   const ex = await import(pathToFileURL(path.join(h.REPO, "tools/export-tagebuch.mjs")).href);
   const st = ex.baueStand({}, [], new Date("2026-11-08T00:00:00Z"), [{ tabelle: "tagebuch_eintrag", id: "9", feld: "aha", anzahl: 1 }]);
-  if (!st.namen_auto || st.namen_auto.length !== 1 || st.skript_version !== 2) probleme.push("f) stand.json ohne namen_auto");
+  if (!st.namen_auto || st.namen_auto.length !== 1 || st.skript_version < 2) probleme.push("f) stand.json ohne namen_auto");   // v925: Skriptversion 3 (steckbrief.md), namen_auto unverändert
   zeilen.push("Migration streng (Abstand ≤ 1), Varianten ohne Rücksicht-Schalter, Alltagswörter erlaubt, Rechte; stand.json meldet namen_auto");
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
   return h.ergebnis("v808 Kindernamen in Schreibvarianten", !probleme.length, probleme.length ? probleme : zeilen);
