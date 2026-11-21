@@ -1,7 +1,7 @@
 /* v862 · Eltern-App: erster Besuch eins nach dem anderen (3.9) und Reihenfolge der Kacheln (3.15), Charles 18.11.
    a) Die Eltern-Tour hat 6 Schritte; der letzte zeigt auf ⋯.
    b) Ohne erledigte Tour erscheint keine Push-Karte; nach „Fertig“ ist die Tour gemerkt.
-   c) Startseite: „Fürs Team“ (Trainerteam zuerst) → „Für die Kinder“ → „Mehr“.
+   c) Startseite: seit v926 „Für die Kinder“ → „Fürs Team“ (Charles 21.11.; vorher Fürs Team → Kinder → Mehr).
    d) „Mehr vom Team“ ist in Lesen, Fotos, Untereinander gegliedert. */
 "use strict";
 const b64 = o => Buffer.from(JSON.stringify(o)).toString("base64url");
@@ -24,7 +24,7 @@ module.exports = async function (h) {
     // c) Reihenfolge
     const body = document.getElementById("ep-dash-body");
     const txt = body ? body.innerText : "";
-    out.pos = ["Fürs Team", "Trainerteam kontaktieren", "Für die Kinder", "Die Kabine", "Mehr vom Team"].map(t => txt.indexOf(t));
+    out.pos = ["Für die Kinder", "Die Kabine", "Fürs Team", "Trainerteam", "Mehr vom Team"].map(t => txt.indexOf(t));   // seit v926: Kinder zuerst (Charles 21.11.)
     // d) Gruppen in „Mehr vom Team“
     const m = document.getElementById("cat-mehr"); const mt = m ? m.textContent : "";
     out.gruppen = ["Lesen", "Nachlesen", "Fotos", "Spieltagsgalerie", "Untereinander", "Adler-Börse"].map(t => mt.indexOf(t));
@@ -52,7 +52,7 @@ module.exports = async function (h) {
   if (r.pushVorTour || !r.tourAuf || r.zaehler !== "1 von 6" || r.zaehlerEnde !== "6 von 6" || !r.gemerkt || !r.zu) probleme.push("b) erster Besuch: " + JSON.stringify(r));
   else zeilen.push("b) keine Push-Karte vor der Tour · 1 von 6 → 6 von 6 → gemerkt" + (r.extra ? " · Zusatzknopf „" + r.extra + "“" : " · (Push hier nicht verfügbar, kein Zusatzknopf)"));
   const steigt = a => a.every(x => x >= 0) && a.every((x, i) => i === 0 || x > a[i - 1]);
-  if (!steigt(r.pos)) probleme.push("c) Reihenfolge: " + JSON.stringify(r.pos)); else zeilen.push("c) Fürs Team → Für die Kinder → Mehr");
+  if (!steigt(r.pos)) probleme.push("c) Reihenfolge: " + JSON.stringify(r.pos)); else zeilen.push("c) Für die Kinder → Fürs Team (seit v926)");
   if (!steigt(r.gruppen)) probleme.push("d) Gruppen: " + JSON.stringify(r.gruppen)); else zeilen.push("d) Mehr vom Team: Lesen · Fotos · Untereinander");
   return h.ergebnis(titel, !probleme.length, probleme.concat(zeilen));
 };

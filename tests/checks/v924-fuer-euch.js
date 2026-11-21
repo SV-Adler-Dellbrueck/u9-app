@@ -61,21 +61,23 @@ module.exports = async function (h) {
     document.querySelectorAll('[role="dialog"]').forEach(d => d.remove());
     /* d) nichts mehr offen */
     await window.__voll(); await steckbriefKarte(window._elternKids); await w(300);
-    out.leer = sek.hidden;
+    out.leer = !document.querySelector("#steckbrief-slot .sb-karte");   // seit v926 können andere Karten (Zu erledigen, Benachrichtigungen) bleiben
     return out;
   }, datum);
   const fe = e.fehler().filter(f => !/Failed to load resource|net::ERR/.test(f));
   await e.schliessen();
-  if (!r.sichtbar || r.zahl !== "1 von 2" || r.punkte !== 2 || r.karten.join(",") !== "feier-karte,sb-karte") probleme.push(`a) Karussell: sichtbar ${r.sichtbar}, „${r.zahl}“, ${r.punkte} Punkte, Karten ${r.karten.join(",")}`);
+  /* seit v926 sammelt „Für euch“ auch „Zu erledigen“ und den Benachrichtigungs-Hinweis – geprüft: Feier vor Steckbrief, Zähler passt zur Zahl der Karten */
+  const nK = r.karten.length, iF = r.karten.indexOf("feier-karte"), iS = r.karten.indexOf("sb-karte");
+  if (!r.sichtbar || iF < 0 || iS < iF || r.zahl !== `1 von ${nK}` || r.punkte !== nK) probleme.push(`a) Karussell: sichtbar ${r.sichtbar}, „${r.zahl}“, ${r.punkte} Punkte, Karten ${r.karten.join(",")}`);
   if (!r.vorTermin) probleme.push("a) „Für euch“ steht nicht vor der Terminkarte");
   if (!(r.erste < r.bahnBreite - 20) || r.querScroll) probleme.push(`a) nächste Karte schaut nicht hervor (${r.erste}/${r.bahnBreite} px) oder Seite scrollt quer (${r.querScroll})`);
   if (r.xHoch < 44 || !/Termin/.test(r.xName) || r.knopfHoch < 56) probleme.push(`b) ✕ ${r.xHoch} px „${r.xName}“, Hauptknopf ${r.knopfHoch} px`);
   const n = r.nachX;
-  if (n.feier || n.gemerkt !== "1" || !/Mitbringliste steht im Termin/.test(n.toast) || !/Rückgängig/.test(n.toast) || n.zahl !== "" || !n.einzeln || n.breite !== r.bahnBreite) probleme.push(`b) nach ✕: ${JSON.stringify(n)}`);
+  if (n.feier || n.gemerkt !== "1" || !/Mitbringliste steht im Termin/.test(n.toast) || !/Rückgängig/.test(n.toast) || n.zahl !== (nK - 1 > 1 ? `1 von ${nK - 1}` : "") || n.einzeln !== (nK - 1 === 1)) probleme.push(`b) nach ✕: ${JSON.stringify(n)}`);
   if (r.nachNeuLaden) probleme.push("b) ausgeblendete Karte kommt beim Neuladen wieder");
-  if (!r.nachUndo.feier || r.nachUndo.gemerkt || r.nachUndo.zahl !== "1 von 2") probleme.push(`b) Rückgängig: ${JSON.stringify(r.nachUndo)}`);
+  if (!r.nachUndo.feier || r.nachUndo.gemerkt || r.nachUndo.zahl !== `1 von ${nK}`) probleme.push(`b) Rückgängig: ${JSON.stringify(r.nachUndo)}`);
   if (!r.imTermin) probleme.push("c) Mitbringliste fehlt im Termin");
-  if (!r.leer) probleme.push("d) „Für euch“ bleibt sichtbar, obwohl nichts offen ist");
+  if (!r.leer) probleme.push("d) Steckbrief-Karte bleibt, obwohl alles ausgefüllt ist");
   zeilen.push(`a) „Für euch“ vor der Terminkarte, „${r.zahl}“, Karte ${r.erste} von ${r.bahnBreite} px · b) ✕ ${r.xHoch} px → weg, gemerkt, „Rückgängig“ holt zurück · c) Mitbringliste im Termin · d) nichts offen → unsichtbar`);
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
   return h.ergebnis(titel, !probleme.length, probleme.length ? probleme.concat(zeilen) : zeilen);

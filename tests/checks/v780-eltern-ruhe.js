@@ -36,7 +36,8 @@ module.exports = async function (h) {
   const fe = s.fehler(); await s.schliessen();
   if (r.hinweise.schrift && r.hinweise.schrift !== "1px") probleme.push("a) Schrift-Hinweis hat noch einen Farbstreifen: " + r.hinweise.schrift);
   if (r.hinweise.push && r.hinweise.push !== "1px") probleme.push("a) Push-Hinweis hat noch einen Farbstreifen: " + r.hinweise.push);
-  if (r.tkTop == null || r.tkTop > 400) probleme.push("a) Terminkarte beginnt bei " + r.tkTop + " px (erwartet höchstens 400; v781: das blaue Kopfband kostet Höhe)");
+  /* seit v926 steht „📌 Für euch“ bewusst über den Terminen (Charles 21.11.) – die Terminkarte muss im ersten Bildschirm beginnen */
+  if (r.tkTop == null || r.tkTop > 600) probleme.push("a) Terminkarte beginnt bei " + r.tkTop + " px (erwartet höchstens 600, seit v926 unter „Für euch“)");
   zeilen.push(`a) Hinweise ohne Streifen (${r.hinweise.schrift}/${r.hinweise.push}) · Terminkarte beginnt bei ${r.tkTop} px`);
   /* v838: Der nächste Termin ist hier ein Training ohne Rückmeldung – das gilt als zugesagt und trägt keinen Mahnstreifen mehr
      (vorher 4 px). Der Streifen am Spiel ohne Rückmeldung steht in v838-eltern-zonen.js. */

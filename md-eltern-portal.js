@@ -448,7 +448,7 @@ function elternPortalDashboard(root){
     <div id="ep-kopf" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;padding:12px 12px 12px;margin-bottom:12px;background:var(--blue);color:#fff;border-radius:18px;box-shadow:0 2px 8px rgba(26,86,219,.25)">
       <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 150px"><img src="logo.png" alt="" width="40" height="40" style="flex:none;border-radius:50%;background:#fff"><div style="min-width:0"><div style="font-size:var(--s-teil);font-weight:800;line-height:1.15">Eltern-Bereich</div><div id="ep-gruss" style="font-size:var(--s-klein);opacity:.95">SV Adler Dellbrück · U9</div><div id="ep-gruss2" style="font-size:var(--s-klein);opacity:.95"></div></div></div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;flex:none">
-        <button type="button" id="rufe-kopf" onclick="rufeEinstieg()" title="Chats – Adler-Rufe im Team" aria-label="Chats öffnen – Adler-Rufe im Team" class="btn btn-kopf ep-chats" style="position:relative">💬<span class="ep-chats-wort">Chats</span><span class="rufe-badge" style="display:none;position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font-size:var(--s-klein);font-weight:800;align-items:center;justify-content:center;border:2px solid #fff;box-sizing:border-box"></span></button>
+        <button type="button" id="rufe-kopf" onclick="rufeEinstieg()" title="Chats – Nachrichten im Team" aria-label="Chats öffnen – Nachrichten im Team" class="btn btn-kopf ep-chats" style="position:relative">💬<span class="ep-chats-wort">Chats</span><span class="rufe-badge" style="display:none;position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font-size:var(--s-klein);font-weight:800;align-items:center;justify-content:center;border:2px solid #fff;box-sizing:border-box"></span></button>
         <button type="button" id="ep-menue-knopf" onclick="elternMenueUmschalten()" aria-expanded="false" aria-controls="ep-menue" aria-label="Mehr: Schriftgröße, Dunkelmodus, Hilfe, Mein Konto" title="Mehr" class="btn btn-kopf" style="font-size:var(--s-teil)">⋯</button>
       </div>
       <div id="ep-menue" style="display:none;flex-basis:100%;flex-wrap:wrap;justify-content:space-around;gap:8px;padding-top:10px;margin-top:2px;border-top:1px solid rgba(255,255,255,.35)">
@@ -1604,25 +1604,18 @@ function elternOffeneRsvpHtml(rows,kids,rsvpAll,ausserId){
     .filter(x=>x.kinder.length);
   if(!offen.length)return "";
   const anzahl=offen.reduce((n,x)=>n+x.kinder.length,0);
-  const zeilen=offen.map(({t,kinder})=>{
+  /* v926: In „Für euch“ steht nur der Hinweis – die Antwortknöpfe stehen einmal, auf der Karte im Termin-Karussell
+     (v686: jeder Termin einmal). „Jetzt antworten“ springt dorthin; liegt der Termin nicht im Karussell, öffnet das Fenster. */
+  const zeilen=offen.slice(0,3).map(({t,kinder})=>{
     const m=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ,col:"#1e3a8a"};
     const d=new Date(t.datum+"T00:00:00"), wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
-    const zeit=elternZeitKurz(t); // v729: mit Ende
-    const kidRows=kinder.map(k=>{
-      const kd=k.kader||{};
-      const btns=Object.keys(EP_RSVP).map(s=>{   // v840: vier Stufen, auch „Krank“
-        const c=EP_RSVP[s];
-        return elternAntwortKnopf({s,on:false,act:`elternRsvp(${t.id},${k.spieler_id},'${s}')`,name:kd.name});
-      }).join("");
-      return `<div style="margin-top:8px">
-        <div style="font-size:var(--s-text);font-weight:700;margin-bottom:5px">${esc(kd.name||"Kind")}${kd.nr!=null?` <span style="color:var(--text3);font-weight:600">#${kd.nr}</span>`:""}</div>
-        <div style="display:flex;gap:6px">${btns}</div></div>`;
-    }).join("");
-    return `<div style="border-top:1px solid #f1f5f9;margin-top:10px;padding-top:10px">
-      <div role="button" tabindex="0" onclick="terminDetailOpen(${t.id})" style="cursor:pointer;min-height:44px;display:flex;align-items:center;gap:6px;font-size:var(--s-text);font-weight:800">${m.icon} ${esc(t.titel||t.gegner||m.label)} <span style="margin-left:auto;color:#2563eb" aria-hidden="true">›</span></div>
-      <div style="font-size:var(--s-klein);color:#64748b">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${zeit?" · "+zeit:""}${t.platz?" · 🏟️ "+esc(t.platz):""}</div>
-      ${kidRows}</div>`;
-  }).join("");
+    const zeit=elternZeitKurz(t);
+    const wer=(kids||[]).length>1?` · ${kinder.map(k=>esc((k.kader&&k.kader.name)||"Kind")).join(", ")}`:"";
+    return `<div class="el-offen-zeile" style="border-top:1px solid #f1f5f9;margin-top:8px;padding-top:8px">
+      <div style="font-size:var(--s-text);font-weight:800">${m.icon} ${esc(t.titel||t.gegner||m.label)}</div>
+      <div style="font-size:var(--s-klein);color:#64748b">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${zeit?" · "+zeit:""}${wer}</div>
+      <button type="button" class="btn btn-p el-offen-los" onclick="elternTkZeigen(${Number(t.id)})" style="width:100%;justify-content:center;margin-top:8px">Jetzt antworten</button></div>`;
+  }).join("")+(offen.length>3?`<div style="font-size:var(--s-klein);color:#64748b;margin-top:8px">und ${offen.length-3} weitere – im Karussell „Nächste Termine“</div>`:"");
   return `<div id="eltern-offen-card" style="background:#fff;border:1px solid #cbd5e1;border-left:4px solid #d97706;border-radius:14px;padding:14px 16px 16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)">
     <div style="display:flex;align-items:baseline;gap:8px">
       <div style="font-size:var(--s-karte);color:#b45309;font-weight:900">❗ Rückmeldung fehlt</div>
@@ -3325,7 +3318,7 @@ function elternTerminKarussell(erste,rows,kids,rsvpAll,termin){
     .sort((a,b)=>String(a.datum).localeCompare(String(b.datum))||String(a.uhrzeit||"").localeCompare(String(b.uhrzeit||""))).slice(0,4);
   return `<section id="termine-karussell" class="tk-sek" aria-label="Nächste Termine">
     <div class="fe-kopf"><span class="fe-titel">📅 Nächste Termine</span><span id="tk-zahl" class="fe-zahl" aria-live="polite"></span></div>
-    <div id="tk-bahn" class="tk-bahn" tabindex="-1">${erste}${weitere.map(t=>elternTerminKarteKlein(t,kids,rsvpAll)).join("")}</div>
+    <div id="tk-bahn" class="tk-bahn" tabindex="-1" data-scrollkeep="tk">${erste}${weitere.map(t=>elternTerminKarteKlein(t,kids,rsvpAll)).join("")}</div>
     <div id="tk-punkte" class="fe-punkte" aria-hidden="true"></div></section>`;
 }
 function elternTerminKarteKlein(t,kids,rsvpAll){
@@ -3343,7 +3336,7 @@ function elternTerminKarteKlein(t,kids,rsvpAll){
   const rsvpRows=ab?"":kids.map(k=>{ const kd=k.kader||{}, s=st(k);
     const btns=Object.keys(EP_RSVP).map(x=>{ const on=s===x; return elternAntwortKnopf({s:x,on,act:on?`elternRsvpClear(${t.id},${k.spieler_id})`:`elternRsvp(${t.id},${k.spieler_id},'${x}')`,name:kd.name,vorab:!s}); }).join("");
     return `<div style="margin-top:10px"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="font-weight:700;font-size:var(--s-text)">${esc(kd.name||"Kind")}</span>
-      <span style="margin-left:auto;font-size:var(--s-klein);font-weight:700;color:${s&&EP_RSVP[s]?EP_RSVP[s].col:(giltZu?"#475569":"#b45309")}">${s&&EP_RSVP[s]?EP_RSVP[s].emo+" "+EP_RSVP[s].lbl:(giltZu?"✓ "+EL_GILT_TEXT:"❗ offen")}</span></div>
+      <span class="tk-stand" style="margin-left:auto;font-size:var(--s-klein);font-weight:700;color:${s&&EP_RSVP[s]?EP_RSVP[s].col:(giltZu?"#475569":"#b45309")}">${s&&EP_RSVP[s]?EP_RSVP[s].emo+" "+EP_RSVP[s].lbl:(giltZu?"✓ "+EL_GILT_TEXT:"❗ offen")}</span></div>
       <div style="display:flex;gap:6px">${btns}</div></div>`; }).join("");
   const aufgaben=(typeof helferTasksFuer==="function")?helferTasksFuer(t.typ,t):[];
   const hilfe=ab?[]:[t.typ==="training"?"Betreuung vor Ort":"",...aufgaben.map(a=>`${a.t.split(" ")[0]} ${a.kurz(t)}`)].filter(Boolean);
@@ -3356,6 +3349,14 @@ function elternTerminKarteKlein(t,kids,rsvpAll){
       ${hilfe.length?`<div class="tk-hilfe" style="margin-top:10px;font-size:var(--s-text);color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:8px 10px">🙌 Hilfe gesucht: ${hilfe.map(esc).join(" · ")}</div>`:""}
       <button type="button" class="btn" onclick="terminDetailOpen(${Number(t.id)})" style="width:100%;justify-content:center;margin-top:10px">Alles zum Termin ›</button>
     </div></div>`;
+}
+function elternTkZeigen(id){
+  const b=document.getElementById("tk-bahn"), k=b&&[...b.children].find(x=>Number(x.dataset.termin)===Number(id));
+  if(!k){ if(typeof terminDetailOpen==="function")terminDetailOpen(id); return; }
+  const sek=document.getElementById("termine-karussell");
+  if(sek&&sek.scrollIntoView)sek.scrollIntoView({block:"start",behavior:"smooth"});
+  b.scrollTo({left:k.offsetLeft-b.children[0].offsetLeft,behavior:"smooth"});
+  setTimeout(()=>{ const x=k.querySelector("button[aria-pressed]"); if(x)try{x.focus({preventScroll:true});}catch(e){} elternTkSync(); },450);
 }
 function elternTkSync(){
   const sek=document.getElementById("termine-karussell"), b=document.getElementById("tk-bahn"); if(!sek||!b)return;

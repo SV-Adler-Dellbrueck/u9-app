@@ -1812,7 +1812,7 @@ details.htp-info .inhalt{padding:0 16px 16px;white-space:pre-wrap;line-height:1.
 .el-gitter>.btn.btn-zeile>span:nth-child(2){width:100%}
 .el-gitter>.btn.btn-zeile.el-breit{grid-column:1/-1;flex-direction:row;align-items:center;min-height:68px}
 .el-gitter>.btn.btn-zeile.el-breit>span:last-child{display:inline}
-.ep-chats{width:auto!important;padding:0 12px!important;gap:5px;font-weight:800}
+.ep-chats{width:auto!important;padding:0 12px!important;gap:5px;font-weight:800;background:rgba(0,0,0,.22)!important;color:#fff!important}
 .ep-chats-wort{font-size:var(--s-text)}
 details.tk-erledigt>summary{min-height:44px;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:var(--s-text);font-weight:700;color:var(--green);list-style:none}
 details.tk-erledigt>summary::-webkit-details-marker{display:none}

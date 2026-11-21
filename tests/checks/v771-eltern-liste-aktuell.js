@@ -34,13 +34,14 @@ module.exports = async function (h) {
   /* Kurze Aufrufe: Der Service Worker lädt in den ersten Sekunden einmal neu; ein langer Aufruf über diesen Moment hinweg verliert
      seinen Kontext (tests/README). */
   const ev = (fn, arg) => s.page.evaluate(fn, arg);
-  const Z = "const __z = id => { const b = [...document.querySelectorAll('button')].find(x => (x.getAttribute('onclick') || '').includes('terminDetailOpen(' + id + ')') && /Danach/.test((x.closest('div') || {}).textContent || '')); return b ? b.textContent.replace(/\\s+/g, ' ').trim() : null; };";
+  /* seit v926: die Übersicht hinter dem Fenster sind die Karten im Karussell „Nächste Termine“ (Stand in .tk-stand) */
+  const Z = "const __z = id => { const k = document.querySelector('#tk-bahn > [data-termin=\"' + id + '\"] .tk-stand'); return k ? k.textContent.replace(/\\s+/g, ' ').trim() : null; };";
   const zeileVon = id => s.page.evaluate(`(() => { ${Z} return __z(${id}); })()`);
   const fehlt = await ev(() => typeof tdRsvp !== "function" || typeof elternTermineOpen !== "function");
   const r = { fehlt };
   if (!fehlt) {
-    r.a = await ev(() => { const k = document.getElementById("danach-alle"); return { da: !!k, hoehe: k ? Math.round(k.getBoundingClientRect().height) : 0, text: k ? k.textContent.trim() : "", zeilen: [...document.querySelectorAll("button")].filter(b => /terminDetailOpen\(\d+\)/.test(b.getAttribute("onclick") || "") && /Danach/.test((b.closest("div") || {}).textContent || "")).length }; });
-    await ev(() => document.getElementById("danach-alle")?.click()); await s.page.waitForTimeout(500);
+    r.a = await ev(() => { const k = document.getElementById("alle-termine-kachel"); /* seit v926 die Kachel „Alle Termine“ unter „Fürs Team“ */ return { da: !!k, hoehe: k ? Math.round(k.getBoundingClientRect().height) : 0, text: k ? k.textContent.trim() : "", zeilen: document.querySelectorAll("#tk-bahn > *").length }; });
+    await ev(() => document.getElementById("alle-termine-kachel")?.click()); await s.page.waitForTimeout(500);
     r.a.liste = await ev(() => { const l = !!document.getElementById("et-modal"); document.getElementById("et-modal")?.remove(); return l; });
     await ev(id => terminDetailOpen(id), ziel); await s.page.waitForTimeout(500);
     await ev(id => tdRsvp(id, 3, "abgesagt"), ziel); await s.page.waitForTimeout(2000);
@@ -50,7 +51,7 @@ module.exports = async function (h) {
   if (r.fehlt) { await s.schliessen(); return h.ergebnis("v771 Eltern-Liste aktuell", false, ["tdRsvp oder elternTermineOpen fehlt"]); }
   const fe = s.fehler(); await s.schliessen();
   if (!r.a.da || r.a.hoehe < 44 || !/Alle Termine/.test(r.a.text) || !r.a.liste || r.a.zeilen < 2) probleme.push("a) " + JSON.stringify(r.a));
-  zeilen.push(`a) Knopf „${r.a.text}“ (${r.a.hoehe} px) unter „Danach“ (${r.a.zeilen} Termine), öffnet die Saisonliste`);
+  zeilen.push(`a) Knopf „${r.a.text}“ (${r.a.hoehe} px) unter „Fürs Team“ (${r.a.zeilen} Termine im Karussell), öffnet die Saisonliste`);
   if (!r.b.zeile || !/Absage/.test(r.b.zeile) || /Zusage/.test(r.b.zeile) || !r.b.andere.length || r.b.andere.some(x => !/Zusage/.test(x))) probleme.push("b) " + JSON.stringify(r.b));
   zeilen.push(`b) nach der Absage im Termin-Fenster steht in der Liste „Absage“, die anderen „Zusage“ – ohne Neuladen`);
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));

@@ -43,9 +43,11 @@ module.exports = async function (h) {
   const a = A.r, c = C.r;
   const lum = f => { const m = f.match(/\d+(\.\d+)?/g).map(Number).slice(0, 3).map(v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }); return .2126 * m[0] + .7152 * m[1] + .0722 * m[2]; };
   // a)
-  const folge = [a.ansage, a.termin, a.offenZone, a.offenKarte, a.neuZone, a.rufe, a.termineListe];
-  if (folge.some(x => x < 0) || folge.some((x, i) => i && x <= folge[i - 1])) probleme.push("a) Reihenfolge Ansage › Termin › „Noch offen“ › offene Antworten › „Neu“ › Rufe › Termine: " + JSON.stringify(folge));
-  else zeilen.push("a) Reihenfolge: Ansage › nächster Termin › „Noch offen“ › „Neu“ › Termine");
+  /* seit v926 (Charles 21.11.): „📌 Für euch“ (mit „Rückmeldung fehlt“) ganz oben › Ansage › Termin-Karussell › „Neu für euch“ › Rufe;
+     „Noch offen“ und die Terminliste darunter gibt es nicht mehr */
+  const folge = [a.offenKarte, a.ansage, a.termin, a.neuZone, a.rufe];
+  if (folge.some(x => x < 0) || folge.some((x, i) => i && x <= folge[i - 1]) || a.offenZone >= 0 || a.termineListe >= 0) probleme.push("a) Reihenfolge Für euch › Ansage › Termin › „Neu für euch“ › Rufe: " + JSON.stringify({ folge, offenZone: a.offenZone, liste: a.termineListe }));
+  else zeilen.push("a) Reihenfolge: Für euch (Rückmeldung fehlt) › Ansage › Termin-Karussell › „Neu für euch“");
   a.zonen.forEach(z => { const k = (1.05) / (lum(z.farbe) + .05); if (z.sichtbar && k < 4.5) probleme.push(`a) Überschrift „${z.text}“ nur ${k.toFixed(1)}:1 auf Weiß`); });
   // b)
   if (!/Gilt als zugesagt/.test(a.tkText) || /überfällig|Rückmeldung fehlt/.test(a.tkText)) probleme.push("b) Training ohne Rückmeldung: " + a.tkText.slice(0, 160));

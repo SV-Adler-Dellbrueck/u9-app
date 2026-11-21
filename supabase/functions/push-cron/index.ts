@@ -167,7 +167,11 @@ Deno.serve(async (req) => {
     const uebermorgen = in2.toISOString().slice(0, 10);
     const cut48 = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
     const { data: kandV } = await admin.from("termine").select("id,typ,titel,gegner,uhrzeit,datum").in("typ", ["spiel", "turnier"]).eq("datum", uebermorgen);   // v845: ohne Training – es gilt als zugesagt
-    const { data: kandN } = await admin.from("termine").select("id,typ,titel,gegner,uhrzeit,datum,created_at").in("typ", ["spiel", "turnier"]).gt("datum", heute).lte("created_at", cut48).order("datum").limit(10);
+    /* v926 (Charles 21.11.): „Bitte rückmelden“ nur für Termine der nächsten 14 Tage – wie „Rückmeldung fehlt“ in der App.
+       Vorher ohne Grenze: die am 21.11. angelegte Rückrunde (ab 27.02.) hätte zwei Tage später Erinnerungen ausgelöst. */
+    const in14 = new Date(); in14.setDate(in14.getDate() + 14);
+    const bis14 = in14.toISOString().slice(0, 10);
+    const { data: kandN } = await admin.from("termine").select("id,typ,titel,gegner,uhrzeit,datum,created_at").in("typ", ["spiel", "turnier"]).gt("datum", heute).lte("datum", bis14).lte("created_at", cut48).order("datum").limit(10);
     const { data: logRows } = await admin.from("rsvp_reminder_log").select("termin_id,art");
     const logged = new Set((logRows || []).map((r: any) => r.termin_id + "|" + r.art));
     const metaT: Record<string, string> = { training: "🏃 Training", spiel: "⚽ Spiel", turnier: "🏆 Turnier" };
