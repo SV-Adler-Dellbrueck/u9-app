@@ -75,6 +75,7 @@ async function _rufeOpen(raumId){
       <input id="rufe-suche-feld" type="search" placeholder="Rufe durchsuchen …" oninput="rufeSucheSetzen(this.value)" style="width:100%;box-sizing:border-box;min-height:44px;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:10px;font:inherit;background:var(--surface2);color:var(--text)">
     </div>
     <div id="rufe-raeume" style="display:flex;gap:6px;overflow-x:auto;padding:8px 12px;flex:none"></div>
+    <div id="rufe-name" style="flex:none"></div>
     <div id="rufe-fix" style="flex:none"></div>
     <div id="rufe-liste" aria-live="polite" style="flex:1;overflow-y:auto;padding:8px 12px 12px"><div style="color:var(--text2);font-size:var(--s-text);padding:12px 0">Lade Rufe …</div></div>
     <div style="flex:none;background:var(--surface);border-top:1px solid var(--surface2);padding:8px 12px calc(8px + env(safe-area-inset-bottom))">
@@ -104,6 +105,10 @@ async function _rufeOpen(raumId){
   rufeRaeumeRender();
   rufeGlockeLaden();
   _rfUngelesenLaden();
+  if(!_rf.trainer){   // v935: Familienraum mit zwei Konten → Raum „nur ich“ anbieten; einmal nach dem Namen fragen
+    const fam=_rf.raeume.find(r=>r.familie_kind&&!r.eltern_email); if(fam)_rfMitleserLaden(fam.id);
+    _rfNameFragen();
+  }
   await rufeLaden(true);
   _rf.timer=setInterval(()=>{ if(!document.getElementById("rufe-modal")){ rufeClose(); return; } if(!document.hidden)rufeLaden(false); },RUFE_TAKT);
 }
@@ -121,6 +126,7 @@ function rufeClose(){
    antwortet die Datenbank mit 400 – dann gilt die alte Abfrage, damit die Rufe weiter öffnen. */
 async function _rfRaeumeHolen(){
   const basis="rufe_raum?archiviert=eq.false&order=sort.asc,id.asc&select=id,name,emoji,sort,familie_kind";
+  try{ const r=await fetch(`${SB_URL}/rest/v1/${basis},nur_eltern,eltern_email`,{headers:sbAuthHeaders()}); if(r.ok)return await r.json(); }catch(e){}   // v935
   try{ const r=await fetch(`${SB_URL}/rest/v1/${basis},nur_eltern`,{headers:sbAuthHeaders()}); if(r.ok)return await r.json(); }catch(e){}
   return _rfGet(basis);
 }
@@ -138,10 +144,20 @@ async function _rfFamilienLaden(){
     const key=Math.min(...geschw); fam[key]=fam[key]||new Set(); geschw.forEach(k=>fam[key].add(k));
   });
   _rf.fam={}; Object.keys(fam).forEach(k=>{ _rf.fam[k]=[...fam[k]].map(id=>name[id]).filter(Boolean).sort((a,b)=>a.localeCompare(b,"de")).join(" & ")||"Familie"; });
+  /* v935: Elternkonten je Familie (Name aus „Meine Angaben“, sonst Einladung, sonst „Elternteil n“) – für „Nur …“ */
+  _rf.konten={};
+  try{ (await _rfGet("rpc/rufe_elternkonten")).forEach(x=>{ (_rf.konten[x.familie_kind]=_rf.konten[x.familie_kind]||[]).push({mail:x.mail,name:x.name}); }); }catch(e){}
+}
+/* v935: Name des Elternteils eines Einzelraums (Trainer) */
+function _rfKontoName(r){
+  if(!r||!r.eltern_email||!_rf||!_rf.konten)return "";
+  const k=(_rf.konten[r.familie_kind]||[]).find(x=>x.mail===String(r.eltern_email).toLowerCase());
+  return k?k.name:"Elternteil";
 }
 function _rfRaumName(r){
   if(!r)return "";
-  if(r.familie_kind)return "🔒 "+(_rf&&_rf.trainer?(_rf.fam[r.familie_kind]||"Familie"):"Trainerteam");
+  if(r.familie_kind&&r.eltern_email)return _rf&&_rf.trainer?"👤 "+_rfKontoName(r)+" · "+(_rf.fam[r.familie_kind]||"Familie"):"🔒 Trainerteam · nur ich";   // v935
+  if(r.familie_kind)return "🔒 "+(_rf&&_rf.trainer?(_rf.fam[r.familie_kind]||"Familie"):"Trainerteam"+(_rf&&_rf.zweiKonten?" · Familie":""));
   return (r.emoji||"💬")+" "+r.name;
 }
 function _rfAktRaum(){ return _rf?_rf.raeume.find(r=>r.id===_rf.raum)||null:null; }
@@ -167,9 +183,12 @@ function rufeRaeumeRender(){
     html+=chip(false,"🔒 Familien"+(ungeP?` · ${ungeP}`:""),"rufeFamilienOpen()","Private Nachricht an eine Familie");
     const akt=privat.find(r=>r.id===_rf.raum); if(akt)html+=chip(true,esc(_rfRaumName(akt)),`rufeRaumWechseln(${Number(akt.id)})`);
   }else{
-    const eigen=privat[0];
-    html+=eigen?chip(eigen.id===_rf.raum,"🔒 Trainerteam"+zahl(eigen.id),`rufeRaumWechseln(${Number(eigen.id)})`,"Privat an das Trainerteam")
+    const eigen=privat.find(r=>!r.eltern_email), ich=privat.find(r=>r.eltern_email);
+    html+=eigen?chip(eigen.id===_rf.raum,esc(_rfRaumName(eigen))+zahl(eigen.id),`rufeRaumWechseln(${Number(eigen.id)})`,"Privat an das Trainerteam")
                :chip(false,"🔒 Trainerteam","rufePrivat(null)","Privat an das Trainerteam");
+    /* v935: Wo zwei Elternkonten sind, gibt es zusätzlich den eigenen Raum „nur ich“ */
+    if(ich)html+=chip(ich.id===_rf.raum,"🔒 Trainerteam · nur ich"+zahl(ich.id),`rufeRaumWechseln(${Number(ich.id)})`,"Privat: nur ich und das Trainerteam");
+    else if(_rf.zweiKonten)html+=chip(false,"🔒 Trainerteam · nur ich","rufePrivatIch()","Privat: nur ich und das Trainerteam");
   }
   box.innerHTML=html+(_rf.mod?chip(false,"＋ Raum","rufeRaumNeu()","Neuen Raum anlegen"):"");
   _rfKopfZeigen();
@@ -178,8 +197,27 @@ function _rfKopfZeigen(){
   rufeChipsRender();
   const r=_rfAktRaum(); const unter=document.getElementById("rufe-unter"), feld=document.getElementById("rufe-text");
   const privat=!!(r&&r.familie_kind), nurEltern=!!(r&&r.nur_eltern);
-  if(unter)unter.textContent=nurEltern?"Nur Eltern – das Trainerteam sieht diesen Raum nicht":privat?(_rf.trainer?"Privat mit der Familie von "+(_rf.fam[r.familie_kind]||""):"Privat: nur ihr und das Trainerteam"):"Eltern und Trainerteam";
-  if(feld)feld.placeholder=privat?(_rf.trainer?"Nachricht an die Familie …":"Nachricht an das Trainerteam …"):"Ruf schreiben …";
+  if(unter)unter.textContent=nurEltern?"Nur Eltern – das Trainerteam sieht diesen Raum nicht":privat?_rfMitleserText(r):"Eltern und Trainerteam";
+  if(feld)feld.placeholder=privat?(_rf.trainer?(r.eltern_email?"Nachricht an "+_rfKontoName(r)+" …":"Nachricht an die Familie …"):"Nachricht an das Trainerteam …"):"Ruf schreiben …";
+  if(privat&&!(_rf.mitleser||{})[r.id])_rfMitleserLaden(r.id);
+}
+/* v935: Die Kopfzeile sagt im privaten Raum immer, wer mitliest. */
+function _rfMitleserText(r){
+  const ml=(_rf.mitleser||{})[r.id];
+  if(!ml||!ml.length)return _rf.trainer?"Privat mit der Familie von "+(_rf.fam[r.familie_kind]||""):"Privat: nur ihr und das Trainerteam";
+  const namen=ml.map(x=>x.ich?"du":x.name);
+  if(_rf.trainer)return r.eltern_email?`Privat – nur ${namen[0]||"dieses Elternteil"} und das Trainerteam`:`Privat – ${namen.join(", ")} und das Trainerteam`;
+  if(r.eltern_email||ml.length<2)return "Privat – nur du und das Trainerteam";
+  const andere=ml.filter(x=>!x.ich).map(x=>x.name);
+  return `Privat – du, ${andere.join(", ")} und das Trainerteam`;
+}
+async function _rfMitleserLaden(raum){
+  if(!_rf)return; _rf.mitleser=_rf.mitleser||{}; _rf.mitleser[raum]=_rf.mitleser[raum]||null;
+  let ml=null; try{ const r=await _rfRpc("rufe_mitleser",{p_raum:raum}); if(r.ok)ml=await r.json(); }catch(e){}
+  if(!_rf||!Array.isArray(ml))return;
+  _rf.mitleser[raum]=ml;
+  if(!_rf.trainer){ const fam=_rf.raeume.find(x=>x.id===raum&&x.familie_kind&&!x.eltern_email); if(fam&&ml.length>1&&!_rf.zweiKonten){ _rf.zweiKonten=true; rufeRaeumeRender(); return; } }
+  if(_rf.raum===raum)_rfKopfZeigen();
 }
 async function _rfUngelesenLaden(){
   if(!_rf)return; const u={};
@@ -188,26 +226,60 @@ async function _rfUngelesenLaden(){
 }
 /* v674: privaten Raum öffnen – Eltern ihren eigenen, das Trainerteam den einer Familie. Die
    Datenbank legt ihn beim ersten Mal an und prüft, wer hinein darf. */
-async function rufePrivat(kind){
+async function rufePrivat(kind,mail,nurIch){
   if(!_rf)return;
   document.getElementById("rufe-menue")?.remove();
   let id=null;
-  try{ const r=await _rfRpc("rufe_privat_raum",{p_kind:kind}); if(!r.ok){ toast(kind?"Diese Familie hat noch keinen Zugang":"Privater Raum nicht verfügbar","err"); return; } id=await r.json(); }
+  const arg={p_kind:kind}; if(mail)arg.p_email=mail; if(nurIch)arg.p_nur_ich=true;   // v935
+  try{ const r=await _rfRpc("rufe_privat_raum",arg); if(!r.ok){ toast(kind?"Diese Familie hat noch keinen Zugang":"Privater Raum nicht verfügbar","err"); return; } id=await r.json(); }
   catch(e){ toast("Kein Netz","err"); return; }
   if(!_rf)return;
   if(!_rf.raeume.some(r=>r.id===id))_rf.raeume=await _rfRaeumeHolen();
   _rf.raum=null; await rufeRaumWechseln(id);
 }
+/* v935: Ohne Vornamen unter „Meine Angaben“ weiß das Trainerteam nicht, wem es schreibt – einmal fragen. */
+async function _rfNameFragen(){
+  try{ if(localStorage.getItem("adler_rufe_name_gefragt"))return; }catch(e){}
+  const uid=_rf&&_rf.uid; if(!uid)return;
+  let a=null; try{ const r=await fetch(`${SB_URL}/rest/v1/eltern_angaben?user_id=eq.${encodeURIComponent(uid)}&select=vorname`,{headers:sbAuthHeaders()}); if(!r.ok)return; a=((await r.json())||[])[0]||null; }catch(e){ return; }
+  if(a&&String(a.vorname||"").trim())return;
+  const box=document.getElementById("rufe-name"); if(!box)return;
+  box.innerHTML=`<div class="rf-name-karte" style="margin:8px 12px 0;background:var(--surface);border:1px solid var(--rand-bedien);border-radius:12px;padding:10px 12px">
+    <div style="font-weight:800;font-size:var(--s-karte);color:var(--text)">Wie sollen wir dich nennen?</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin:2px 0 6px">Damit das Trainerteam weiß, wem es schreibt – zum Beispiel „Anna“ oder „Papa von …“.</div>
+    <label for="rf-name-feld" style="position:absolute;left:-9999px">Dein Name</label>
+    <input id="rf-name-feld" maxlength="40" autocomplete="given-name" style="width:100%;box-sizing:border-box;min-height:48px;padding:10px 12px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-karte);background:var(--surface);color:var(--text)">
+    <div style="display:flex;gap:8px;margin-top:8px"><button type="button" class="btn" onclick="rufeNameSpeichern()" style="flex:1;justify-content:center">Speichern</button>
+      <button type="button" class="btn" onclick="rufeNameSpaeter()" style="justify-content:center">Später</button></div></div>`;
+}
+function rufeNameSpaeter(){ try{ localStorage.setItem("adler_rufe_name_gefragt","1"); }catch(e){} const b=document.getElementById("rufe-name"); if(b)b.innerHTML=""; }
+async function rufeNameSpeichern(){
+  const v=(document.getElementById("rf-name-feld")||{}).value||""; const name=v.trim().slice(0,40);
+  if(!name){ toast("Bitte einen Namen eintragen","err"); return; }
+  const uid=_rf&&_rf.uid; if(!uid)return;
+  try{ const r=await fetch(`${SB_URL}/rest/v1/eltern_angaben?on_conflict=user_id`,{method:"POST",headers:{...sbAuthHeaders(),"Content-Type":"application/json","Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({user_id:uid,vorname:name})});
+    if(!r.ok){ toast("Konnte den Namen nicht speichern","err"); return; } }catch(e){ toast("Kein Netz","err"); return; }
+  toast("Danke, "+name+"!"); rufeNameSpaeter();
+}
+function rufePrivatIch(){ return rufePrivat(null,null,true); }   // v935: Eltern – eigener Raum „nur ich“
 function rufeFamilienOpen(){
   if(!_rf)return;
-  const raumVon={}; _rf.raeume.filter(r=>r.familie_kind).forEach(r=>raumVon[r.familie_kind]=r);
-  const liste=Object.keys(_rf.fam).map(k=>({k:Number(k),name:_rf.fam[k],raum:raumVon[k]||null,n:raumVon[k]?(_rf.unge[raumVon[k].id]||0):0}))
-    .sort((a,b)=>(b.n-a.n)||((b.raum?1:0)-(a.raum?1:0))||a.name.localeCompare(b.name,"de"));
+  /* v935 (Charles 21.11.): je Familie „👪 Familie“ (alle Elternteile lesen) und bei zwei Konten „👤 Nur …“ je Elternteil */
+  const raumVon={}, einzel={};
+  _rf.raeume.filter(r=>r.familie_kind).forEach(r=>{ if(r.eltern_email)einzel[r.familie_kind+"|"+String(r.eltern_email).toLowerCase()]=r; else raumVon[r.familie_kind]=r; });
+  const unge=r=>r?(_rf.unge[r.id]||0):0;
+  const liste=Object.keys(_rf.fam).map(k=>{ const konten=(_rf.konten||{})[k]||[]; const ein=konten.map(x=>einzel[k+"|"+x.mail]);
+      return {k:Number(k),name:_rf.fam[k],raum:raumVon[k]||null,konten,ein,n:unge(raumVon[k])+ein.reduce((a,r)=>a+unge(r),0)}; })
+    .sort((a,b)=>(b.n-a.n)||(((b.raum||b.ein.some(Boolean))?1:0)-((a.raum||a.ein.some(Boolean))?1:0))||a.name.localeCompare(b.name,"de"));
+  const zeile=(emo,titel,unter,n,on)=>`<button type="button" class="rf-familie btn btn-zeile" style="margin-top:6px" onclick="${on}"><span aria-hidden="true">${emo}</span><span style="flex:1;min-width:0;text-align:left"><span style="display:block;font-weight:800">${titel}</span><span style="display:block;font-size:var(--s-klein);color:var(--text2);font-weight:400">${unter}</span></span>${n?`<span style="background:#dc2626;color:#fff;border-radius:999px;padding:0 8px;font-weight:800;font-size:var(--s-klein)">${n}</span>`:""}<span aria-hidden="true" style="color:var(--text3)">›</span></button>`;
   _rfBlatt("rufe-menue","Privat an eine Familie",
-    `<div style="font-size:var(--s-klein);color:var(--text2)">Lesen können nur diese Familie und das Trainerteam – der Elternbeirat nicht.</div>
-    <div style="max-height:55vh;overflow-y:auto">${liste.length?liste.map(f=>`<button type="button" class="rf-familie btn btn-zeile" style="margin-top:6px" onclick="rufePrivat(${f.k})"><span aria-hidden="true">🔒</span><span style="flex:1">${esc(f.name)}</span>${f.n?`<b>${f.n} neu</b>`:f.raum?`<span style="font-size:var(--s-klein);color:var(--text2)">Verlauf</span>`:""}</button>`).join("")
+    `<div style="font-size:var(--s-klein);color:var(--text2)">Lesen können nur die genannten Eltern und das Trainerteam – der Elternbeirat nicht.</div>
+    <div style="max-height:60vh;overflow-y:auto">${liste.length?liste.map(f=>`<div class="rf-fam-block" style="margin-top:12px"><div style="font-weight:800;font-size:var(--s-karte)">Familie ${esc(f.name)}</div>
+      ${zeile("👪","Familie",f.konten.length>1?"es lesen mit: "+f.konten.map(x=>esc(x.name)).join(", "):"ein Elternteil mit Zugang",unge(f.raum),`rufePrivat(${f.k})`)}
+      ${f.konten.length>1?f.konten.map((x,i)=>zeile("👤","Nur "+esc(x.name),"nur dieses Elternteil liest",unge(f.ein[i]),`rufePrivat(${f.k},'${jsq(x.mail)}')`)).join(""):""}</div>`).join("")
       :`<div style="color:var(--text2);margin-top:8px">Noch keine Familie mit Zugang.</div>`}</div>`);
 }
+
 async function rufeRaumWechseln(id){
   if(!_rf||_rf.raum===id)return;
   _rf.raum=id; _rf.antwort=null; _rf.letzte=null; rufeAntwortRender();

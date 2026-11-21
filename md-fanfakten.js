@@ -44,7 +44,7 @@ const SB_FREUNDE=[["spitzname","Spitzname","z. B. Mimi","ff-spitz"],["lieblingsf
   ["lieblingsspiel","Lieblingsspiel drinnen und draußen","z. B. Uno und Verstecken"],["lieblingsfach","Lieblingsfach","z. B. Sport"],["mag_nicht","Das mag ich gar nicht","z. B. Rosenkohl"],
   ["groesster_wunsch","Mein größter Wunsch","z. B. einmal ins Stadion"]];
 const SB_KREATIV=[["superkraft","Meine Superkraft wäre …","z. B. fliegen"],["zaubern","Wenn ich zaubern könnte, würde ich …","z. B. Schnee im Sommer machen"],
-  ["lieblingswitz","Mein Lieblingswitz","Kurz reicht"],["geheimes_talent","Das kann ich, und kaum einer weiß es","z. B. auf den Händen laufen"],
+  ["geheimes_talent","Das kann ich, und kaum einer weiß es","z. B. auf den Händen laufen"],
   ["star_spielen","Mit diesem Star würde ich gern einmal spielen","z. B. Neuer"],["traumstadion","Mein Traumstadion","z. B. Camp Nou"],
   ["fussball_erlebnis","Mein größtes Fußball-Erlebnis","z. B. erster Stadionbesuch"],["satz_an_team","Ein Satz an mein Team","z. B. Wir halten zusammen!"]];
 const SB_FOTOS=[["aktion","⚽","Beim Fußball"],["sport","🏅","Beim Sport"],["alltag","🏠","Aus dem Alltag"],["gemalt","🎨","Selbst gemalt"]];

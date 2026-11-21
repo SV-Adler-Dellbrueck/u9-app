@@ -159,9 +159,9 @@ module.exports = async function (h) {
     const out = { vorher: chips() };
     [...document.querySelectorAll("#rufe-raeume button")].find(b => /Familien/.test(b.textContent)).click(); await w(100);
     const blatt = document.getElementById("rufe-menue");
-    out.liste = [...blatt.querySelectorAll(".rf-familie")].map(b => b.textContent.replace(/\s+/g, " ").trim());
+    out.liste = [...blatt.querySelectorAll(".rf-fam-block")].map(b => b.textContent.replace(/\s+/g, " ").trim());
     out.hinweis = blatt.textContent;
-    [...blatt.querySelectorAll(".rf-familie")].find(b => /Kind D/.test(b.textContent)).click(); await w(400);
+    [...blatt.querySelectorAll(".rf-fam-block")].find(b => /Kind D/.test(b.textContent)).querySelector(".rf-familie").click(); await w(400);   // v935: Name steht über den Knöpfen
     out.nachher = chips(); out.raum = _rf.raum; out.unter = document.getElementById("rufe-unter").textContent;
     rufeClose();
     return out;
@@ -170,7 +170,7 @@ module.exports = async function (h) {
   if (rt.fehler) probleme.push("e) " + rt.fehler);
   else {
     if (rt.vorher.some(c => /Kind/.test(c)) || !rt.vorher.includes("🔒 Familien · 2")) probleme.push(`e) Knöpfe: ${JSON.stringify(rt.vorher)}`);
-    if (!/^🔒\s*Kind C\s*2 neu$/.test(rt.liste[0] || "") || !rt.liste.some(x => x.includes("Kind A & Kind B")) || rt.liste.length !== 3) probleme.push(`e) Familienliste: ${JSON.stringify(rt.liste)}`);
+    if (!/^Familie Kind C\b.*\D2›$/.test(rt.liste[0] || "") || !rt.liste.some(x => x.includes("Kind A & Kind B")) || rt.liste.length !== 3) probleme.push(`e) Familienliste: ${JSON.stringify(rt.liste)}`);
     if (!/der Elternbeirat nicht/.test(rt.hinweis)) probleme.push("e) Hinweis, wer mitliest, fehlt");
     if (tr[0] !== '{"p_kind":4}' || rt.raum !== 13 || !rt.nachher.includes("🔒 Kind D*") || !/Familie von Kind D/.test(rt.unter)) probleme.push(`e) Öffnen: ${JSON.stringify({ tr, rt })}`);
   }
