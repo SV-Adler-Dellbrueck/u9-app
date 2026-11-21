@@ -1,0 +1,3862 @@
+{
+ "schema": "adler-kinderfragen/1",
+ "stand": "2026-11-21-2",
+ "fragen": [
+  {
+   "id": "lf1-01",
+   "leitfrage": 1,
+   "stufe": "U8",
+   "typ": "ab",
+   "feld": "3+1",
+   "frage": "Ein Gegner ist in der Nähe. Wer behält den Ball besser?",
+   "bilder": [
+    {
+     "ausschnitt": {
+      "x": 15,
+      "y": 25,
+      "w": 70,
+      "h": 60
+     },
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 62
+      },
+      {
+       "seite": "gegner",
+       "x": 52,
+       "y": 44
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 50
+     }
+    },
+    {
+     "ausschnitt": {
+      "x": 15,
+      "y": 25,
+      "w": 70,
+      "h": 60
+     },
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 62
+      },
+      {
+       "seite": "gegner",
+       "x": 52,
+       "y": 44
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 59
+     }
+    }
+   ],
+   "richtig": 1,
+   "erklaerung": {
+    "richtig": "⚽ Genau! Der Ball bleibt eng am Fuß – so kommt der Gegner nicht ran.",
+    "falsch": "Liegt der Ball weit vor dir, holt ihn sich der Gegner. Ist einer in der Nähe, führ den Ball ganz eng."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 1"
+   ]
+  },
+  {
+   "id": "lf1-02",
+   "leitfrage": 1,
+   "stufe": "U8",
+   "typ": "ab",
+   "feld": "3+1",
+   "frage": "Der Gegner kommt von hinten. Wer schirmt den Ball richtig ab?",
+   "bilder": [
+    {
+     "ausschnitt": {
+      "x": 15,
+      "y": 25,
+      "w": 70,
+      "h": 60
+     },
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 50
+      },
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 40
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 45
+     }
+    },
+    {
+     "ausschnitt": {
+      "x": 15,
+      "y": 25,
+      "w": 70,
+      "h": 60
+     },
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 50
+      },
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 40
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 55
+     }
+    }
+   ],
+   "richtig": 1,
+   "erklaerung": {
+    "richtig": "💪 Stark! Dein Körper ist zwischen Ball und Gegner – er kommt nicht dran.",
+    "falsch": "Liegt der Ball zwischen dir und dem Gegner, nimmt er ihn dir weg. Bring deinen Körper dazwischen."
+   },
+   "quelle": [
+    "https://dfb.de/fileadmin/_dfbdam/59412-360-ue20-te.pdf"
+   ]
+  },
+  {
+   "id": "lf1-03",
+   "leitfrage": 1,
+   "stufe": "U8",
+   "typ": "szene",
+   "feld": "3+1",
+   "frage": "Ein Gegner läuft auf dich zu. Kein Mitspieler ist frei. Was machst du?",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 60
+    },
+    {
+     "seite": "gegner",
+     "x": 50,
+     "y": 40
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 57
+   },
+   "anim": {
+    "gegner": [
+     {
+      "nach": {
+       "x": 50,
+       "y": 50
+      }
+     }
+    ]
+   },
+   "optionen": [
+    "Ball abschirmen und dich wegdrehen",
+    "Den Ball liegen lassen",
+    "Augen zu und irgendwohin schießen"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "👍 Richtig! Abschirmen und wegdrehen – so bleibt der Ball bei dir.",
+    "falsch": "Ist keiner frei, behältst du den Ball: Körper dazwischen und wegdrehen."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 1"
+   ]
+  },
+  {
+   "id": "lf1-04",
+   "leitfrage": 1,
+   "stufe": "U9",
+   "typ": "tippen",
+   "feld": "3+1",
+   "frage": "Der Gegner kommt von rechts. Wohin drehst du dich mit dem Ball weg? Tippe!",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 55,
+     "y": 55
+    },
+    {
+     "seite": "gegner",
+     "x": 72,
+     "y": 52
+    }
+   ],
+   "ball": {
+    "x": 55,
+    "y": 58
+   },
+   "ziele": [
+    {
+     "x": 30,
+     "y": 58,
+     "r": 13
+    }
+   ],
+   "erklaerung": {
+    "richtig": "⚡ Genau! Weg vom Gegner, dahin, wo Platz ist.",
+    "falsch": "Dreh dich weg vom Gegner. Er kommt von rechts – also links weg."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 1 (Richtung wechseln)"
+   ]
+  },
+  {
+   "id": "lf1-05",
+   "leitfrage": 1,
+   "stufe": "U9",
+   "typ": "szene",
+   "feld": "3+1",
+   "frage": "Du dribbelst mit dem Ball. Was machst du mit deinem Kopf?",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 65
+    },
+    {
+     "seite": "gegner",
+     "x": 30,
+     "y": 42
+    },
+    {
+     "seite": "gegner",
+     "x": 70,
+     "y": 40
+    },
+    {
+     "seite": "wir",
+     "x": 80,
+     "y": 50
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 62
+   },
+   "anim": {
+    "ball": {
+     "nach": {
+      "x": 50,
+      "y": 57
+     }
+    },
+    "wir": [
+     {
+      "nach": {
+       "x": 50,
+       "y": 60
+      }
+     }
+    ]
+   },
+   "optionen": [
+    "Immer wieder hochschauen, wo Platz ist",
+    "Nur auf den Ball schauen",
+    "Die Augen zumachen"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "👀 Klasse! Wer hochschaut, sieht Gegner, Mitspieler und Platz.",
+    "falsch": "Schau immer wieder hoch. Nur so siehst du, wo Platz ist und wer frei steht."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 5 (Kopf hoch)"
+   ]
+  },
+  {
+   "id": "lf1-06",
+   "leitfrage": 1,
+   "stufe": "U9",
+   "typ": "ab",
+   "feld": "3+1",
+   "frage": "Vor dir steht ein Gegner. Wer macht es besser?",
+   "bilder": [
+    {
+     "ausschnitt": {
+      "x": 15,
+      "y": 25,
+      "w": 70,
+      "h": 60
+     },
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 68
+      },
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 46
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 65
+     },
+     "pfeile": [
+      {
+       "art": "dribbel",
+       "von": {
+        "x": 50,
+        "y": 65
+       },
+       "nach": {
+        "x": 50,
+        "y": 50
+       }
+      }
+     ]
+    },
+    {
+     "ausschnitt": {
+      "x": 15,
+      "y": 25,
+      "w": 70,
+      "h": 60
+     },
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 68
+      },
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 46
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 65
+     },
+     "pfeile": [
+      {
+       "art": "dribbel",
+       "von": {
+        "x": 50,
+        "y": 65
+       },
+       "nach": {
+        "x": 28,
+        "y": 55
+       },
+       "ueber": {
+        "x": 46,
+        "y": 58
+       }
+      }
+     ]
+    }
+   ],
+   "richtig": 1,
+   "erklaerung": {
+    "richtig": "👏 Richtig! Rechtzeitig die Richtung wechseln, weg vom Gegner.",
+    "falsch": "Wer direkt in den Gegner dribbelt, verliert den Ball. Wechsel vorher die Richtung."
+   },
+   "quelle": [
+    "https://dfb.de/fileadmin/_dfbdam/82265-373-c-te.pdf"
+   ]
+  },
+  {
+   "id": "lf1-07",
+   "leitfrage": 1,
+   "stufe": "U10",
+   "typ": "szene",
+   "feld": "4+1",
+   "frage": "Zwei Gegner kommen auf dich zu. Hinter dir steht euer Torwart frei. Was ist klug?",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 60
+    },
+    {
+     "seite": "gegner",
+     "x": 42,
+     "y": 44
+    },
+    {
+     "seite": "gegner",
+     "x": 58,
+     "y": 44
+    },
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 92,
+     "rolle": "TW"
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 57
+   },
+   "anim": {
+    "gegner": [
+     {
+      "nach": {
+       "x": 45,
+       "y": 52
+      }
+     },
+     {
+      "nach": {
+       "x": 55,
+       "y": 52
+      }
+     }
+    ]
+   },
+   "optionen": [
+    "Zum Torwart zurückspielen",
+    "Mitten durch beide dribbeln",
+    "Den Ball weit wegschießen"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "🧤 Klug! Zurückspielen ist kein Fehler – der Ball bleibt bei euch.",
+    "falsch": "Gegen zwei auf einmal ist der Ball schnell weg. Spiel lieber sicher zurück, der Torwart nimmt ihn mit dem Fuß."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 1",
+    "Durchführungsbestimmungen Kreis Köln 2026/27, 4 (12)"
+   ]
+  },
+  {
+   "id": "lf1-08",
+   "leitfrage": 1,
+   "stufe": "U8",
+   "typ": "tippen",
+   "feld": "funino",
+   "frage": "Wo ist kein Gegner? Tippe dorthin, wo du mit dem Ball hindribbelst.",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 60
+    },
+    {
+     "seite": "gegner",
+     "x": 30,
+     "y": 45
+    },
+    {
+     "seite": "gegner",
+     "x": 45,
+     "y": 40
+    },
+    {
+     "seite": "gegner",
+     "x": 35,
+     "y": 60
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 57
+   },
+   "ziele": [
+    {
+     "x": 75,
+     "y": 45,
+     "r": 14
+    }
+   ],
+   "erklaerung": {
+    "richtig": "🦅 Gut gesehen! Rechts ist Platz – da kannst du dribbeln.",
+    "falsch": "Links stehen die Gegner. Dribbel dahin, wo keiner ist – nach rechts."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 1"
+   ]
+  },
+  {
+   "id": "lf1-09",
+   "leitfrage": 1,
+   "stufe": "U10",
+   "typ": "ab",
+   "feld": "4+1",
+   "frage": "Der Pass kommt, ein Gegner steht links neben dir. Wer nimmt den Ball besser an?",
+   "bilder": [
+    {
+     "ausschnitt": {
+      "x": 15,
+      "y": 25,
+      "w": 70,
+      "h": 60
+     },
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 55
+      },
+      {
+       "seite": "gegner",
+       "x": 40,
+       "y": 53
+      },
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 83
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 52
+     },
+     "pfeile": [
+      {
+       "art": "pass",
+       "von": {
+        "x": 50,
+        "y": 80
+       },
+       "nach": {
+        "x": 50,
+        "y": 57
+       }
+      },
+      {
+       "art": "dribbel",
+       "von": {
+        "x": 50,
+        "y": 55
+       },
+       "nach": {
+        "x": 40,
+        "y": 48
+       }
+      }
+     ]
+    },
+    {
+     "ausschnitt": {
+      "x": 15,
+      "y": 25,
+      "w": 70,
+      "h": 60
+     },
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 55
+      },
+      {
+       "seite": "gegner",
+       "x": 40,
+       "y": 53
+      },
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 83
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 52
+     },
+     "pfeile": [
+      {
+       "art": "pass",
+       "von": {
+        "x": 50,
+        "y": 80
+       },
+       "nach": {
+        "x": 50,
+        "y": 57
+       }
+      },
+      {
+       "art": "dribbel",
+       "von": {
+        "x": 50,
+        "y": 55
+       },
+       "nach": {
+        "x": 62,
+        "y": 48
+       }
+      }
+     ]
+    }
+   ],
+   "richtig": 1,
+   "erklaerung": {
+    "richtig": "⚽ Richtig! Der erste Kontakt geht weg vom Gegner – in den freien Raum.",
+    "falsch": "Nimm den Ball nicht zum Gegner hin an. Der erste Kontakt geht dahin, wo Platz ist."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 4 (erster Kontakt)"
+   ]
+  },
+  {
+   "id": "lf1-10",
+   "leitfrage": 1,
+   "stufe": "U9",
+   "typ": "szene",
+   "feld": "3+1",
+   "frage": "Du bist mit dem Ball an der Seitenlinie eingeklemmt. Was machst du?",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 8,
+     "y": 45
+    },
+    {
+     "seite": "gegner",
+     "x": 16,
+     "y": 40
+    },
+    {
+     "seite": "gegner",
+     "x": 18,
+     "y": 50
+    },
+    {
+     "seite": "wir",
+     "x": 40,
+     "y": 55
+    }
+   ],
+   "ball": {
+    "x": 6,
+    "y": 44
+   },
+   "anim": {
+    "gegner": [
+     {
+      "nach": {
+       "x": 13,
+       "y": 41
+      }
+     },
+     {
+      "nach": {
+       "x": 14,
+       "y": 49
+      }
+     }
+    ]
+   },
+   "optionen": [
+    "Ball abschirmen, bis ein Mitspieler kommt",
+    "Den Ball ins Aus schießen",
+    "Durch die Beine des Gegners schießen"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "💪 Stark! Ball schützen und auf Hilfe warten – dein Mitspieler kommt.",
+    "falsch": "Eingeklemmt? Schirm den Ball ab und warte, bis ein Mitspieler zum Anspielen kommt."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 1 (abschirmen)"
+   ]
+  },
+  {
+   "id": "lf2-01",
+   "leitfrage": 2,
+   "stufe": "U8",
+   "typ": "szene",
+   "feld": "3+1",
+   "frage": "Du hast den Ball. Vor dir ist ganz viel Platz bis zum Tor. Was machst du?",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 62
+    },
+    {
+     "seite": "gegner",
+     "x": 20,
+     "y": 30
+    },
+    {
+     "seite": "gegner",
+     "x": 80,
+     "y": 28
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 59
+   },
+   "anim": {
+    "ball": {
+     "nach": {
+      "x": 50,
+      "y": 55
+     }
+    }
+   },
+   "optionen": [
+    "Losdribbeln – schnell nach vorne!",
+    "Sofort zurückspielen",
+    "Stehen bleiben"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "🚀 Klasse! Ist Platz vor dir, dann dribbel los – mutig nach vorne.",
+    "falsch": "Wenn vor dir Platz ist, nimm ihn dir! Dribbel mutig nach vorne."
+   },
+   "quelle": [
+    "https://www.fsa-online.de/upload/qualifizierung/Mit_Bolzplatzprinzipien_das_Training_optimieren.pdf"
+   ]
+  },
+  {
+   "id": "lf2-02",
+   "leitfrage": 2,
+   "stufe": "U9",
+   "typ": "szene",
+   "feld": "3+1",
+   "frage": "Zwei Gegner stehen direkt vor dir. Rechts steht dein Mitspieler ganz frei. Was ist klug?",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 45,
+     "y": 55
+    },
+    {
+     "seite": "gegner",
+     "x": 40,
+     "y": 46
+    },
+    {
+     "seite": "gegner",
+     "x": 52,
+     "y": 46
+    },
+    {
+     "seite": "wir",
+     "x": 80,
+     "y": 48
+    }
+   ],
+   "ball": {
+    "x": 45,
+    "y": 52
+   },
+   "anim": {
+    "gegner": [
+     {
+      "nach": {
+       "x": 43,
+       "y": 49
+      }
+     },
+     {
+      "nach": {
+       "x": 49,
+       "y": 49
+      }
+     }
+    ]
+   },
+   "optionen": [
+    "Zum freien Mitspieler passen",
+    "Mitten durch beide Gegner dribbeln",
+    "Den Ball wegschießen"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "👍 Klug! Gegen zwei auf einmal ist der Pass zum Freien die bessere Idee.",
+    "falsch": "Gegen einen Gegner darfst du dribbeln. Stehen zwei direkt vor dir und ein Mitspieler ist frei, spiel ihn an."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfragen 2 und 4"
+   ]
+  },
+  {
+   "id": "lf2-03",
+   "leitfrage": 2,
+   "stufe": "U8",
+   "typ": "ab",
+   "feld": "3+1",
+   "frage": "Wer kommt leichter am Verteidiger vorbei?",
+   "bilder": [
+    {
+     "ausschnitt": {
+      "x": 15,
+      "y": 25,
+      "w": 70,
+      "h": 60
+     },
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 70
+      },
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 45
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 67
+     },
+     "pfeile": [
+      {
+       "art": "dribbel",
+       "von": {
+        "x": 50,
+        "y": 67
+       },
+       "nach": {
+        "x": 50,
+        "y": 48
+       }
+      }
+     ]
+    },
+    {
+     "ausschnitt": {
+      "x": 15,
+      "y": 25,
+      "w": 70,
+      "h": 60
+     },
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 70
+      },
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 45
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 67
+     },
+     "pfeile": [
+      {
+       "art": "dribbel",
+       "von": {
+        "x": 50,
+        "y": 67
+       },
+       "nach": {
+        "x": 66,
+        "y": 32
+       },
+       "ueber": {
+        "x": 46,
+        "y": 52
+       }
+      }
+     ]
+    }
+   ],
+   "richtig": 1,
+   "erklaerung": {
+    "richtig": "⚡ Genau! Ein schneller Haken und danach Gas geben – so bist du vorbei.",
+    "falsch": "Wer langsam geradeaus auf den Verteidiger zuläuft, bleibt hängen. Mach einen Haken und werde danach schnell."
+   },
+   "quelle": [
+    "https://dfb.de/fileadmin/_dfbdam/82265-373-c-te.pdf"
+   ]
+  },
+  {
+   "id": "lf2-04",
+   "leitfrage": 2,
+   "stufe": "U9",
+   "typ": "ab",
+   "feld": "3+1",
+   "frage": "Der Verteidiger kommt von rechts. Wer schützt den Ball besser?",
+   "bilder": [
+    {
+     "ausschnitt": {
+      "x": 15,
+      "y": 25,
+      "w": 70,
+      "h": 60
+     },
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 48,
+       "y": 55
+      },
+      {
+       "seite": "gegner",
+       "x": 58,
+       "y": 52
+      }
+     ],
+     "ball": {
+      "x": 53,
+      "y": 52
+     }
+    },
+    {
+     "ausschnitt": {
+      "x": 15,
+      "y": 25,
+      "w": 70,
+      "h": 60
+     },
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 48,
+       "y": 55
+      },
+      {
+       "seite": "gegner",
+       "x": 58,
+       "y": 52
+      }
+     ],
+     "ball": {
+      "x": 43,
+      "y": 52
+     }
+    }
+   ],
+   "richtig": 1,
+   "erklaerung": {
+    "richtig": "💪 Richtig! Der Ball ist auf der Seite weg vom Gegner – dein Körper ist dazwischen.",
+    "falsch": "Führst du den Ball auf der Seite des Gegners, kann er ihn leicht wegspitzeln. Nimm den Fuß, der weiter weg vom Gegner ist."
+   },
+   "quelle": [
+    "https://www.dfb.de/fileadmin/_dfbdam/11306-269-dc-ha1-01.pdf",
+    "https://dfb.de/fileadmin/_dfbdam/59412-360-ue20-te.pdf"
+   ]
+  },
+  {
+   "id": "lf2-05",
+   "leitfrage": 2,
+   "stufe": "U9",
+   "typ": "tippen",
+   "feld": "3+1",
+   "frage": "Der Verteidiger steht etwas links vor dir. Wo ist Platz zum Vorbeidribbeln? Tippe!",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 64
+    },
+    {
+     "seite": "gegner",
+     "x": 43,
+     "y": 48
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 61
+   },
+   "ziele": [
+    {
+     "x": 64,
+     "y": 44,
+     "r": 13
+    }
+   ],
+   "erklaerung": {
+    "richtig": "⚽ Stark gesehen! Rechts neben dem Verteidiger ist Platz – da geht es vorbei.",
+    "falsch": "Schau, wo der Verteidiger nicht steht. Er steht links, also ist rechts neben ihm Platz."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 2"
+   ]
+  },
+  {
+   "id": "lf2-06",
+   "leitfrage": 2,
+   "stufe": "U10",
+   "typ": "szene",
+   "feld": "4+1",
+   "frage": "Du täuschst nach links an. Der Verteidiger geht mit nach links. Was jetzt?",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 64
+    },
+    {
+     "seite": "gegner",
+     "x": 50,
+     "y": 48
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 61
+   },
+   "anim": {
+    "gegner": [
+     {
+      "nach": {
+       "x": 42,
+       "y": 49
+      }
+     }
+    ],
+    "ball": {
+     "nach": {
+      "x": 46,
+      "y": 60
+     }
+    }
+   },
+   "optionen": [
+    "Schnell auf die rechte Seite gehen!",
+    "Weiter nach links laufen",
+    "Stehen bleiben"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "🔥 Erwischt! Er ist nach links gegangen – jetzt rechts vorbei, und zwar schnell.",
+    "falsch": "Wenn der Verteidiger auf deine Täuschung reinfällt, geh blitzschnell auf die andere Seite."
+   },
+   "quelle": [
+    "https://dfb.de/fileadmin/_dfbdam/85379-375-c-te.pdf"
+   ]
+  },
+  {
+   "id": "lf2-07",
+   "leitfrage": 2,
+   "stufe": "U10",
+   "typ": "ab",
+   "feld": "4+1",
+   "frage": "Wann ist der beste Moment für deinen Haken?",
+   "bilder": [
+    {
+     "ausschnitt": {
+      "x": 15,
+      "y": 25,
+      "w": 70,
+      "h": 60
+     },
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 75
+      },
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 40
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 72
+     },
+     "pfeile": [
+      {
+       "art": "dribbel",
+       "von": {
+        "x": 50,
+        "y": 72
+       },
+       "nach": {
+        "x": 66,
+        "y": 48
+       },
+       "ueber": {
+        "x": 50,
+        "y": 66
+       }
+      }
+     ]
+    },
+    {
+     "ausschnitt": {
+      "x": 15,
+      "y": 25,
+      "w": 70,
+      "h": 60
+     },
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 75
+      },
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 40
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 72
+     },
+     "pfeile": [
+      {
+       "art": "dribbel",
+       "von": {
+        "x": 50,
+        "y": 72
+       },
+       "nach": {
+        "x": 66,
+        "y": 34
+       },
+       "ueber": {
+        "x": 50,
+        "y": 48
+       }
+      }
+     ]
+    }
+   ],
+   "richtig": 1,
+   "erklaerung": {
+    "richtig": "👏 Richtig! Kurz vor dem Verteidiger – dann hat er keine Zeit mehr, sich umzustellen.",
+    "falsch": "Ein Haken weit vor dem Verteidiger bringt nichts – er hat Zeit, sich neu hinzustellen. Mach ihn erst kurz vor ihm."
+   },
+   "quelle": [
+    "Trainerwissen, bestätigt durch Charles 21.11.2026"
+   ]
+  },
+  {
+   "id": "lf2-08",
+   "leitfrage": 2,
+   "stufe": "U8",
+   "typ": "tippen",
+   "feld": "funino",
+   "frage": "Der Verteidiger steht vor dem linken Tor. Welches Tor ist frei? Tippe es an.",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 40
+    },
+    {
+     "seite": "gegner",
+     "x": 30,
+     "y": 12
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 37
+   },
+   "ziele": [
+    {
+     "x": 72,
+     "y": 5,
+     "r": 12
+    }
+   ],
+   "erklaerung": {
+    "richtig": "🦅 Genau! Das rechte Tor ist frei – dribbel dorthin und schieß aus der Schusszone.",
+    "falsch": "Schau, wo der Verteidiger steht. Vor dem linken Tor – also ist das rechte frei."
+   },
+   "quelle": [
+    "Durchführungsbestimmungen Kreis Köln 2.4 (Schusszone)"
+   ]
+  },
+  {
+   "id": "lf2-09",
+   "leitfrage": 2,
+   "stufe": "U9",
+   "typ": "szene",
+   "feld": "3+1",
+   "frage": "Du hast den Verteidiger ausgespielt. Was machst du jetzt?",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 55,
+     "y": 48
+    },
+    {
+     "seite": "gegner",
+     "x": 45,
+     "y": 52
+    }
+   ],
+   "ball": {
+    "x": 55,
+    "y": 45
+   },
+   "anim": {
+    "ball": {
+     "nach": {
+      "x": 56,
+      "y": 38
+     }
+    }
+   },
+   "optionen": [
+    "Schnell weiter Richtung Tor",
+    "Anhalten und jubeln",
+    "Zurück, um ihn noch einmal auszuspielen"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "🚀 Genau! Nach dem Vorbeigehen schnell weiter – sonst ist er gleich wieder da.",
+    "falsch": "Bist du vorbei, mach Tempo Richtung Tor. Wer anhält, wird wieder eingeholt."
+   },
+   "quelle": [
+    "https://dfb.de/fileadmin/_dfbdam/82265-373-c-te.pdf"
+   ]
+  },
+  {
+   "id": "lf2-10",
+   "leitfrage": 2,
+   "stufe": "U8",
+   "typ": "szene",
+   "feld": "3+1",
+   "frage": "Du hast beim Dribbeln den Ball verloren. Was jetzt?",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 50
+    },
+    {
+     "seite": "gegner",
+     "x": 50,
+     "y": 44
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 47
+   },
+   "anim": {
+    "ball": {
+     "nach": {
+      "x": 52,
+      "y": 40
+     }
+    },
+    "gegner": [
+     {
+      "nach": {
+       "x": 52,
+       "y": 38
+      }
+     }
+    ]
+   },
+   "optionen": [
+    "Sofort zurückholen – und beim nächsten Mal wieder probieren!",
+    "Nie wieder dribbeln",
+    "Den Mitspielern die Schuld geben"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "💪 So machen das Adler! Ball zurückholen und weiter mutig dribbeln.",
+    "falsch": "Ball verlieren gehört dazu – auch bei den Profis. Hol ihn zurück und probier es wieder."
+   },
+   "quelle": [
+    "https://www.fsa-online.de/upload/qualifizierung/Mit_Bolzplatzprinzipien_das_Training_optimieren.pdf",
+    "Ausbildungskonzept U9 Fassung 3, 7 (Eigener Trick)"
+   ]
+  },
+  {
+   "id": "lf3-01",
+   "leitfrage": 3,
+   "stufe": "U8",
+   "typ": "tippen",
+   "feld": "3+1",
+   "frage": "Der Torwart steht links im Tor. Wohin schießt du? Tippe ins Tor.",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 30
+    },
+    {
+     "seite": "gegner",
+     "x": 42,
+     "y": 4,
+     "rolle": "TW"
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 27
+   },
+   "ziele": [
+    {
+     "x": 58,
+     "y": 4,
+     "r": 7
+    }
+   ],
+   "erklaerung": {
+    "richtig": "⚽ Tor! Dahin, wo der Torwart nicht steht – ins freie Eck.",
+    "falsch": "Schieß nicht auf den Torwart. Er steht links, also ist rechts frei."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 3"
+   ]
+  },
+  {
+   "id": "lf3-02",
+   "leitfrage": 3,
+   "stufe": "U8",
+   "typ": "szene",
+   "feld": "3+1",
+   "frage": "Du bist in der gegnerischen Hälfte frei vor dem Tor. Was machst du?",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 32
+    },
+    {
+     "seite": "gegner",
+     "x": 50,
+     "y": 4,
+     "rolle": "TW"
+    },
+    {
+     "seite": "gegner",
+     "x": 30,
+     "y": 55
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 29
+   },
+   "anim": {
+    "ball": {
+     "nach": {
+      "x": 50,
+      "y": 26
+     }
+    }
+   },
+   "optionen": [
+    "Schießen!",
+    "Noch einen Gegner ausspielen",
+    "Zurückpassen"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "🔥 Genau! Frei vor dem Tor – schieß mutig!",
+    "falsch": "Bist du frei vor dem Tor, dann schieß. Mut gehört dazu!"
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 3 (Mut)"
+   ]
+  },
+  {
+   "id": "lf3-03",
+   "leitfrage": 3,
+   "stufe": "U9",
+   "typ": "ab",
+   "feld": "3+1",
+   "frage": "Wessen Tor zählt?",
+   "bilder": [
+    {
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 62
+      },
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 4,
+       "rolle": "TW"
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 59
+     },
+     "pfeile": [
+      {
+       "art": "pass",
+       "von": {
+        "x": 50,
+        "y": 59
+       },
+       "nach": {
+        "x": 55,
+        "y": 2
+       }
+      }
+     ]
+    },
+    {
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 36
+      },
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 4,
+       "rolle": "TW"
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 33
+     },
+     "pfeile": [
+      {
+       "art": "pass",
+       "von": {
+        "x": 50,
+        "y": 33
+       },
+       "nach": {
+        "x": 57,
+        "y": 2
+       }
+      }
+     ]
+    }
+   ],
+   "richtig": 1,
+   "erklaerung": {
+    "richtig": "👍 Richtig! Auf die großen Tore zählt ein Tor nur aus der gegnerischen Hälfte.",
+    "falsch": "Aus der eigenen Hälfte zählt kein Tor. Erst über die Mittellinie, dann schießen."
+   },
+   "quelle": [
+    "Durchführungsbestimmungen Kreis Köln 2026/27, 2 (5)"
+   ]
+  },
+  {
+   "id": "lf3-04",
+   "leitfrage": 3,
+   "stufe": "U9",
+   "typ": "ab",
+   "feld": "funino",
+   "frage": "Wessen Tor zählt beim FUNiño?",
+   "bilder": [
+    {
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 70,
+       "y": 34
+      },
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 40
+      }
+     ],
+     "ball": {
+      "x": 70,
+      "y": 31
+     },
+     "pfeile": [
+      {
+       "art": "pass",
+       "von": {
+        "x": 70,
+        "y": 31
+       },
+       "nach": {
+        "x": 72,
+        "y": 2
+       }
+      }
+     ]
+    },
+    {
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 70,
+       "y": 18
+      },
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 40
+      }
+     ],
+     "ball": {
+      "x": 70,
+      "y": 15
+     },
+     "pfeile": [
+      {
+       "art": "pass",
+       "von": {
+        "x": 70,
+        "y": 15
+       },
+       "nach": {
+        "x": 72,
+        "y": 2
+       }
+      }
+     ]
+    }
+   ],
+   "richtig": 1,
+   "erklaerung": {
+    "richtig": "⚽ Genau! Beim FUNiño zählt ein Tor nur aus der Schusszone.",
+    "falsch": "Vor der Schusszone zählt kein Tor. Erst hinein, dann schießen."
+   },
+   "quelle": [
+    "Durchführungsbestimmungen Kreis Köln 2026/27, 2 (4)"
+   ]
+  },
+  {
+   "id": "lf3-05",
+   "leitfrage": 3,
+   "stufe": "U9",
+   "typ": "szene",
+   "feld": "3+1",
+   "frage": "Der Torwart läuft auf dich zu. Was machst du?",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 30
+    },
+    {
+     "seite": "gegner",
+     "x": 50,
+     "y": 6,
+     "rolle": "TW"
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 27
+   },
+   "anim": {
+    "gegner": [
+     {
+      "nach": {
+       "x": 50,
+       "y": 17
+      }
+     }
+    ]
+   },
+   "optionen": [
+    "Flach ins freie Eck schieben",
+    "Mit voller Kraft auf den Torwart schießen",
+    "Umdrehen und weglaufen"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "👏 Cool geblieben! Flach am Torwart vorbei ins freie Eck.",
+    "falsch": "Schieß nicht auf den Torwart. Schieb den Ball flach dahin, wo er nicht ist."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 3"
+   ]
+  },
+  {
+   "id": "lf3-06",
+   "leitfrage": 3,
+   "stufe": "U9",
+   "typ": "tippen",
+   "feld": "funino",
+   "frage": "Du stehst rechts in der Schusszone. Welches Tor triffst du am leichtesten? Tippe es an.",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 76,
+     "y": 16
+    },
+    {
+     "seite": "gegner",
+     "x": 45,
+     "y": 22
+    }
+   ],
+   "ball": {
+    "x": 76,
+    "y": 13
+   },
+   "ziele": [
+    {
+     "x": 72,
+     "y": 4,
+     "r": 9
+    }
+   ],
+   "erklaerung": {
+    "richtig": "🎯 Genau! Das nahe Tor – kurzer Weg, und kein Gegner davor.",
+    "falsch": "Das Tor direkt vor dir ist am nächsten. Ein kurzer Schuss trifft leichter."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 3 (Abschluss kurz)"
+   ]
+  },
+  {
+   "id": "lf3-07",
+   "leitfrage": 3,
+   "stufe": "U10",
+   "typ": "szene",
+   "feld": "4+1",
+   "frage": "Der Ball liegt frei vor deinem linken Fuß. Ein Verteidiger kommt schnell. Was machst du?",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 30
+    },
+    {
+     "seite": "gegner",
+     "x": 50,
+     "y": 4,
+     "rolle": "TW"
+    },
+    {
+     "seite": "gegner",
+     "x": 66,
+     "y": 24
+    }
+   ],
+   "ball": {
+    "x": 46,
+    "y": 27
+   },
+   "anim": {
+    "gegner": [
+     {
+      "nach": {
+       "x": 58,
+       "y": 26
+      }
+     }
+    ]
+   },
+   "optionen": [
+    "Sofort mit links schießen",
+    "Erst auf rechts legen",
+    "Nicht schießen"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "🔥 Super! Mit links geht das auch – sonst ist der Verteidiger da.",
+    "falsch": "Erst umlegen dauert zu lange. Schieß mit dem Fuß, vor dem der Ball liegt – auch links."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 3 (beide Füße)"
+   ]
+  },
+  {
+   "id": "lf3-08",
+   "leitfrage": 3,
+   "stufe": "U10",
+   "typ": "ab",
+   "feld": "4+1",
+   "frage": "Dein Mitspieler schießt. Was machst du?",
+   "bilder": [
+    {
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 40,
+       "y": 30
+      },
+      {
+       "seite": "wir",
+       "x": 64,
+       "y": 34
+      },
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 4,
+       "rolle": "TW"
+      }
+     ],
+     "ball": {
+      "x": 40,
+      "y": 27
+     },
+     "pfeile": [
+      {
+       "art": "pass",
+       "von": {
+        "x": 40,
+        "y": 27
+       },
+       "nach": {
+        "x": 48,
+        "y": 3
+       }
+      }
+     ]
+    },
+    {
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 40,
+       "y": 30
+      },
+      {
+       "seite": "wir",
+       "x": 64,
+       "y": 34
+      },
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 4,
+       "rolle": "TW"
+      }
+     ],
+     "ball": {
+      "x": 40,
+      "y": 27
+     },
+     "pfeile": [
+      {
+       "art": "pass",
+       "von": {
+        "x": 40,
+        "y": 27
+       },
+       "nach": {
+        "x": 48,
+        "y": 3
+       }
+      },
+      {
+       "art": "lauf",
+       "von": {
+        "x": 64,
+        "y": 34
+       },
+       "nach": {
+        "x": 57,
+        "y": 14
+       }
+      }
+     ]
+    }
+   ],
+   "richtig": 1,
+   "erklaerung": {
+    "richtig": "⚽ Richtig! Nachlaufen – vielleicht prallt der Ball vom Torwart ab.",
+    "falsch": "Nicht stehen bleiben! Lauf Richtung Tor nach, falls der Torwart den Ball abprallen lässt."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 3"
+   ]
+  },
+  {
+   "id": "lf3-09",
+   "leitfrage": 3,
+   "stufe": "U8",
+   "typ": "szene",
+   "feld": "3+1",
+   "frage": "Du hast danebengeschossen. Was jetzt?",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 30
+    },
+    {
+     "seite": "gegner",
+     "x": 50,
+     "y": 4,
+     "rolle": "TW"
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 27
+   },
+   "anim": {
+    "ball": {
+     "nach": {
+      "x": 70,
+      "y": 1
+     }
+    }
+   },
+   "optionen": [
+    "Beim nächsten Mal wieder schießen!",
+    "Nie wieder schießen",
+    "Schimpfen"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "💪 So geht das! Wer schießt, trifft auch mal daneben – nächstes Mal wieder!",
+    "falsch": "Danebenschießen gehört dazu. Wer nicht schießt, trifft nie. Probier es wieder!"
+   },
+   "quelle": [
+    "https://www.fsa-online.de/upload/qualifizierung/Mit_Bolzplatzprinzipien_das_Training_optimieren.pdf"
+   ]
+  },
+  {
+   "id": "lf3-10",
+   "leitfrage": 3,
+   "stufe": "U9",
+   "typ": "ab",
+   "feld": "3+1",
+   "frage": "Du bist neben dem Tor, dein Mitspieler steht frei davor. Wer macht es besser?",
+   "bilder": [
+    {
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 80,
+       "y": 16
+      },
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 22
+      },
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 4,
+       "rolle": "TW"
+      },
+      {
+       "seite": "gegner",
+       "x": 65,
+       "y": 30
+      }
+     ],
+     "ball": {
+      "x": 80,
+      "y": 13
+     },
+     "pfeile": [
+      {
+       "art": "pass",
+       "von": {
+        "x": 80,
+        "y": 13
+       },
+       "nach": {
+        "x": 60,
+        "y": 2
+       }
+      }
+     ]
+    },
+    {
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 80,
+       "y": 16
+      },
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 22
+      },
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 4,
+       "rolle": "TW"
+      },
+      {
+       "seite": "gegner",
+       "x": 65,
+       "y": 30
+      }
+     ],
+     "ball": {
+      "x": 80,
+      "y": 13
+     },
+     "pfeile": [
+      {
+       "art": "pass",
+       "von": {
+        "x": 80,
+        "y": 13
+       },
+       "nach": {
+        "x": 52,
+        "y": 20
+       }
+      }
+     ]
+    }
+   ],
+   "richtig": 1,
+   "erklaerung": {
+    "richtig": "👏 Teamplay! Der Querpass zum Freien ist die bessere Chance.",
+    "falsch": "Von ganz außen ist das Tor klein. Steht ein Mitspieler frei davor, spiel ihn an."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 3 und 4"
+   ]
+  },
+  {
+   "id": "lf4-01",
+   "leitfrage": 4,
+   "stufe": "U8",
+   "typ": "tippen",
+   "feld": "3+1",
+   "frage": "Welcher Mitspieler ist frei? Tippe ihn an.",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 62
+    },
+    {
+     "seite": "wir",
+     "x": 25,
+     "y": 45
+    },
+    {
+     "seite": "gegner",
+     "x": 27,
+     "y": 40
+    },
+    {
+     "seite": "wir",
+     "x": 75,
+     "y": 45
+    },
+    {
+     "seite": "gegner",
+     "x": 55,
+     "y": 40
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 59
+   },
+   "ziel_spieler": 3,
+   "erklaerung": {
+    "richtig": "⚽ Genau! Bei ihm steht kein Gegner – zu ihm geht der Pass.",
+    "falsch": "Schau, wo kein Gegner in der Nähe ist. Der rechte Mitspieler ist frei."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 4 (hinschauen)"
+   ]
+  },
+  {
+   "id": "lf4-02",
+   "leitfrage": 4,
+   "stufe": "U8",
+   "typ": "ab",
+   "feld": "3+1",
+   "frage": "Welcher Pass kommt an?",
+   "bilder": [
+    {
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 65
+      },
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 35
+      },
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 50
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 62
+     },
+     "pfeile": [
+      {
+       "art": "pass",
+       "von": {
+        "x": 50,
+        "y": 62
+       },
+       "nach": {
+        "x": 50,
+        "y": 38
+       }
+      }
+     ]
+    },
+    {
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 65
+      },
+      {
+       "seite": "wir",
+       "x": 72,
+       "y": 40
+      },
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 50
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 62
+     },
+     "pfeile": [
+      {
+       "art": "pass",
+       "von": {
+        "x": 50,
+        "y": 62
+       },
+       "nach": {
+        "x": 70,
+        "y": 42
+       }
+      }
+     ]
+    }
+   ],
+   "richtig": 1,
+   "erklaerung": {
+    "richtig": "👍 Richtig! Kein Gegner steht im Weg – der Pass kommt an.",
+    "falsch": "Steht ein Gegner zwischen euch, fängt er den Pass ab. Spiel dorthin, wo der Weg frei ist."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 4"
+   ]
+  },
+  {
+   "id": "lf4-03",
+   "leitfrage": 4,
+   "stufe": "U9",
+   "typ": "szene",
+   "feld": "3+1",
+   "frage": "Dein Mitspieler läuft los in den freien Raum. Wohin spielst du den Pass?",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 40,
+     "y": 65
+    },
+    {
+     "seite": "wir",
+     "x": 70,
+     "y": 55
+    },
+    {
+     "seite": "gegner",
+     "x": 55,
+     "y": 40
+    }
+   ],
+   "ball": {
+    "x": 40,
+    "y": 62
+   },
+   "anim": {
+    "wir": [
+     {},
+     {
+      "nach": {
+       "x": 78,
+       "y": 38
+      }
+     }
+    ]
+   },
+   "optionen": [
+    "Vor ihn in den Lauf",
+    "Genau dorthin, wo er gerade war",
+    "Gar nicht passen"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "🚀 Klasse! In den Lauf – dann muss er nicht anhalten.",
+    "falsch": "Spiel den Ball dahin, wo dein Mitspieler hinläuft, nicht wo er gerade war."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 4"
+   ]
+  },
+  {
+   "id": "lf4-04",
+   "leitfrage": 4,
+   "stufe": "U9",
+   "typ": "tippen",
+   "feld": "funino",
+   "frage": "Du hast den Ball in der Mitte. Wen spielst du an? Tippe ihn an.",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 60
+    },
+    {
+     "seite": "wir",
+     "x": 20,
+     "y": 38
+    },
+    {
+     "seite": "gegner",
+     "x": 22,
+     "y": 32
+    },
+    {
+     "seite": "wir",
+     "x": 80,
+     "y": 38
+    },
+    {
+     "seite": "gegner",
+     "x": 55,
+     "y": 45
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 57
+   },
+   "ziel_spieler": 3,
+   "erklaerung": {
+    "richtig": "🦅 Richtig! Rechts ist dein Flitzer frei – und das Tor dort auch.",
+    "falsch": "Links wird dein Mitspieler gedeckt. Rechts ist er frei – spiel ihn an."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 4",
+    "entscheidungen.md 16.09.2026 (Aufpasser verteilt links oder rechts)"
+   ]
+  },
+  {
+   "id": "lf4-05",
+   "leitfrage": 4,
+   "stufe": "U9",
+   "typ": "ab",
+   "feld": "3+1",
+   "frage": "Welcher Pass ist sicherer?",
+   "bilder": [
+    {
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 45,
+       "y": 70
+      },
+      {
+       "seite": "wir",
+       "x": 55,
+       "y": 25
+      },
+      {
+       "seite": "gegner",
+       "x": 45,
+       "y": 48
+      },
+      {
+       "seite": "gegner",
+       "x": 58,
+       "y": 40
+      },
+      {
+       "seite": "wir",
+       "x": 70,
+       "y": 62
+      }
+     ],
+     "ball": {
+      "x": 45,
+      "y": 67
+     },
+     "pfeile": [
+      {
+       "art": "pass",
+       "von": {
+        "x": 45,
+        "y": 67
+       },
+       "nach": {
+        "x": 55,
+        "y": 28
+       }
+      }
+     ]
+    },
+    {
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 45,
+       "y": 70
+      },
+      {
+       "seite": "wir",
+       "x": 55,
+       "y": 25
+      },
+      {
+       "seite": "gegner",
+       "x": 45,
+       "y": 48
+      },
+      {
+       "seite": "gegner",
+       "x": 58,
+       "y": 40
+      },
+      {
+       "seite": "wir",
+       "x": 70,
+       "y": 62
+      }
+     ],
+     "ball": {
+      "x": 45,
+      "y": 67
+     },
+     "pfeile": [
+      {
+       "art": "pass",
+       "von": {
+        "x": 45,
+        "y": 67
+       },
+       "nach": {
+        "x": 68,
+        "y": 63
+       }
+      }
+     ]
+    }
+   ],
+   "richtig": 1,
+   "erklaerung": {
+    "richtig": "👍 Richtig! Der kurze Pass zum freien Mitspieler kommt sicher an.",
+    "falsch": "Ein langer Pass über zwei Gegner geht oft schief. Spiel lieber kurz zum Freien."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 4"
+   ]
+  },
+  {
+   "id": "lf4-06",
+   "leitfrage": 4,
+   "stufe": "U10",
+   "typ": "szene",
+   "feld": "4+1",
+   "frage": "Gleich kommt der Ball zu dir. Ein Gegner ist hinter dir. Was machst du, bevor der Ball da ist?",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 50
+    },
+    {
+     "seite": "gegner",
+     "x": 50,
+     "y": 42
+    },
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 80,
+     "rolle": "TW"
+    },
+    {
+     "seite": "wir",
+     "x": 80,
+     "y": 40
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 77
+   },
+   "anim": {
+    "ball": {
+     "nach": {
+      "x": 50,
+      "y": 60
+     }
+    }
+   },
+   "optionen": [
+    "Über die Schulter schauen, wo der Gegner ist",
+    "Nur auf den Ball schauen",
+    "Wegdrehen und weglaufen"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "👀 Profi! Wer vorher schaut, weiß schon, wohin mit dem Ball.",
+    "falsch": "Schau vorher über die Schulter. Dann weißt du, wo der Gegner ist und wo Platz ist."
+   },
+   "quelle": [
+    "https://www.sbfv.de/fileadmin/user_upload/Nav_Fussball/Kinder/Trainingsformen/E-Jugend/Beispiel-Trainingseinheit_3_-_E-Jugend_0.pdf",
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 5 (Kopf hoch)"
+   ]
+  },
+  {
+   "id": "lf4-07",
+   "leitfrage": 4,
+   "stufe": "U10",
+   "typ": "tippen",
+   "feld": "4+1",
+   "frage": "Links ist alles zu. Wen spielst du an, um die Seite zu wechseln? Tippe ihn an.",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 22,
+     "y": 45
+    },
+    {
+     "seite": "gegner",
+     "x": 18,
+     "y": 38
+    },
+    {
+     "seite": "gegner",
+     "x": 28,
+     "y": 40
+    },
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 65
+    },
+    {
+     "seite": "wir",
+     "x": 84,
+     "y": 42
+    },
+    {
+     "seite": "gegner",
+     "x": 55,
+     "y": 40
+    }
+   ],
+   "ball": {
+    "x": 22,
+    "y": 48
+   },
+   "ziel_spieler": 3,
+   "erklaerung": {
+    "richtig": "🔄 Gut! Über den Mitspieler hinten geht es auf die freie Seite.",
+    "falsch": "Links ist zu. Spiel zurück zum Mitspieler in der Mitte – er kann auf die freie Seite verlagern."
+   },
+   "quelle": [
+    "https://assets.dfb.de/uploads/000/236/239/original_Booklet_-_Spielformen_im_Kinderfußball.pdf?1616499665"
+   ]
+  },
+  {
+   "id": "lf4-08",
+   "leitfrage": 4,
+   "stufe": "U8",
+   "typ": "szene",
+   "feld": "3+1",
+   "frage": "Dein Mitspieler ruft „Hier!“, aber direkt vor ihm steht ein Gegner. Ein anderer Mitspieler ist frei. Was machst du?",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 62
+    },
+    {
+     "seite": "wir",
+     "x": 30,
+     "y": 40
+    },
+    {
+     "seite": "gegner",
+     "x": 32,
+     "y": 46
+    },
+    {
+     "seite": "wir",
+     "x": 75,
+     "y": 42
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 59
+   },
+   "anim": {
+    "gegner": [
+     {
+      "nach": {
+       "x": 31,
+       "y": 44
+      }
+     }
+    ]
+   },
+   "optionen": [
+    "Zum freien Mitspieler spielen",
+    "Trotzdem zum Rufer spielen",
+    "Den Ball wegschießen"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "👍 Klug! Nicht wer ruft, sondern wer frei ist, bekommt den Ball.",
+    "falsch": "Schau selbst hin: Der Rufer ist gedeckt. Spiel den freien Mitspieler an."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 4 (hinschauen)"
+   ]
+  },
+  {
+   "id": "lf4-09",
+   "leitfrage": 4,
+   "stufe": "U9",
+   "typ": "ab",
+   "feld": "3+1",
+   "frage": "Vorne steht dein Mitspieler frei. Welcher Pass ist besser?",
+   "bilder": [
+    {
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 40,
+       "y": 62
+      },
+      {
+       "seite": "wir",
+       "x": 75,
+       "y": 62
+      },
+      {
+       "seite": "wir",
+       "x": 55,
+       "y": 32
+      },
+      {
+       "seite": "gegner",
+       "x": 70,
+       "y": 55
+      }
+     ],
+     "ball": {
+      "x": 40,
+      "y": 59
+     },
+     "pfeile": [
+      {
+       "art": "pass",
+       "von": {
+        "x": 40,
+        "y": 59
+       },
+       "nach": {
+        "x": 72,
+        "y": 61
+       }
+      }
+     ]
+    },
+    {
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 40,
+       "y": 62
+      },
+      {
+       "seite": "wir",
+       "x": 75,
+       "y": 62
+      },
+      {
+       "seite": "wir",
+       "x": 55,
+       "y": 32
+      },
+      {
+       "seite": "gegner",
+       "x": 70,
+       "y": 55
+      }
+     ],
+     "ball": {
+      "x": 40,
+      "y": 59
+     },
+     "pfeile": [
+      {
+       "art": "pass",
+       "von": {
+        "x": 40,
+        "y": 59
+       },
+       "nach": {
+        "x": 54,
+        "y": 35
+       }
+      }
+     ]
+    }
+   ],
+   "richtig": 1,
+   "erklaerung": {
+    "richtig": "🚀 Richtig! Ist vorne einer frei, geht der Pass nach vorne – Richtung Tor.",
+    "falsch": "Quer ist nicht falsch, aber vorne ist einer frei und näher am Tor. Spiel nach vorne."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 4"
+   ]
+  },
+  {
+   "id": "lf4-10",
+   "leitfrage": 4,
+   "stufe": "U9",
+   "typ": "szene",
+   "feld": "3+1",
+   "frage": "Du hast den Ball zu deinem Mitspieler gespielt. Was machst du jetzt?",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 40,
+     "y": 60
+    },
+    {
+     "seite": "wir",
+     "x": 60,
+     "y": 45
+    },
+    {
+     "seite": "gegner",
+     "x": 50,
+     "y": 50
+    }
+   ],
+   "ball": {
+    "x": 60,
+    "y": 48
+   },
+   "anim": {
+    "wir": [
+     {
+      "nach": {
+       "x": 36,
+       "y": 40
+      }
+     }
+    ]
+   },
+   "optionen": [
+    "Loslaufen, damit du den Ball wiederbekommst",
+    "Stehen bleiben und zuschauen",
+    "Zum Trainer gehen"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "⚡ Genau! Nach dem Pass weiterlaufen – so wirst du wieder anspielbar.",
+    "falsch": "Nach dem Pass nicht stehen bleiben. Lauf in den freien Raum, dann bekommst du ihn zurück."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 4 und 5"
+   ]
+  },
+  {
+   "id": "lf5-01",
+   "leitfrage": 5,
+   "stufe": "U8",
+   "typ": "tippen",
+   "feld": "3+1",
+   "frage": "Dein Mitspieler hat den Ball. Wo kann er dich anspielen? Tippe dorthin.",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 65
+    },
+    {
+     "seite": "gegner",
+     "x": 50,
+     "y": 48
+    },
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 38
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 62
+   },
+   "ziele": [
+    {
+     "x": 72,
+     "y": 44,
+     "r": 13
+    },
+    {
+     "x": 28,
+     "y": 44,
+     "r": 13
+    }
+   ],
+   "erklaerung": {
+    "richtig": "👍 Genau! Neben dem Gegner bist du anspielbar – nicht dahinter.",
+    "falsch": "Hinter dem Gegner kommt kein Pass an. Geh seitlich weg, dahin, wo der Weg frei ist."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 5 (anbieten)"
+   ]
+  },
+  {
+   "id": "lf5-02",
+   "leitfrage": 5,
+   "stufe": "U8",
+   "typ": "ab",
+   "feld": "3+1",
+   "frage": "Wer ist anspielbar?",
+   "bilder": [
+    {
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 65
+      },
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 48
+      },
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 36
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 62
+     }
+    },
+    {
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 65
+      },
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 48
+      },
+      {
+       "seite": "wir",
+       "x": 68,
+       "y": 40
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 62
+     }
+    }
+   ],
+   "richtig": 1,
+   "erklaerung": {
+    "richtig": "⚽ Richtig! Neben dem Gegner – der Passweg ist frei.",
+    "falsch": "Wer sich hinter einem Gegner versteckt, kann nicht angespielt werden. Geh zur Seite."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 5"
+   ]
+  },
+  {
+   "id": "lf5-03",
+   "leitfrage": 5,
+   "stufe": "U9",
+   "typ": "szene",
+   "feld": "3+1",
+   "frage": "Ein Gegner bleibt immer neben dir. Wie wirst du ihn los?",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 40,
+     "y": 45
+    },
+    {
+     "seite": "gegner",
+     "x": 42,
+     "y": 48
+    },
+    {
+     "seite": "wir",
+     "x": 55,
+     "y": 70
+    }
+   ],
+   "ball": {
+    "x": 55,
+    "y": 67
+   },
+   "anim": {
+    "wir": [
+     {
+      "nach": {
+       "x": 30,
+       "y": 38
+      }
+     }
+    ],
+    "gegner": [
+     {
+      "nach": {
+       "x": 33,
+       "y": 42
+      }
+     }
+    ]
+   },
+   "optionen": [
+    "Kurz weglaufen und dann schnell in den freien Raum",
+    "Neben ihm stehen bleiben",
+    "Dorthin laufen, wo alle sind"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "🏃 Clever! Erst weg, dann schnell zurück – so hast du ihn abgehängt.",
+    "falsch": "Wer stehen bleibt, bleibt gedeckt. Lauf kurz weg und dann schnell in den freien Raum."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 5 (wegbewegen)"
+   ]
+  },
+  {
+   "id": "lf5-04",
+   "leitfrage": 5,
+   "stufe": "U9",
+   "typ": "ab",
+   "feld": "3+1",
+   "frage": "Welches Team steht besser?",
+   "bilder": [
+    {
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 60
+      },
+      {
+       "seite": "wir",
+       "x": 46,
+       "y": 56
+      },
+      {
+       "seite": "wir",
+       "x": 54,
+       "y": 55
+      },
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 50
+      },
+      {
+       "seite": "gegner",
+       "x": 45,
+       "y": 48
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 57
+     }
+    },
+    {
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 60
+      },
+      {
+       "seite": "wir",
+       "x": 18,
+       "y": 45
+      },
+      {
+       "seite": "wir",
+       "x": 82,
+       "y": 45
+      },
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 50
+      },
+      {
+       "seite": "gegner",
+       "x": 45,
+       "y": 48
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 57
+     }
+    }
+   ],
+   "richtig": 1,
+   "erklaerung": {
+    "richtig": "🦅 ADLER! Breit verteilt hat der Ballführende zwei Anspielstationen.",
+    "falsch": "Stehen alle beim Ball, ist der Platz zu eng. Verteilt euch breit – das ist ADLER."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 5"
+   ]
+  },
+  {
+   "id": "lf5-05",
+   "leitfrage": 5,
+   "stufe": "U9",
+   "typ": "tippen",
+   "feld": "funino",
+   "frage": "Der Aufpasser hat den Ball in der Mitte. Wo bietest du dich als Flitzer L an? Tippe!",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 62
+    },
+    {
+     "seite": "wir",
+     "x": 46,
+     "y": 50
+    },
+    {
+     "seite": "wir",
+     "x": 80,
+     "y": 40
+    },
+    {
+     "seite": "gegner",
+     "x": 55,
+     "y": 45
+    },
+    {
+     "seite": "gegner",
+     "x": 40,
+     "y": 40
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 59
+   },
+   "ziele": [
+    {
+     "x": 18,
+     "y": 38,
+     "r": 14
+    }
+   ],
+   "erklaerung": {
+    "richtig": "👍 Genau! Außen vorne, Richtung linkes Tor – da bist du frei.",
+    "falsch": "Als Flitzer gehst du außen nach vorne zum Tor, nicht in die Mitte zu den Gegnern."
+   },
+   "quelle": [
+    "entscheidungen.md 16.09.2026 (FUNiño: Flitzer greifen außen an)"
+   ]
+  },
+  {
+   "id": "lf5-06",
+   "leitfrage": 5,
+   "stufe": "U10",
+   "typ": "ab",
+   "feld": "4+1",
+   "frage": "Der Pass kommt von links. Wer sieht Ball und Tor gleichzeitig?",
+   "bilder": [
+    {
+     "ausschnitt": {
+      "x": 15,
+      "y": 25,
+      "w": 70,
+      "h": 60
+     },
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 55,
+       "y": 45
+      },
+      {
+       "seite": "gegner",
+       "x": 60,
+       "y": 35
+      },
+      {
+       "seite": "wir",
+       "x": 25,
+       "y": 60
+      }
+     ],
+     "ball": {
+      "x": 25,
+      "y": 57
+     },
+     "pfeile": [
+      {
+       "art": "blick",
+       "von": {
+        "x": 55,
+        "y": 45
+       },
+       "nach": {
+        "x": 45,
+        "y": 52
+       }
+      }
+     ]
+    },
+    {
+     "ausschnitt": {
+      "x": 15,
+      "y": 25,
+      "w": 70,
+      "h": 60
+     },
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 55,
+       "y": 45
+      },
+      {
+       "seite": "gegner",
+       "x": 60,
+       "y": 35
+      },
+      {
+       "seite": "wir",
+       "x": 25,
+       "y": 60
+      }
+     ],
+     "ball": {
+      "x": 25,
+      "y": 57
+     },
+     "pfeile": [
+      {
+       "art": "blick",
+       "von": {
+        "x": 55,
+        "y": 45
+       },
+       "nach": {
+        "x": 46,
+        "y": 38
+       }
+      }
+     ]
+    }
+   ],
+   "richtig": 1,
+   "erklaerung": {
+    "richtig": "👀 Richtig! Halb offen stehen – Ball und Tor im Blick.",
+    "falsch": "Wer nur zum Ball schaut, hat das Tor im Rücken. Stell dich halb offen, dann siehst du beides."
+   },
+   "quelle": [
+    "https://www.sbfv.de/fileadmin/user_upload/Nav_Fussball/Kinder/Trainingsformen/E-Jugend/Beispiel-Trainingseinheit_3_-_E-Jugend_0.pdf"
+   ]
+  },
+  {
+   "id": "lf5-07",
+   "leitfrage": 5,
+   "stufe": "U10",
+   "typ": "szene",
+   "feld": "4+1",
+   "frage": "Dein Mitspieler mit dem Ball wird bedrängt. Was machst du?",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 30,
+     "y": 55
+    },
+    {
+     "seite": "gegner",
+     "x": 34,
+     "y": 50
+    },
+    {
+     "seite": "wir",
+     "x": 70,
+     "y": 30
+    }
+   ],
+   "ball": {
+    "x": 30,
+    "y": 58
+   },
+   "anim": {
+    "gegner": [
+     {
+      "nach": {
+       "x": 32,
+       "y": 52
+      }
+     }
+    ],
+    "wir": [
+     {},
+     {
+      "nach": {
+       "x": 48,
+       "y": 60
+      }
+     }
+    ]
+   },
+   "optionen": [
+    "Näher kommen und anbieten",
+    "Weit weg bleiben",
+    "Rufen, dass er schießen soll"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "🤝 Super! Komm ihm entgegen – dann hat er einen sicheren Pass.",
+    "falsch": "Steht dein Mitspieler unter Druck, braucht er Hilfe in der Nähe. Biete dich an."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 5 (anbieten)"
+   ]
+  },
+  {
+   "id": "lf5-08",
+   "leitfrage": 5,
+   "stufe": "U8",
+   "typ": "tippen",
+   "feld": "3+1",
+   "frage": "Auf welcher Seite ist mehr Platz? Tippe die freie Seite an.",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 62
+    },
+    {
+     "seite": "gegner",
+     "x": 25,
+     "y": 40
+    },
+    {
+     "seite": "gegner",
+     "x": 30,
+     "y": 48
+    },
+    {
+     "seite": "gegner",
+     "x": 20,
+     "y": 55
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 59
+   },
+   "ziele": [
+    {
+     "x": 78,
+     "y": 45,
+     "r": 16
+    }
+   ],
+   "erklaerung": {
+    "richtig": "⚽ Gut gesehen! Rechts ist viel Platz.",
+    "falsch": "Links stehen drei Gegner. Auf der rechten Seite ist Platz."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 5"
+   ]
+  },
+  {
+   "id": "lf5-09",
+   "leitfrage": 5,
+   "stufe": "U9",
+   "typ": "ab",
+   "feld": "3+1",
+   "frage": "Wo hat der Ballführende mehr Möglichkeiten?",
+   "bilder": [
+    {
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 65
+      },
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 50
+      },
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 35
+      },
+      {
+       "seite": "gegner",
+       "x": 55,
+       "y": 42
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 62
+     }
+    },
+    {
+     "spieler": [
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 65
+      },
+      {
+       "seite": "wir",
+       "x": 28,
+       "y": 48
+      },
+      {
+       "seite": "wir",
+       "x": 70,
+       "y": 40
+      },
+      {
+       "seite": "gegner",
+       "x": 55,
+       "y": 42
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 62
+     }
+    }
+   ],
+   "richtig": 1,
+   "erklaerung": {
+    "richtig": "🔺 Dreieck! Zwei Mitspieler, zwei Wege – das ist schwer zu verteidigen.",
+    "falsch": "Stehen alle hintereinander, verdeckt einer den anderen. Bildet ein Dreieck."
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 5"
+   ]
+  },
+  {
+   "id": "lf5-10",
+   "leitfrage": 5,
+   "stufe": "U9",
+   "typ": "szene",
+   "feld": "3+1",
+   "frage": "Toraus für euch, euer Torwart hat den Ball. Wo stellst du dich als Flitzer hin?",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 92,
+     "rolle": "TW"
+    },
+    {
+     "seite": "wir",
+     "x": 48,
+     "y": 82
+    },
+    {
+     "seite": "gegner",
+     "x": 35,
+     "y": 42
+    },
+    {
+     "seite": "gegner",
+     "x": 65,
+     "y": 42
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 89
+   },
+   "anim": {},
+   "optionen": [
+    "Breit an die Seite",
+    "Ganz nah zum Torwart",
+    "Vorne zu den Gegnern"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "🦅 Richtig! Breit an der Seite bist du frei – der Torwart spielt flach zu dir.",
+    "falsch": "Steht ihr alle beim Torwart, kann er keinen sicheren Pass spielen. Geh breit an die Seite."
+   },
+   "quelle": [
+    "Durchführungsbestimmungen Kreis Köln 2026/27, 4 (12)",
+    "entscheidungen.md 16.09.2026 (3+1, Torwart spielt mit)"
+   ]
+  },
+  {
+   "id": "lf6-01",
+   "leitfrage": 6,
+   "stufe": "U8",
+   "typ": "ab",
+   "feld": "3+1",
+   "frage": "Der Gegner dribbelt auf dein Tor zu. Welcher Verteidiger steht besser?",
+   "bilder": [
+    {
+     "ausschnitt": {
+      "x": 15,
+      "y": 25,
+      "w": 70,
+      "h": 60
+     },
+     "spieler": [
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 40
+      },
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 44
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 42
+     }
+    },
+    {
+     "ausschnitt": {
+      "x": 15,
+      "y": 25,
+      "w": 70,
+      "h": 60
+     },
+     "spieler": [
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 40
+      },
+      {
+       "seite": "wir",
+       "x": 45,
+       "y": 48
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 42
+     }
+    }
+   ],
+   "richtig": 1,
+   "erklaerung": {
+    "richtig": "🛡️ Genau! Eine Armlänge Abstand und leicht seitlich – so kommt der Gegner nicht einfach vorbei.",
+    "falsch": "Wer am Gegner klebt, ist mit einem Haken schon ausgespielt. Halte eine Armlänge Abstand und stell dich leicht seitlich."
+   },
+   "quelle": [
+    "https://www.dfb.de/fileadmin/_dfbdam/188226-455-d-te.pdf",
+    "https://dfb.de/fileadmin/_dfbdam/59412-360-ue20-te.pdf"
+   ]
+  },
+  {
+   "id": "lf6-02",
+   "leitfrage": 6,
+   "stufe": "U8",
+   "typ": "ab",
+   "feld": "3+1",
+   "frage": "Wer steht richtig – zwischen Gegner und eigenem Tor?",
+   "bilder": [
+    {
+     "ausschnitt": {
+      "x": 15,
+      "y": 25,
+      "w": 70,
+      "h": 60
+     },
+     "spieler": [
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 45
+      },
+      {
+       "seite": "wir",
+       "x": 38,
+       "y": 45
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 47
+     }
+    },
+    {
+     "ausschnitt": {
+      "x": 15,
+      "y": 25,
+      "w": 70,
+      "h": 60
+     },
+     "spieler": [
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 45
+      },
+      {
+       "seite": "wir",
+       "x": 48,
+       "y": 56
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 47
+     }
+    }
+   ],
+   "richtig": 1,
+   "erklaerung": {
+    "richtig": "👍 Richtig! Du stehst zwischen Gegner und Tor – er muss erst an dir vorbei.",
+    "falsch": "Steht der Verteidiger neben dem Gegner, ist der Weg zum Tor frei. Stell dich zwischen Gegner und euer Tor."
+   },
+   "quelle": [
+    "https://dfb.de/fileadmin/_dfbdam/196408-464-f-te.pdf"
+   ]
+  },
+  {
+   "id": "lf6-03",
+   "leitfrage": 6,
+   "stufe": "U9",
+   "typ": "tippen",
+   "feld": "3+1",
+   "frage": "Der Gegner kommt auf dich zu. Wohin lenkst du ihn? Tippe auf die Seite.",
+   "spieler": [
+    {
+     "seite": "gegner",
+     "x": 45,
+     "y": 42
+    },
+    {
+     "seite": "wir",
+     "x": 48,
+     "y": 52
+    },
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 92,
+     "rolle": "TW"
+    }
+   ],
+   "ball": {
+    "x": 45,
+    "y": 45
+   },
+   "ziele": [
+    {
+     "x": 14,
+     "y": 62,
+     "r": 14
+    }
+   ],
+   "erklaerung": {
+    "richtig": "⚽ Stark! Nach außen ist der Weg zum Tor weit und eng – da kann der Gegner kaum schießen.",
+    "falsch": "Lenk den Gegner nach außen zur Seitenlinie, weg von der Mitte vor eurem Tor."
+   },
+   "quelle": [
+    "https://dfb.de/fileadmin/_dfbdam/196408-464-f-te.pdf",
+    "https://www.dfb.de/fileadmin/_dfbdam/228046-490-b-te.pdf"
+   ]
+  },
+  {
+   "id": "lf6-04",
+   "leitfrage": 6,
+   "stufe": "U9",
+   "typ": "szene",
+   "feld": "3+1",
+   "frage": "Schau genau hin: Der Ball springt dem Gegner zu weit vom Fuß. Was machst du jetzt?",
+   "spieler": [
+    {
+     "seite": "gegner",
+     "x": 50,
+     "y": 38
+    },
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 50
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 41
+   },
+   "anim": {
+    "ball": {
+     "nach": {
+      "x": 50,
+      "y": 46
+     }
+    },
+    "gegner": [
+     {
+      "nach": {
+       "x": 50,
+       "y": 40
+      }
+     }
+    ]
+   },
+   "optionen": [
+    "Jetzt zupacken und den Ball holen!",
+    "Weiter zurückweichen",
+    "Stehen bleiben und warten"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "🔥 Genau jetzt! Springt der Ball zu weit weg, ist der Moment da – schnapp ihn dir.",
+    "falsch": "Wenn der Ball dem Gegner zu weit vom Fuß springt, ist das deine Chance. Dann zupacken!"
+   },
+   "quelle": [
+    "https://dfb.de/fileadmin/_dfbdam/59407-360-ue20-au1-01.pdf"
+   ]
+  },
+  {
+   "id": "lf6-05",
+   "leitfrage": 6,
+   "stufe": "U9",
+   "typ": "szene",
+   "feld": "3+1",
+   "frage": "Der Gegner hat den Ball eng am Fuß. Du bist noch ein paar Schritte weg. Was ist klug?",
+   "spieler": [
+    {
+     "seite": "gegner",
+     "x": 50,
+     "y": 35
+    },
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 58
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 38
+   },
+   "anim": {
+    "gegner": [
+     {
+      "nach": {
+       "x": 50,
+       "y": 40
+      }
+     }
+    ],
+    "ball": {
+     "nach": {
+      "x": 50,
+      "y": 43
+     }
+    }
+   },
+   "optionen": [
+    "Hinrennen und reinspringen",
+    "Näher kommen, abbremsen und seitlich stellen",
+    "Umdrehen und zum Tor laufen"
+   ],
+   "richtig": 1,
+   "erklaerung": {
+    "richtig": "👏 Klug! Erst stellen, dann zupacken – wer reinspringt, wird leicht ausgespielt.",
+    "falsch": "Nicht reinspringen! Lauf an, bremse kurz vor dem Gegner ab und stell dich seitlich hin."
+   },
+   "quelle": [
+    "https://dfb.de/fileadmin/_dfbdam/158840-431-a-st1-01.pdf"
+   ]
+  },
+  {
+   "id": "lf6-06",
+   "leitfrage": 6,
+   "stufe": "U10",
+   "typ": "ab",
+   "feld": "4+1",
+   "frage": "Der Gegner dribbelt auf deiner linken Seite. Wer lenkt ihn nach außen?",
+   "bilder": [
+    {
+     "ausschnitt": {
+      "x": 0,
+      "y": 25,
+      "w": 60,
+      "h": 55
+     },
+     "spieler": [
+      {
+       "seite": "gegner",
+       "x": 25,
+       "y": 42
+      },
+      {
+       "seite": "wir",
+       "x": 31,
+       "y": 50
+      }
+     ],
+     "ball": {
+      "x": 25,
+      "y": 45
+     },
+     "pfeile": [
+      {
+       "art": "dribbel",
+       "von": {
+        "x": 25,
+        "y": 45
+       },
+       "nach": {
+        "x": 14,
+        "y": 58
+       }
+      }
+     ]
+    },
+    {
+     "ausschnitt": {
+      "x": 0,
+      "y": 25,
+      "w": 60,
+      "h": 55
+     },
+     "spieler": [
+      {
+       "seite": "gegner",
+       "x": 25,
+       "y": 42
+      },
+      {
+       "seite": "wir",
+       "x": 18,
+       "y": 50
+      }
+     ],
+     "ball": {
+      "x": 25,
+      "y": 45
+     },
+     "pfeile": [
+      {
+       "art": "dribbel",
+       "von": {
+        "x": 25,
+        "y": 45
+       },
+       "nach": {
+        "x": 38,
+        "y": 60
+       }
+      }
+     ]
+    }
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "🛡️ Richtig! Du stehst innen, also bleibt dem Gegner nur der Weg nach außen.",
+    "falsch": "Wer außen steht, macht dem Gegner den Weg in die Mitte frei. Stell dich auf die Innenseite, dann muss er nach außen."
+   },
+   "quelle": [
+    "https://dfb.de/fileadmin/_dfbdam/196408-464-f-te.pdf",
+    "https://www.dfb.de/fileadmin/_dfbdam/228046-490-b-te.pdf"
+   ]
+  },
+  {
+   "id": "lf6-07",
+   "leitfrage": 6,
+   "stufe": "U9",
+   "typ": "tippen",
+   "feld": "funino",
+   "frage": "Der Gegner dribbelt auf eurer rechten Seite nach vorne. Welches Tor ist in Gefahr? Tippe es an.",
+   "spieler": [
+    {
+     "seite": "gegner",
+     "x": 74,
+     "y": 58
+    },
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 62
+    },
+    {
+     "seite": "wir",
+     "x": 30,
+     "y": 70
+    }
+   ],
+   "ball": {
+    "x": 74,
+    "y": 61
+   },
+   "ziele": [
+    {
+     "x": 72,
+     "y": 95,
+     "r": 12
+    }
+   ],
+   "erklaerung": {
+    "richtig": "🦔 Genau! Das Tor auf der Ballseite ist in Gefahr – dort muss einer davor.",
+    "falsch": "Gefährlich ist das Tor auf der Seite, wo der Ball ist. Einer drängt, zwei schützen die Tore."
+   },
+   "quelle": [
+    "entscheidungen.md 16.09.2026 (FUNiño: einer drängt, zwei schützen die Tore)"
+   ]
+  },
+  {
+   "id": "lf6-08",
+   "leitfrage": 6,
+   "stufe": "U8",
+   "typ": "szene",
+   "feld": "3+1",
+   "frage": "Der Gegner hat den Ball und steht mit dem Rücken zu deinem Tor. Was machst du?",
+   "spieler": [
+    {
+     "seite": "gegner",
+     "x": 50,
+     "y": 50
+    },
+    {
+     "seite": "wir",
+     "x": 50,
+     "y": 56
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 47
+   },
+   "anim": {
+    "gegner": [
+     {
+      "nach": {
+       "x": 52,
+       "y": 50
+      }
+     }
+    ]
+   },
+   "optionen": [
+    "Dicht dranbleiben, damit er sich nicht umdrehen kann",
+    "Weggehen und warten",
+    "Ihn von hinten schubsen"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "💪 Super! Bleib dran – so kann er sich nicht zu deinem Tor drehen. Und fair bleiben!",
+    "falsch": "Bleib dicht dran, aber ohne Schubsen. Dann kann er sich nicht umdrehen und aufs Tor laufen."
+   },
+   "quelle": [
+    "https://dfb.de/fileadmin/_dfbdam/59412-360-ue20-te.pdf"
+   ]
+  },
+  {
+   "id": "lf6-09",
+   "leitfrage": 6,
+   "stufe": "U10",
+   "typ": "ab",
+   "feld": "4+1",
+   "frage": "Wer läuft den Gegner besser an?",
+   "bilder": [
+    {
+     "ausschnitt": {
+      "x": 15,
+      "y": 25,
+      "w": 70,
+      "h": 60
+     },
+     "spieler": [
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 35
+      },
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 72
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 38
+     },
+     "pfeile": [
+      {
+       "art": "lauf",
+       "von": {
+        "x": 50,
+        "y": 70
+       },
+       "nach": {
+        "x": 50,
+        "y": 39
+       }
+      }
+     ]
+    },
+    {
+     "ausschnitt": {
+      "x": 15,
+      "y": 25,
+      "w": 70,
+      "h": 60
+     },
+     "spieler": [
+      {
+       "seite": "gegner",
+       "x": 50,
+       "y": 35
+      },
+      {
+       "seite": "wir",
+       "x": 50,
+       "y": 72
+      }
+     ],
+     "ball": {
+      "x": 50,
+      "y": 38
+     },
+     "pfeile": [
+      {
+       "art": "lauf",
+       "von": {
+        "x": 50,
+        "y": 70
+       },
+       "nach": {
+        "x": 50,
+        "y": 50
+       }
+      }
+     ]
+    }
+   ],
+   "richtig": 1,
+   "erklaerung": {
+    "richtig": "👍 Richtig! Schnell hin, aber vor dem Gegner abbremsen – dann kannst du noch reagieren.",
+    "falsch": "Wer in vollem Tempo bis zum Gegner rennt, wird mit einem Haken ausgespielt. Kurz vorher abbremsen!"
+   },
+   "quelle": [
+    "https://dfb.de/fileadmin/_dfbdam/59412-360-ue20-te.pdf",
+    "https://dfb.de/fileadmin/_dfbdam/158840-431-a-st1-01.pdf"
+   ]
+  },
+  {
+   "id": "lf6-10",
+   "leitfrage": 6,
+   "stufe": "U9",
+   "typ": "szene",
+   "feld": "3+1",
+   "frage": "Du hast gerade den Ball verloren. Du bist am nächsten dran. Was machst du sofort?",
+   "spieler": [
+    {
+     "seite": "wir",
+     "x": 48,
+     "y": 40
+    },
+    {
+     "seite": "gegner",
+     "x": 52,
+     "y": 38
+    },
+    {
+     "seite": "wir",
+     "x": 20,
+     "y": 45
+    },
+    {
+     "seite": "wir",
+     "x": 80,
+     "y": 45
+    }
+   ],
+   "ball": {
+    "x": 50,
+    "y": 40
+   },
+   "anim": {
+    "ball": {
+     "nach": {
+      "x": 54,
+      "y": 35
+     }
+    },
+    "gegner": [
+     {
+      "nach": {
+       "x": 54,
+       "y": 33
+      }
+     }
+    ]
+   },
+   "optionen": [
+    "Sofort stören – ich bin am nächsten dran",
+    "Stehen bleiben und ärgern",
+    "Zum Trainer schauen"
+   ],
+   "richtig": 0,
+   "erklaerung": {
+    "richtig": "⚡ Genau! Wer am nächsten ist, stört sofort. Die anderen laufen zurück.",
+    "falsch": "Ball weg? Wer am nächsten dran ist, stört sofort. Ärgern kannst du dich später – jetzt zählt der Ball!"
+   },
+   "quelle": [
+    "Ausbildungskonzept U9 Fassung 3, Leitfrage 6",
+    "entscheidungen.md 16.09.2026 (Jäger läuft als Erster an)"
+   ]
+  }
+ ]
+}
