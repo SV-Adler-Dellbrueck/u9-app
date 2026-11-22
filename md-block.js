@@ -549,4 +549,177 @@ async function blockLoeschen(id){
 }
 /* Welle 2 kommt nach dem ersten Bild: war der Trainings-Tab schon offen, jetzt nachziehen. */
 if(window._periodLoaded)blockBannerRender();
+/* ═══ v940 · Planung: der fertige Plan zuerst (Charles 22.11.2026, Entwurf im Bild freigegeben) ═══════════════════════
+   „Sobald ich auf Planung klicke … das All-inclusive-Paket … der komplette Trainingsplan automatisch nach der Leitfrage.“
+   Oben steht groß der Plan nach der Leitfrage des Trainingsblocks („Passt – speichern“ / „Ansehen und ändern“), darunter
+   gleich groß drei Wege für Tage, an denen man es anders will: Andere Leitfrage (oder die Vorwoche wiederholen – statt zweier
+   Leitfragen in einer Einheit; das Ausbildungskonzept sagt „Jede Einheit steht unter einer Frage“), Selbst bauen, Mit KI.
+   Zu- und Absagen: Der gespeicherte Plan passt sich beim Öffnen selbst an (dieselbe Rechnung wie „Plan anpassen“), mit
+   Hinweis und „Rückgängig“; ab zwei Stunden vor Beginn ändert sich nichts mehr von selbst. */
+const TPS_FRIER_MIN=120;
+let _tpsRueck=null;            // Stand vor der automatischen Anpassung (für „Rückgängig“)
+let _tpsHinweis=null;          // {datum, text}
+function _tpsKinder(){ try{ const p=(typeof _tgPool==="function")?_tgPool():null; return p&&Array.isArray(p.namen)?p.namen.length:0; }catch(e){ return 0; } }
+function _tpsTrainer(){ try{ return (typeof tpGetTrainerCount==="function")?tpGetTrainerCount():0; }catch(e){ return 0; } }
+function _tpsHatPlan(){ try{ return (typeof tpPlanEntries==="function")&&tpPlanEntries().length>0; }catch(e){ return false; } }
+/* Aufwärmen · Hauptteil · Abschluss aus den Blöcken: alles vor dem ersten Hauptteil, die Hauptteile, alles danach. */
+function _tpsAblauf(slots){
+  const s=(slots||[]).filter(x=>x&&x.parallelZu==null);
+  const haupt=s.map((x,i)=>(typeof tpIstHauptteil==="function"&&tpIstHauptteil(x.typ))?i:-1).filter(i=>i>=0);
+  if(!haupt.length)return null;
+  const min=a=>a.reduce((m,x)=>m+(Number(x.dauer)||0),0);
+  return {vor:min(s.slice(0,haupt[0])),haupt:min(s.slice(haupt[0],haupt[haupt.length-1]+1)),nach:min(s.slice(haupt[haupt.length-1]+1))};
+}
+function _tpsStart(datum){
+  const z=String((typeof TP_TERMIN_ZEIT!=="undefined"&&TP_TERMIN_ZEIT)||"").slice(0,5);
+  return new Date(`${datum}T${/^\d\d:\d\d$/.test(z)?z:"23:59"}:00`);
+}
+function _tpsEingefroren(datum){ return Date.now()>=_tpsStart(datum).getTime()-TPS_FRIER_MIN*60000; }
+async function _tpsVorwoche(datum){
+  /* Leitfrage des Trainings eine Woche vorher – aus dem Block, der dort galt. Ohne Block keine Wiederholung. */
+  const d=new Date(datum+"T12:00:00"); d.setDate(d.getDate()-7);
+  const vor=d.toISOString().slice(0,10);
+  const b=blockFuerDatum(vor)||(TB_BLOECKE||[]).filter(x=>String(x.von)<datum&&String(x.bis)<datum).sort((a,c)=>String(c.bis).localeCompare(String(a.bis)))[0]||null;
+  return b&&b.leitfrage?String(b.leitfrage):"";
+}
+async function tpStartRender(datum){
+  const el=document.getElementById("tp-start"); if(!el)return;
+  datum=String(datum||document.getElementById("tp-date")?.value||"").slice(0,10);
+  if(!datum||(typeof sbToken==="function"&&!sbToken())){ el.innerHTML=""; return; }
+  if(!_tbGeladen)await blockLaden();
+  await _tbVorlagenSicher();
+  if((document.getElementById("tp-date")?.value||datum)!==datum)return;
+  const b=blockFuerDatum(datum);
+  let z=null, zu=[]; if(b){ zu=blockZuordnung(await _tbTrainings(String(b.von),String(b.bis)),b); z=zu.find(x=>x.datum===datum)||null; }
+  const v=z?_tbVorlage(z.vorlage):null;
+  const hatPlan=_tpsHatPlan();
+  const n=_tpsKinder(), tr=_tpsTrainer();
+  const ablauf=hatPlan?_tpsAblauf(typeof tpSlots!=="undefined"?tpSlots:[]):(v&&typeof vuPlanAusVorlage==="function"?_tpsAblauf(vuPlanAusVorlage(v).slots):null);
+  const lf=b&&z?String(b.leitfrage||""):"";
+  const zustand=hatPlan?"steht":(v?"bereit":"leer");
+  const titel={steht:"Dein Training steht",bereit:"Dein Training ist bereit",leer:"Noch kein Plan für diesen Termin"}[zustand];
+  const haupt={steht:`<button type="button" class="tps-gross" id="tps-speichern" onclick="tpStartSpeichern()"><span aria-hidden="true">✓</span> Passt – speichern</button>`,
+    bereit:`<button type="button" class="tps-gross" id="tps-uebernehmen" onclick="tpStartUebernehmen('${esc(datum)}')"><span aria-hidden="true">✓</span> Plan übernehmen</button>`,
+    leer:`<button type="button" class="tps-gross" id="tps-leitfrage" onclick="tpStartLeitfrage('${esc(datum)}')"><span aria-hidden="true">🎯</span> Leitfrage wählen</button>`}[zustand];
+  const h=_tpsHinweis&&_tpsHinweis.datum===datum?_tpsHinweis:null;
+  el.innerHTML=`<section class="tps" aria-label="Plan für diesen Termin">
+    <div class="tps-haupt" id="tps-haupt">
+      <div class="tps-ueber">⚡ ${zustand==="leer"?"Schnell planen":"Fertiger Plan"}</div>
+      <div class="tps-titel">${titel}</div>
+      ${lf?`<div class="tps-lf"><span class="tps-lf-klein">Leitfrage des Blocks · Einheit ${esc(z.buchstabe)} · Training ${z.nr} von ${zu.length}</span>${esc(lf)}</div>`
+        :`<div class="tps-lf"><span class="tps-lf-klein">Kein Trainingsblock für diesen Termin</span>${hatPlan?"Der Plan unten gilt.":"Wähle eine Leitfrage – der Plan entsteht aus der passenden Einheit."}</div>`}
+      ${ablauf?`<div class="tps-ablauf"><div style="flex:${Math.max(1,ablauf.vor)}">Aufwärmen<span>${ablauf.vor} Min</span></div><div style="flex:${Math.max(1,ablauf.haupt)}">Hauptteil${tr>1?` · ${tr} Felder`:""}<span>${ablauf.haupt} Min</span></div><div style="flex:${Math.max(1,ablauf.nach)}">Abschluss<span>${ablauf.nach} Min</span></div></div>`:""}
+      <div class="tps-rechnet">👥 rechnet mit ${n} ${n===1?"Kind":"Kindern"}${tr?` · ${tr} ${tr===1?"Trainer":"Trainern"}`:""}</div>
+      ${haupt}
+      ${zustand==="leer"&&!b?`<button type="button" class="tps-zweit" onclick="blockEditorOpen()">🧱 Trainingsblock anlegen</button>`
+        :`<button type="button" class="tps-zweit" id="tps-ansehen" onclick="tpStartAnsehen()">Ansehen und ändern</button>`}
+    </div>
+    ${h?`<div class="tps-hinweis" id="tps-hinweis" role="status"><span aria-hidden="true">🔄</span><span>${esc(h.text)}</span>${_tpsRueck&&_tpsRueck.datum===datum?`<button type="button" onclick="tpStartRueckgaengig()">Rückgängig</button>`:""}</div>`:""}
+    <div class="tps-oder">Heute lieber anders?</div>
+    <div class="tps-wege">
+      <button type="button" class="tps-weg" id="tps-andere" onclick="tpStartLeitfrage('${esc(datum)}')"><span class="tps-i" aria-hidden="true">🔁</span><b>Andere Leitfrage</b><small>wählen oder die Vorwoche wiederholen</small></button>
+      <button type="button" class="tps-weg" id="tps-selbst" onclick="tpStartAnsehen()"><span class="tps-i" aria-hidden="true">✏️</span><b>Selbst bauen</b><small>jeden Block selbst belegen · ${n} Kinder</small></button>
+      <button type="button" class="tps-weg" id="tps-ki" onclick="tpStartKi()"><span class="tps-i" aria-hidden="true">✨</span><b>Mit KI</b><small>Ziel nennen, Übung vom Adler-Coach</small></button>
+    </div>
+  </section>`;
+}
+function tpStartAnsehen(){
+  const ziel=document.querySelector("#train-sub-planung .tp-schritt")||document.getElementById("tp-timeline");
+  if(ziel)ziel.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function tpStartKi(){
+  if(typeof kiCoachOpen==="function")kiCoachOpen(); else toast("Der Adler-Coach lädt noch – gleich nochmal","err");
+}
+async function tpStartUebernehmen(datum){
+  const k=document.getElementById("tps-uebernehmen"); if(k)k.disabled=true;
+  try{ await blockEinheitUebernehmen(datum,{still:true}); }
+  finally{ if(k)k.disabled=false; }
+  if(_tpsHatPlan())tpStartHerz();
+  tpStartRender(datum);
+}
+async function tpStartSpeichern(){
+  const k=document.getElementById("tps-speichern"); if(k)k.disabled=true;
+  try{ if(typeof tpPlanSave==="function")await tpPlanSave(true); }
+  finally{ if(k)k.disabled=false; }
+  tpStartHerz();
+}
+/* Andere Leitfrage: gibt es eine Vorwoche, steht sie als eigener Weg da; die Wahl selbst ist der vertraute Vorlagen-Dialog,
+   gefiltert auf die Leitfrage (dort stehen die Einheiten der Folge, „Auf den Termin setzen“ bzw. „Plan ersetzen“). */
+async function tpStartLeitfrage(datum){
+  if(typeof vorlageUebernehmenOpen!=="function"){ toast("Die Vorlagen laden noch – gleich nochmal","err"); return; }
+  const vw=await _tpsVorwoche(datum);
+  if(!vw){ vorlageUebernehmenOpen(); return; }
+  document.getElementById("tps-modal")?.remove();
+  const m=document.createElement("div"); m.id="tps-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Andere Leitfrage");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{ if(e.target===m)m.remove(); };
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
+    ${mdlHead("tps-modal","🔁","Andere Leitfrage","Heute ein anderes Thema oder die Vorwoche festigen","var(--fam-training)")}
+    <button type="button" class="tps-weg tps-weg-breit" id="tps-vorwoche" onclick="tpStartVorwoche()"><span class="tps-i" aria-hidden="true">🔁</span><b>Vorwoche wiederholen</b><small>${esc(vw)}</small></button>
+    <button type="button" class="tps-weg tps-weg-breit" id="tps-wahl" onclick="document.getElementById('tps-modal').remove();vorlageUebernehmenOpen()"><span class="tps-i" aria-hidden="true">🎯</span><b>Leitfrage wählen</b><small>alle sechs Leitfragen mit ihren Einheiten</small></button>
+  </div>`;
+  m.dataset.lf=vw;
+  document.body.appendChild(m);
+}
+async function tpStartVorwoche(){
+  const m=document.getElementById("tps-modal"), lf=m?m.dataset.lf:""; if(m)m.remove();
+  await vorlageUebernehmenOpen();
+  if(lf&&typeof _vuFilter!=="undefined"){ _vuFilter.leitfrage=lf; _vuAuswahl=null; if(typeof vorlageUebernehmenRender==="function")vorlageUebernehmenRender(); }
+}
+/* Nach dem Öffnen eines Termins: Zu- und Absagen seit dem Speichern? Dann passt sich der Plan selbst an – nur vor dem
+   Einfrieren, nur an heutigen und künftigen Terminen und nicht erneut, wenn der Trainer genau diesen Stand zurückgenommen hat. */
+function _tpsSchluessel(v){ return `${v.kinderZahl}|${(v.trainer||[]).slice().sort().join(",")}|${(v.raus||[]).slice().sort().join(",")}|${(v.rein||[]).slice().sort().join(",")}`; }
+async function tpStartAuto(datum){
+  if(!datum||datum<(typeof isoLokal==="function"?isoLokal():datum)||_tpsEingefroren(datum)||!_tpsHatPlan())return false;
+  if(typeof tpAnpassenVorschlag!=="function"||typeof tpAnpassenUebernehmen!=="function")return false;
+  let v; try{ v=tpAnpassenVorschlag(); }catch(e){ return false; }
+  if(!v||v.fehler||v.nichts)return false;
+  let nein=""; try{ nein=localStorage.getItem("tps_nein_"+datum)||""; }catch(e){}
+  if(nein===_tpsSchluessel(v))return false;
+  _tpsRueck={datum,plan:tpPlanEntries(),slots:tpSlotsMitZuordnung(),tg:(typeof tgFor==="function"&&tgFor())?JSON.parse(JSON.stringify(tgFor())):null,schluessel:_tpsSchluessel(v)};
+  window._tpAnpassen=v;
+  let r=null; try{ r=await tpAnpassenUebernehmen(); }catch(e){ _tpsRueck=null; return false; }
+  const grund=[]; if(v.raus.length)grund.push(`${v.raus.length} ${v.raus.length===1?"Absage":"Absagen"}`); if(v.rein.length)grund.push(`${v.rein.length} ${v.rein.length===1?"Zusage":"Zusagen"}`);
+  const was=[]; if(v.nachher!==v.vorher)was.push(`${v.nachher} statt ${v.vorher} Felder`);
+  const getauscht=r&&r.getauscht||0; if(getauscht)was.push(`${getauscht===1?"eine Übung":getauscht+" Übungen"} getauscht`);
+  if(!was.length)was.push(`Gruppen neu: ${v.kinderZahl} Kinder`);
+  _tpsHinweis={datum,text:`Angepasst${grund.length?" wegen "+grund.join(" und "):""}: ${was.join(" · ")}.`};
+  return true;
+}
+async function tpStartRueckgaengig(){
+  const s=_tpsRueck; if(!s)return;
+  const datum=s.datum;
+  try{ localStorage.setItem("tps_nein_"+datum,s.schluessel); }catch(e){}
+  try{
+    if(typeof tpPlanFremdGeschrieben==="function")tpPlanFremdGeschrieben(datum);
+    const von=(typeof trainerMe==="function")?(await trainerMe()||null):null;
+    const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?on_conflict=datum`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify({datum,plan:s.plan,slots:s.slots,gespeichert_von:von,updated_at:new Date().toISOString()})});
+    if(typeof sbCheck401==="function"&&sbCheck401(r))return;
+    if(!r.ok){ toast(`Nicht zurückgenommen – Server antwortet ${r.status}`,"err"); return; }
+    if(typeof TP_STAND!=="undefined")delete TP_STAND[datum];
+    if(s.tg&&typeof tgSave==="function")tgSave(s.tg);
+  }catch(e){ toast("Kein Netz – nicht zurückgenommen","err"); return; }
+  _tpsRueck=null; _tpsHinweis=null;
+  toast("↩️ Wie vorher – der Plan bleibt so, bis sich wieder etwas ändert");
+  if(typeof tpPlanRestore==="function")await tpPlanRestore(datum);
+}
+async function tpStartNachLaden(datum){
+  if(!document.getElementById("tp-start"))return;
+  if(_tpsHinweis&&_tpsHinweis.datum!==datum){ _tpsHinweis=null; _tpsRueck=null; }
+  try{ await tpStartAuto(datum); }catch(e){}
+  await tpStartRender(datum);
+}
+/* Kleiner Gruß nach dem Speichern: ein Herz fliegt hoch, dazu ein Satz mit dem Vornamen des angemeldeten Trainers. */
+const TPS_GRUESSE=["Danke, {n}! Die Kinder freuen sich.","Stark, {n} – das wird ein gutes Training.","Plan steht, {n}. Viel Spaß auf dem Platz!","Merci, {n}! Ohne dich kein Training.","Top, {n}! Jetzt nur noch Bälle aufpumpen."];
+async function tpStartHerz(){
+  let name=""; try{ name=String((typeof trainerMe==="function"?await trainerMe():"")||"").trim().split(/\s+/)[0]||""; }catch(e){}
+  const satz=TPS_GRUESSE[Math.floor(Math.random()*TPS_GRUESSE.length)].replace("{n}",name||"Trainer");
+  document.getElementById("tps-herz")?.remove();
+  const d=document.createElement("div"); d.id="tps-herz"; d.setAttribute("role","status");
+  d.innerHTML=`<span class="tps-herz-bild" aria-hidden="true">❤️</span><span class="tps-herz-text">${esc(satz)}</span>`;
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(),2600);
+}
 function blockModulDa(){ return true; }

@@ -2394,6 +2394,7 @@ function tpRsvpBereit(datum){
   return _tpRsvpLauf;
 }
 let TP_TERMIN_MIN=0;
+let TP_TERMIN_ZEIT="";   // v940: Beginn des Trainings (für das Einfrieren der automatischen Anpassung)
 /* v868 (Bestandsaufnahme 5.11): Die freien Minuten sind der Puffer für Trinken und Umbau – und so heißen sie jetzt.
    Unter drei Minuten sagt die Zeile, dass keine Zeit dafür bleibt; ab neun sind es wirklich freie Minuten. */
 function tpPufferText(frei){
@@ -2440,6 +2441,7 @@ async function _tpRsvpLadenIntern(datum){
         if(t&&t.id!=null)TP_TERMIN_ID=t.id;
         /* v868 (5.11): Die Ziel-Dauer folgt dem Termin – vorher stand sie immer auf 75 Minuten, auch an 90-Minuten-Trainings. */
         TP_TERMIN_MIN=tpTerminMinuten(t);
+        TP_TERMIN_ZEIT=(t&&t.uhrzeit)?String(t.uhrzeit).slice(0,5):"";
         const dsel=document.getElementById("tp-dauer"); if(dsel&&TP_TERMIN_MIN){ if(![...dsel.options].some(o=>+o.value===TP_TERMIN_MIN))dsel.add(new Option(String(TP_TERMIN_MIN),String(TP_TERMIN_MIN))); dsel.value=String(TP_TERMIN_MIN); }
         if(t&&t.trainer_status&&typeof t.trainer_status==="object")TP_RSVP=t.trainer_status;}
     }catch(e){}
@@ -4805,6 +4807,8 @@ async function _tpPlanRestoreIntern(datum,lauf){
   if(!_tpRestoreGilt(datum,lauf))return;
   const r=tpZustandLaden(null,plan);
   if(r.felder)_tpWahlGeladenZeigen(r);
+  /* v940: oben der fertige Plan; Zu- und Absagen seit dem Speichern passen ihn selbst an (md-block.js, Welle 2 – geprüft) */
+  if(typeof tpStartNachLaden==="function"&&_tpRestoreGilt(datum,lauf))tpStartNachLaden(datum);
 }
 /* ═══ v884 · 4.8 Schritt 5 – ÖFFNEN ÜBER DEN ZUSTAND ═══════════════════════════════════════
    tpZustandLaden(slots, plan) – rein: kein DOM, kein Zeichnen, kein Speichern.
