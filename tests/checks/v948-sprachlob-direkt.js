@@ -10,7 +10,7 @@ module.exports = async function (h) {
   const titel = "v948 Sprachlob direkt aus dem To-do: Team oder einzelne Kinder, ✕ zum Ausblenden, neuer Stil";
   const probleme = [], zeilen = [], K = h.KINDER;
   const views = fs.readFileSync(path.join(h.REPO, "views.js"), "utf8");
-  const zeile = views.split("\n").find(l => /Du bist dran: Sprachlob/.test(l)) || "";
+  const zeile = views.split("\n").find(l => /todos\.push/.test(l) && /Du bist dran: Sprachlob/.test(l)) || "";
   if (/kaderEditOpen/.test(zeile) || !/botschaftOpen\(/.test(zeile) || !/wegAct:`lobTodoWeg/.test(zeile)) probleme.push("a) To-do-Zeile: " + zeile.trim().slice(0, 160));
   const gestern = h.tagePlus(-1);
   const nom = {}; K.slice(0, 4).forEach((n, i) => { nom[String(i + 1)] = "dabei"; }); nom["5"] = "nicht";
