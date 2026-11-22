@@ -6737,5 +6737,8 @@ const UEBUNG_BETREUUNG_VORSCHLAG={
   /* v749: beim FUNiño-Wachstum schickt der Trainer das nächste Startkind, beim Eishockey gibt er
      das Kommando zum Reihentausch und die Provokationsregeln vor */
   "FUNiño 1 gegen 0 bis 4 gegen 4 – der Angreifer wird Verteidiger":"fuehrt",
-  "Eishockey-Reihentausch – 6 gegen 6 in zwei Reihen":"fuehrt"
+  "Eishockey-Reihentausch – 6 gegen 6 in zwei Reihen":"fuehrt",
+  /* v941: Übungen aus der Praxis (Vorschlag, gilt erst nach der Durchsicht) */
+  "Anbieten und Freilaufen – Einstimmen":"allein",   // feste Passfolge, die Kinder rufen und spielen selbst
+  "Pylonen-Spiel – Läufer gegen Wächter":"fuehrt",   // Trainer gibt das Kommando und wechselt die Rollen
 };
