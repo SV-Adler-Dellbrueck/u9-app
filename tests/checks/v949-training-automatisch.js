@@ -50,7 +50,8 @@ module.exports = async function (h) {
     out.d2 = txt(document.querySelector("#tps-haupt .tps-lf"));
     window.frageJaNein = async () => true; window.vuPlanAusVorlage = orig;   // echte Übungsliste zum Schreiben
     await tpaBauen(datum); await w(400);
-    out.d3 = txt(document.getElementById("tps-haupt"));
+    out.d3 = txt(document.getElementById("tps-fertig"));   // v952: gebaut = gespeichert → Übersicht
+    tpStartZeigen(datum); await w(300);   // v952: Kacheln stehen unter „Plan ändern“
     out.e = { wege: [...document.querySelectorAll(".tps-wege .tps-weg")].map(txt) };
     await vorlageUebernehmenOpen(); await w(300); _vuAuswahl = 12; _vuPlanDa = false; vorlageUebernehmenRender(); await w(100);
     out.e.vu = txt(document.getElementById("vu-haupt")); document.getElementById("vu-modal")?.remove();
@@ -64,7 +65,7 @@ module.exports = async function (h) {
     if (!p.b || p.b.leitfrage !== F5 || !p.b.thema || p.b.monat !== datum.slice(0, 7)) probleme.push("b) gespeichert: " + JSON.stringify(posts));
     if (!/Dein Training ist bereit/.test(r.b.text) || !/Leitfrage des Monats · Einheit L5-3/.test(r.b.text) || r.b.knopf < 56) probleme.push(`c) erste Einheit (L5-3 FUNiño vor L5-2, L5-1 schon trainiert): ${r.b.text.slice(0, 160)} · Knopf ${r.b.knopf}`);
     if (!/Einheit L5-2/.test(r.d1) || !/Einheit L5-3/.test(r.d2)) probleme.push(`d) Andere Einheit: „${r.d1}“ / „${r.d2}“`);
-    if (!plan || !/Dein Training steht/.test(r.d3)) probleme.push("d) Training bauen: " + (plan ? "Plan da" : "kein Plan") + " · " + r.d3.slice(0, 80));
+    if (!plan || !/Training steht/.test(r.d3)) probleme.push("d) Training bauen: " + (plan ? "Plan da" : "kein Plan") + " · " + r.d3.slice(0, 80));
     if (r.e.wege.length !== 2 || !/Selbst bauen/.test(r.e.wege[0]) || !/Mit KI/.test(r.e.wege[1])) probleme.push("e) Kacheln " + JSON.stringify(r.e.wege));
     if (!/^.?Für \S+ \d\d\.\d\d\. übernehmen/.test(r.e.vu.trim())) probleme.push("e) Vorlagen-Knopf „" + r.e.vu + "“");
   }

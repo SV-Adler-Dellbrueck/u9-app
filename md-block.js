@@ -615,16 +615,13 @@ async function tpStartRender(datum){
     leer:""}[zustand];
   const h=_tpsHinweis&&_tpsHinweis.datum===datum?_tpsHinweis:null;
   /* v952 · Charles 22.11.: „Wenn ich noch Änderungen vornehme und dann ganz unten Plan speichern klicke, müsste ja oben der fertige
-     Plan verschwinden … vielleicht nochmal aufrufbar.“ Nach bewusstem Speichern eine Zeile; ändert sich die Kinderzahl, geht sie auf. */
-  const gz=zustand==="steht"?_tpsZuLesen(datum):null;
-  if(gz&&gz.n!==n){ _tpsZuWeg(datum); }
-  else if(gz&&!gz.offen){
-    const min=ablauf?ablauf.vor+ablauf.haupt+ablauf.nach:0;
-    el.innerHTML=`<section class="tps-zu" id="tps-zu" aria-label="Plan für diesen Termin"><span class="tps-zu-ok" aria-hidden="true">✓</span>
-      <span class="tps-zu-text"><b>Training steht</b><small>gespeichert ${esc(gz.zeit)} · ${n} ${n===1?"Kind":"Kinder"}${min?` · ${min} Min`:""}</small></span>
-      <button type="button" id="tps-zeigen" aria-expanded="false" onclick="tpStartZeigen('${esc(datum)}')">Zeigen ▾</button></section>`;
-    return;
-  }
+     Plan verschwinden …“ und dann: „Eigentlich kann da die ganze Planungsübersicht als fertig angezeigt werden. Als Trainer muss ich
+     dann nur noch den Plan sehen können … Planung doch nochmal ändern kann dann eine Option sein.“ (Bild freigegeben)
+     Steht ein gespeicherter Plan, zeigt die Seite nur die Übersicht mit „Training starten“; die Blockkarten erst nach „Plan ändern“. */
+  const gz=_tpsZuLesen(datum), gespeichert=!!(gz&&gz.zeit)||!!(typeof TP_STAND!=="undefined"&&TP_STAND[datum]&&TP_STAND[datum].updated_at);
+  const fertig=zustand==="steht"&&gespeichert&&!(gz&&gz.offen);
+  document.getElementById("train-sub-planung")?.classList.toggle("tp-fertig",fertig);
+  if(fertig){ el.innerHTML=tpUebersichtHtml(datum,{lf,n,ablauf,hinweis:h?`<div class="tps-hinweis tpu-hinweis" id="tps-hinweis" role="status"><span aria-hidden="true">🔄</span><span>${esc(h.text)}</span>${_tpsRueck&&_tpsRueck.datum===datum?`<button type="button" onclick="tpStartRueckgaengig()">Rückgängig</button>`:""}</div>`:"",lfKlein:auto?`Leitfrage des Monats · Einheit ${String(auto.v.name).split(" ")[0]}`:(b&&z?`Leitfrage des Blocks · Einheit ${z.buchstabe}`:"")}); return; }
   el.innerHTML=`<section class="tps" aria-label="Plan für diesen Termin">
     <div class="tps-haupt" id="tps-haupt">
       <div class="tps-ueber">⚡ ${zustand==="leer"?"Schnell planen":"Fertiger Plan"}</div>
@@ -638,7 +635,7 @@ async function tpStartRender(datum){
       ${haupt}
       ${zustand==="auto"?`<div class="tps-paar"><button type="button" class="tps-zweit" id="tps-andere-einheit" onclick="tpaAndere('${esc(datum)}')">🔄 Andere Einheit</button><button type="button" class="tps-zweit" id="tps-lf-aendern" onclick="tpaLfAendern('${esc(datum)}')">🎯 Leitfrage ändern</button></div><div id="tps-lf-wahl"></div>`
         :zustand==="leer"?"":`<button type="button" class="tps-zweit" id="tps-ansehen" onclick="tpStartAnsehen()">Ansehen und ändern</button>`}
-      ${gz&&gz.offen&&_tpsZu[datum]?`<button type="button" class="tps-einklappen" id="tps-einklappen" onclick="tpStartEinklappen('${esc(datum)}')">Einklappen ▴</button>`:""}
+      ${zustand==="steht"&&gespeichert?`<button type="button" class="tps-einklappen" id="tps-einklappen" onclick="tpStartEinklappen('${esc(datum)}')">✓ Fertig – zur Übersicht</button>`:""}
     </div>
     ${h?`<div class="tps-hinweis" id="tps-hinweis" role="status"><span aria-hidden="true">🔄</span><span>${esc(h.text)}</span>${_tpsRueck&&_tpsRueck.datum===datum?`<button type="button" onclick="tpStartRueckgaengig()">Rückgängig</button>`:""}</div>`:""}
     <div class="tps-oder">Heute lieber anders?</div>
@@ -728,8 +725,33 @@ function tpStartGespeichert(datum){
   try{ localStorage.setItem("adler_tps_zu_"+datum,JSON.stringify(_tpsZu[datum])); }catch(e){}
   if((document.getElementById("tp-date")?.value||"")===datum)tpStartRender(datum);
 }
-function tpStartZeigen(datum){ const z=_tpsZuLesen(datum); if(z){ z.offen=true; } tpStartRender(datum).then(()=>document.getElementById("tps-haupt")?.focus?.()); }
-function tpStartEinklappen(datum){ const z=_tpsZuLesen(datum); if(z){ z.offen=false; } tpStartRender(datum).then(()=>document.getElementById("tps-zeigen")?.focus()); }
+function tpStartZeigen(datum){ _tpsZu[datum]=Object.assign(_tpsZuLesen(datum)||{},{offen:true}); tpStartRender(datum).then(()=>document.getElementById("tps-haupt")?.scrollIntoView({block:"start"})); }
+function tpStartEinklappen(datum){ const z=_tpsZuLesen(datum); if(z)z.offen=false; tpStartRender(datum).then(()=>{ document.getElementById("tps-fertig")?.scrollIntoView({block:"start"}); document.getElementById("tpu-start")?.focus(); }); }
+/* v952: Übersicht des fertigen Plans – dieselben Stationen wie der Trainingsstart (_tlSnapshot), nur lesen. */
+function _tpuZeit(min){ const t=String(typeof TP_TERMIN_ZEIT!=="undefined"?TP_TERMIN_ZEIT:""), m=t.match(/^(\d{1,2}):(\d{2})/); if(!m)return min+"′"; const a=Number(m[1])*60+Number(m[2])+min; return String(Math.floor(a/60)%24).padStart(2,"0")+":"+String(a%60).padStart(2,"0"); }
+function _tpuIch(){ return (typeof _meTrainer==="string"&&_meTrainer)||""; }
+function tpUebersichtHtml(datum,o){
+  let st=[]; try{ st=(typeof _tlSnapshot==="function")?_tlSnapshot():[]; }catch(e){}
+  const ich=_tpuIch(), gz=_tpsZuLesen(datum);
+  const min=st.reduce((a,x)=>a+(Number(x.dauer)||0),0);
+  /* Durchgänge eines Blocks stehen als eine Karte: Übungen aus dem ersten, darunter „Gruppen wechseln“ */
+  const bl=[]; st.forEach(x=>{ const l=bl[bl.length-1], dg=/ · Durchgang (\d+)\//.exec(String(x.label)); if(l&&dg&&Number(dg[1])>1&&String(x.label).startsWith(l.label+" · Durchgang")){ l.dauer+=x.dauer; l.dg++; } else bl.push({si:x.si,label:String(x.label).replace(/ · Durchgang .*/,""),dauer:x.dauer,farbe:x.farbe,gruppen:x.gruppen,dg:1,ab:0}); });
+  let t=0; bl.forEach(x=>{ x.ab=t; t+=x.dauer; });
+  const zeile=x=>{
+    const alle=x.gruppen.length===1&&(!x.gruppen[0].gruppe);
+    const g=x.gruppen.map(gr=>{ const meins=ich&&gr.trainer===ich;
+      return `<div class="tpu-g${meins?" tpu-ich":""}">${gr.gruppe?`<span class="tpu-grp">${esc(gr.gruppe)}</span>`:""}<span class="tpu-ueb">${esc(gr.uebung)}</span><span class="tpu-tr">${alle?"alle":meins?"Du":esc(gr.trainer)}</span></div>`; }).join("");
+    return `<li class="tpu-b" style="--f:${esc(x.farbe||"#16a34a")}"><span class="tpu-zeit">${_tpuZeit(x.ab)}</span><div class="tpu-k"><div class="tpu-t"><b>${esc(x.label)}</b><span>${x.dauer} Min${x.gruppen.length>1?` · ${x.gruppen.length} Felder`:""}</span></div>${g}${x.dg>1?`<div class="tpu-dg">🔁 Gruppen wechseln ${x.dg-1}× (alle ${Math.round(x.dauer/x.dg)} Min)</div>`:""}</div></li>`;
+  };
+  return `<section class="tpu" id="tps-fertig" aria-label="Fertiger Plan">
+    <div class="tpu-ok"><span class="tps-zu-ok" aria-hidden="true">✓</span><span class="tps-zu-text"><b>Training steht</b><small>${esc(_tpuZeit(0)==="0′"?"":_tpuZeit(0)+" Uhr · ")}${o.n} ${o.n===1?"Kind":"Kinder"} · ${min} Min${gz&&gz.zeit?` · gespeichert ${esc(gz.zeit)}`:""}</small></span></div>
+    ${o.lf?`<div class="tpu-lf">${o.lfKlein?`<small>${esc(o.lfKlein)}</small>`:""}${esc(o.lf)}</div>`:""}
+    <button type="button" class="tpu-start" id="tpu-start" onclick="taOpen()"><span aria-hidden="true">▶</span> Training starten</button>
+    <div class="tpu-zweit"><button type="button" id="tps-zeigen" onclick="tpStartZeigen('${esc(datum)}')">✏️ Plan ändern</button><button type="button" id="tpu-gruppen" onclick="if(typeof tgOpen==='function')tgOpen()">👥 Gruppen</button></div>
+    ${o.hinweis||""}
+    <ol class="tpu-liste">${bl.map(zeile).join("")}</ol>
+  </section>`;
+}
 async function tpStartSpeichern(){
   const k=document.getElementById("tps-speichern"); if(k)k.disabled=true;
   try{ if(typeof tpPlanSave==="function")await tpPlanSave(true); }
@@ -823,4 +845,112 @@ async function tpStartHerz(){
   if(typeof freudeHerz==="function")freudeHerz(satz);   // v942: gemeinsam mit der Eltern-App (core.js)
   if(typeof freudeMeilenstein==="function"&&name)setTimeout(()=>freudeMeilenstein("trainer",name),2700);
 }
+
+/* ═══ v952 · Trainingsansicht (Charles 22.11., Bild freigegeben) ═══
+   „Evtl. müssen wir über eine Trainingsansicht nachdenken, auf der nur die Übungen aufgelistet sind mit den Infos zu den Übungen.
+   Vielleicht auch nur die, die der jeweilige Trainer in der Planung zugewiesen hat. Die anderen Hauptteile sind vorerst
+   ausgeblendet. Vielleicht auch mit einem kleinen Countdown bzw. einer Stoppuhr.“
+   Läuft auf dem eigenen Handy ohne Netz und ohne Warten auf die anderen (Uhr nach Date.now, übersteht Sperrbildschirm);
+   „Gemeinsam starten“ (tlStart, alle Handys im Takt) bleibt als Link. Dieselben Stationen wie der Trainingsstart (_tlSnapshot). */
+let _ta=null;
+function _taFmt(s){ s=Math.max(0,Math.round(s)); return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); }
+function _taRest(){ if(!_ta)return 0; const st=_ta.st[_ta.i]; const ges=(st?st.dauer*60:0)+_ta.extra; const lauf=_ta.acc+(_ta.laeuft?(Date.now()-_ta.seit)/1000:0); return ges-lauf; }
+function _taUebung(name){
+  try{ const i=(typeof tfIndexVon==="function")?tfIndexVon({formName:String(name||"")}):-1; return i>=0?tpAllForms()[i]:null; }catch(e){ return null; }
+}
+function _taPunkte(text,max){
+  return String(text||"").split(/\n+|(?<=[.!?])\s+(?=[A-ZÄÖÜ„])/).map(x=>x.trim()).filter(Boolean).slice(0,max||4);
+}
+async function taOpen(){
+  let st=[]; try{ st=(typeof _tlSnapshot==="function")?_tlSnapshot():[]; }catch(e){}
+  if(!st.length){ toast("Erst Blöcke mit Übungen planen","err"); return; }
+  let ich=_tpuIch(); if(!ich&&typeof trainerMe==="function"){ try{ ich=await trainerMe()||""; }catch(e){} }
+  _ta={st,i:0,laeuft:false,seit:0,acc:0,extra:0,ich,alle:false,uhr:{laeuft:false,seit:0,acc:0},gepfiffen:-1};
+  document.getElementById("ta-ov")?.remove();
+  const ov=document.createElement("div"); ov.id="ta-ov"; ov.className="ta-ov";
+  ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-label","Trainingsansicht");
+  document.body.appendChild(ov);
+  _taRender();
+  _ta.tick=setInterval(_taTick,500);
+  try{ if(navigator.wakeLock)_ta.lock=await navigator.wakeLock.request("screen"); }catch(e){}
+  ov.querySelector(".ta-haupt")?.focus();
+}
+function taSchliessen(){
+  if(_ta){ clearInterval(_ta.tick); try{ _ta.lock&&_ta.lock.release(); }catch(e){} }
+  _ta=null; document.getElementById("ta-ov")?.remove();
+  document.getElementById("tpu-start")?.focus();
+}
+function _taTick(){
+  if(!_ta||!document.getElementById("ta-ov")){ if(_ta)clearInterval(_ta.tick); return; }
+  const r=_taRest();
+  if(_ta.laeuft&&r<=0&&_ta.gepfiffen!==_ta.i){ _ta.gepfiffen=_ta.i; try{ if(typeof stTimerWhistle==="function")stTimerWhistle(); }catch(e){} }
+  const u=document.getElementById("ta-uhr"); if(u){ u.textContent=r<=0&&_ta.laeuft?"Abpfiff!":_taFmt(r); u.classList.toggle("ta-aus",r<=0&&_ta.laeuft); }
+  const b=document.getElementById("ta-bis"); if(b)b.textContent=_taBisText(r);
+  const sw=document.getElementById("ta-sw"); if(sw){ const x=_ta.uhr; sw.textContent=_taFmt(x.acc+(x.laeuft?(Date.now()-x.seit)/1000:0)); }
+}
+function _taBisText(r){
+  if(!_ta.laeuft)return _ta.acc?"pausiert":"tippe auf Start";
+  const d=new Date(Date.now()+Math.max(0,r)*1000);
+  return "noch · bis "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+}
+function taStartPause(){ if(!_ta)return; if(_ta.laeuft){ _ta.acc+=(Date.now()-_ta.seit)/1000; _ta.laeuft=false; } else { _ta.seit=Date.now(); _ta.laeuft=true; } _taRender(); }
+function taPlusMinute(){ if(!_ta)return; _ta.extra+=60; if(_taRest()>0)_ta.gepfiffen=-1; _taTick(); }
+function taWeiter(richtung){
+  if(!_ta)return; const n=_ta.i+(richtung||1);
+  if(n<0)return;
+  if(n>=_ta.st.length){ _ta.i=_ta.st.length; _ta.laeuft=false; _taRender(); return; }
+  const lief=_ta.laeuft; _ta.i=n; _ta.acc=0; _ta.extra=0; _ta.seit=Date.now(); _ta.laeuft=lief; _ta.gepfiffen=-1; _taRender();
+  document.getElementById("ta-ov")?.scrollTo({top:0});
+}
+function taAlleUmschalten(){ if(!_ta)return; _ta.alle=!_ta.alle; _taRender(); }
+function taUhr(aktion){ if(!_ta)return; const x=_ta.uhr; if(aktion==="reset"){ _ta.uhr={laeuft:false,seit:0,acc:0}; } else if(x.laeuft){ x.acc+=(Date.now()-x.seit)/1000; x.laeuft=false; } else { x.seit=Date.now(); x.laeuft=true; } _taRender(); }
+function taGemeinsam(){ taSchliessen(); if(typeof tlStart==="function")tlStart(); }
+function _taKarte(g,eigen){
+  const f=_taUebung(g.uebung);
+  let skizze=""; try{ const sp=f&&typeof skzSpecVon==="function"?skzSpecVon(f):null; if(sp&&typeof _skz==="function")skizze=_skz(sp); }catch(e){}
+  const meta=[f&&f.spieler?"👥 "+f.spieler:"",f&&f.feld?"📐 "+f.feld:"",f&&f.material?"🎒 "+f.material:""].filter(Boolean);
+  const so=_taPunkte(f&&(f.ablauf||f.kurz),4), achten=_taPunkte(f&&f.coaching,4);
+  return `<article class="ta-karte${eigen?" ta-eigen":""}">
+    <div class="ta-kl">${g.gruppe?esc(g.gruppe)+" · ":""}${g.kinder&&g.kinder.length?g.kinder.length+" Kinder · ":""}${eigen?"Deine Übung":"🧢 "+esc(g.trainer)}</div>
+    <h2>${esc(g.uebung)}</h2>
+    ${skizze?`<div class="ta-skizze">${skizze}</div>`:""}
+    ${meta.length?`<div class="ta-meta">${meta.map(m=>`<span>${esc(m)}</span>`).join("")}</div>`:""}
+    ${so.length?`<h3>So geht’s</h3><ul>${so.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+    ${achten.length?`<h3>Worauf achten</h3><ul>${achten.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+    ${f&&f.varianten?`<details class="ta-var"><summary>Leichter / schwerer</summary><p>${esc(f.varianten)}</p></details>`:""}
+    ${g.kinder&&g.kinder.length?`<h3>Kinder</h3><div class="ta-kids">${g.kinder.map(k=>`<span>${esc(k)}</span>`).join("")}</div>`:""}
+    ${f&&typeof tlUebungZeigen==="function"?`<button type="button" class="ta-ganz" data-name="${esc(g.uebung)}" onclick="tlUebungZeigen(this.dataset.name)">Ganze Übung ansehen</button>`:""}
+  </article>`;
+}
+function _taRender(){
+  const ov=document.getElementById("ta-ov"); if(!ov||!_ta)return;
+  const n=_ta.st.length, kopfX=`<button type="button" class="ta-x" onclick="taSchliessen()" aria-label="Trainingsansicht schließen">✕</button>`;
+  if(_ta.i>=n){
+    ov.innerHTML=`<div class="ta-haupt" tabindex="-1"><div class="ta-top"><span>🏁 Training geschafft</span>${kopfX}</div>
+      <div class="ta-ende"><div style="font-size:64px" aria-hidden="true">🎉</div><b>Gut gemacht!</b><p>Denkt an die Nachbereitung – jeder bewertet seine eigenen Übungen.</p>
+      <button type="button" class="ta-p" onclick="taSchliessen()">Fertig</button></div></div>`;
+    return;
+  }
+  const st=_ta.st[_ta.i], ich=_ta.ich;
+  const meine=st.gruppen.filter(g=>g.trainer===ich||g.trainer==="Alle"||!g.gruppe&&st.gruppen.length===1);
+  const zeigen=_ta.alle||!meine.length?st.gruppen:meine;
+  const andere=st.gruppen.length-meine.length;
+  const naechst=_ta.st[_ta.i+1];
+  const nMeine=naechst?(naechst.gruppen.find(g=>g.trainer===ich)||naechst.gruppen[0]):null;
+  const r=_taRest();
+  ov.innerHTML=`<div class="ta-haupt" tabindex="-1">
+    <div class="ta-top"><span>🏃 ${esc(st.label)} · Block ${_ta.i+1} von ${n}</span>${kopfX}</div>
+    <div class="ta-prog" aria-hidden="true">${_ta.st.map((x,i)=>`<div class="${i<_ta.i?"da":i===_ta.i?"jetzt":""}" style="flex:${Math.max(1,x.dauer)}"></div>`).join("")}</div>
+    <div class="ta-uhrbox"><div class="ta-uhr${r<=0&&_ta.laeuft?" ta-aus":""}" id="ta-uhr" role="timer" aria-live="off">${r<=0&&_ta.laeuft?"Abpfiff!":_taFmt(r)}</div><div class="ta-bis" id="ta-bis">${esc(_taBisText(r))}</div></div>
+    <div class="ta-knoepfe"><button type="button" id="ta-start" onclick="taStartPause()">${_ta.laeuft?"⏸ Pause":"▶ Start"}</button><button type="button" onclick="taPlusMinute()">+1 Min</button><button type="button" class="ta-p" id="ta-weiter" onclick="taWeiter(1)">${_ta.i===n-1?"Fertig ✓":"Weiter ›"}</button></div>
+    ${!meine.length&&!_ta.alle?`<div class="ta-hinweis">Dir ist in diesem Block keine Gruppe zugeteilt – hier alle Felder.</div>`:""}
+    ${zeigen.map(g=>_taKarte(g,meine.includes(g)&&!!ich&&g.trainer===ich)).join("")}
+    ${naechst?`<div class="ta-next"><span aria-hidden="true">⏭</span><div><b>Danach: ${esc(naechst.label)}</b><small>${naechst.dauer} Min${nMeine?" · "+esc(nMeine.uebung):""}</small></div></div>`:""}
+    ${andere>0&&meine.length?`<button type="button" class="ta-alle" id="ta-alle" aria-pressed="${_ta.alle}" onclick="taAlleUmschalten()">${_ta.alle?"Nur meine Gruppe":`Andere Gruppen anzeigen (${andere})`}</button>`:""}
+    <details class="ta-sw"><summary>⏱ Stoppuhr</summary><div><span id="ta-sw">${_taFmt(_ta.uhr.acc)}</span><button type="button" onclick="taUhr()">${_ta.uhr.laeuft?"⏸":"▶"}</button><button type="button" onclick="taUhr('reset')" aria-label="Stoppuhr zurücksetzen">↺</button></div></details>
+    <div class="ta-unten">${_ta.i>0?`<button type="button" class="ta-link" onclick="taWeiter(-1)">‹ Block zurück</button>`:""}<button type="button" class="ta-link" onclick="taGemeinsam()">Gemeinsam starten (alle Handys im Takt)</button></div>
+  </div>`;
+  const sw=ov.querySelector(".ta-sw"); if(sw&&_ta.swOffen)sw.open=true; if(sw)sw.addEventListener("toggle",()=>{ if(_ta)_ta.swOffen=sw.open; });
+}
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&document.getElementById("ta-ov")&&!document.querySelector("#ta-ov ~ [role=dialog]"))taSchliessen(); });
 function blockModulDa(){ return true; }

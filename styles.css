@@ -2040,3 +2040,59 @@ details.tk-erledigt[open]>summary::after{content:"▴"}
 .tp-station .tp-feld>label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .tp-station .tp-pick{min-height:56px;border-radius:12px;font-weight:800;font-size:var(--s-text)}
 .tp-ringtausch{background:var(--surface2);border-radius:10px;padding:6px 10px!important;margin-top:6px}
+
+/* v952 · Plan fertig: nur die Übersicht, der Editor erst nach „Plan ändern“ */
+#train-sub-planung.tp-fertig #tp-start~*{display:none!important}
+.tpu{margin:4px 0 14px}
+.tpu-ok{display:flex;align-items:center;gap:10px;background:var(--surface);border:2px solid var(--green);border-radius:16px;padding:12px;color:var(--text)}
+.tpu-lf{background:var(--surface);border:1px solid var(--rand-bedien);border-radius:12px;padding:10px 12px;margin:10px 0 0;font-size:var(--s-text);font-weight:700;color:var(--text)}
+.tpu-lf small{display:block;font-weight:600;color:var(--text2);font-size:var(--s-klein)}
+.tpu-start{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:60px;border:0;border-radius:16px;background:var(--green);color:#fff;font:inherit;font-size:var(--s-teil);font-weight:900;margin:12px 0 8px;cursor:pointer;box-shadow:0 4px 12px rgba(21,128,61,.3)}
+.tpu-zweit{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.tpu-zweit button{min-height:48px;border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text);border-radius:12px;font:inherit;font-weight:700;font-size:var(--s-text);cursor:pointer}
+.tpu-liste{list-style:none;margin:14px 0 0;padding:0}
+.tpu-b{display:grid;grid-template-columns:48px minmax(0,1fr);gap:8px;margin-bottom:10px}
+.tpu-zeit{text-align:right;color:var(--text2);font-size:var(--s-klein);font-weight:700;padding-top:12px}
+.tpu-k{background:var(--surface);border-radius:14px;padding:10px 12px;border-left:5px solid var(--f);color:var(--text)}
+.tpu-t{display:flex;justify-content:space-between;gap:8px;align-items:baseline}.tpu-t b{font-size:var(--s-karte)}.tpu-t span{color:var(--text2);font-weight:700;font-size:var(--s-klein);white-space:nowrap}
+.tpu-g{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;font-size:var(--s-text);margin-top:6px;line-height:1.35}
+.tpu-grp{font-size:var(--s-klein);color:var(--text2);font-weight:700;flex:0 0 100%}
+.tpu-ueb{flex:1 1 auto;min-width:0;font-weight:600}
+.tpu-tr{margin-left:auto;font-size:var(--s-klein);color:var(--text2);font-weight:700}
+.tpu-ich{background:var(--blue-bg,#eff6ff);border-radius:8px;padding:4px 6px;margin-left:-6px;margin-right:-6px}.tpu-ich .tpu-tr{color:var(--blue,#1d4ed8)}
+.tpu-dg{font-size:var(--s-klein);color:var(--text2);margin-top:6px}
+
+/* v952 · Trainingsansicht – dunkel und groß, für draußen; nur die eigene Übung */
+.ta-ov{position:fixed;inset:0;z-index:10990;background:#0b1324;color:#fff;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.ta-haupt{max-width:520px;margin:0 auto;padding:14px 16px 40px;outline:none}
+.ta-top{display:flex;align-items:center;gap:8px;font-weight:800;font-size:var(--s-karte)}
+.ta-x{margin-left:auto;min-width:48px;min-height:48px;border:0;border-radius:12px;background:#1e293b;color:#fff;font-size:var(--s-teil);cursor:pointer}
+.ta-prog{display:flex;gap:4px;margin:12px 0}.ta-prog div{height:8px;border-radius:4px;background:#334155}.ta-prog .da{background:#22c55e}.ta-prog .jetzt{background:#60a5fa}
+.ta-uhrbox{text-align:center;margin:4px 0}
+.ta-uhr{font-size:64px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.05}.ta-uhr.ta-aus{color:#f87171}
+.ta-bis{opacity:.8;font-size:var(--s-text)}
+.ta-knoepfe{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+.ta-knoepfe button{min-height:56px;border:0;border-radius:14px;background:#1e293b;color:#fff;font:inherit;font-weight:800;font-size:var(--s-karte);cursor:pointer}
+.ta-p{background:#16a34a!important;color:#fff;border:0;border-radius:14px;min-height:56px;font:inherit;font-weight:800;font-size:var(--s-karte);cursor:pointer;padding:0 20px}
+.ta-hinweis{background:#1e293b;border-radius:12px;padding:10px 12px;font-size:var(--s-text);margin-top:6px}
+.ta-karte{background:#111c33;border-radius:18px;padding:14px;margin-top:10px}
+.ta-karte.ta-eigen{box-shadow:inset 0 0 0 2px #60a5fa}
+.ta-kl{font-size:var(--s-klein);font-weight:800;opacity:.8;text-transform:uppercase;letter-spacing:.03em}
+.ta-karte h2{margin:4px 0 8px;font-size:var(--s-seite);line-height:1.2}
+.ta-skizze{background:#14532d;border-radius:12px;padding:6px;margin-bottom:10px}.ta-skizze svg{display:block;width:100%;height:auto}
+.ta-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}.ta-meta span{background:#1e293b;border-radius:999px;padding:5px 10px;font-size:var(--s-klein);font-weight:700}
+.ta-karte h3{font-size:var(--s-klein);letter-spacing:.04em;text-transform:uppercase;opacity:.75;margin:12px 0 4px}
+.ta-karte ul{margin:0;padding-left:20px;line-height:1.5;font-size:var(--s-text)}
+.ta-var summary{min-height:44px;display:flex;align-items:center;font-weight:700;cursor:pointer;font-size:var(--s-text)}.ta-var p{margin:0 0 6px;font-size:var(--s-text);line-height:1.5;opacity:.9}
+.ta-kids{display:flex;gap:6px;flex-wrap:wrap}.ta-kids span{background:rgba(255,255,255,.14);border-radius:14px;padding:5px 10px;font-weight:700;font-size:var(--s-text)}
+.ta-ganz{display:block;width:100%;min-height:48px;margin-top:12px;border:1.5px solid rgba(255,255,255,.45);background:transparent;color:#fff;border-radius:12px;font:inherit;font-weight:700;font-size:var(--s-text);cursor:pointer}
+.ta-next{display:flex;align-items:center;gap:10px;background:#111c33;border-radius:14px;padding:12px;margin-top:10px;font-size:var(--s-text)}.ta-next small{display:block;opacity:.8}
+.ta-alle{display:block;width:100%;min-height:48px;margin-top:10px;background:transparent;border:1px solid #475569;color:#e2e8f0;border-radius:12px;font:inherit;font-weight:700;font-size:var(--s-text);cursor:pointer}
+.ta-sw{margin-top:12px;background:#111c33;border-radius:14px;padding:0 12px}
+.ta-sw summary{min-height:48px;display:flex;align-items:center;font-weight:800;cursor:pointer;font-size:var(--s-text)}
+.ta-sw div{display:flex;align-items:center;gap:8px;padding-bottom:12px}.ta-sw span{font-size:34px;font-weight:900;font-variant-numeric:tabular-nums;flex:1}
+.ta-sw button{min-width:52px;min-height:48px;border:0;border-radius:12px;background:#334155;color:#fff;font-size:var(--s-karte);cursor:pointer}
+.ta-unten{display:flex;flex-direction:column;align-items:center;margin-top:10px}
+.ta-link{min-height:44px;border:0;background:transparent;color:#cbd5e1;text-decoration:underline;font:inherit;font-weight:700;font-size:var(--s-text);cursor:pointer}
+.ta-ende{text-align:center;margin-top:10vh;font-size:var(--s-text)}.ta-ende b{display:block;font-size:var(--s-seite);margin:8px 0}
+.ta-x:focus-visible,.ta-knoepfe button:focus-visible,.ta-p:focus-visible,.ta-link:focus-visible,.ta-alle:focus-visible,.ta-ganz:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
