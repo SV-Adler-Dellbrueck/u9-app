@@ -2,6 +2,7 @@
    v705 (Version 7): beachtet die Ruhezeit je Empfänger (verteilen).
    v728 (Version 8): art „ticker_helfer“ – Mitteilung an ein freigeschaltetes Elternkonto.
    v910 (Version 9): art „grill_dienst“ – die für einen Heimtermin eingeteilten Familien.
+   v951 (Version 12): art „grill_zeit“ – dieselben Familien erfahren Grillzeit und ob beide Elternteile vor Ort helfen.
 
    v643: Die VAPID-Schlüssel standen bis dahin als Konstante im Code dieser Funktion. Jetzt
    liegen sie im Supabase Vault (adler_vapid_public / adler_vapid_private) und werden über
@@ -185,6 +186,34 @@ Deno.serve(async (req) => {
       const dat = new Date(t.datum + "T00:00:00").toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" });
       const was = t.typ === "turnier" ? (t.titel || "Turnier") : ("Heimspiel" + (t.gegner ? " gegen " + t.gegner : ""));
       const payload = { title: "🔥 Grillhütte", body: `Ihr seid am ${dat} dran (${was}). Könnt ihr nicht? Im Eltern-Bereich „Ersatz suchen“.`, url: "./eltern/?portal", tag: "adler-grill-" + tid };
+      const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth,user_id").in("user_id", ids);
+      const v = await verteilen(admin, subs || [], payload);
+      return json({ ok: true, familien, sent: v.sent, wartet: v.wartet });
+    }
+
+    /* v951 (Version 12): Grillzeit und „beide Elternteile vor Ort“ – Charles 22.11.: „Die finale Uhrzeit und ob beide Eltern vor
+       Ort helfen müssen, erhalten wir erst einen Tag vorher.“ Das Trainerteam trägt es am Termin ein (termine.grill_zeit,
+       termine.grill_beide); Empfänger wie bei grill_dienst: die eingeteilten bzw. übernehmenden Familien. Fester Text. */
+    if (body.art === "grill_zeit") {
+      if (!prof || prof.role !== "trainer") return json({ error: "nur Trainer duerfen benachrichtigen" }, 403);
+      const tid = Number(body.termin_id);
+      if (!Number.isFinite(tid) || tid <= 0) return json({ error: "Termin fehlt" }, 400);
+      const { data: t } = await admin.from("termine").select("id,datum,grill_zeit,grill_beide").eq("id", tid).maybeSingle();
+      if (!t) return json({ error: "Termin nicht gefunden" }, 404);
+      const { data: ds } = await admin.from("dienst_einteilung").select("kind_id,status,uebernommen_kind").eq("termin_id", tid).eq("dienst", "grillhuette");
+      const kinder = [...new Set((ds || []).map((d: any) => d.status === "uebernommen" && d.uebernommen_kind != null ? d.uebernommen_kind : d.kind_id).filter((x: any) => x != null))];
+      if (!kinder.length) return json({ ok: true, familien: 0, sent: 0 });
+      const { data: ek } = await admin.from("eltern_kinder").select("email,spieler_id").in("spieler_id", kinder);
+      const mails = [...new Set((ek || []).map((x: any) => String(x.email || "").toLowerCase()).filter(Boolean))];
+      const familien = new Set((ek || []).map((x: any) => x.spieler_id)).size;
+      const { data: profs } = mails.length ? await admin.from("profiles").select("id").in("email", mails) : { data: [] };
+      const ids = (profs || []).map((p: any) => p.id);
+      if (!ids.length) return json({ ok: true, familien, sent: 0 });
+      await vapid(admin);
+      const dat = new Date(t.datum + "T00:00:00").toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" });
+      const zeit = String(t.grill_zeit || "").trim();
+      const beide = t.grill_beide === true ? "Bitte beide Elternteile vor Ort." : t.grill_beide === false ? "Ein Elternteil genügt." : "";
+      const payload = { title: "🔥 Grillhütte " + dat, body: `${zeit ? "Grillhütte " + zeit + " Uhr." : "Die Uhrzeit folgt noch."}${beide ? " " + beide : ""} Danke, dass ihr helft!`, url: "./eltern/?portal", tag: "adler-grillzeit-" + tid };
       const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth,user_id").in("user_id", ids);
       const v = await verteilen(admin, subs || [], payload);
       return json({ ok: true, familien, sent: v.sent, wartet: v.wartet });

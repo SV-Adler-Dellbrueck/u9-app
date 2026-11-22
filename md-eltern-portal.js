@@ -2803,7 +2803,7 @@ async function tdBuedchenLoad(t){
   if(typeof ghFamilieZu==="function"&&!d.familie)d.familie=await ghFamilieZu(d.dienst_id);   // v934: Name der Familie
   box.innerHTML=`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px"><b style="font-size:var(--s-text)">🔥 Grillhütte</b>${(typeof ghElternChip==="function"?ghElternChip(d):ghChip(d.status))}</div>
-    ${ghDienstHtml(d)}${(typeof ghVorlaeufig==="function"&&ghVorlaeufig(d.datum))?`<div class="gh-vorl" style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">ℹ️ Termin noch vorläufig – der Spielplan der Rückrunde kann sich ändern.</div>`:""}</div>`;
+    ${typeof ghZeitHtml==="function"?ghZeitHtml(t):""}${ghDienstHtml(d)}${(typeof ghVorlaeufig==="function"&&ghVorlaeufig(d.datum))?`<div class="gh-vorl" style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">ℹ️ Termin noch vorläufig – der Spielplan der Rückrunde kann sich ändern.</div>`:""}</div>`;
 }
 // Alle kommenden Termine als Dialog + Kalender-Export (.ics) – gleiche Quelle wie die Liste.
 let ELTERN_TERMINE=[];
