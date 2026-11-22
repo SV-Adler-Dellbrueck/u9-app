@@ -1899,11 +1899,27 @@ details.tk-erledigt[open]>summary::after{content:"▴"}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tps-hinweis{background:#422006;color:#fde68a}:root:not([data-theme="light"]) .tps-hinweis button{background:#1c1917;color:#fde68a;border-color:#fbbf24}}
 :root[data-theme="dark"] .tps-hinweis{background:#422006;color:#fde68a}
 :root[data-theme="dark"] .tps-hinweis button{background:#1c1917;color:#fde68a;border-color:#fbbf24}
-#tps-herz{position:fixed;left:50%;bottom:120px;transform:translateX(-50%);z-index:10050;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
-.tps-herz-bild{font-size:64px;line-height:1;animation:tpsHerz 2.4s ease-out forwards}
-.tps-herz-text{background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);border-radius:14px;padding:10px 14px;font-size:var(--s-karte);font-weight:700;box-shadow:0 10px 24px -8px rgba(0,0,0,.45);animation:tpsGruss 2.4s ease-out forwards}
+#fr-herz{position:fixed;left:50%;bottom:120px;transform:translateX(-50%);z-index:10050;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
+.fr-herz-bild{font-size:64px;line-height:1;animation:tpsHerz 2.4s ease-out forwards}
+.fr-herz-text{background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);border-radius:14px;padding:10px 14px;font-size:var(--s-karte);font-weight:700;box-shadow:0 10px 24px -8px rgba(0,0,0,.45);animation:tpsGruss 2.4s ease-out forwards}
 @keyframes tpsEin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @keyframes tpsHerz{0%{opacity:0;transform:translateY(40px) scale(.4)}20%{opacity:1;transform:translateY(0) scale(1.15)}35%{transform:scale(.95)}50%{transform:scale(1.08)}80%{opacity:1;transform:translateY(-60px) scale(1)}100%{opacity:0;transform:translateY(-120px) scale(.9)}}
 @keyframes tpsGruss{0%,10%{opacity:0;transform:translateY(8px)}25%,80%{opacity:1;transform:none}100%{opacity:0}}
-@media (prefers-reduced-motion:reduce){.tps-haupt,.tps-herz-bild,.tps-herz-text{animation:none}.tps-gross,.tps-zweit,.tps-weg,.tps-i{transition:none}}
+@media (prefers-reduced-motion:reduce){.tps-haupt,.fr-herz-bild,.fr-herz-text{animation:none}.tps-gross,.tps-zweit,.tps-weg,.tps-i{transition:none}}
 @media (max-width:359px){.tps-wege{grid-template-columns:1fr}.tps-weg{min-height:0;flex-direction:row;text-align:left;justify-content:flex-start}}
+
+/* ═══ v942 · Kleine Freuden (core.js): Karte, Konfetti, fliegender Adler ═══ */
+.fr-karte{position:fixed;left:50%;top:max(16px,env(safe-area-inset-top));transform:translateX(-50%);z-index:10060;display:flex;gap:12px;align-items:center;width:min(92vw,400px);box-sizing:border-box;
+  background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);border-radius:16px;padding:12px 16px;font-size:var(--s-karte);line-height:1.35;
+  box-shadow:inset 0 -4px 0 var(--k3-kante),0 14px 30px -10px rgba(0,0,0,.5);animation:frEin .35s ease-out;transition:opacity .4s ease,transform .4s ease}
+.fr-karte.fr-weg{opacity:0;transform:translate(-50%,-12px)}
+.fr-pokal-bild{font-size:34px;line-height:1;animation:frWackel 1.2s ease-in-out 2}
+.fr-konfetti{position:fixed;inset:0;pointer-events:none;z-index:10055;overflow:hidden}
+.fr-konfetti i{position:absolute;top:-12px;width:8px;height:14px;border-radius:2px;animation:frFall linear forwards}
+.fr-adler{position:fixed;left:-160px;top:34vh;width:140px;height:auto;z-index:10058;pointer-events:none;animation:frFlug 3s ease-in-out forwards;filter:drop-shadow(0 10px 16px rgba(0,0,0,.35))}
+.fr-adler.fr-adler-ruhig{left:50%;transform:translateX(-50%);animation:frEin .3s ease-out}
+@keyframes frEin{from{opacity:0;transform:translate(-50%,-10px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes frFall{0%{transform:translateY(0) rotate(0)}100%{transform:translateY(110vh) rotate(540deg)}}
+@keyframes frFlug{0%{left:-160px;top:38vh;transform:rotate(-6deg)}50%{top:28vh;transform:rotate(4deg)}100%{left:110vw;top:34vh;transform:rotate(-4deg)}}
+@keyframes frWackel{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
+@media (prefers-reduced-motion:reduce){.fr-karte,.fr-pokal-bild{animation:none}}
