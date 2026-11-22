@@ -144,7 +144,7 @@ module.exports = async function (h) {
   }
   if (dunkel.some(k => k < 4.5)) probleme.push(`g) dunkel: Kontrast ${dunkel.map(k => k.toFixed ? k.toFixed(1) : k).join("/")}`);
   if (xpAufrufe !== 1) probleme.push(`h) ${xpAufrufe} Federn-Aufrufe für zweimal richtig auf lf6-01 – erwartet genau einer`);
-  if (!r.anschauen.includes("4 Karten")) probleme.push(`i) Block zeigt „${r.anschauen}“ statt „Anschauen (4 Karten)“`);
+  if (!/Erst anschauen\s*4 Bilder/.test(r.anschauen.replace(/\s+/g, " "))) probleme.push(`i) Block zeigt „${r.anschauen}“ statt „Erst anschauen · 4 Bilder“ (v938)`);
   if (!r.zeig || !r.karte) probleme.push("i) Nach falscher Antwort fehlt „Zeig's mir“ oder es öffnet nichts");
   else {
     if (r.karte.id !== "mk6-1") probleme.push(`i) „Zeig's mir“ öffnet ${r.karte.id} statt mk6-1`);

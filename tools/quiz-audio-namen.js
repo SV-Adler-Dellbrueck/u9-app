@@ -59,6 +59,17 @@ function eintraege() {
     if (f.typ === "szene") (f.optionen || []).forEach((o, i) => dazu("audio/schule", o, `${f.id} Antwort ${i + 1}`));
   });
   (K.merkkarten || []).forEach(m => dazu("audio/schule", m.merksatz, m.id));
+  /* v938: Was der Lehrer sagt – Begrüßung im Stundenplan und der Satz zu Beginn jeder Stunde. Die Texte stehen in quiz.js
+     zwischen den Marken LEHRER-TEXTE; die Leitfragen stammen aus KF_LEITFRAGEN daneben. */
+  try {
+    const q = fs.readFileSync(path.join(WURZEL, "quiz.js"), "utf8");
+    const lt = q.slice(q.indexOf("/*LEHRER-TEXTE-ANFANG*/"), q.indexOf("/*LEHRER-TEXTE-ENDE*/"));
+    const lf = q.slice(q.indexOf("const KF_LEITFRAGEN="), q.indexOf("const KF_ICON="));
+    const c = {}; vm.createContext(c);
+    vm.runInContext(lt.replace(/const /g, "var ") + "\n" + lf.replace(/const /g, "var "), c);
+    if (c.SCHULE_GRUSS) dazu("audio/schule", c.SCHULE_GRUSS, "Lehrer: Begrüßung");
+    Object.keys(c.KF_LEITFRAGEN || {}).forEach(k => dazu("audio/schule", c.SCHULE_STUNDE_VOR + c.KF_LEITFRAGEN[k] + c.SCHULE_STUNDE_NACH, "Lehrer: Stunde " + k));
+  } catch (e) {}
   return aus;
 }
 function liste() {
@@ -80,6 +91,9 @@ function liste() {
   });
   z.push("", `## 3 Merksätze – ${M.length} Merkkarten (Ziel: \`audio/schule/\`)`, "", "| ID | Datei | Sprechtext |", "|---|---|---|");
   M.forEach(m => { const t = sprechtext(m.merksatz); z.push(`| ${m.id} | ${hash(t)}.mp3 | ${zelle(t)} |`); });
+  const L = eintraege().filter(e => /^Lehrer: /.test(e.quelle));   // v938
+  z.push("", `## 4 Der Lehrer – ${L.length} Texte (Ziel: \`audio/schule/\`)`, "", "Begrüßung im Stundenplan und der Satz zu Beginn jeder Stunde. Ohne Namen des Kindes – Namen gehen nicht an einen Sprachdienst.", "", "| Wo | Datei | Sprechtext |", "|---|---|---|");
+  L.forEach(e => z.push(`| ${zelle(e.quelle.replace(/^Lehrer: /, ""))} | ${e.datei} | ${zelle(e.text)} |`));
   z.push("", "---", "", "**Vertonung offen – Texte von Charles freigeben lassen, dann im Projekt-Chat mit ElevenLabs/Lennart erzeugen.**", "");
   const md = z.join("\n");
   if (process.argv.includes("--schreiben")) {

@@ -460,7 +460,7 @@ function tqStart(){
   const progress=tqGetProgress();
   const pp=tqPlayer?progress[tqPlayer]||{}:{};
   let html=`<div class="tq-panel">
-    <div style="font-size:12px;font-weight:700;color:var(--purple-text);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">`;
+    <div style="font-size:13px;font-weight:700;color:var(--purple-text);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">`;
   if(!tqPlayer){
     const auswahl=TQ_EIGENE_KINDER
       ? KADER.filter(k=>TQ_EIGENE_KINDER.includes(k.name))
@@ -478,18 +478,18 @@ function tqStart(){
     html+=`</div>${extern?"":'<button class="btn btn-sm" onclick="tqStop()" style="margin-top:8px"><i class="ti ti-x"></i>Abbrechen</button>'}`;
   } else {
     html+=`🧑 ${tqPlayer}${tqPlayerRole?" – "+tqPlayerRole:""}</div>
-      <div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:2px">🎓 Adler-Schule</div>
-      <div style="font-size:13px;color:var(--text2);margin-bottom:2px">Heute auf dem Stundenplan: Sport, Sport, Sport ❤️</div>`;
+      <div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:8px">🎓 Adler-Schule</div>`;
     // Nur bei Geschwistern: ein dezenter Weg zurück zur Namenswahl.
     if(TQ_EIGENE_KINDER&&TQ_EIGENE_KINDER.length>1)
       html+=`<button onclick="tqVergissKind()" style="border:none;background:none;color:var(--text3);font-size:11px;text-decoration:underline;cursor:pointer;padding:0 0 8px;min-height:44px">Nicht ${esc(tqPlayer)}? Name ändern</button>`;
     else html+=`<div style="margin-bottom:8px"></div>`;
     /* v936 (Charles 21.11.): Alles Lernen unter „Adler-Schule“ – oben die drei Sport-Stunden,
        darunter das Adler-Zeugnis mit dem echten Stand in Sport und Augenzwinkern bei den anderen Fächern. */
-    html+=kfRenderLauncher();         // v928: Training verstehen (Leitfragen 1–6)
-    html+=tqRenderTaktikLauncher(pp); // Taktik
-    html+=wqRenderLauncher();         // Fußball-Wissen
-    html+=schuleZeugnisHtml(pp);      // v936
+    html+=schuleStundenplanKopf();    // v938: Lehrer mit Sprechblase, „das Beste“, Überschrift
+    html+=kfRenderLauncher();         // 1. Stunde · Training verstehen (Leitfragen 1–6)
+    html+=tqRenderTaktikLauncher(pp); // 2. Stunde · Taktik
+    html+=wqRenderLauncher();         // 3. Stunde · Fußball-Wissen
+    html+=schuleStundenplanFuss();    // 4.–6. Stunde fallen aus, Zeugnis am Ende der Hin- und Rückrunde
     html+=`<div id="tq-challenge"></div>`;
     if(!extern)html+=`<div style="display:flex;margin-top:10px">
         <button class="btn btn-sm" onclick="tqStop()" style="margin-left:auto"><i class="ti ti-x"></i>Schließen</button>
@@ -506,10 +506,10 @@ function tqRenderTaktikLauncher(pp){
   const pct=Math.round(done/total*100);
   return `<div class="card" role="button" tabindex="0" style="padding:0;margin-top:10px;overflow:hidden;cursor:pointer" onclick="tqBlocksShow()">
     <div style="background:linear-gradient(135deg,#7c3aed,#2563eb);padding:12px 14px;color:#fff">
-      <div style="font-size:15px;font-weight:800;margin-bottom:2px">🎯 Taktik</div>
+      <div style="font-size:16px;font-weight:800;margin-bottom:2px">🎯 2. Stunde · Sport: Taktik</div>
       <div style="font-size:13px;opacity:.95;margin-bottom:8px">3+1, FUNiño und Raute – ${total} Blöcke Spielverständnis</div>
       <div style="height:8px;background:rgba(255,255,255,.25);border-radius:4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:#fbbf24;border-radius:4px;transition:width .4s"></div></div>
-      <div style="font-size:10px;margin-top:5px;opacity:.9">${done}/${total} Blöcke gemeistert</div>
+      <div style="font-size:13px;margin-top:5px">${done}/${total} Blöcke gemeistert</div>
     </div>
   </div>`;
 }
@@ -1309,10 +1309,10 @@ function wqRenderLauncher(){
   const done=wqPlayerDone(), total=WQ_QUESTIONS.length, pct=Math.round(done/total*100);
   return `<div class="card" role="button" tabindex="0" style="padding:0;margin-top:10px;overflow:hidden;cursor:pointer" onclick="wqStart()">
     <div style="background:linear-gradient(135deg,#0369a1,#4f46e5);padding:12px 14px;color:#fff">
-      <div style="font-size:15px;font-weight:800;margin-bottom:2px">🧠 Fußball-Wissen</div>
+      <div style="font-size:16px;font-weight:800;margin-bottom:2px">🧠 3. Stunde · Sport: Fußball-Wissen</div>
       <div style="font-size:13px;margin-bottom:8px">${WQ_CATS.length} Kategorien · WM, Bundesliga, Legenden, Stars & mehr — sammle ${XP_ICON} Federn!</div>
       <div style="height:8px;background:rgba(255,255,255,.25);border-radius:4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:#fbbf24;border-radius:4px;transition:width .4s"></div></div>
-      <div style="font-size:12px;margin-top:5px">${done}/${total} richtig beantwortet</div>
+      <div style="font-size:13px;margin-top:5px">${done}/${total} richtig beantwortet</div>
     </div>
   </div>`;
 }
@@ -1520,7 +1520,9 @@ function kfDatenPruefen(j){
   if(!j||j.schema!=="adler-kinderfragen/1"||!Array.isArray(j.fragen))return null;
   const fragen=j.fragen.filter(kfFrageGueltig), ids=new Set(fragen.map(f=>f.id));
   const merkkarten=(j.merkkarten||[]).filter(m=>m&&m.id&&m.merksatz&&ids.has(m.bild_aus));
-  return fragen.length?{stand:j.stand||"",fragen,merkkarten}:null;
+  /* v938: Videos je Leitfrage – nur Dateien aus dem eigenen Ordner video/ (kein fremder Host, kein „..“). */
+  const videos={}; Object.keys(j.videos||{}).forEach(k=>{ const v=String(j.videos[k]||""); if(/^[1-6]$/.test(k)&&/^video\/[A-Za-z0-9._-]+\.(mp4|webm)$/.test(v))videos[k]=v; });
+  return fragen.length?{stand:j.stand||"",fragen,merkkarten,videos}:null;
 }
 async function kfLaden(){
   if(KF_DATEN)return KF_DATEN;
@@ -1577,45 +1579,57 @@ function kfSvg(feld,bild,o){
 }
 
 /* ── Einstieg ── */
-/* v936: Das Adler-Zeugnis. Sport zeigt den echten Stand (Trainingsfragen und Taktik-Blöcke, gemeistert
-   ab 70 %), die anderen Fächer sind ein Augenzwinkern. Keine Noten, keine Prozente – Kinder sehen bei uns
-   keine Bewertungszahlen. */
-const SCHULE_FAECHER=[["🔢","Mathe","Bis 3 zählen klappt: 3 gegen 1","✓ erledigt"],["📖","Deutsch","Kann „Toooor!“ schreiben","✓ erledigt"],
-  ["🎵","Musik","„Adler Dellbrück!“ sitzt","✓ erledigt"],["🌍","Erdkunde","Weiß, wo das Tor steht","✓ erledigt"],["🧪","Chemie","Kommt erst in Klasse 7","😴 gähn"]];
-function schuleHalbjahr(d){ d=d||new Date(); const m=d.getMonth(); return (m>=7&&m<=10?"Herbst":m>=2&&m<=4?"Frühling":m>=5&&m<=6?"Sommer":"Winter")+" "+(m===0||m===1?d.getFullYear()-1:d.getFullYear()); }
+/* v938 (Charles 22.11.): „Kein Zeugnis, sondern Stundenplan … Zeugnis gibt es immer am Ende der Hin- und Rückrunde. Und das
+   Beste: Du musst nur zum Unterricht gehen, wenn du willst. Können wir das Maskottchen auch mit einbinden als Lehrer –
+   bildlich, mit Audio und evtl. Videos?“ (Entwurf im Bild freigegeben.)
+   Der Lehrer hat noch keinen Namen – der wird an der Weihnachtsfeier abgestimmt. Sein Bild liegt als Datei im Repo, sobald
+   Charles es geschickt hat (SCHULE_LEHRER_BILD); bis dahin steht der Adler als Zeichen da.
+   Die Sprechtexte zwischen den beiden Marken liest auch tools/quiz-audio-namen.js (Aufnahmen unter audio/schule/). */
+/*LEHRER-TEXTE-ANFANG*/
+const SCHULE_GRUSS="Hallo! Heute stehen drei Stunden Sport auf dem Plan. Such dir eine aus! Und das Beste: Du musst nur zum Unterricht, wenn du willst.";
+const SCHULE_STUNDE_VOR="Heute lernen wir: ", SCHULE_STUNDE_NACH=" Erst schauen wir uns Bilder an. Dann bist du dran!";
+/*LEHRER-TEXTE-ENDE*/
+function schuleStundeText(lf){ return SCHULE_STUNDE_VOR+KF_LEITFRAGEN[lf]+SCHULE_STUNDE_NACH; }
+const SCHULE_LEHRER_BILD="";   // z. B. "maskottchen.png" – leer, solange das Bild fehlt
+const SCHULE_AUSFALL=[["🔢","Mathe","Bis 3 zählen kannst du schon: 3 gegen 1","fällt aus 🎉"],["📖","Deutsch","„Toooor!“ kannst du schon schreiben","fällt aus 🎉"],["🧪","Chemie","Kommt erst in Klasse 7","😴 gähn"]];
+function schuleLehrerHtml(text,fett){
+  const bild=SCHULE_LEHRER_BILD?`<img src="${kfBasis()+SCHULE_LEHRER_BILD}" alt="" style="width:100%;height:100%;object-fit:contain">`:`<span aria-hidden="true" style="font-size:50px;line-height:1">🦅</span>`;
+  const t=jsq(text);
+  return `<div class="sl-lehrer" style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px">
+    <div class="sl-figur k3" role="img" aria-label="Dein Lehrer, der Adler" style="flex:none;width:88px;height:100px;border-radius:20px;background:linear-gradient(180deg,#1d4ed8,#1e3a8a);display:flex;align-items:center;justify-content:center;overflow:hidden">${bild}</div>
+    <div class="sl-blase k3" style="flex:1;min-width:0;background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);border-radius:18px 18px 18px 4px;padding:12px">
+      <div style="font-size:16px;line-height:1.35;font-weight:600">${fett||esc(text)}</div>
+      <button type="button" class="btn btn-sm sl-vorlesen" onclick="kfVorlesen(['${t}'],this.querySelector('.sl-ton'),()=>'${t}')" aria-label="Vorlesen" style="min-height:44px;margin-top:8px;border-radius:999px"><span class="sl-ton" aria-hidden="true">🔊</span> Vorlesen</button>
+    </div></div>`;
+}
 function schuleSportStand(pp){
   pp=pp||{};
-  const kf=[1,2,3,4,5,6].filter(lf=>tqGemeistert(kfBlockStand(lf))).length;
-  const tk=TQ_BLOCKS.filter((b,i)=>tqGemeistert(pp[i])).length;
-  const anteil=(kf+tk)/(6+TQ_BLOCKS.length);
-  const chip=anteil>=1?"🏆 Adler-Profi":anteil>=.4?"🥇 läuft super":anteil>0?"💪 wird immer besser":"🌱 geht gleich los";
-  return {kf,tk,chip};
+  return {kf:[1,2,3,4,5,6].filter(lf=>tqGemeistert(kfBlockStand(lf))).length, tk:TQ_BLOCKS.filter((b,i)=>tqGemeistert(pp[i])).length};
 }
-function schuleZeugnisHtml(pp){
-  if(!tqPlayer)return "";
-  const s=schuleSportStand(pp);
-  const zeile=(emo,fach,unter,chip,gaehn)=>`<div class="sz-fach" style="display:flex;align-items:center;gap:10px;padding:9px 2px;border-top:1px dashed #d1d5db">
-      <span aria-hidden="true" style="font-size:22px;width:28px;text-align:center">${emo}</span>
-      <span style="flex:1;min-width:0"><b style="display:block;font-size:15px">${fach}</b><span style="display:block;font-size:13px;color:#4b5563">${unter}</span></span>
-      <span style="font-size:13px;font-weight:700;border-radius:999px;padding:2px 9px;white-space:nowrap;${gaehn?"color:#4b5563;background:#f3f4f6":"color:#065f46;background:#d1fae5"}">${chip}</span></div>`;
-  return `<section id="schule-zeugnis" aria-label="Mein Adler-Zeugnis" style="position:relative;margin-top:14px;background:#fffdf5;color:#1f2937;border:1px solid #e5e7eb;border-radius:18px;padding:14px 14px 8px;box-shadow:0 4px 16px rgba(0,0,0,.12)">
-    <div aria-hidden="true" style="position:absolute;right:12px;top:10px;transform:rotate(9deg);border:3px solid #dc2626;color:#dc2626;border-radius:10px;padding:2px 8px;font-weight:900;font-size:12px;text-align:center;line-height:1.15">LIEBLINGS-<br>FACH:<br>SPORT ⚽</div>
-    <div style="font-family:Georgia,serif;font-size:17px;font-weight:700">Mein Adler-Zeugnis</div>
-    <div style="font-size:13px;color:#4b5563;margin-bottom:8px">${esc(tqPlayer)} · ${schuleHalbjahr()}</div>
-    <span style="position:absolute;left:-9999px">Lieblingsfach: Sport</span>
-    ${zeile("⚽","Sport",`${s.kf} von 6 Trainings-Fragen · ${s.tk} von ${TQ_BLOCKS.length} Taktik-Blöcken`,s.chip,false)}
-    ${SCHULE_FAECHER.map(f=>zeile(f[0],f[1],f[2],f[3],f[3].indexOf("gähn")>=0)).join("")}
-  </section>`;
+function schuleStundenplanKopf(){
+  return schuleLehrerHtml(SCHULE_GRUSS,"Hallo "+esc(tqPlayer)+"! Heute stehen drei Stunden Sport auf dem Plan. Such dir eine aus!")
+    +`<div id="schule-beste" style="background:#fef9c3;color:#1f2937;border:2px dashed #ca8a04;border-radius:16px;padding:10px 12px;font-size:15px;font-weight:700;margin-bottom:10px">🎉 Das Beste: Du musst nur zum Unterricht, wenn du willst.</div>
+    <div style="font-size:17px;font-weight:800;color:var(--text);margin:4px 2px 0">📅 Mein Stundenplan</div>`;
+}
+function schuleStundenplanFuss(){
+  const zeile=(nr,f)=>`<div class="sp-aus k3" style="display:flex;align-items:center;gap:12px;background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);border-radius:16px;padding:10px 12px;margin-top:10px;min-height:64px">
+      <span style="flex:none;width:46px;text-align:center;font-size:13px;font-weight:800;color:var(--text2);line-height:1.15">${nr}.<br>Std.</span>
+      <span aria-hidden="true" style="font-size:26px">${f[0]}</span>
+      <span style="flex:1;min-width:0"><b style="display:block;font-size:16px;text-decoration:line-through;color:var(--text2)">${f[1]}</b><span style="display:block;font-size:14px;color:var(--text2)">${f[2]}</span></span>
+      <span style="flex:none;font-size:13px;font-weight:800;border-radius:999px;padding:3px 10px;background:#fef3c7;color:#78350f;white-space:nowrap">${f[3]}</span></div>`;
+  return `<div id="schule-ausfall">${SCHULE_AUSFALL.map((f,i)=>zeile(i+4,f)).join("")}</div>
+    <div id="schule-zeugnis-hinweis" class="k3" style="display:flex;gap:10px;align-items:center;margin-top:10px;background:#fffdf5;color:#1f2937;border:1px solid #e5e7eb;border-radius:16px;padding:12px;font-size:15px">
+      <span aria-hidden="true" style="font-size:28px">📜</span><span><b style="display:block">Dein Zeugnis</b>gibt es am Ende der Hinrunde und am Ende der Rückrunde.</span></div>`;
 }
 function kfRenderLauncher(){
   if(!tqPlayer)return "";
   const fertig=[1,2,3,4,5,6].filter(lf=>tqGemeistert(kfBlockStand(lf))).length;
   return `<div class="card" role="button" tabindex="0" id="kf-launcher" style="padding:0;margin-top:10px;overflow:hidden;cursor:pointer" onclick="kfStart()">
     <div style="background:linear-gradient(135deg,#047857,#0369a1);padding:12px 14px;color:#fff">
-      <div style="font-size:15px;font-weight:800;margin-bottom:2px">🎓 Training verstehen</div>
+      <div style="font-size:16px;font-weight:800;margin-bottom:2px">⚽ 1. Stunde · Sport: Training verstehen</div>
       <div style="font-size:13px;margin-bottom:8px">Wie behalte ich den Ball? Wie komme ich vorbei? – 6 Fragen aus dem Training</div>
       <div style="height:8px;background:rgba(255,255,255,.25);border-radius:4px;overflow:hidden"><div style="height:100%;width:${Math.round(fertig/6*100)}%;background:#fbbf24;border-radius:4px"></div></div>
-      <div style="font-size:12px;margin-top:5px">${fertig}/6 Blöcke geschafft</div>
+      <div style="font-size:13px;margin-top:5px">${fertig}/6 Blöcke geschafft</div>
     </div>
   </div>`;
 }
@@ -1647,11 +1661,30 @@ function kfBlock(lf){
   if(!KF_DATEN){kfStart();return;}
   kfLf=lf;
   const karten=KF_DATEN.merkkarten.filter(m=>m.leitfrage===lf);
-  kfPanel(`<div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">🎓 Adler-Schule</div>
-    <div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:12px">${KF_ICON[lf]} ${esc(KF_LEITFRAGEN[lf])}</div>
-    ${karten.length?`<button class="btn" id="kf-anschauen" style="width:100%;min-height:56px;justify-content:center;font-size:15px;margin-bottom:8px" onclick="kfKarten(${lf})">👀 Anschauen (${karten.length} Karten)</button>`:""}
-    <button class="btn btn-p" id="kf-los" style="width:100%;min-height:56px;justify-content:center;font-size:15px" onclick="kfLos(${lf})">Los geht's! ⚽</button>
-    <button class="btn btn-sm" style="margin-top:12px" onclick="kfStart()"><i class="ti ti-arrow-left"></i>Andere Fragen</button>`);
+  /* v938: Die Seite war fast leer (zwei Knöpfe oben) und erklärte sich einem Kind nicht. Jetzt sagt der Lehrer, was dran ist,
+     und zwei große, nummerierte Kacheln zeigen den Weg: erst anschauen, dann spielen. Darunter der eigene Stand. */
+  const n=KF_DATEN.fragen.filter(f=>f.leitfrage===lf).length, bp=kfBlockStand(lf);
+  const video=(KF_DATEN.videos||{})[lf]||"";
+  const weg=(nr,id,bild,titel,unter,auf,haupt)=>`<button type="button" class="btn${haupt?" btn-p":""} sl-weg k3" id="${id}" onclick="${auf}" style="display:flex;width:100%;align-items:center;justify-content:flex-start;gap:12px;text-align:left;min-height:108px;padding:14px;border-radius:20px;margin-bottom:10px;white-space:normal">
+      <span aria-hidden="true" style="flex:none;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;${haupt?"background:#fff;color:#1d4ed8":"background:#1e3a8a;color:#fff"}">${nr}</span>
+      <span aria-hidden="true" style="flex:none;font-size:40px;line-height:1">${bild}</span>
+      <span style="min-width:0"><span style="display:block;font-size:19px;font-weight:800;line-height:1.2">${titel}</span><span style="display:block;font-size:15px;font-weight:500;line-height:1.3">${unter}</span></span></button>`;
+  kfPanel(`<div style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🎓 Adler-Schule · ${KF_ICON[lf]}</div>
+    ${schuleLehrerHtml(schuleStundeText(lf),`${esc(SCHULE_STUNDE_VOR)}<b>${esc(KF_LEITFRAGEN[lf])}</b>${esc(SCHULE_STUNDE_NACH)}`)}
+    ${video?weg("🎬","kf-video","📺","Video ansehen","Der Lehrer zeigt es dir",`kfVideo(${lf})`,false):""}
+    ${karten.length?weg(1,"kf-anschauen","👀","Erst anschauen",`${karten.length} Bilder mit Merksatz`,`kfKarten(${lf})`,false):""}
+    ${weg(karten.length?2:1,"kf-los","⚽",karten.length?"Dann spielen":"Los geht's!",`${n} Fragen`,`kfLos(${lf})`,true)}
+    <div id="kf-stand" class="k3" style="background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);border-radius:16px;padding:12px;font-size:15px;font-weight:700">${bp?`So weit bist du: ${bp.score} von ${bp.total} richtig ${tqMedaille(bp.score,bp.total)}`:"Das ist deine erste Stunde hier. Viel Spaß!"}</div>
+    <button class="btn" style="margin-top:12px;min-height:48px" onclick="kfStart()"><i class="ti ti-arrow-left"></i>Andere Themen</button>`);
+}
+/* v938: Platz für ein Video je Stunde. Es erscheint nur, wenn uebungen/kinderfragen.json unter „videos“ einen Pfad im Ordner
+   video/ nennt (keine fremden Adressen) – solange es keine Clips gibt, sieht niemand etwas davon. */
+function kfVideo(lf){
+  const v=(KF_DATEN&&KF_DATEN.videos||{})[lf]; if(!v)return;
+  kfStopp();
+  kfPanel(`<div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:10px">🎬 ${esc(KF_LEITFRAGEN[lf])}</div>
+    <video id="kf-video-spieler" src="${kfBasis()+esc(v)}" controls playsinline preload="metadata" style="width:100%;border-radius:14px;background:#000"></video>
+    <button class="btn" style="margin-top:12px;min-height:48px" onclick="kfBlock(${lf})"><i class="ti ti-arrow-left"></i>Zurück zur Stunde</button>`);
 }
 function kfLos(lf){
   kfLf=lf;
