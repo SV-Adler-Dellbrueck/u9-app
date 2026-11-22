@@ -1992,7 +1992,7 @@ details.tk-erledigt[open]>summary::after{content:"▴"}
 .bot-meldung{font-size:var(--s-text);color:#b91c1c;min-height:20px;margin-bottom:6px}
 
 /* v951: Grillzeit je Termin (Trainer-Fenster) */
-.gh-zeit-form{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0}
-.gh-zeit-form label{display:flex;flex-direction:column;font-size:var(--s-klein);color:var(--text2);gap:2px}
-.gh-zeit-form input,.gh-zeit-form select{min-height:44px;border:1px solid var(--rand-bedien);border-radius:8px;font:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);padding:0 8px}
-.gh-zeit-form .gh-zeit-speichern{grid-column:1/-1;min-height:44px}
+.gh-zeit-form{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin:6px 0;max-width:100%}
+.gh-zeit-form label{display:flex;flex-direction:column;min-width:0;font-size:var(--s-klein);color:var(--text2);gap:2px}
+.gh-zeit-form input,.gh-zeit-form select{min-height:44px;border:1px solid var(--rand-bedien);border-radius:8px;font:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);padding:0 8px;width:100%;min-width:0;box-sizing:border-box}
+.gh-zeit-form .gh-zeit-speichern{grid-column:1/-1;min-height:44px;width:100%;box-sizing:border-box;justify-content:center}
