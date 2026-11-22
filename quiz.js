@@ -1598,22 +1598,33 @@ const SCHULE_LEHRER={master:"Maskottchen/master/adler_master/adler_master_klein.
 function schuleWeihnachtszeit(d){ d=d||new Date(); const m=d.getMonth()+1, t=d.getDate(); return (m===11&&t>=15)||m===12||(m===1&&t<=6); }
 function schuleLehrerBild(pose){ return schuleWeihnachtszeit()?(SCHULE_LEHRER[pose]||SCHULE_LEHRER.master):SCHULE_LEHRER.master; }
 const SCHULE_AUSFALL=[["🔢","Mathe","Bis 3 zählen kannst du schon: 3 gegen 1","fällt aus 🎉"],["📖","Deutsch","„Toooor!“ kannst du schon schreiben","fällt aus 🎉"],["🧪","Chemie","Kommt erst in Klasse 7","😴 gähn"]];
-function schuleLehrerHtml(text,fett,pose){
+/* v939: Das Begrüßungsvideo – der Adler sagt den Gruß selbst. Es liegt fest im Repo (video/), deshalb eine Konstante
+   statt eines Eintrags in kinderfragen.json (dort gibt es nur die Stunden 1–6). */
+const SCHULE_GRUSS_VIDEO="video/lehrer-begruessung.mp4";
+function schuleLehrerVideo(knopf,v){
+  const box=knopf.closest(".sl-lehrer")?.nextElementSibling; if(!box||!box.classList.contains("sl-video"))return;
+  kfStopp();
+  if(!box.hidden){ const alt=box.querySelector("video"); if(alt)alt.pause(); box.hidden=true; knopf.setAttribute("aria-expanded","false"); return; }
+  box.innerHTML=`<video src="${kfBasis()+esc(v)}#t=0.1" poster="${kfBasis()+esc(v.replace(/\.(mp4|webm)$/,".webp"))}" controls playsinline autoplay style="width:100%;border-radius:14px;background:#000;display:block"></video>`;
+  box.hidden=false; knopf.setAttribute("aria-expanded","true");
+}
+function schuleLehrerHtml(text,fett,pose,video){
   const bild=`<img class="sl-bild" src="${kfBasis()+schuleLehrerBild(pose||"winkt")}" alt="" draggable="false" style="width:100%;height:100%;object-fit:contain;object-position:50% 100%" onerror="this.outerHTML='<span aria-hidden=&quot;true&quot; style=&quot;font-size:50px;line-height:1&quot;>🦅</span>'">`;
   const t=jsq(text);
   return `<div class="sl-lehrer" style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px">
     <div class="sl-figur k3" role="img" aria-label="Dein Lehrer, der Adler" style="flex:none;width:96px;height:112px;border-radius:20px;background:radial-gradient(circle at 50% 35%,#ffffff,#dbeafe 70%);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;padding:4px 2px 0">${bild}</div>
     <div class="sl-blase k3" style="flex:1;min-width:0;background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);border-radius:18px 18px 18px 4px;padding:12px">
       <div style="font-size:16px;line-height:1.35;font-weight:600">${fett||esc(text)}</div>
-      <button type="button" class="btn btn-sm sl-vorlesen" onclick="kfVorlesen(['${t}'],this.querySelector('.sl-ton'),()=>'${t}')" aria-label="Vorlesen" style="min-height:44px;margin-top:8px;border-radius:999px"><span class="sl-ton" aria-hidden="true">🔊</span> Vorlesen</button>
-    </div></div>`;
+      <button type="button" class="btn btn-sm sl-vorlesen" onclick="kfVorlesen(['${t}'],this.querySelector('.sl-ton'),()=>'${t}')" aria-label="Vorlesen" style="min-height:44px;margin-top:8px;border-radius:999px"><span class="sl-ton" aria-hidden="true">🔊</span> Vorlesen</button>${video?`
+      <button type="button" class="btn btn-sm sl-ansehen" onclick="schuleLehrerVideo(this,'${jsq(video)}')" aria-expanded="false" style="min-height:44px;margin-top:8px;border-radius:999px"><span aria-hidden="true">▶️</span> Ansehen</button>`:""}
+    </div></div>${video?`<div class="sl-video" hidden style="margin:-4px 0 12px"></div>`:""}`;
 }
 function schuleSportStand(pp){
   pp=pp||{};
   return {kf:[1,2,3,4,5,6].filter(lf=>tqGemeistert(kfBlockStand(lf))).length, tk:TQ_BLOCKS.filter((b,i)=>tqGemeistert(pp[i])).length};
 }
 function schuleStundenplanKopf(){
-  return schuleLehrerHtml(SCHULE_GRUSS,"Hallo "+esc(tqPlayer)+"! Heute stehen drei Stunden Sport auf dem Plan. Such dir eine aus!","winkt")
+  return schuleLehrerHtml(SCHULE_GRUSS,"Hallo "+esc(tqPlayer)+"! Heute stehen drei Stunden Sport auf dem Plan. Such dir eine aus!","winkt",SCHULE_GRUSS_VIDEO)
     +`<div id="schule-beste" style="background:#fef9c3;color:#1f2937;border:2px dashed #ca8a04;border-radius:16px;padding:10px 12px;font-size:15px;font-weight:700;margin-bottom:10px">🎉 Das Beste: Du musst nur zum Unterricht, wenn du willst.</div>
     <div style="font-size:17px;font-weight:800;color:var(--text);margin:4px 2px 0">📅 Mein Stundenplan</div>`;
 }
@@ -1685,12 +1696,12 @@ function kfBlock(lf){
 }
 /* v938: Platz für ein Video je Stunde. Es erscheint nur, wenn uebungen/kinderfragen.json unter „videos“ einen Pfad im Ordner
    video/ nennt (keine fremden Adressen) – solange es keine Clips gibt, sieht niemand etwas davon. */
-/* „#t=0.1“: Safari auf dem iPhone zeigt sonst bis zum Abspielen nur Schwarz statt des ersten Bilds. */
+/* „#t=0.1“ und das Startbild (gleicher Name, .webp, seit v939): Safari auf dem iPhone zeigt sonst bis zum Abspielen nur Schwarz. */
 function kfVideo(lf){
   const v=(KF_DATEN&&KF_DATEN.videos||{})[lf]; if(!v)return;
   kfStopp();
   kfPanel(`<div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:10px">🎬 ${esc(KF_LEITFRAGEN[lf])}</div>
-    <video id="kf-video-spieler" src="${kfBasis()+esc(v)}#t=0.1" controls playsinline preload="metadata" style="width:100%;border-radius:14px;background:#000"></video>
+    <video id="kf-video-spieler" src="${kfBasis()+esc(v)}#t=0.1" poster="${kfBasis()+esc(v.replace(/\.(mp4|webm)$/,".webp"))}" controls playsinline preload="metadata" style="width:100%;border-radius:14px;background:#000"></video>
     <button class="btn" style="margin-top:12px;min-height:48px" onclick="kfBlock(${lf})"><i class="ti ti-arrow-left"></i>Zurück zur Stunde</button>`);
 }
 function kfLos(lf){
