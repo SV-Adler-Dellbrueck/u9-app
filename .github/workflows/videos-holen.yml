@@ -1,0 +1,68 @@
+# Videos holen – lädt fertig erzeugte Videos (ElevenLabs, z. B. die Lehrer-Videos der Adler-Schule)
+# und öffnet einen Pull Request mit ihnen unter video/.
+# Nur von Hand: Actions → „Videos holen“ → Run workflow. Eingabe: je Zeile „dateiname.mp4 https://…“.
+# Erlaubt sind nur Adressen auf elevenlabsusercontent.com und Dateinamen, die die App annimmt
+# (^[A-Za-z0-9._-]+\.mp4$, dieselbe Regel wie kfDatenPruefen in quiz.js). Die signierten Adressen
+# laufen nach einigen Stunden ab und enthalten keinen Schlüssel.
+# ffmpeg läuft mit -nostdin: sonst liest es aus der Liste mit und verschluckt Zeichen des nächsten Namens (v938).
+# Jedes Video wird für das Handy verkleinert (640 px breit, H.264, faststart), damit die App schlank bleibt.
+name: Videos holen
+
+on:
+  workflow_dispatch:
+    inputs:
+      liste:
+        description: "Je Zeile: dateiname.mp4 https://elevenlabsusercontent.com/…"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: videos-holen
+  cancel-in-progress: false
+
+jobs:
+  holen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Videos laden und verkleinern
+        env:
+          LISTE: ${{ inputs.liste }}
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null
+          mkdir -p video /tmp/roh
+          anzahl=0
+          while read -r name url; do
+            [ -z "${name:-}" ] && continue
+            if ! [[ "$name" =~ ^[A-Za-z0-9._-]+\.mp4$ ]]; then echo "::error::Dateiname nicht erlaubt: $name"; exit 1; fi
+            if ! [[ "$url" =~ ^https://elevenlabsusercontent\.com/ ]]; then echo "::error::Adresse nicht erlaubt für $name"; exit 1; fi
+            curl -fsSL --max-filesize 104857600 -o "/tmp/roh/$name" "$url"
+            ffmpeg -nostdin -v error -y -i "/tmp/roh/$name" -vf "scale=640:-2" -c:v libx264 -preset slow -crf 26 \
+              -pix_fmt yuv420p -c:a aac -b:a 96k -movflags +faststart "video/$name"
+            echo "$name: $(du -k "/tmp/roh/$name" | cut -f1) KB → $(du -k "video/$name" | cut -f1) KB"
+            anzahl=$((anzahl+1))
+          done <<< "$LISTE"
+          echo "Geholt: $anzahl"
+
+      - name: Pull Request öffnen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -z "$(git status --porcelain -- video)" ]; then echo "Keine neuen Videos – kein Pull Request."; exit 0; fi
+          zweig="videos/holen-${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$zweig"
+          git add -A -- video
+          git commit -q -m "Videos holen: $(git diff --cached --name-only | wc -l) Dateien unter video/"
+          git push -q -u origin "$zweig"
+          gh pr create --draft --base "${GITHUB_REF_NAME}" --head "$zweig" --title "Videos holen (Lauf ${GITHUB_RUN_ID})" \
+            --body "Erzeugt von der Action „Videos holen“, Lauf ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. Vor dem Einbinden ansehen." \
+            || echo "::warning::Pull Request konnte nicht geöffnet werden. Zweig $zweig ist gepusht."

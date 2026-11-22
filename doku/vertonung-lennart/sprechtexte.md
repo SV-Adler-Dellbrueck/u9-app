@@ -296,6 +296,20 @@ Bei A-oder-B-Fragen gehört „Bild A oder Bild B?“ zum Sprechtext. Bei Szenen
 | mk6-3 | d0f89ee7.mp3 | Stell dich innen hin – dann muss er nach außen. |
 | mk6-4 | 153a1949.mp3 | Springt der Ball zu weit weg: zupacken! |
 
+## 4 Der Lehrer – 7 Texte (Ziel: `audio/schule/`)
+
+Begrüßung im Stundenplan und der Satz zu Beginn jeder Stunde. Ohne Namen des Kindes – Namen gehen nicht an einen Sprachdienst.
+
+| Wo | Datei | Sprechtext |
+|---|---|---|
+| Begrüßung | 83db98e3.mp3 | Hallo! Heute stehen drei Stunden Sport auf dem Plan. Such dir eine aus! Und das Beste: Du musst nur zum Unterricht, wenn du willst. |
+| Stunde 1 | 58641aec.mp3 | Heute lernen wir: Wie behalte ich den Ball, wenn einer kommt? Erst schauen wir uns Bilder an. Dann bist du dran! |
+| Stunde 2 | 66640c97.mp3 | Heute lernen wir: Wie komme ich an einem vorbei? Erst schauen wir uns Bilder an. Dann bist du dran! |
+| Stunde 3 | 7a425017.mp3 | Heute lernen wir: Wie mache ich ein Tor? Erst schauen wir uns Bilder an. Dann bist du dran! |
+| Stunde 4 | 4e9d01fb.mp3 | Heute lernen wir: Wie kriege ich den Ball zu einem, der frei ist? Erst schauen wir uns Bilder an. Dann bist du dran! |
+| Stunde 5 | c165c6f0.mp3 | Heute lernen wir: Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht? Erst schauen wir uns Bilder an. Dann bist du dran! |
+| Stunde 6 | 9ff25f23.mp3 | Heute lernen wir: Wie hole ich mir den Ball zurück? Erst schauen wir uns Bilder an. Dann bist du dran! |
+
 ---
 
 **Vertonung offen – Texte von Charles freigeben lassen, dann im Projekt-Chat mit ElevenLabs/Lennart erzeugen.**

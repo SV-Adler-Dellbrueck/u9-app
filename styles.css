@@ -1858,3 +1858,8 @@ details.tk-erledigt[open]>summary::after{content:"▴"}
   .termin-kachel:active,.tmd-kachel:active,.tm-zeile:active,.k-raster>button:active,.phase-zeile:active,.el-gitter>.btn.btn-zeile:active,.woche-zeile:active{transform:none}
   #tmd-modal,#tmd-inhalt{animation:none}
 }
+/* ── v938: Adler-Schule – Lehrer, Stundenplan, Stundenbeginn in 3D (wie die Kacheln seit v937) ── */
+.k3{box-shadow:inset 0 2px 0 rgba(255,255,255,.28),inset 0 -5px 0 rgba(15,23,42,.16),0 2px 3px rgba(15,23,42,.14),0 12px 24px -6px rgba(15,23,42,.2)}
+.sl-weg{transition:transform .11s ease,box-shadow .11s ease}
+.sl-weg:active{transform:translateY(4px) scale(.985);box-shadow:inset 0 3px 7px rgba(15,23,42,.25)}
+@media (prefers-reduced-motion:reduce){.sl-weg{transition:none}.sl-weg:active{transform:none}}

@@ -168,6 +168,7 @@ boot.js             Start, Routing der Sonderrouten
 md-*.js             Feature-Module (Welle 2)
 sw.js               Service Worker samt Precache-Liste
 supabase/functions/ Edge Functions (weitere sind nur deployed)
+Maskottchen/        Der Comic-Adler (Master, Varianten, Regeln) – vor jeder Verwendung README.md lesen
 ```
 
 ## Testen ohne Anmeldedaten
