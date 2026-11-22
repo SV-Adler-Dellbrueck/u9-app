@@ -597,7 +597,7 @@ async function vorlageUebernehmenOpen(){
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{ if(e.target===m)vorlageUebernehmenClose(); };
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:520px;width:100%;margin:auto">
-    ${mdlHead("vu-modal","🗂️","Vorlage übernehmen","Fertige Einheit auf den gewählten Termin setzen","#7c3aed")}
+    ${mdlHead("vu-modal","🗂️","Vorlage übernehmen","Fertige Einheit für den gewählten Termin übernehmen","#7c3aed")}
     <div id="vu-inhalt"><div style="font-size:var(--s-text);color:var(--text2);padding:8px 0">Lade Vorlagen …</div></div>
   </div>`;
   document.body.appendChild(m);
@@ -828,7 +828,7 @@ function vorlageUebernehmenRender(opt){
     ${gewaehlt&&(themenStart||!treffer.includes(gewaehlt))?vorschau(gewaehlt):""}
     <div id="vu-fuss" style="position:sticky;bottom:-16px;z-index:2;background:var(--surface);margin:12px -4px 0;padding:8px 4px 24px;border-top:1px solid var(--surface2)">
       ${gewaehlt?`<div style="font-size:var(--s-klein);color:var(--text2);margin:0 2px 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Gewählt: <b>${esc(gewaehlt.name)}</b>${_vuPlanDa?" · ersetzt den Plan des Termins":""}</div>`:""}
-      <button id="vu-haupt" onclick="vorlageUebernehmenSetzen()" class="btn btn-p" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte)"${(!gewaehlt||!datum)?" disabled":""}><i class="ti ti-calendar-plus"></i>${_vuPlanDa?"Plan ersetzen":"Auf den Termin setzen"}</button>
+      <button id="vu-haupt" onclick="vorlageUebernehmenSetzen()" class="btn btn-p" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte)"${(!gewaehlt||!datum)?" disabled":""}><i class="ti ti-calendar-plus"></i>${_vuPlanDa?"Plan ersetzen":(datum?"Für "+new Date(String(datum).slice(0,10)+"T12:00:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"})+" übernehmen":"Übernehmen")}</button>
     </div>
     <button onclick="vorlageUebernehmenClose()" class="btn" style="width:100%;min-height:48px;margin-top:4px;justify-content:center">Abbrechen</button>`;
   /* Nach dem Neuzeichnen zurück ins Suchfeld – sonst verlöre jeder Tastendruck den Fokus. */
