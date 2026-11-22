@@ -8,7 +8,7 @@ Ablauf: Anflug (Rückblick), Kinderkarten Teil 1, Pause, Kinderkarten Teil 2, Au
 
 ## Anflug (Rückblick), ca. 45 Sekunden
 
-Hallo, ihr Adler! Ich bin’s, euer Adler, und ich habe heute eine Weihnachtsmütze auf. Ich bin einmal über unseren Platz geflogen und habe zurückgeschaut. Ende August haben wir angefangen. Seitdem haben wir viel trainiert und an acht Spieltagen gespielt [prüfen: acht Turniere im Terminplan bis 21.11.]. Ihr habt Pässe gespielt, ihr habt euch freigelaufen, und eure Rollen als Aufpasser, Flitzer und Jäger versteht ihr immer besser. Und die Raute? Die kann man jetzt richtig sehen. Gleich erzähle ich euch von jedem Einzelnen etwas Besonderes.
+Hallo, ihr Adler! Ich bin’s, euer Adler, und ich habe heute eine Weihnachtsmütze auf. Ich bin einmal über unseren Platz geflogen und habe zurückgeschaut. Ende August haben wir angefangen. Seitdem haben wir viel trainiert und an elf Spieltagen gespielt [Charles 22.11.: Stand Feier – acht Turniere bis 21.11., dazu 28.11. Heim, 05.12. Lindenthal, 06.12. Halle Lindenthal; fällt eines aus, vor dem Einsprechen anpassen]. Ihr habt Pässe gespielt, ihr habt euch freigelaufen, und eure Rollen als Aufpasser, Flitzer und Jäger versteht ihr immer besser. Und die Raute? Die kann man jetzt richtig sehen. Gleich erzähle ich euch von jedem Einzelnen etwas Besonderes.
 
 ## Ausblick, ca. 30 Sekunden
 

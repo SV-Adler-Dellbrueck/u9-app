@@ -1,0 +1,117 @@
+<!doctype html>
+<!-- Weihnachtsvideo U9 I · Szenen-Vorlage (1920 × 1080). Das Render-Skript (render.mjs) setzt window.SZENE und ruft
+     zeigeZeit(t) für jedes Bild auf; alles hier ist deterministisch (gleiche Zeit = gleiches Bild), damit sich eine
+     einzelne Szene neu rendern lässt, ohne dass die anderen anders aussehen. Keine Namen, keine Fotos in dieser Datei. -->
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../vendor/barlow.css">
+<style>
+  :root{ --blau:#0044AA; --nacht:#0A1A3A; --gold:#D4A64A; --hell:#eef3fb; }
+  html,body{ margin:0; width:1920px; height:1080px; overflow:hidden; background:var(--nacht); }
+  body{ font-family:'Barlow',sans-serif; color:#fff; }
+  #buehne{ position:absolute; inset:0; background:radial-gradient(ellipse at 50% 35%, #1b5cc4 0%, var(--blau) 38%, var(--nacht) 100%); overflow:hidden; }
+  /* Lichterkette als oberer Rahmen: ein Draht, warme Lichter, die sanft und zeitgesteuert glimmen */
+  #kette{ position:absolute; left:0; right:0; top:0; height:120px; }
+  .licht{ position:absolute; width:22px; height:30px; border-radius:50% 50% 45% 45%; background:var(--gold); }
+  #schnee{ position:absolute; inset:0; pointer-events:none; }
+  .flocke{ position:absolute; border-radius:50%; background:#fff; }
+  #wappen{ position:absolute; left:64px; bottom:48px; width:120px; height:120px; object-fit:contain; }
+  #fuss{ position:absolute; left:204px; bottom:70px; font:600 44px 'Barlow Condensed',sans-serif; letter-spacing:1px; color:var(--hell); opacity:.9; }
+  /* Kinderkarte */
+  #karte{ position:absolute; left:150px; top:190px; width:1620px; height:700px; display:flex; gap:80px; align-items:center; }
+  #foto{ flex:none; width:520px; height:650px; border-radius:36px; overflow:hidden; background:#ffffff1a; border:8px solid var(--gold); box-shadow:0 30px 80px #0008; display:flex; align-items:flex-end; justify-content:center; }
+  #foto img{ width:100%; height:100%; object-fit:cover; }
+  #foto.adler{ background:radial-gradient(circle at 50% 40%, #fff, #dbeafe 70%); }
+  #foto.adler img{ object-fit:contain; object-position:50% 100%; width:92%; height:92%; }
+  #text{ flex:1; min-width:0; padding-right:300px; }
+  #name{ font:800 150px/1 'Barlow Condensed',sans-serif; letter-spacing:1px; text-shadow:0 6px 24px #0007; }
+  .zeile{ display:flex; align-items:center; gap:22px; margin-top:44px; font:600 60px/1.1 'Barlow',sans-serif; }
+  .marke{ flex:none; font:700 44px 'Barlow Condensed',sans-serif; letter-spacing:2px; text-transform:uppercase; color:var(--nacht); background:var(--gold); border-radius:14px; padding:10px 22px; }
+  /* Rahmenszenen */
+  #rahmen{ position:absolute; left:150px; top:250px; width:1000px; }
+  #ueber{ font:600 60px 'Barlow Condensed',sans-serif; letter-spacing:4px; text-transform:uppercase; color:var(--gold); }
+  #titel{ font:800 150px/1.02 'Barlow Condensed',sans-serif; margin-top:18px; text-shadow:0 6px 24px #0007; }
+  #unter{ font:600 56px/1.25 'Barlow',sans-serif; margin-top:36px; color:var(--hell); max-width:900px; }
+  #adler{ position:absolute; width:620px; height:620px; object-fit:contain; transform-origin:50% 100%; filter:drop-shadow(0 24px 40px #0007); }
+  .aus{ display:none !important; }
+</style>
+</head>
+<body>
+<div id="buehne">
+  <div id="kette"></div>
+  <div id="schnee"></div>
+  <div id="karte" class="aus"><div id="foto"><img id="foto-img" alt=""></div>
+    <div id="text"><div id="name"></div>
+      <div class="zeile" id="z-rolle"><span class="marke">Rolle</span><span id="rolle"></span></div>
+      <div class="zeile" id="z-form"><span class="marke">Formation</span><span id="formation"></span></div></div></div>
+  <div id="rahmen" class="aus"><div id="ueber"></div><div id="titel"></div><div id="unter"></div></div>
+  <img id="adler" alt="">
+  <img id="wappen" src="../../logo.png" alt="">
+  <div id="fuss">SV Adler Dellbrück · U9 I · Hinrunde 2026</div>
+</div>
+<script>
+/* Kleiner Zufallsgenerator mit festem Startwert: Schnee und Lichter liegen in jeder Szene gleich. */
+function zufall(start){ let s=start>>>0||1; return ()=>{ s^=s<<13; s>>>=0; s^=s>>17; s^=s<<5; s>>>=0; return s/4294967296; }; }
+const MAX_FLOCKEN=40, LICHTER=26;
+let flocken=[], lichter=[];
+function aufbauen(){
+  const z=zufall(20261207);
+  const schnee=document.getElementById("schnee");
+  for(let i=0;i<MAX_FLOCKEN;i++){
+    const d=document.createElement("div"); d.className="flocke"; schnee.appendChild(d);
+    const r=3+z()*7; d.style.width=d.style.height=r+"px"; d.style.opacity=(.35+z()*.5).toFixed(2);
+    flocken.push({el:d,x:z()*1920,y:z()*1080,v:28+z()*45,w:8+z()*22,p:z()*6.28});
+  }
+  const kette=document.getElementById("kette");
+  const draht=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  draht.setAttribute("width","1920"); draht.setAttribute("height","120");
+  let pfad="M0 30"; for(let i=0;i<=8;i++){ const x=i*240; pfad+=` Q ${x+120} 92 ${x+240} 30`; }
+  draht.innerHTML=`<path d="${pfad}" fill="none" stroke="#1d2a44" stroke-width="5"/>`;
+  kette.appendChild(draht);
+  for(let i=0;i<LICHTER;i++){
+    const x=(i+.5)*1920/LICHTER, bogen=(x%240)/240, y=30+62*4*bogen*(1-bogen)*0.95;
+    const d=document.createElement("div"); d.className="licht"; d.style.left=(x-11)+"px"; d.style.top=(y+4)+"px"; kette.appendChild(d);
+    lichter.push({el:d,p:z()*6.28,f:.6+z()*.9});
+  }
+}
+function bild(pfad){ return pfad; }
+function einrichten(){
+  const s=window.SZENE; aufbauen();
+  const adler=document.getElementById("adler"); adler.src=s.adler;
+  if(s.art==="kind"){
+    document.getElementById("karte").classList.remove("aus");
+    document.getElementById("name").textContent=s.name;
+    document.getElementById("rolle").textContent=s.rolle||"";
+    document.getElementById("formation").textContent=s.formation||"";
+    if(!s.rolle)document.getElementById("z-rolle").classList.add("aus");
+    if(!s.formation)document.getElementById("z-form").classList.add("aus");
+    const f=document.getElementById("foto"), img=document.getElementById("foto-img");
+    if(s.foto){ img.src=s.foto; } else { f.classList.add("adler"); img.src=s.ersatz; }
+    Object.assign(adler.style,{width:"440px",height:"440px",right:"40px",bottom:"20px"});
+  }else{
+    document.getElementById("rahmen").classList.remove("aus");
+    document.getElementById("ueber").textContent=s.ueber||"";
+    document.getElementById("titel").textContent=s.titel||"";
+    document.getElementById("unter").textContent=s.unter||"";
+    Object.assign(adler.style,{right:"120px",bottom:"110px"});
+  }
+  return Promise.all([...document.images].map(i=>i.complete?0:new Promise(r=>{i.onload=i.onerror=r;}))).then(()=>document.fonts.ready);
+}
+/* Ein Bild zur Zeit t (Sekunden). amp[] ist die Lautstärke der Stimme je Bild (0…1), daraus wippt der Adler. */
+function zeigeZeit(t){
+  const s=window.SZENE, fps=s.fps||25;
+  for(const f of flocken){ const y=(f.y+f.v*t)%1100-10, x=f.x+Math.sin(f.p+t*.6)*f.w; f.el.style.transform=`translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`; }
+  for(const l of lichter){ const h=.55+.45*Math.sin(l.p+t*l.f*2); l.el.style.opacity=(.55+.45*h).toFixed(2); l.el.style.boxShadow=`0 0 ${(10+22*h).toFixed(0)}px ${(3+8*h).toFixed(0)}px rgba(212,166,74,${(.35+.4*h).toFixed(2)})`; }
+  const a=(s.amp||[])[Math.min((s.amp||[]).length-1,Math.max(0,Math.round(t*fps)))]||0;
+  const adler=document.getElementById("adler");
+  let dx=0, dy=-a*26, rot=Math.sin(t*5.2)*a*4;
+  if(s.art==="intro"){ const k=Math.min(1,t/2.2), e=1-Math.pow(1-k,3); dx=(1-e)*-1500; dy+=(1-e)*-260+Math.sin(t*2.2)*10*e; }
+  else dy+=Math.sin(t*1.6)*4;   // auch ohne Stimme lebt er ein wenig
+  adler.style.transform=`translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) rotate(${rot.toFixed(2)}deg)`;
+  const ein=Math.min(1,t/0.6);   // Text und Karte blenden in den ersten 0,6 s ein
+  for(const id of ["karte","rahmen"]){ const el=document.getElementById(id); el.style.opacity=ein.toFixed(2); el.style.transform=`translateY(${((1-ein)*30).toFixed(1)}px)`; }
+}
+</script>
+</body>
+</html>
