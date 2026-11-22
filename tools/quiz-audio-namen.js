@@ -68,6 +68,7 @@ function eintraege() {
     const c = {}; vm.createContext(c);
     vm.runInContext(lt.replace(/const /g, "var ") + "\n" + lf.replace(/const /g, "var "), c);
     if (c.SCHULE_GRUSS) dazu("audio/schule", c.SCHULE_GRUSS, "Lehrer: Begrüßung");
+    if (c.ELTERN_MOIN) dazu("audio/schule", c.ELTERN_MOIN, "Eltern: Moin-Gruß (v947)");
     Object.keys(c.KF_LEITFRAGEN || {}).forEach(k => dazu("audio/schule", c.SCHULE_STUNDE_VOR + c.KF_LEITFRAGEN[k] + c.SCHULE_STUNDE_NACH, "Lehrer: Stunde " + k));
   } catch (e) {}
   return aus;
@@ -94,6 +95,8 @@ function liste() {
   const L = eintraege().filter(e => /^Lehrer: /.test(e.quelle));   // v938
   z.push("", `## 4 Der Lehrer – ${L.length} Texte (Ziel: \`audio/schule/\`)`, "", "Begrüßung im Stundenplan und der Satz zu Beginn jeder Stunde. Ohne Namen des Kindes – Namen gehen nicht an einen Sprachdienst.", "", "| Wo | Datei | Sprechtext |", "|---|---|---|");
   L.forEach(e => z.push(`| ${zelle(e.quelle.replace(/^Lehrer: /, ""))} | ${e.datei} | ${zelle(e.text)} |`));
+  const E = eintraege().filter(e => /^Eltern: /.test(e.quelle));   // v947
+  if (E.length) { z.push("", `## 5 Eltern-App – ${E.length} Text(e) (Ziel: \`audio/schule/\`)`, "", "Der Moin-Gruß der Eltern-Startseite (🔊 in der Sprechblase).", "", "| Wo | Datei | Sprechtext |", "|---|---|---|"); E.forEach(e => z.push(`| ${zelle(e.quelle.replace(/^Eltern: /, ""))} | ${e.datei} | ${zelle(e.text)} |`)); }
   z.push("", "---", "", "**Vertonung offen – Texte von Charles freigeben lassen, dann im Projekt-Chat mit ElevenLabs/Lennart erzeugen.**", "");
   const md = z.join("\n");
   if (process.argv.includes("--schreiben")) {

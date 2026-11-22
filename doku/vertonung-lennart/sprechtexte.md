@@ -1,6 +1,6 @@
 # Sprechtexte für die Vertonung mit „Lennart – Energetic“
 
-Erzeugt mit `node tools/quiz-audio-namen.js --liste --schreiben` aus `data.js` und `uebungen/kinderfragen.json` (Stand 2026-11-21-3).
+Erzeugt mit `node tools/quiz-audio-namen.js --liste --schreiben` aus `data.js` und `uebungen/kinderfragen.json` (Stand 2026-11-22-1).
 Stimme: Maskottchen-Stimme „Lennart – Energetic“ (ElevenLabs, eleven_v4), Beschluss 21.11.2026. Ziel-Dateinamen = Hash des Sprechtexts; ändert sich ein Text, ändert sich der Name.
 
 ## 1 Taktik-Quiz – 120 Szenarien (Ziel: `audio/quiz/`)
@@ -309,6 +309,14 @@ Begrüßung im Stundenplan und der Satz zu Beginn jeder Stunde. Ohne Namen des K
 | Stunde 4 | 4e9d01fb.mp3 | Heute lernen wir: Wie kriege ich den Ball zu einem, der frei ist? Erst schauen wir uns Bilder an. Dann bist du dran! |
 | Stunde 5 | c165c6f0.mp3 | Heute lernen wir: Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht? Erst schauen wir uns Bilder an. Dann bist du dran! |
 | Stunde 6 | 9ff25f23.mp3 | Heute lernen wir: Wie hole ich mir den Ball zurück? Erst schauen wir uns Bilder an. Dann bist du dran! |
+
+## 5 Eltern-App – 1 Text(e) (Ziel: `audio/schule/`)
+
+Der Moin-Gruß der Eltern-Startseite (🔊 in der Sprechblase).
+
+| Wo | Datei | Sprechtext |
+|---|---|---|
+| Moin-Gruß (v947) | dd18d932.mp3 | Moin! Schön, dass ihr da seid. Der Adler freut sich aufs nächste Training! |
 
 ---
 

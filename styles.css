@@ -1952,3 +1952,19 @@ details.tk-erledigt[open]>summary::after{content:"▴"}
 .fh-mehr{font-size:var(--s-text);font-weight:600;color:var(--text2)}
 .fh-text{font-size:var(--s-text);line-height:1.45;color:var(--text2);margin-bottom:10px}
 .fh-karte .btn.fh-los{margin-top:auto;width:100%;min-height:48px;justify-content:center;font-weight:800}
+
+/* v947: Moin-Sprechblase, Monats-Lob, Pokal-Vitrine (Eltern) */
+.saison-blase{flex:1;min-width:0;position:relative;background:var(--surface2);border:var(--border);border-radius:14px;padding:8px 10px;font-size:var(--s-text);line-height:1.35}
+.saison-blase::before{content:"";position:absolute;left:-7px;top:50%;margin-top:-6px;border:6px solid transparent;border-right-color:var(--surface2);border-left:0}
+.saison-ton{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text);font-size:var(--s-karte);cursor:pointer}
+.lob-karte{position:relative;display:flex;flex-direction:column;justify-content:center;border-radius:16px;background-color:#047857;background-image:linear-gradient(135deg,#059669,#047857);color:#fff;padding:14px;margin:10px 0}
+.lob-karte .fe-x{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.6);color:#fff}
+.lob-titel{font-size:var(--s-karte);font-weight:900;padding-right:44px}
+.lob-text{font-size:var(--s-text);line-height:1.45;margin-top:6px}
+.vitrine{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.vitrine-pokal{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;border-radius:12px;border:var(--border);background:var(--surface2);color:var(--text2)}
+.vitrine-pokal.da{background:linear-gradient(180deg,rgba(212,166,74,.22),rgba(212,166,74,.06));border-color:#b45309;color:var(--text)}
+.vitrine-bild{font-size:var(--s-seite);line-height:1}
+.vitrine-zahl{font-size:var(--s-karte);font-weight:900}
+.vitrine-unter{font-size:var(--s-klein);font-weight:700}
+.vitrine-stand,.vitrine-leer{font-size:var(--s-klein);color:var(--text2);margin-top:6px}

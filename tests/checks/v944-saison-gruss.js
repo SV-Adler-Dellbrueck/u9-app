@@ -19,7 +19,7 @@ module.exports = async function (h) {
     supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), profiles: [{ role: "parent" }], dsgvo_consent: [{ version: "x" }],
       eltern_kinder: [{ spieler_id: 1, label: "", kader: { id: 1, name: "Kind A", nr: 6 } }], termine: () => [T(1, 2)],
       rueckmeldungen: [], kind_fanfacts: [], kind_foto: [] }) });
-  await e.page.evaluate(t => { localStorage.setItem("adler_sb_auth_eltern", JSON.stringify({ access_token: t, refresh_token: "r", expires_at: Math.floor(Date.now() / 1000) + 3600 })); }, TOKEN);
+  await e.page.evaluate(t => { localStorage.setItem("adler_sb_auth_eltern", JSON.stringify({ access_token: t, refresh_token: "r", expires_at: Math.floor(Date.now() / 1000) + 3600 })); /* v947: der Moin-Gruß kommt einmal am Tag zuerst – hier gilt er als schon gesehen */ const d = new Date(), z = n => String(n).padStart(2, "0"); localStorage.setItem("adler_moin_tag", d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate())); }, TOKEN);
   await e.page.reload({ waitUntil: "networkidle" });
   const r = await e.page.evaluate(async () => {
     const w = ms => new Promise(x => setTimeout(x, ms)), txt = el => el ? el.textContent.replace(/\s+/g, " ").trim() : "";
