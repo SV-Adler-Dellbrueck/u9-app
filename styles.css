@@ -1923,3 +1923,11 @@ details.tk-erledigt[open]>summary::after{content:"▴"}
 @keyframes frFlug{0%{left:-160px;top:38vh;transform:rotate(-6deg)}50%{top:28vh;transform:rotate(4deg)}100%{left:110vw;top:34vh;transform:rotate(-4deg)}}
 @keyframes frWackel{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
 @media (prefers-reduced-motion:reduce){.fr-karte,.fr-pokal-bild{animation:none}}
+
+/* v943: Klugscheißer-Info des Tages (Eltern-Dashboard) */
+.ks-karte{background:var(--surface);color:var(--text);border-radius:14px;padding:14px 16px;margin:4px 0 12px;box-shadow:0 2px 10px rgba(0,0,0,.05);border-left:4px solid var(--amber)}
+.ks-kopf{font-size:var(--s-karte);font-weight:800;margin-bottom:6px}
+.ks-text{font-size:var(--s-text);line-height:1.55;margin:0 0 10px;color:var(--text)}
+.ks-fuss{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.ks-quelle{font-size:var(--s-klein);color:var(--text2);text-decoration:underline}
+.ks-weiter{min-height:44px}
