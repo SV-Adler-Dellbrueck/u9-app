@@ -1,6 +1,6 @@
 # Sprechtexte für die Vertonung mit „Lennart – Energetic“
 
-Erzeugt mit `node tools/quiz-audio-namen.js --liste --schreiben` aus `data.js` und `uebungen/kinderfragen.json` (Stand 2026-11-21-3).
+Erzeugt mit `node tools/quiz-audio-namen.js --liste --schreiben` aus `data.js` und `uebungen/kinderfragen.json` (Stand 2026-11-22-1).
 Stimme: Maskottchen-Stimme „Lennart – Energetic“ (ElevenLabs, eleven_v4), Beschluss 21.11.2026. Ziel-Dateinamen = Hash des Sprechtexts; ändert sich ein Text, ändert sich der Name.
 
 ## 1 Taktik-Quiz – 120 Szenarien (Ziel: `audio/quiz/`)
