@@ -21,14 +21,17 @@ module.exports = async function (h) {
   const s = await h.starten({ start: "/trainer/index.html", warten: 1200, hoehe: 2400,
     supabase: h.supabaseAttrappe({ kader: rows,
       termine: [{ id: 3, datum, typ: "spiel", gegner: "Gegner B", uhrzeit: "10:00:00" }],
-      rueckmeldungen: [{ spieler_id: 1, status: "zugesagt" }, { spieler_id: 2, status: "zugesagt" }, { spieler_id: 3, status: "abgesagt" }, { spieler_id: 4, status: "krank" }] }) });
+      rueckmeldungen: [{ termin_id: 3, spieler_id: 1, status: "zugesagt" }, { termin_id: 3, spieler_id: 2, status: "zugesagt" }, { termin_id: 3, spieler_id: 3, status: "abgesagt" }, { termin_id: 3, spieler_id: 4, status: "krank" }],
+      trainingsplan: [], trainingsgruppen: [], nominierungen: [] }) });
   const r = await s.page.evaluate(async ({ K }) => {
     await loadKader();
     const box = document.createElement("div"); box.innerHTML = _kachelInhalt("spieltag"); document.body.appendChild(box);
-    await spieltagDabeiKarteLoad();
-    const karte = document.getElementById("st-dabei");
-    const knopf = document.getElementById("st-dabei-anpassen");
-    const out = { text: karte ? karte.textContent.replace(/\s+/g, " ") : "", knopf: knopf ? Math.round(knopf.getBoundingClientRect().height) : 0,
+    /* v937: Die Karte „Nächster Spieltag“ ist die Termin-Kachel (homeWocheLoad("spieltag")); die ganze Kachel ist der Knopf. */
+    await homeWocheLoad("spieltag");
+    const karte = document.querySelector("#spieltag-termine .termin-kachel");
+    const knopf = karte;
+    const out = { text: karte ? document.getElementById("spieltag-termine").textContent.replace(/\s+/g, " ") : "", knopf: knopf ? Math.round(knopf.getBoundingClientRect().height) : 0,
+      ziel: karte ? karte.getAttribute("onclick") : "",
       alteKachel: /kachelRun\('spieltagAnwesenheitOpen'/.test(box.innerHTML) };
     // b) gespeicherte Einteilung mit Kindern, die nicht dabei sind
     nomStatus = {}; KADER.forEach(k => nomStatus[k.name] = "offen");
@@ -47,7 +50,8 @@ module.exports = async function (h) {
   if (r.alteKachel) probleme.push("a) Die alte Sprung-Kachel steht noch da");
   /* v702 PO: „kann auch die Ansicht ‚wer ist dabei‘ zugeklappt haben oder vielleicht ganz weg?“ Die
      Karte trägt nur noch den Stand; die Namen stehen im Schritt „Wer kommt?“, wo man sie ändern kann. */
-  for (const w of ["Nächster Spieltag", "gegen Gegner B", "2 zugesagt", "❌ 1 abgesagt", "🤒 1 krank", "ohne Rückmeldung", "Wer kommt?"])
+  if (!/^wocheOpen\(3,/.test(r.ziel || "")) probleme.push(`a) Tipp auf die Kachel führt nicht zum Spieltag: ${r.ziel}`);
+  for (const w of ["Nächste Spieltage", "Gegner B", "2 zugesagt", "❌ 1 abgesagt", "🤒 1 krank", "ohne Rückmeldung"])
     if (!r.text.includes(w)) probleme.push(`a) „${w}“ fehlt in der Karte`);
   for (const w of [K[0], K[1], K[2], K[3]]) if (r.text.includes(w)) probleme.push(`a) Name „${w}“ steht noch in der Karte (Doppelung)`);
   if (r.knopf < 56) probleme.push(`a) Knopf nur ${r.knopf} px`);

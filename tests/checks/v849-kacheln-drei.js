@@ -38,7 +38,9 @@ module.exports = async function (h) {
   for (const [v, x] of Object.entries(gross)) {
     if (!x.raster.length) { probleme.push(`${v}: kein Kachelraster (.k-raster) gefunden – Stand vor v849?`); continue; }
     if (x.navOben == null) probleme.push(`${v}: untere Leiste nicht gefunden`);
-    else if (x.unten > x.navOben) probleme.push(`a) ${v}: reicht bis ${x.unten} px, die Leiste beginnt bei ${x.navOben} px`);
+    /* v937 (Charles 21.11.): Orga trägt oben „Neuer Termin“ und die Termin-Kacheln zum Wischen – die Seite ist damit länger als
+       ein Bildschirm; das ist gewollt („Ebenso in Orga“). Team und Eltern & Kinder bleiben ein Bildschirm. */
+    else if (v !== "ue-orga" && x.unten > x.navOben) probleme.push(`a) ${v}: reicht bis ${x.unten} px, die Leiste beginnt bei ${x.navOben} px`);
     const falsch = x.raster.filter(([n, sp]) => (n % 3 === 0 && n >= 3) !== (sp === 3));
     if (falsch.length) probleme.push(`c) ${v}: Raster ${JSON.stringify(x.raster)}`);
   }

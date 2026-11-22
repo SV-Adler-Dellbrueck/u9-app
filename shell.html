@@ -580,7 +580,6 @@
     </div>
     <div class="sl nt"><i class="ti ti-calendar"></i>Kommende Termine</div>
     <!-- v741: mehrere Termine auf einmal absagen (Ferien, Zeitraum) -->
-    <button id="tm-absagen-btn" class="btn btn-sm" style="width:100%;justify-content:center;min-height:44px;margin-bottom:8px" onclick="if(typeof tmAbsagenOpen==='function')tmAbsagenOpen();else toast('Lädt noch – gleich noch einmal','err')"><i class="ti ti-beach"></i>Ferien &amp; Zeitraum absagen</button>
     <div id="tm-upcoming"></div>
     <!-- v683: Trainerplan und Grillhütte als Kacheln UNTER den Terminen. Oben standen sie als zwei
          gleich große Knöpfe vor „Neuer Termin“ – drei Knöpfe, bevor man den ersten Termin sah. Sie
@@ -588,6 +587,8 @@
     <div style="display:grid;grid-template-columns:1fr;gap:10px;margin-top:16px"><!-- v910: die Grillhütte steht unter Orga → Team-Orga -->
       <button onclick="trainerPlanOpen()" style="min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid var(--fam-orga);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px" aria-hidden="true">🧑‍🏫</span><span style="font-size:var(--s-karte);font-weight:800">Trainerplan</span></button>
     </div>
+    <!-- v937 (Charles 21.11.): „Ferien & Zeitraum absagen“ stand über der Liste – vor dem ersten Termin. Selten gebraucht, deshalb jetzt darunter. -->
+    <button id="tm-absagen-btn" class="btn btn-sm" style="width:100%;justify-content:center;min-height:44px;margin-top:10px" onclick="if(typeof tmAbsagenOpen==='function')tmAbsagenOpen();else toast('Lädt noch – gleich noch einmal','err')"><i class="ti ti-beach"></i>Ferien &amp; Zeitraum absagen</button>
     <button class="btn btn-sm" id="tm-archiv-btn" style="margin-top:16px;width:100%;justify-content:center" onclick="tmToggleArchiv()"><i class="ti ti-archive"></i>🗄️ Archiv: vergangene Termine anzeigen</button>
     <div id="tm-past" style="display:none;margin-top:8px"></div>
   </div><!-- /train-sub-termine -->
@@ -608,14 +609,18 @@
          „Auto-Plan“ ganz unten, obwohl beide dasselbe tun – den Plan füllen –, und am Ende zwei
          gleich große Knöpfe „Plan speichern“ und „Trainingsstart“. Alle IDs bleiben; nur die
          Reihenfolge und die Beschriftung der Schritte sind neu. -->
-    <div class="sl nt tp-schritt"><span class="tp-nr" aria-hidden="true">1</span>Termin und Trainer</div>
-    <select id="tp-date" onchange="tpTrainerRsvpLaden(this.value);tpPlanRestore(this.value)" style="display:none"><option>Lade Termine…</option></select>
-    <div id="tp-vorplan" style="margin:6px 0 8px"></div>
+    <!-- v937 (Charles 21.11.): Termin und Trainer waren Schritt 1 – wer aus einem Termin kommt, hat beides schon gewählt.
+         Jetzt eine Zeile mit dem Stand; „ändern“ klappt Terminwahl und Trainer auf. Alle IDs und die Logik bleiben. -->
+    <details id="tp-klapp" class="kopf-klapp" style="margin:6px 0 8px">
+      <summary id="tp-klapp-zeile" style="list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:48px;padding:6px 12px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);font-size:var(--s-text);font-weight:700;color:var(--text)"><span class="kk-text" style="flex:1;min-width:0">📅 Termin und Trainer</span><span class="kk-aendern" style="flex:none;color:var(--blue-text)">ändern</span></summary>
+      <select id="tp-date" onchange="tpTrainerRsvpLaden(this.value);tpPlanRestore(this.value)" style="display:none"><option>Lade Termine…</option></select>
+      <div id="tp-vorplan" style="margin:8px 0 8px"></div>
+      <div id="tp-trainer-quelle" style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px"></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;padding:2px 0 8px" id="tp-trainer-checks"><!-- wird aus TRAINER befüllt (D2) --></div>
+    </details>
     <div id="tp-gespeichert" style="margin:2px 0 6px"></div>
     <div id="tp-nachbereiten"></div><!-- v483: nach der Einheit der Weg in die Nachbereitung -->
-    <div id="tp-trainer-quelle" style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px"></div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;padding:2px 0 8px" id="tp-trainer-checks"><!-- wird aus TRAINER befüllt (D2) --></div>
-    <div class="sl tp-schritt"><span class="tp-nr" aria-hidden="true">2</span>Plan</div>
+    <div class="sl tp-schritt"><span class="tp-nr" aria-hidden="true">1</span>Plan</div>
     <div id="tp-fokus"></div><!-- v712: offene Konsequenzen aus dem Tagebuch, mit Übungsvorschlägen -->
     <div id="tp-block"></div><!-- v650: Einheit des Trainingsblocks für diesen Termin, Aufbau nach Kinderzahl -->
     <div id="tp-kopf"></div>
@@ -631,7 +636,7 @@
     <div id="tp-diagnose"></div>
     <div id="tp-timeline"></div>
       <button class="btn" id="tp-add-slot" onclick="tpAddSlot()" style="width:100%;margin-top:10px;min-height:56px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px"><span style="font-size:22px">➕</span><span style="font-size:var(--s-karte);font-weight:800">Block hinzufügen</span></button>
-    <div class="sl tp-schritt"><span class="tp-nr" aria-hidden="true">3</span>Speichern und starten</div>
+    <div class="sl tp-schritt"><span class="tp-nr" aria-hidden="true">2</span>Speichern und starten</div>
     <div id="tp-netto" style="margin:6px 0 8px"></div>
       <button class="btn" onclick="tpPlanSave(true)" style="width:100%;justify-content:center;min-height:48px;margin-bottom:10px;font-size:var(--s-karte)">💾 Plan speichern</button>
       <button class="btn btn-p" id="tp-start-echt" onclick="tlStart()" title="Synchroner Start auf allen Trainer-Handys: alle bereit → 10-Sekunden-Countdown → die Blöcke laufen überall parallel" style="width:100%;justify-content:center;min-height:64px;margin-bottom:6px;font-size:17px">🟢 Trainingsstart</button>
@@ -644,14 +649,18 @@
   <!-- SUB: Anwesenheit -->
   <div id="train-sub-anwesenheit" class="train-sub">
     <div class="sl nt"><i class="ti ti-checkbox"></i>Anwesenheit</div>
-    <label for="aw-date" class="sl nt tp-schritt"><span class="tp-nr" aria-hidden="true">1</span>Termin</label>
+    <!-- v937: Termin und Trainer als eine Zeile mit „ändern“ (wie im Trainingsplan) -->
+    <details id="aw-klapp" class="kopf-klapp" style="margin:6px 0 8px">
+    <summary id="aw-klapp-zeile" style="list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:48px;padding:6px 12px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);font-size:var(--s-text);font-weight:700;color:var(--text)"><span class="kk-text" style="flex:1;min-width:0">📅 Termin und Trainer</span><span class="kk-aendern" style="flex:none;color:var(--blue-text)">ändern</span></summary>
+    <label for="aw-date" class="sl nt">Termin</label>
     <div class="mg"><select id="aw-date" onchange="awLoad()" style="width:100%;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:13px;background:var(--surface);font-family:inherit;color:var(--text)"><option>Lade Termine…</option></select></div>
     <!-- Standard: heute + kommende Termine (PO). Vergessenes wird bewusst per Klick nachgetragen. -->
     <div id="aw-nachtragen"></div>
-    <div class="sl tp-schritt"><span class="tp-nr" aria-hidden="true">2</span>Welche Trainer waren da?</div>
+    <div class="sl">Welche Trainer waren da?</div>
     <div id="aw-trainer-quelle" style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px"></div>
     <div id="aw-trainer-checks" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"><!-- wird aus TRAINER befüllt (D2) --></div>
-    <div class="sl tp-schritt"><span class="tp-nr" aria-hidden="true">3</span>Welche Kinder waren da?</div>
+    </details>
+    <div class="sl">Welche Kinder waren da?</div>
     <div id="aw-list"></div>
     <!-- v845: dauerhafter Stand statt nur einer Meldung, die verschwindet -->
     <div id="aw-stand" role="status" aria-live="polite" style="min-height:22px;margin-top:12px"></div>

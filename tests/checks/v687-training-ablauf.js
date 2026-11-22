@@ -34,13 +34,15 @@ module.exports = async function (h) {
       termin: idx(document.getElementById("tp-vorplan")), trainer: idx(document.getElementById("tp-trainer-checks")),
       vorlage: idx(knopf("Vorlage übernehmen")), auto: idx(knopf("Training füllen")), ablauf: idx(document.getElementById("tp-timeline")),
       netto: idx(document.getElementById("tp-netto")), speichern: idx(knopf("Plan speichern")), start: idx(knopf("Trainingsstart")),
-      s: [1, 2, 3].map(sIdx),
+      s: [1, 2].map(sIdx), klapp: idx(document.getElementById("tp-klapp")), klappZu: !document.getElementById("tp-klapp").open,
+      klappText: (document.querySelector("#tp-klapp-zeile .kk-text") || {}).textContent || "",
       nebeneinander: knopf("Vorlage übernehmen") && knopf("Training füllen") && knopf("Vorlage übernehmen").parentElement === knopf("Training füllen").parentElement,
       hStart: Math.round(knopf("Trainingsstart").getBoundingClientRect().height), hSpeichern: Math.round(knopf("Plan speichern").getBoundingClientRect().height) };
     // b)
     go("anwesenheit"); await w(1200);
     const aw = document.getElementById("train-sub-anwesenheit");
-    out.aw = { schritte: [...aw.querySelectorAll(".tp-schritt")].map(e => e.textContent.replace(/\s+/g, " ").trim()) };
+    out.aw = { schritte: [...aw.querySelectorAll(".tp-schritt")].map(e => e.textContent.replace(/\s+/g, " ").trim()),
+      klapp: !!document.getElementById("aw-klapp"), imKlapp: !!document.querySelector("#aw-klapp #aw-date") && !!document.querySelector("#aw-klapp #aw-trainer-checks"), listeDraussen: !document.querySelector("#aw-klapp #aw-list") };
     const kacheln = [...document.querySelectorAll("#aw-list .aw-tile")];
     const zahl = () => (document.getElementById("aw-zahl") || {}).textContent || "";
     const knopfT = () => (document.getElementById("aw-save-btn") || {}).textContent || "";
@@ -66,18 +68,19 @@ module.exports = async function (h) {
   const f = s.fehler(); await s.schliessen();
   if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
   const p = r.plan;
-  const soll = ["1Termin und Trainer", "2Plan", "3Speichern und starten"];   // v800: drei statt fünf Schritte   // die Ziffer steht im Kreis davor (aria-hidden)
+  /* v937 (Charles 21.11.): Termin und Trainer sind kein eigener Schritt mehr, sondern eine Zeile mit „ändern“ (#tp-klapp, zugeklappt). */
+  const soll = ["1Plan", "2Speichern und starten"];   // die Ziffer steht im Kreis davor (aria-hidden)
   if (JSON.stringify(p.schritte) !== JSON.stringify(soll)) probleme.push(`a) Schritte: ${JSON.stringify(p.schritte)}`);
-  const [s1, s2, s3] = p.s;
+  const [s2, s3] = p.s;
   const zw = (x, a, b) => x > a && (b < 0 || x < b);
-  if (!zw(p.termin, s1, s2)) probleme.push("a) Terminwahl steht nicht in Schritt 1");
-  if (!zw(p.trainer, s1, s2)) probleme.push("a) Trainer stehen nicht in Schritt 1");
+  if (!(p.klapp >= 0 && p.klapp < s2) || p.termin !== p.klapp || p.trainer !== p.klapp) probleme.push("a) Terminwahl und Trainer stehen nicht in der Kopfzeile über Schritt 1");
+  if (!p.klappZu || !/^📅 .+ · 🧢 /.test(p.klappText)) probleme.push(`a) Kopfzeile: zu ${p.klappZu}, „${p.klappText}“`);
   if (!zw(p.vorlage, s2, s3) || !zw(p.auto, s2, s3)) probleme.push("a) Vorlage/Auto-Plan stehen nicht in Schritt 2");
   if (!p.nebeneinander) probleme.push("a) Vorlage und Auto-Plan stehen nicht nebeneinander");
   if (!zw(p.ablauf, s2, s3) || !(p.ablauf > p.vorlage)) probleme.push("a) Der Ablauf steht nicht in Schritt 2 unter den Füll-Kacheln");
   if (!(p.netto > s3 && p.speichern > s3 && p.start > s3)) probleme.push("a) Spielform-Minuten, Speichern und Start stehen nicht in Schritt 3");
   if (p.hStart < 56 || p.hSpeichern >= p.hStart) probleme.push(`a) Hauptaktion: Start ${p.hStart} px, Speichern ${p.hSpeichern} px`);
-  if (r.aw.schritte.length !== 3) probleme.push(`b) Anwesenheit: ${JSON.stringify(r.aw.schritte)}`);
+  if (r.aw.schritte.length !== 0 || !r.aw.klapp || !r.aw.imKlapp || !r.aw.listeDraussen) probleme.push(`b) Anwesenheit: Termin und Trainer in der Kopfzeile, Kinderliste darunter – ${JSON.stringify(r.aw)}`);
   const n = r.aw.einer.n;
   if (r.aw.voll.zahl !== `✓ ${n} da · 0 fehlen` || !r.aw.voll.knopf.endsWith(`· ${n} da`) || r.aw.voll.alle) probleme.push(`b) alle da: ${JSON.stringify(r.aw.voll)}`);
   if (r.aw.einer.zahl !== `✓ ${n - 1} da · 1 fehlt` || !r.aw.einer.knopf.endsWith(`· ${n - 1} da`) || !r.aw.einer.alle) probleme.push(`b) einer fehlt: ${JSON.stringify(r.aw.einer)}`);

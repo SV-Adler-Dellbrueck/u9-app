@@ -76,7 +76,7 @@ module.exports = async function (h) {
   const rt = await st.page.evaluate(eval(DURCHLAUF), { start: "localStorage.removeItem('adler_trainer_tour'); tourStart();", key: "adler_trainer_tour" });
   const planSchritt = await st.page.evaluate(() => (TOUR.findIndex(s => /Trainingsplan/.test(s.t))));
   const ft = st.fehler(); await st.schliessen();
-  pruef("Trainer", rt, 17, 9, false);
+  pruef("Trainer", rt, 16, 9, false);   // v937: „Termin wählen“ und „Wer ist Trainer?“ sind ein Schritt (Kopfzeile im Trainingsplan)
   const ps = rt.schritte[planSchritt] || {};
   if (!ps.ziel) probleme.push("Trainer: der Trainingsplan-Schritt zeigt nicht auf die Terminkacheln – der Bereich wurde nicht geöffnet");
   if (ft.length) probleme.push("Trainer, Konsole: " + ft[0]);

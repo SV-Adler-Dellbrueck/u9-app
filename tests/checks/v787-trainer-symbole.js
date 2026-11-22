@@ -6,7 +6,7 @@
 "use strict";
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
-  const termine = [{ id: 1, datum: h.tagePlus(2), uhrzeit: "16:45", uhrzeit_ende: "18:00", typ: "training", titel: "Training", trainer_status: {} }];
+  const termine = [{ id: 1, datum: h.tagePlus(2), uhrzeit: "16:45", uhrzeit_ende: "18:00", typ: "spiel", titel: "Spiel", gegner: "Gegner A", trainer_status: {} }];   // v937: die Erinnerung unter Orga gibt es nur noch für Spiel und Festival
   const s = await h.starten({ breite: 390, hoehe: 844, warten: 1500, angemeldet: true, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), termine, anwesenheit: [], rueckmeldungen: [] }) });
   await h.sichtbarMachen(s.page, "#main-app");
   const r = await s.page.evaluate(async () => {

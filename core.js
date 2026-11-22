@@ -831,7 +831,8 @@ function wetterKitTip(w){
   const t=w.hour?w.temp:(w.tmin!=null?w.tmin:w.tmax);
   const tips=[];
   if(t!=null){
-    if(t<=4)tips.push("🧤 sehr kalt: Mütze & Handschuhe, warm anziehen");
+    /* v937 (Charles 21.11.): unter 5 Grad steht der Packhinweis mit Handschuhen und langer Hose – bei Eltern und Trainern. */
+    if(t<5)tips.push("🧤 unter 5 Grad: Mütze, Handschuhe, lange Hose und lange Ärmel – warm anziehen");
     else if(t<=12)tips.push("🧥 kühl: lange Sachen, Wechselschuhe");
     else if(t>=27)tips.push("🧴 heiß: Sonnencreme, Kappe, extra trinken");
     else if(t>=21)tips.push("🧢 warm: Kappe & genug trinken");
@@ -875,6 +876,18 @@ const TK_FARBEN={training:["var(--fam-training)","var(--fam-training-2)"],spiel:
 function terminKarteCountdown(datum){
   const tage=Math.round((new Date(datum+"T00:00:00")-new Date(isoLokal()+"T00:00:00"))/864e5);
   return tage<=0?"Heute":tage===1?"Morgen":`in ${tage} Tagen`;
+}
+/* v937 (Charles 21.11.): Wo findet es statt – so kurz, wie es der Trainer braucht. Training: Platz oder Halle.
+   Spiel und Festival: Heim oder Auswärts (mit Gegner). Die Adresse gehört nur zum Auswärtstermin und steht dort eigens. */
+function terminOrtKurz(t){
+  if(!t)return "";
+  if(t.typ==="training"||t.typ==="event")return t.platz?(/halle/i.test(t.platz)?t.platz:"Platz · "+t.platz):"";
+  if(t.typ==="spiel"||t.typ==="turnier"){
+    if(t.heim===true)return "Heim"+(t.platz?" · "+t.platz:"");
+    if(t.heim===false)return "Auswärts"+(t.gegner?" · bei "+t.gegner:"");
+    return t.platz||"";
+  }
+  return "";
 }
 function terminKarteBand(o){
   const d=new Date(o.datum+"T00:00:00");

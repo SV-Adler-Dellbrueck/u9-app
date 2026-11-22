@@ -1010,6 +1010,8 @@ html,body{overscroll-behavior-y:contain}
 /* ── Zugeklappter Tipp im Trainingsplan (v473) ─────────────────────────────────
    Erklaerung nur auf Wunsch: <details> statt Absatz. Der Klapper ist 44 px hoch. */
 .tp-tipp{margin:2px 0 4px}
+.kopf-klapp>summary::-webkit-details-marker{display:none}
+.kopf-klapp[open]>summary{margin-bottom:8px}
 .tp-tipp summary{list-style:none;display:inline-flex;align-items:center;min-height:44px;padding:0 10px;border-radius:10px;font-size:var(--s-klein);font-weight:700;color:var(--text2);cursor:pointer;user-select:none}
 .tp-tipp summary::-webkit-details-marker{display:none}
 .tp-tipp[open] summary{color:var(--text)}
@@ -1819,3 +1821,40 @@ details.tk-erledigt>summary{min-height:44px;display:flex;align-items:center;gap:
 details.tk-erledigt>summary::-webkit-details-marker{display:none}
 details.tk-erledigt>summary::after{content:"▾";margin-left:auto;color:var(--text2)}
 details.tk-erledigt[open]>summary::after{content:"▴"}
+
+/* ── v937 (Charles 22.11.): Kacheln in 3D – in beiden Apps ───────────────────────────────────────────────────
+   „Geht bei den Kacheln auch eine Art 3D-Effekt? … noch stärker. In beiden Apps.“ (Entwurf im Bild freigegeben.)
+   Jede Kachel steht erhaben auf dem Grund: heller Lichtrand oben, dunkle Kante unten, tiefer Schatten darunter.
+   Beim Antippen drückt sie sich ein – sie sinkt, die Kante verschwindet, der Schatten wandert nach innen.
+   Nur Form und Schatten: Textfarben und Kontraste bleiben, Farbe trägt keine neue Bedeutung.
+   Das Termin-Fenster blendet ein und steigt auf. Mit „Bewegung reduzieren“ bleibt die Tiefe, die Bewegung entfällt. */
+:root{--k3-licht:rgba(255,255,255,.9);--k3-kante:rgba(15,23,42,.16);--k3-nah:rgba(15,23,42,.14);--k3-fern:rgba(15,23,42,.20);--k3-innen:rgba(15,23,42,.22)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--k3-licht:rgba(255,255,255,.10);--k3-kante:rgba(0,0,0,.55);--k3-nah:rgba(0,0,0,.45);--k3-fern:rgba(0,0,0,.55);--k3-innen:rgba(0,0,0,.6)}}
+:root[data-theme="dark"]{--k3-licht:rgba(255,255,255,.10);--k3-kante:rgba(0,0,0,.55);--k3-nah:rgba(0,0,0,.45);--k3-fern:rgba(0,0,0,.55);--k3-innen:rgba(0,0,0,.6)}
+.termin-kachel,.tmd-kachel,.tm-zeile,.k-raster>button,.phase-zeile,.el-gitter>.btn.btn-zeile,#termin-card{
+  box-shadow:inset 0 2px 0 var(--k3-licht),inset 0 -5px 0 var(--k3-kante),0 2px 3px var(--k3-nah),0 12px 24px -6px var(--k3-fern);
+  transition:transform .11s ease,box-shadow .11s ease}
+.termin-kachel:active,.tmd-kachel:active,.tm-zeile:active,.k-raster>button:active,.phase-zeile:active,.el-gitter>.btn.btn-zeile:active{
+  transform:translateY(4px) scale(.985);box-shadow:inset 0 3px 7px var(--k3-innen),0 1px 1px var(--k3-nah)}
+/* Hauptkachel (blau): die Kante ist dunkler, der Schatten trägt die Farbe */
+.tmd-kachel.btn-p{box-shadow:inset 0 2px 0 rgba(255,255,255,.35),inset 0 -5px 0 rgba(0,0,0,.28),0 2px 3px var(--k3-nah),0 12px 24px -6px rgba(29,78,216,.5)}
+.tmd-kachel.btn-p:active{box-shadow:inset 0 3px 8px rgba(0,0,0,.4)}
+/* Band, Datumsblatt und Ring der Terminkarte: Glanz oben, Kante unten */
+.tk-band{box-shadow:inset 0 2px 0 rgba(255,255,255,.38),inset 0 -5px 0 rgba(0,0,0,.24),0 4px 10px -2px var(--k3-fern)}
+.tk-datum{box-shadow:inset 0 -3px 0 rgba(15,23,42,.16),0 3px 6px rgba(0,0,0,.3)}
+.tk-ring{border-radius:50%;background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.30),rgba(255,255,255,0) 62%);box-shadow:0 3px 7px rgba(0,0,0,.3)}
+.woche-zeile{transition:transform .11s ease,background-color .11s ease;border-radius:10px}
+.woche-zeile:active{transform:scale(.985);background:var(--surface2)}
+.tk-bahn{padding:2px 3px 22px;transition:height .2s ease}
+.tk-bahn::-webkit-scrollbar{display:none}
+.k-raster{padding-bottom:6px}
+@keyframes tmdEin{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes tmdGrund{from{background-color:rgba(0,0,0,0)}to{background-color:rgba(0,0,0,.6)}}
+#tmd-modal{animation:tmdGrund .18s ease both}
+#tmd-inhalt{animation:tmdEin .22s cubic-bezier(.2,.8,.2,1) both}
+#tmd-inhalt .tmd-karte{box-shadow:0 18px 50px rgba(15,23,42,.35)}
+@media (prefers-reduced-motion:reduce){
+  .termin-kachel,.tmd-kachel,.tm-zeile,.k-raster>button,.phase-zeile,.el-gitter>.btn.btn-zeile,.woche-zeile,.tk-bahn{transition:none}
+  .termin-kachel:active,.tmd-kachel:active,.tm-zeile:active,.k-raster>button:active,.phase-zeile:active,.el-gitter>.btn.btn-zeile:active,.woche-zeile:active{transform:none}
+  #tmd-modal,#tmd-inhalt{animation:none}
+}

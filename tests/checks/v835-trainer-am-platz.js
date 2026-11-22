@@ -26,10 +26,13 @@ module.exports = async function (h) {
     await loadKader();
     // c) Startseite
     go("home"); await w(1500);
-    const kn = [...document.querySelectorAll(".woche-erweitert button")].map(b => ({ t: b.textContent.trim(), oc: b.getAttribute("onclick") || "" }));
-    out.matchday = kn.some(k => /Matchday/.test(k.t));
-    out.zumSpieltag = kn.find(k => /Zum Spieltag/.test(k.t)) || null;
-    out.terminKnopf = (() => { const b = document.querySelector('#home-woche button[onclick="homeTerminNeu()"]'); return b ? Math.round(b.getBoundingClientRect().height) : 0; })();
+    /* v937: Unter der Kachel stehen keine Knöpfe mehr. Die Kachel des nächsten Spiels ist selbst der Weg zum Spieltag
+       (wocheOpen → spieltagZuTermin); „Neuer Termin“ steht unter Orga (#orga-termin-neu). */
+    out.matchday = /Matchday/.test(document.getElementById("home-woche").textContent);
+    const sk = [...document.querySelectorAll("#home-termine .termin-kachel")].find(k => /wocheOpen\(\d+,'[^']+','(spiel|turnier)'\)/.test(k.getAttribute("onclick") || ""));
+    out.zumSpieltag = sk ? { t: "Kachel", oc: (String(wocheOpen).match(/spieltagZuTermin\(datum\)/) || [""])[0] } : null;
+    go("ue-orga"); await w(1500);
+    out.terminKnopf = (() => { const b = document.getElementById("orga-termin-neu"); return b ? Math.round(b.getBoundingClientRect().height) : 0; })();
     homeTerminNeu(); await w(900);
     out.formularOffen = (document.getElementById("tm-karte") || { style: { display: "none" } }).style.display !== "none" && (document.getElementById("tm-neu-toggle") || {}).getAttribute?.("aria-expanded") === "true";
     // d) Gruppenzahl
@@ -79,7 +82,7 @@ module.exports = async function (h) {
   if (/über „Vorlagen importieren“/.test(fs.readFileSync(path.join(h.REPO, "md-einheit-import.js"), "utf8").split("function vorlageUebernehmenRender")[1].split("\nfunction ")[0])) probleme.push("b) Leertext verweist weiter auf „Vorlagen importieren“");
   if (r.matchday || !r.zumSpieltag || !/^spieltagZuTermin\(/.test(r.zumSpieltag.oc)) probleme.push("c) Knopf am nächsten Spiel: " + JSON.stringify(r.zumSpieltag) + (r.matchday ? " · „Matchday“ steht noch da" : ""));
   else zeilen.push("c) Startseite: „Zum Spieltag“ → spieltagZuTermin");
-  if (r.terminKnopf < 44 || !r.formularOffen) probleme.push(`e) „Termin“ auf der Wochenkarte: ${r.terminKnopf} px, Formular offen ${r.formularOffen}`);
+  if (r.terminKnopf < 44 || !r.formularOffen) probleme.push(`e) „Neuer Termin“ unter Orga: ${r.terminKnopf} px, Formular offen ${r.formularOffen}`);
   else zeilen.push("e) Wochenkarte: „Termin“ öffnet die Termine-Seite mit offenem Formular");
   if (r.gruppen !== "6→1 7→1 8→2 12→2") probleme.push("d) Gruppenzahl (zwei Trainer): " + r.gruppen);
   else zeilen.push("d) Gruppen bei zwei Trainern: " + r.gruppen);

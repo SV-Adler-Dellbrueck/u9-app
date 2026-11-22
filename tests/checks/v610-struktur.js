@@ -23,7 +23,7 @@ module.exports = async function (h) {
       const out = {};
       ["spieltag", "orga", "elki"].forEach(k => out[k] = labels(k));
       out.taktik = labels("taktik");   // v871: keine Kachelseite mehr – erwartet leer
-      out.spieltagKarte = /id="st-dabei-karte"/.test(_kachelInhalt("spieltag"));
+      out.spieltagKarte = /id="spieltag-termine"/.test(_kachelInhalt("spieltag"));   // v937: Termin-Kachel statt eigener Karte
       const d = document.createElement("div"); d.innerHTML = _kachelInhalt("orga");
       out.orgaEinst = (d.innerHTML.split(/Einstellungen/)[1] || "");
       // e) Turnier-Gruppe bei einem Auswärtsturnier

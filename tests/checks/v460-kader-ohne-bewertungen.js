@@ -17,7 +17,8 @@ module.exports = async function (h) {
     activeFilter = "all"; renderKader();
     out.leer = zeilen();
     out.text = document.getElementById("kader-content").textContent.replace(/\s+/g, " ").trim().slice(0, 200);
-    out.bewertenKnopf = !!document.querySelector('#kader-content button[onclick^="kaderBewerten"]');
+    // v937: Solange Bewerten gesperrt ist, führt der Knopf ins Profil statt auf die gesperrte Seite.
+    out.bewertenKnopf = !!document.querySelector(typeof bewFreigegeben === "function" && !bewFreigegeben() ? '#kader-content button.kader-profil' : '#kader-content button[onclick^="kaderBewerten"]');
     activeFilter = "tw"; renderKader(); out.tw = zeilen().length;
     activeFilter = "aufpasser"; renderKader(); out.rolle = document.getElementById("kader-content").textContent.includes("Kein Spieler für diesen Filter");
     // jetzt eine echte Bewertung fuer ein Kind
@@ -34,7 +35,7 @@ module.exports = async function (h) {
   if (r.leer.length !== 14) probleme.push(`ohne Bewertungen ${r.leer.length} Zeilen statt 14`);
   if (r.leer.some(z => z.includes(RAUS))) probleme.push("ausgetragenes Kind steht in der Liste");
   if (/Kein Spieler für diesen Filter/.test(r.text)) probleme.push("Liste meldet weiter „Kein Spieler für diesen Filter“");
-  if (!r.bewertenKnopf) probleme.push("kein Weg zur ersten Bewertung");
+  if (!r.bewertenKnopf) probleme.push("kein Weg zur ersten Bewertung (gesperrt: kein Weg ins Profil)");
   if (r.tw !== 2) probleme.push(`TW-Filter zeigt ${r.tw} statt 2 (aus dem Kader, nicht aus Bewertungen)`);
   if (!r.rolle) probleme.push("Rollenfilter ohne Bewertungen muesste leer melden");
   if (r.mitBewertung !== 14) probleme.push(`mit einer Bewertung ${r.mitBewertung} Zeilen statt 14`);

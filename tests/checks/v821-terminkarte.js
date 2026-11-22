@@ -25,12 +25,14 @@ module.exports = async function (h) {
     if (typeof terminKarteBand !== "function") return { alt: true };
     await loadKader(); go("home"); await w(2000);
     const zeilen = [...document.querySelectorAll("#home-woche .woche-zeile")];
-    const band = zeilen[0] && zeilen[0].querySelector(".tk-band");
+    /* v937: Das Band steht in der Kachel des nächsten Termins (#home-termine); die Wochenliste darunter hat nur Zeilen. */
+    const kacheln = [...document.querySelectorAll("#home-termine .termin-kachel")];
+    const band = kacheln[0] && kacheln[0].querySelector(".tk-band");
     if (!band) return { ohneBand: true, zeilen: zeilen.length };
     const ring = band.querySelector(".tk-ring");
     const chip = [...zeilen[0].querySelectorAll("span")].map(e => e.textContent.trim()).find(t => /^\d+ dabei$/.test(t)) || "";
     const texte = [...band.querySelectorAll(".tk-countdown, .tk-titel")];
-    return { zeilen: zeilen.length, zweiteMitBand: !!(zeilen[1] && zeilen[1].querySelector(".tk-band")),
+    return { zeilen: zeilen.length, zweiteMitBand: zeilen.some(z => z.querySelector(".tk-band")) || kacheln.some(k => !k.querySelector(".tk-band")),
       ring: ring ? ring.getAttribute("aria-label") : null, ringZahl: ring ? ring.textContent.replace(/\s+/g, " ").trim() : "", chip,
       countdown: band.querySelector(".tk-countdown").textContent.trim(), text: band.innerText.replace(/\s+/g, " "),
       kontrast: (() => {   // weiße Schrift gegen Grundfarbe UND beide Enden des Verlaufs – der Helfer kennt nur die Grundfarbe
@@ -62,9 +64,9 @@ module.exports = async function (h) {
   const offen = await eltern([]), zu = await eltern([{ termin_id: 1, spieler_id: 1, status: "zugesagt" }]);
   const f = [].concat(ft, offen.f, zu.f); if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
 
-  if (rt.ohneBand) probleme.push("a) erste Zeile von „Diese Woche“ ohne Band");
+  if (rt.ohneBand) probleme.push("a) Kachel des nächsten Termins ohne Band");
   else {
-    if (rt.zeilen !== 2 || rt.zweiteMitBand) probleme.push(`a) ${rt.zeilen} Zeilen, zweite mit Band: ${rt.zweiteMitBand}`);
+    if (rt.zeilen !== 2 || rt.zweiteMitBand) probleme.push(`a) ${rt.zeilen} Zeilen; Band in der Liste oder Kachel ohne Band: ${rt.zweiteMitBand}`);
     const zahl = (rt.chip.match(/^\d+/) || [""])[0];
     if (!rt.ring || !zahl || rt.ring.indexOf(zahl + " von 15") !== 0) probleme.push(`a) Ring „${rt.ring}“ passt nicht zum Etikett „${rt.chip}“`);
     if (rt.countdown !== "Morgen" || !/17:00 Uhr/.test(rt.text) || !/Training/.test(rt.text)) probleme.push(`b) Band-Text: „${rt.text}“`);

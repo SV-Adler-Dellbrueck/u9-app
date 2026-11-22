@@ -438,7 +438,7 @@ async function mdOpen(datum,typ){
       <div style="font-size:var(--s-klein);color:var(--text3);margin-top:2px">Leer lassen ist der Normalfall – die Route führt dann zum Ort aus dem Termin.</div>
     </div>`;
   modal.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:400px;width:100%;max-height:90vh;overflow-y:auto">
-    <div style="font-weight:700;margin-bottom:4px">Eltern-Info · ${typ==="training"?"🏃 Training":"⚽ Spiel"} · ${datum}</div>
+    <div style="font-weight:700;margin-bottom:4px">Eltern-Info · ${typ==="training"?"🏃 Training":"⚽ Spiel"} · ${/^\d{4}-\d{2}-\d{2}$/.test(datum)?new Date(datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}):esc(datum)}</div>
     <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:12px">Nur Logistik – für die Eltern sichtbar. Keine Bewertungen.</div>
     ${ausDemTermin}
     ${istSpiel?gegnerAdresse:""}
