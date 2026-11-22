@@ -37,7 +37,7 @@ module.exports = async function (h) {
     const karten = [...document.querySelectorAll("#tk-bahn > *")];
     out.tkAnzahl = karten.length; out.tkErste = karten[0] ? karten[0].id : "";
     const zweite = karten[1];
-    out.zweite = zweite ? { rsvp: zweite.querySelectorAll("button[aria-pressed]").length, alles: /Alles zum Termin/.test(zweite.textContent), hilfe: /Hilfe gesucht/.test(zweite.textContent) } : null;
+    out.zweite = zweite ? { rsvp: zweite.querySelectorAll("button[aria-pressed]").length, alles: /Alle Details/.test(zweite.textContent), hilfe: /Hilfe gesucht/.test(zweite.textContent) } : null;
     out.tkZahl = txt(document.getElementById("tk-zahl"));
     out.woche = !!document.getElementById("eltern-termine");
     const betr = document.querySelector("#betreuung-card details.tk-erledigt summary");

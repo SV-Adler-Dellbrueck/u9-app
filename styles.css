@@ -2000,3 +2000,6 @@ details.tk-erledigt[open]>summary::after{content:"▴"}
 .bot-kinder{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 .bot-hinweis{font-size:var(--s-klein);color:var(--text2);line-height:1.5;background:var(--surface2);border-radius:10px;padding:8px 10px;margin:10px 0}
 .bot-meldung{font-size:var(--s-text);color:#b91c1c;min-height:20px;margin-bottom:6px}
+/* v950: weitere Termine im Karussell aufklappen */
+.tk-details{margin-top:10px;border-top:1px solid #e2e8f0;padding-top:8px}
+.tk-details-innen{font-size:var(--s-text)}

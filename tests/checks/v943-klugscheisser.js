@@ -44,10 +44,10 @@ module.exports = async function (h) {
       out.karte = !!k; if (!k) return out;
       out.text = txt(k.querySelector(".ks-text")); out.kopf = txt(k.querySelector(".ks-kopf"));
       const q = k.querySelector("a.ks-quelle"); out.quelle = q ? txt(q) + " " + q.getAttribute("href") + " " + q.getAttribute("rel") : "";
-      const b = k.querySelector(".ks-weiter"); out.knopf = b ? Math.round(b.getBoundingClientRect().height) : 0;
+      const b = k.querySelector(".ks-weiter"); out.knopf = b ? 1 : 0;   // v950: kein „Noch eins“ mehr
       const t = document.getElementById("tk-bahn"), kr = k.getBoundingClientRect();
       out.unterTerminen = t ? kr.top > t.getBoundingClientRect().bottom : false;
-      b.click(); await w(300); out.danach = txt(document.querySelector("#klug-slot .ks-text"));
+      await ksKarte(); await w(100); out.danach = txt(document.querySelector("#klug-slot .ks-text"));   // v950: neu gezeichnet → derselbe Fakt
       const d = KS_DATEN, r25 = ksReihe(d, "2026-11-25"), r22 = ksReihe(d, "2026-11-22"), r23 = ksReihe(d, "2026-11-23");
       out.erst25 = r25[0].id; out.kopf25 = (ksKarteHtml(r25[0], "2026-11-25").match(/class="ks-kopf">([^<]*)/) || [])[1];
       out.art22 = r22[0].art; out.verschieden = r22[0].id !== r23[0].id;
@@ -64,14 +64,14 @@ module.exports = async function (h) {
     if (r.erst25 !== "tag-040" || r.kopf25 !== "📅 Heute vor 73 Jahren") probleme.push(`b) 25.11.: ${r.erst25}, „${r.kopf25}“`);
     if (r.art22 === "tag" || !r.verschieden) probleme.push(`b) 22.11.: ${r.art22}, verschieden ${r.verschieden}`);
     if (!/^Quelle: /.test(r.quelle) || !/https:\/\//.test(r.quelle) || !/noopener/.test(r.quelle)) probleme.push("c) Quelle „" + r.quelle + "“");
-    if (r.knopf < 44) probleme.push("c) „Noch eins“ " + r.knopf + " px");
+    if (r.knopf) probleme.push("c) „Noch eins“ ist noch da (seit v950 nur eine Info am Tag)");
     if (!r.unterTerminen) probleme.push("c) Karte steht nicht unter den Terminen");
-    if (!r.danach || r.danach === r.text) probleme.push("c) „Noch eins“ zeigt denselben Fakt");
+    if (!r.danach || r.danach !== r.text) probleme.push("c) Neu zeichnen zeigt einen anderen Fakt – am selben Tag muss es derselbe sein");
     if (r.quer) probleme.push("c) Querscrollen");
   }
   if (ohne.r.fehler || ohne.r.karte) probleme.push("d) ohne Datei: " + JSON.stringify(ohne.r));
   const fehler = mit.f.concat(ohne.f).filter(x => !/Failed to load resource/.test(x)); if (fehler.length) probleme.push("Konsole: " + fehler.slice(0, 2).join(" | "));
   zeilen.push(`b) 25.11. → ${r.erst25} „${r.kopf25}“ · 22.11. → ${r.art22}, Folgetag anders: ${r.verschieden}`);
-  zeilen.push(`c) „${r.kopf}“ · „${String(r.text || "").slice(0, 60)}…“ · ${String(r.quelle || "").split(" https")[0]} · Knopf ${r.knopf} px · d) ohne Datei keine Karte`);
+  zeilen.push(`c) „${r.kopf}“ · „${String(r.text || "").slice(0, 60)}…“ · ${String(r.quelle || "").split(" https")[0]} · kein „Noch eins“ · d) ohne Datei keine Karte`);
   return h.ergebnis(titel, !probleme.length, zeilen.concat(probleme));
 };
