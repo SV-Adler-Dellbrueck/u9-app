@@ -2015,9 +2015,9 @@ details.tk-erledigt[open]>summary::after{content:"▴"}
 .tp-dauer .tp-dauer-sel{order:0!important}
 .tp-slot>*:not(.tp-slot-head){margin-left:12px;margin-right:12px}
 .tp-slot>.tp-station{margin-left:0;margin-right:0;border-radius:0;border:0;border-top:1px solid var(--surface2);background:transparent;padding:10px 12px;margin-top:0}
-.tp-slot-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"griff label mehr" "griff zeit dauer";align-items:center;column-gap:6px;row-gap:0;padding:6px 6px 6px 8px;margin:0 0 4px;border-bottom:1px solid var(--surface2);position:relative}
+.tp-slot-head{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;grid-template-areas:"griff klapp label mehr" "griff klapp zeit dauer";align-items:center;column-gap:6px;row-gap:0;padding:6px 6px 6px 8px;margin:0 0 4px;border-bottom:1px solid var(--surface2);position:relative}
 .tp-slot-head .tp-griff{grid-area:griff;margin:0}
-.tp-slot-head .tp-klapp{grid-area:griff}
+.tp-slot-head .tp-klapp{grid-area:klapp}
 .tp-slot-head .tp-slot-label{grid-area:label;font-size:var(--s-karte);font-weight:800;white-space:normal;min-width:0}
 .tp-slot-head .tp-slot-time{grid-area:zeit;margin:0;white-space:normal}
 .tp-slot-head .tp-mehr{grid-area:mehr}

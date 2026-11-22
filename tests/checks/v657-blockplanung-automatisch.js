@@ -90,6 +90,7 @@ module.exports = async function (h) {
     await tpTrainerRsvpLaden(datum);
     await tpPlanRestore(datum); await warte(200);
     await blockPlanKarte(datum); await warte(100);
+    if (typeof tpStartZeigen === "function") { tpStartZeigen(datum); await warte(300); }   // v952: steht der Plan, liegt die Blockkarte unter „Plan ändern“
     const knopf = document.getElementById("tp-block-akt");
     out.bHoehe = knopf ? Math.round(knopf.getBoundingClientRect().height) : 0;
     const vorher = Object.keys(_tpStationGruppe).map(id => (tpAllForms()[+document.getElementById(id).value] || {}).name);

@@ -12,7 +12,7 @@
       nach dem letzten „Training geschafft“; ✕ schließt.
    c) „Plan im Detail“: kein „Plan anpassen“; „Training füllen“ nur bei leerem Plan; Link „Andere Vorlage wählen“ (≥ 44 px).
    d) Blockkopf: ⋯ (≥ 44 px) öffnet ein Menü mit Nach oben / Nach unten / Block löschen, Escape schließt es; − / + ändern die
-      Minuten in Schritten (10 → 15 → 10); bei 360 px ragt im Kopf nichts hinaus. */
+      Minuten in Schritten (10 → 15 → 10); bei 360 px ragt im Kopf nichts hinaus; kein Ziehgriff liegt unter dem Aufklapp-Pfeil. */
 "use strict";
 module.exports = async function (h) {
   const titel = "v952 Planung: fertiger Plan als Übersicht, Trainingsansicht mit eigener Übung und Countdown, ⋯ und − / + am Block";
@@ -51,7 +51,11 @@ module.exports = async function (h) {
     const mehr = kopf && kopf.querySelector(".tp-mehr");
     out.d = { mehr: mehr ? Math.round(Math.min(mehr.offsetWidth, mehr.offsetHeight)) : 0,
       raus: [...document.querySelectorAll(".tp-slot-head")].some(k => { const b = k.getBoundingClientRect(); return [...k.querySelectorAll("*")].some(c => c.offsetParent && c.getBoundingClientRect().right > b.right + 1); }) };
-    mehr.click(); await w(100);
+    tpRenderTimeline(); await w(200);   // gefüllte Blöcke bekommen ihren Aufklapp-Pfeil (v857)
+    out.d.griffVerdeckt = [...document.querySelectorAll("#tp-timeline .tp-griff")].filter(g => { g.scrollIntoView({ block: "center" }); const r = g.getBoundingClientRect(), o = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return !o || o.closest(".tp-griff") !== g; }).length;
+    out.d.klapp = document.querySelectorAll("#tp-timeline .tp-klapp").length;
+    _tpAlleOffen = true; tpRenderTimeline(); await w(200);   // für Menü und − / + alle Blöcke offen
+    const mehrJetzt = document.querySelector(`.tp-slot[data-si="${si}"] .tp-mehr`) || mehr; mehrJetzt.click(); await w(100);
     out.d.menu = [...document.querySelectorAll("#tp-block-menu button")].map(txt);
     out.d.fokus = document.activeElement && document.activeElement.closest("#tp-block-menu") ? true : false;
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); await w(100);
@@ -115,10 +119,12 @@ module.exports = async function (h) {
     if (JSON.stringify(r.d.menu.map(x => x.replace(/^[^A-Za-zÄÖÜ]+/, ""))) !== JSON.stringify(["Nach oben", "Nach unten", "Block löschen"]) || !r.d.fokus || !r.d.zu) probleme.push(`d) Menü ${JSON.stringify(r.d.menu)}, Fokus ${r.d.fokus}, Escape ${r.d.zu}`);
     if (JSON.stringify(r.d.schritt) !== "[15,10]") probleme.push("d) − / + " + JSON.stringify(r.d.schritt));
     if (r.d.raus || r.quer) probleme.push(`d) ragt hinaus: Kopf ${r.d.raus}, Seite ${r.quer}`);
+    if (!r.d.klapp) probleme.push("d) kein Aufklapp-Pfeil im Testplan – Griff-Prüfung ohne Wirkung");
+    if (r.d.griffVerdeckt) probleme.push(`d) ${r.d.griffVerdeckt} Ziehgriff(e) verdeckt (Aufklapp-Pfeile: ${r.d.klapp})`);
   }
   const fehler = fe.filter(x => !/Failed to load resource/.test(x)); if (fehler.length) probleme.push("Konsole: " + fehler.slice(0, 2).join(" | "));
   zeilen.push(`a) 3 Kacheln ohne Überstand · b) „${String((r.b || {}).zu || "").slice(0, 50)}“, ${(r.b || {}).bloecke} Blöcke, Editor aus, „Plan ändern“ zeigt ihn`);
   zeilen.push(`e) Trainingsansicht „${String((r.e || {}).kopf || "").slice(0, 40)}“, eigene Gruppe ${(r.e || {}).karten}/${(r.e || {}).alle}, Uhr ${(r.e || {}).uhr}, Ende und ✕`);
-  zeilen.push(`c) kein „Plan anpassen“, „Training füllen“ nur leer, Link ${(r.c0 || {}).link} px · d) ⋯ ${(r.d || {}).mehr} px, Menü ${((r.d || {}).menu || []).length} Einträge, − / + ${JSON.stringify((r.d || {}).schritt)}`);
+  zeilen.push(`c) kein „Plan anpassen“, „Training füllen“ nur leer, Link ${(r.c0 || {}).link} px · d) ⋯ ${(r.d || {}).mehr} px, Pfeile ${(r.d || {}).klapp}, Griffe verdeckt ${(r.d || {}).griffVerdeckt}, Menü ${((r.d || {}).menu || []).length} Einträge, − / + ${JSON.stringify((r.d || {}).schritt)}`);
   return h.ergebnis(titel, !probleme.length, zeilen.concat(probleme));
 };
