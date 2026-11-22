@@ -69,7 +69,7 @@ module.exports = async function (h) {
   if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
   const p = r.plan;
   /* v937 (Charles 21.11.): Termin und Trainer sind kein eigener Schritt mehr, sondern eine Zeile mit „ändern“ (#tp-klapp, zugeklappt). */
-  const soll = ["1Plan", "2Speichern und starten"];   // die Ziffer steht im Kreis davor (aria-hidden)
+  const soll = ["1Plan im Detail", "2Speichern und starten"];   // v940: über Schritt 1 steht der fertige Plan, Schritt 1 heißt „Plan im Detail“   // die Ziffer steht im Kreis davor (aria-hidden)
   if (JSON.stringify(p.schritte) !== JSON.stringify(soll)) probleme.push(`a) Schritte: ${JSON.stringify(p.schritte)}`);
   const [s2, s3] = p.s;
   const zw = (x, a, b) => x > a && (b < 0 || x < b);

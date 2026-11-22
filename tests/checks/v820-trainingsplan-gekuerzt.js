@@ -85,7 +85,9 @@ module.exports = async function (h) {
   if (!r.slots) probleme.push("c) Plan ohne Blöcke – die Leiste lässt sich nicht prüfen");
   if (r.leisteSpaeter) probleme.push("c) schwebender Startknopf an einem anderen Tag sichtbar");
   if (!r.leisteHeute) probleme.push("c) schwebender Startknopf fehlt am Trainingstag");
-  if (r.seite > 3100) probleme.push(`d) leerer Plan ${r.seite} px lang (vor v820 rund 3.680)`);
+  /* v940 (Charles 22.11., Entwurf freigegeben): oben steht die Startkarte „fertiger Plan“ mit drei gleich großen Wegen (rund 650 px) –
+     die Grenze wächst um diese Karte, der Rest des Plans bleibt so kurz wie seit v820. */
+  if (r.seite > 3450) probleme.push(`d) leerer Plan ${r.seite} px lang (vor v820 rund 3.680)`);
 
   zeilen.push(`Fokus zu ${r.fokusZu.hoehe} px → „${r.fokusNachTipp.text}“ · ${r.teams ? r.teams.zeile : "–"} · Startknopf heute ${r.leisteHeute}, später ${r.leisteSpaeter} · Seite ${r.seite} px`);
   return h.ergebnis(titel, !probleme.length, probleme.concat(zeilen));

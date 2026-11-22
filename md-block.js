@@ -634,13 +634,14 @@ async function tpStartUebernehmen(datum){
   const k=document.getElementById("tps-uebernehmen"); if(k)k.disabled=true;
   try{ await blockEinheitUebernehmen(datum,{still:true}); }
   finally{ if(k)k.disabled=false; }
-  if(_tpsHatPlan())tpStartHerz();
+  if(_tpsHatPlan()){ _tpsLageMerken(datum); tpStartHerz(); }
   tpStartRender(datum);
 }
 async function tpStartSpeichern(){
   const k=document.getElementById("tps-speichern"); if(k)k.disabled=true;
   try{ if(typeof tpPlanSave==="function")await tpPlanSave(true); }
   finally{ if(k)k.disabled=false; }
+  const d=document.getElementById("tp-date")?.value; if(d)_tpsLageMerken(d);
   tpStartHerz();
 }
 /* Andere Leitfrage: gibt es eine Vorwoche, steht sie als eigener Weg da; die Wahl selbst ist der vertraute Vorlagen-Dialog,
@@ -705,10 +706,19 @@ async function tpStartRueckgaengig(){
   toast("↩️ Wie vorher – der Plan bleibt so, bis sich wieder etwas ändert");
   if(typeof tpPlanRestore==="function")await tpPlanRestore(datum);
 }
+/* Angepasst wird nur, wenn sich seit dem letzten Öffnen auf diesem Gerät Kinder- oder Trainerzahl geändert haben –
+   ein Plan, den man zum ersten Mal sieht, bleibt, wie er gespeichert wurde (wer ihn gebaut hat, kannte die Lage). */
+function _tpsLage(){
+  let tr=[]; try{ tr=(typeof tpGetCheckedTrainers==="function")?tpGetCheckedTrainers().slice().sort():[]; }catch(e){}
+  return `${_tpsKinder()}|${tr.join(",")}`;
+}
+function _tpsLageMerken(datum){ try{ localStorage.setItem("tps_lage_"+datum,_tpsLage()); }catch(e){} }
 async function tpStartNachLaden(datum){
   if(!document.getElementById("tp-start"))return;
   if(_tpsHinweis&&_tpsHinweis.datum!==datum){ _tpsHinweis=null; _tpsRueck=null; }
-  try{ await tpStartAuto(datum); }catch(e){}
+  let vorher=""; try{ vorher=localStorage.getItem("tps_lage_"+datum)||""; }catch(e){}
+  if(vorher&&vorher!==_tpsLage()){ try{ await tpStartAuto(datum); }catch(e){} }
+  if(_tpsHatPlan())_tpsLageMerken(datum);
   await tpStartRender(datum);
 }
 /* Kleiner Gruß nach dem Speichern: ein Herz fliegt hoch, dazu ein Satz mit dem Vornamen des angemeldeten Trainers. */

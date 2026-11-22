@@ -5,7 +5,7 @@
       Training n von m, Ablauf Aufwärmen · Hauptteil · Abschluss, „rechnet mit N Kindern“; Hauptknopf „Plan übernehmen“
       (≥ 56 px); darunter drei gleich breite Kacheln (≥ 140 px hoch): Andere Leitfrage, Selbst bauen, Mit KI.
    b) „Plan übernehmen“ schreibt den Plan; danach „Dein Training steht“ mit „Passt – speichern“; ein Herz mit Gruß erscheint.
-   c) Automatische Anpassung: ändert sich etwas, wird übernommen und der Hinweis „Angepasst wegen …“ mit „Rückgängig“
+   c) Automatische Anpassung (nur wenn sich Kinder- oder Trainerzahl seit dem letzten Öffnen auf dem Gerät geändert haben): ändert sich etwas, wird übernommen und der Hinweis „Angepasst wegen …“ mit „Rückgängig“
       erscheint; zwei Stunden vor Beginn nicht; nicht erneut für einen zurückgenommenen Stand. „Rückgängig“ schreibt
       den vorherigen Plan zurück.
    d) „Andere Leitfrage“ bietet „Vorwoche wiederholen“ (Leitfrage aus dem Block der Vorwoche) und öffnet die Vorlagen
@@ -67,6 +67,12 @@ module.exports = async function (h) {
     await tpStartRueckgaengig(); await w(200);
     out.c.nein = (localStorage.getItem("tps_nein_" + datum) || "").startsWith("9|");
     out.c.wieder = await tpStartAuto(datum);
+    // Schwelle: ohne gemerkte Lage passt nichts an (erstes Öffnen), mit anderer Lage schon
+    let zaehl = 0; window.tpAnpassenUebernehmen = async () => { zaehl++; return { getauscht: 0 }; };
+    localStorage.removeItem("tps_nein_" + datum);
+    localStorage.removeItem("tps_lage_" + datum); _tpsHinweis = null; await tpStartNachLaden(datum); out.c.ohneLage = zaehl;
+    localStorage.setItem("tps_lage_" + datum, "99|Niemand"); await tpStartNachLaden(datum); out.c.andereLage = zaehl;
+    out.c.gemerkt = localStorage.getItem("tps_lage_" + datum) !== "99|Niemand";
     window.tpAnpassenVorschlag = altV; window.tpAnpassenUebernehmen = altU;
     // d) Andere Leitfrage
     await tpStartLeitfrage(datum); await w(100);
@@ -89,6 +95,7 @@ module.exports = async function (h) {
   if (!posts.length) P("b) kein Plan geschrieben");
   if (!r.c.auto || r.c.uebernommen !== 1 || !/Angepasst wegen 2 Absagen: 1 statt 2 Felder · eine Übung getauscht/.test(r.c.hinweis) || !r.c.rueck) P(`c) Anpassung: ${JSON.stringify(r.c)}`);
   if (r.c.frier !== false) P("c) zwei Stunden vor Beginn trotzdem angepasst");
+  if (r.c.ohneLage !== 0 || r.c.andereLage !== 1 || !r.c.gemerkt) P(`c) Schwelle: ohne Lage ${r.c.ohneLage}, andere Lage ${r.c.andereLage}, gemerkt ${r.c.gemerkt}`);
   if (!r.c.nein || r.c.wieder !== false) P(`c) Rückgängig: gemerkt ${r.c.nein}, erneut angepasst ${r.c.wieder}`);
   if (!/Vorwoche wiederholen/.test(r.d.modal) || !r.d.modal.includes(F) || !r.d.vu || r.d.filter !== F) P(`d) Andere Leitfrage: ${JSON.stringify(r.d).slice(0, 240)}`);
   if (!/Noch kein Plan/.test(r.e.text) || !r.e.wahl || !/Trainingsblock anlegen/.test(r.e.text)) P(`e) ohne Block: ${JSON.stringify(r.e).slice(0, 200)}`);

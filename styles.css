@@ -1868,31 +1868,31 @@ details.tk-erledigt[open]>summary::after{content:"▴"}
 .tps{margin:4px 0 14px}
 .tps-haupt{border-radius:22px;padding:16px;background:linear-gradient(160deg,#1d4ed8,#1e3a8a);color:#fff;
   box-shadow:inset 0 2px 0 rgba(255,255,255,.35),inset 0 -6px 0 rgba(0,0,0,.28),0 2px 3px var(--k3-nah),0 16px 30px -8px rgba(29,78,216,.55);animation:tpsEin .35s ease-out}
-.tps-ueber{font-size:14px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;opacity:.92}
-.tps-titel{font-size:22px;font-weight:900;line-height:1.2;margin-top:2px}
-.tps-lf{display:block;background:rgba(255,255,255,.16);border-radius:14px;padding:10px 12px;margin:10px 0 12px;font-size:16px;font-weight:700;line-height:1.35}
-.tps-lf-klein{display:block;font-size:14px;font-weight:600;opacity:.92;margin-bottom:2px}
+.tps-ueber{font-size:var(--s-karte);font-weight:800;letter-spacing:.4px;text-transform:uppercase;opacity:.92}
+.tps-titel{font-size:var(--s-seite);font-weight:900;line-height:1.2;margin-top:2px}
+.tps-lf{display:block;background:rgba(255,255,255,.16);border-radius:14px;padding:10px 12px;margin:10px 0 12px;font-size:var(--s-karte);font-weight:700;line-height:1.35}
+.tps-lf-klein{display:block;font-size:var(--s-karte);font-weight:600;opacity:.92;margin-bottom:2px}
 .tps-ablauf{display:flex;gap:4px;margin:4px 0 6px}
-.tps-ablauf>div{min-width:72px;background:rgba(255,255,255,.2);border-radius:10px;padding:8px 6px;font-size:14px;font-weight:700;text-align:center;line-height:1.25;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}
+.tps-ablauf>div{min-width:72px;background:rgba(255,255,255,.2);border-radius:10px;padding:8px 6px;font-size:var(--s-karte);font-weight:700;text-align:center;line-height:1.25;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}
 .tps-ablauf>div span{display:block;font-weight:600;opacity:.95}
-.tps-rechnet{font-size:15px;font-weight:600;margin:8px 0 14px}
+.tps-rechnet{font-size:var(--s-karte);font-weight:600;margin:8px 0 14px}
 .tps-gross,.tps-zweit,.tps-weg,.tps-hinweis button{font-family:inherit;cursor:pointer;transition:transform .11s ease,box-shadow .11s ease}
-.tps-gross{width:100%;min-height:56px;border-radius:16px;border:0;background:#fff;color:#1e3a8a;font-size:19px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;
+.tps-gross{width:100%;min-height:56px;border-radius:16px;border:0;background:#fff;color:#1e3a8a;font-size:var(--s-teil);font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;
   box-shadow:inset 0 -5px 0 rgba(30,58,138,.22),0 6px 14px -4px rgba(0,0,0,.45)}
-.tps-zweit{width:100%;min-height:48px;margin-top:10px;border-radius:14px;border:2px solid rgba(255,255,255,.75);background:rgba(255,255,255,.06);color:#fff;font-size:17px;font-weight:700}
-.tps-oder{font-size:17px;font-weight:800;margin:18px 2px 10px;color:var(--text)}
+.tps-zweit{width:100%;min-height:48px;margin-top:10px;border-radius:14px;border:2px solid rgba(255,255,255,.75);background:rgba(255,255,255,.06);color:#fff;font-size:var(--s-teil);font-weight:700}
+.tps-oder{font-size:var(--s-teil);font-weight:800;margin:18px 2px 10px;color:var(--text)}
 .tps-wege{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .tps-weg{border-radius:18px;background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);padding:14px 8px;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;gap:6px;
   box-shadow:inset 0 2px 0 var(--k3-licht),inset 0 -5px 0 var(--k3-kante),0 2px 3px var(--k3-nah),0 12px 24px -6px var(--k3-fern)}
-.tps-weg b{font-size:16px;line-height:1.2}
-.tps-weg small{font-size:14px;color:var(--text2);line-height:1.3}
+.tps-weg b{font-size:var(--s-karte);line-height:1.2}
+.tps-weg small{font-size:var(--s-karte);color:var(--text2);line-height:1.3}
 .tps-i{font-size:34px;line-height:1;transition:transform .2s ease}
 .tps-weg-breit{width:100%;min-height:96px;margin-top:10px;flex-direction:row;justify-content:flex-start;text-align:left;padding:14px;flex-wrap:wrap;column-gap:12px}
 .tps-weg-breit b{flex:1;min-width:0}
 .tps-weg-breit small{flex-basis:100%;padding-left:46px}
-.tps-hinweis{margin-top:12px;border-radius:16px;padding:12px;background:#fef3c7;color:#713f12;font-size:15px;font-weight:600;display:flex;gap:10px;align-items:center;line-height:1.35;
+.tps-hinweis{margin-top:12px;border-radius:16px;padding:12px;background:#fef3c7;color:#713f12;font-size:var(--s-karte);font-weight:600;display:flex;gap:10px;align-items:center;line-height:1.35;
   box-shadow:inset 0 -4px 0 rgba(161,98,7,.18),0 6px 14px -8px rgba(0,0,0,.35)}
-.tps-hinweis button{margin-left:auto;flex:none;min-height:44px;border-radius:12px;border:1px solid #a16207;background:#fff;color:#713f12;font-size:15px;font-weight:700;padding:0 12px}
+.tps-hinweis button{margin-left:auto;flex:none;min-height:44px;border-radius:12px;border:1px solid #a16207;background:#fff;color:#713f12;font-size:var(--s-karte);font-weight:700;padding:0 12px}
 .tps-gross:active,.tps-zweit:active,.tps-weg:active,.tps-hinweis button:active{transform:translateY(4px) scale(.985);box-shadow:inset 0 3px 7px var(--k3-innen),0 1px 1px var(--k3-nah)}
 .tps-weg:active .tps-i{transform:scale(1.18) rotate(-6deg)}
 .tps-gross:focus-visible,.tps-zweit:focus-visible,.tps-weg:focus-visible{outline:3px solid #f59e0b;outline-offset:3px}
@@ -1901,7 +1901,7 @@ details.tk-erledigt[open]>summary::after{content:"▴"}
 :root[data-theme="dark"] .tps-hinweis button{background:#1c1917;color:#fde68a;border-color:#fbbf24}
 #tps-herz{position:fixed;left:50%;bottom:120px;transform:translateX(-50%);z-index:10050;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
 .tps-herz-bild{font-size:64px;line-height:1;animation:tpsHerz 2.4s ease-out forwards}
-.tps-herz-text{background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);border-radius:14px;padding:10px 14px;font-size:16px;font-weight:700;box-shadow:0 10px 24px -8px rgba(0,0,0,.45);animation:tpsGruss 2.4s ease-out forwards}
+.tps-herz-text{background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);border-radius:14px;padding:10px 14px;font-size:var(--s-karte);font-weight:700;box-shadow:0 10px 24px -8px rgba(0,0,0,.45);animation:tpsGruss 2.4s ease-out forwards}
 @keyframes tpsEin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @keyframes tpsHerz{0%{opacity:0;transform:translateY(40px) scale(.4)}20%{opacity:1;transform:translateY(0) scale(1.15)}35%{transform:scale(.95)}50%{transform:scale(1.08)}80%{opacity:1;transform:translateY(-60px) scale(1)}100%{opacity:0;transform:translateY(-120px) scale(.9)}}
 @keyframes tpsGruss{0%,10%{opacity:0;transform:translateY(8px)}25%,80%{opacity:1;transform:none}100%{opacity:0}}
