@@ -266,10 +266,13 @@ async function tmLoad(){
     const vergangen=rows.filter(t=>vorbei(t)).reverse();
     // Nur der NÄCHSTE Termin als volle Karte (Wetter/Büdchen inline); alle weiteren kompakt
     // hinter einem Button, damit die Liste bei einer ganzen Saison nicht endlos wird.
-    const FULL=1;
-    const kFull=kommend.slice(0,FULL), kRest=kommend.slice(FULL);
+    /* v937 (Charles 21.11.): Die erste Karte trug eigene Knöpfe (Findet statt, Trainer, Plan, Rückmeldungen, Mehr) – eine
+       dritte Bauart für dasselbe. Jetzt sind alle kommenden Termine schlanke Zeilen; ein Tipp öffnet „Termin verwalten“.
+       Die ersten acht stehen offen da, der Rest hinter dem Knopf. */
+    const OFFEN=8;
+    const kFull=[], kZeilen=kommend.slice(0,OFFEN), kRest=kommend.slice(OFFEN);
     up.innerHTML=kommend.length
-      ? kFull.map(tmCard).join("")+(kRest.length?`<button id="tm-more-btn" class="btn btn-sm" style="width:100%;margin:2px 0 8px" onclick="tmToggleMore()"><i class="ti ti-chevron-down"></i>Weitere ${kRest.length} Termine anzeigen</button><div id="tm-more" style="display:none">${kRest.map(tmRow).join("")}</div>`:"")
+      ? kZeilen.map(tmRow).join("")+(kRest.length?`<button id="tm-more-btn" class="btn btn-sm" style="width:100%;margin:2px 0 8px" onclick="tmToggleMore()"><i class="ti ti-chevron-down"></i>Weitere ${kRest.length} Termine anzeigen</button><div id="tm-more" style="display:none">${kRest.map(tmRow).join("")}</div>`:"")
       : '<div style="font-size:var(--s-klein);color:var(--text3);padding:6px">Keine kommenden Termine.</div>';
     pa.innerHTML=vergangen.length?vergangen.slice(0,40).map(tmRow).join(""):'<div style="font-size:var(--s-klein);color:var(--text3);padding:6px">Noch keine vergangenen Termine.</div>';
     kFull.forEach(t=>wetterInto("wx-tm-"+t.id,t.datum,t.ort,t.uhrzeit)); // Wetter nur für die vollen Karten
@@ -296,11 +299,11 @@ function tmRow(t){
   const zeit=t.uhrzeit?String(t.uhrzeit).slice(0,5)+" Uhr":"";
   const hb=heimLabel(t);
   const faelltAus=typeof terminFaelltAus==="function"&&terminFaelltAus(t);
-  return `<div role="button" tabindex="0" onclick="tmDetailOpen(${t.id})" style="display:flex;align-items:center;gap:10px;background:var(--surface);border:var(--border-s);border-left:3px solid ${faelltAus?"var(--text3)":m.col};border-radius:var(--rl);padding:9px 12px;margin-bottom:6px;cursor:pointer">
+  return `<div role="button" tabindex="0" onclick="tmDetailOpen(${t.id},'orga')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="tm-zeile" style="display:flex;align-items:center;gap:10px;min-height:56px;background:var(--surface);border:var(--border-s);border-left:3px solid ${faelltAus?"var(--text3)":m.col};border-radius:var(--rl);padding:9px 12px;margin-bottom:6px;cursor:pointer">
     <span style="font-size:var(--s-teil)">${m.icon}</span>
     <div style="flex:1;min-width:0">
       <div style="font-size:var(--s-text);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${faelltAus?"var(--text2)":"inherit"}">${esc(t.titel||m.label)}${faelltAus?` ${terminAbsageChip(t,true)}`:""}</div>
-      <div style="font-size:var(--s-klein);color:var(--text2)">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"2-digit"})}${zeit?" · "+zeit:""}${tmMeetingOffenZeile(t)}${hb?` · <span style="color:${t.heim?"#15803d":"#b45309"};font-weight:700">${esc(hb)}</span>`:""}</div>
+      <div style="font-size:var(--s-klein);color:var(--text2)">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"2-digit"})}${zeit?" · "+zeit:""}${tmMeetingOffenZeile(t)}${(()=>{const o=typeof terminOrtKurz==="function"?terminOrtKurz(t):"";return o?" · "+esc(o):(hb?` · <span style="color:${t.heim?"#15803d":"#b45309"};font-weight:700">${esc(hb)}</span>`:"");})()}</div>
     </div>
     <span style="font-size:var(--s-karte);color:var(--text3)">›</span>
   </div>`;
@@ -336,7 +339,14 @@ async function tmTerminNachladen(id){
     return t;
   }catch(e){return null;}
 }
-async function tmDetailOpen(id){
+/* v937 (Charles 21.11.: „Wenn ich auf den Termin klicke, brauche ich nur Themen, die relevant sind fürs Training oder das
+   Spiel. Orga-Themen nicht.“) Das Fenster hat zwei Ansichten: „sport“ (von der Startseite) und „orga“ (aus Orga und der
+   Terminliste: „Termin verwalten“). Jede führt mit einem Link zur anderen. Termine ohne Sport (Feier, Meeting) kennen
+   nur die Orga-Ansicht. */
+let _tmdModus="sport";
+function tmdModus(id,modus){ tmDetailOpen(id,modus); }
+async function tmDetailOpen(id,modus){
+  _tmdModus=modus==="orga"?"orga":"sport";
   let t=(TM_TERMINE||[]).find(x=>Number(x.id)===Number(id));
   if(!t)t=await tmTerminNachladen(id);
   if(!t){ if(typeof go==="function")go("termine"); return; }
@@ -443,59 +453,102 @@ function _tmdKarte(t){
   const ampel=PLATZ_AMPEL[t.platz_status||""]||null;
   const abgesagt=t.platz_status==="abgesagt";
 
-  return `<div style="background:var(--surface);color:var(--text);border-radius:var(--rl);overflow:hidden;box-shadow:0 8px 30px rgba(15,23,42,.18)">
-    <div style="display:flex;align-items:center;gap:12px;padding:14px;background:linear-gradient(90deg,${m.col}1f,transparent);border-left:5px solid ${m.col}">
-      <div style="width:46px;height:46px;flex:none;border-radius:14px;background:${m.col};display:flex;align-items:center;justify-content:center;font-size:var(--s-seite);box-shadow:0 2px 8px ${m.col}55">${m.icon}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:var(--s-karte);font-weight:900;line-height:1.2">${esc(t.titel||m.label)}</div>
-        <div style="font-size:var(--s-text);color:var(--text2);margin-top:3px">${datumStr}${zeitStr?" · "+zeitStr+" Uhr":""}</div>
-        ${badges?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">${badges}</div>`:""}
-      </div>
-    </div>
-    ${typeof terminAbsageBanner==="function"?terminAbsageBanner(t):""}
-    <div style="padding:12px 14px 14px">
-
-      ${(t.ort||t.platz)?`<div style="font-size:var(--s-text);color:var(--text2);line-height:1.6">
-        ${t.ort?`<div><i class="ti ti-map-pin"></i> ${mapsAnchor(t.ort,null,true)}</div>`:""}
-        ${t.platz?`<div>🏟️ ${esc(t.platz)}</div>`:""}
-      </div>`:""}
-      <div id="wx-tm-${t.id}"></div>
-      ${notizClean?`<div style="font-size:var(--s-text);color:var(--text3);margin-top:6px">${esc(notizClean)}</div>`:""}
-      ${/* v741 (PO 04.10.): „Fällt aus“ direkt im Termin, nicht erst hinter „Für die Eltern“ */ (kommt&&!istMeeting)?`<div id="tm-stattfinden-${t.id}" style="margin-top:10px">${platzAmpelTrainer(t,true)}</div>`:""}
-
-      ${abgesagt
-        ? `${sec("Was du hier tust")}<div style="font-size:var(--s-text);color:var(--text2);line-height:1.5">Für diesen Termin ist nichts mehr zu planen. Soll er doch stattfinden, oben wieder auf <b>🟢 Findet statt</b> stellen.</div>`
-        : `${sec("Was du hier tust")}
-      <div style="display:flex;flex-direction:column;gap:6px">${gross.filter(Boolean).map(grossBtn).join("")}</div>`}
-
-      ${sec("Wer ist dabei")}
-      ${kommt?`<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
-        <span style="font-size:var(--s-klein);color:var(--text3);font-weight:800;width:100%">Trainer</span>
+  const sportTyp=istSpiel||t.typ==="training";
+  const orga=!sportTyp||_tmdModus==="orga";
+  const info=(window._terminInfo||{})[t.id]||{};
+  const ortKurz=typeof terminOrtKurz==="function"?terminOrtKurz(t):"";
+  /* Eine Kachel-Bauart für beide Ansichten: Symbol, Name, eine Zeile dazu – immer zwei nebeneinander, gleich groß. */
+  const kachel=o=>{ if(!o)return "";
+    const innen=`<i class="ti ${o.i}" aria-hidden="true" style="font-size:var(--s-seite)"></i><span style="display:block;font-size:var(--s-karte);font-weight:800;line-height:1.2">${o.l}</span>${o.u?`<span style="display:block;font-size:var(--s-text);font-weight:500;line-height:1.3;white-space:normal">${o.u}</span>`:""}`;
+    const stil=`display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:4px;min-height:96px;padding:12px;text-align:left;white-space:normal;${o.voll?"grid-column:1/-1;":""}`;
+    return o.href?`<a class="btn tmd-kachel" href="${o.href}" target="_blank" rel="noopener noreferrer" style="${stil}text-decoration:none">${innen}</a>`
+      :`<button type="button" class="btn tmd-kachel${o.p?" btn-p":""}" onclick="${o.c}" style="${stil}">${innen}</button>`; };
+  const kacheln=a=>`<div class="tmd-kacheln" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${a.filter(Boolean).map(kachel).join("")}</div>`;
+  const zu2=`document.getElementById('tmd-modal')?.remove();`;
+  const wechsel=(modus,text)=>`<button type="button" class="btn" id="tmd-wechsel" onclick="tmdModus(${Number(t.id)},'${modus}')" style="width:100%;min-height:48px;justify-content:center;margin-top:14px">${text} ›</button>`;
+  const kopf=`<div style="padding:4px">${terminKarteBand({typ:t.typ,datum:t.datum,zeit:zeitStr,wetterId:"",abgesagt:abgesagt,ring:(!abgesagt&&kommt&&info.ring)||null,
+      titelHtml:`${m.icon} ${esc(t.titel||t.gegner||m.label)}${ortKurz?`<span style="display:block;font-weight:700;font-size:var(--s-text)">${esc(ortKurz)}</span>`:""}`})}
+      ${badges?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin:8px 8px 0">${badges}</div>`:""}</div>`;
+  const trainerBlock=kommt?`${sec("Welche Trainer sind dabei?")}
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
         ${trainerstabNamen(t.trainer_status).map(tn=>{const stt=(t.trainer_status||{})[tn];const fz=stt==="ja"?"green":stt==="unsicher"?"amber":stt==="nein"?"red":"";const bg=fz?`var(--${fz}-bg)`:"var(--surface2)";const col=fz?`var(--${fz})`:"var(--text2)";const mk=stt==="ja"?" ✓":stt==="unsicher"?" 🤔":stt==="nein"?" ✕":"";
-          return `<button onclick="tmTrainerToggle(${Number(t.id)},'${tn.replace(/'/g,"")}')" title="Tippen wechselt: dabei → unsicher → nicht dabei → offen" style="min-height:44px;border:1px solid ${fz?col:"var(--rand-bedien)"};border-radius:12px;padding:0 12px;font-size:var(--s-text);font-weight:700;background:${bg};color:${col};cursor:pointer;font-family:inherit">${esc(tn)}${mk}</button>`;}).join("")}
-      </div>`:""}
-      ${(t.heim===true&&istSpiel&&kommt)?`<div id="bd-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:4px">🔥 Grillhütte: lädt …</div>`:""}
-      ${kommt?`<div id="helfer-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:4px"></div>`:""}
-      ${(kommt&&!istMeeting)?`<button class="btn btn-sm" onclick="rsvpOverviewOpen(${Number(t.id)})" style="width:100%;min-height:44px;margin-top:8px;justify-content:center"><i class="ti ti-list-check"></i>Rückmeldungen</button>`:""}
-      ${istMeeting?`<div id="meet-tm-${t.id}" style="font-size:var(--s-klein);color:var(--text2);margin-top:8px;line-height:1.5"></div>
-      <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px;line-height:1.5">🔒 Diesen Termin sehen nur Trainer – Eltern und die öffentlichen Seiten bekommen ihn nicht zu Gesicht.</div>`:""}
-
-      ${(vorbei||istHeute)&&(istSpiel||t.typ==="training")?`${sec("Nach dem Termin")}
+          return `<button onclick="tmTrainerToggle(${Number(t.id)},'${tn.replace(/'/g,"")}')" title="Tippen wechselt: dabei → unsicher → nicht dabei → offen" style="min-height:48px;border:1px solid ${fz?col:"var(--rand-bedien)"};border-radius:12px;padding:0 14px;font-size:var(--s-text);font-weight:700;background:${bg};color:${col};cursor:pointer;font-family:inherit">${esc(tn)}${mk}</button>`;}).join("")}
+      </div>`:"";
+  const ampelBlock=(kommt&&!istMeeting)?`<div id="tm-stattfinden-${t.id}" style="margin-top:10px">${platzAmpelTrainer(t,true)}</div>`:"";
+  const nachBlock=(vorbei||istHeute)&&sportTyp?`${sec("Nach dem Termin")}
         ${istSpiel?`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
           <span style="font-size:var(--s-text);color:var(--text2)">Ergebnis</span>
-          <input type="text" value="${esc(t.ergebnis||"")}" placeholder="z. B. 3:2" onchange="tmSetResult(${Number(t.id)},this.value)" style="width:100px;min-height:44px;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:var(--s-text);font-family:inherit;background:var(--surface2);color:var(--text)">
+          <input type="text" value="${esc(t.ergebnis||"")}" placeholder="z. B. 3:2" onchange="tmSetResult(${Number(t.id)},this.value)" style="width:100px;min-height:48px;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:var(--s-text);font-family:inherit;background:var(--surface2);color:var(--text)">
         </div>
-        <button class="btn btn-sm" onclick="tmJump('blitz','${t.datum}','${t.spielform||""}')" style="width:100%;min-height:44px;justify-content:center"><i class="ti ti-bolt"></i>${typeof bewFreigegeben==="function"&&bewFreigegeben()?"Auswertung &amp; Blitz-Rating":"Auswertung"}</button>
-        <!-- v525: Das Blitz-Rating deckt die KINDER ab. Wie die Mannschaft gespielt hat,
-             stand nirgends – und genau danach hat der PO gefragt. Der Knopf steht bewusst
-             direkt darunter: eine Ebene tiefer, derselbe Moment. -->
-        <button class="btn btn-sm" onclick="if(typeof fazitOpen==='function')fazitOpen(${Number(t.id)});else toast('Lädt noch – gleich nochmal','err')" style="width:100%;min-height:44px;justify-content:center;margin-top:6px"><i class="ti ti-clipboard-check"></i>${t.typ==="turnier"?"Festival":"Spiel"} nachbereiten · Mannschaft</button>`:""}
-        <div id="puls-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:6px"></div>`:""}
+        ${kacheln([{i:"ti-bolt",l:typeof bewFreigegeben==="function"&&bewFreigegeben()?"Auswertung &amp; Blitz-Rating":"Auswertung",c:`tmJump('blitz','${t.datum}','${t.spielform||""}')`},
+                   {i:"ti-clipboard-check",l:(t.typ==="turnier"?"Festival":"Spiel")+" nachbereiten",u:"Mannschaft",c:`if(typeof fazitOpen==='function')fazitOpen(${Number(t.id)});else toast('Lädt noch – gleich nochmal','err')`}])}`:""}
+        <div id="puls-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:6px"></div>`:"";
 
-      ${istMeeting?"":zu(`📣 Für die Eltern${ampel?" · "+ampel.emo+" "+esc(ampel.lbl):""}`,
-        raster(elternRest))}
-      ${zu("⚙️ Mehr",`${raster(rest)}
-        <button class="btn btn-sm btn-d" onclick="tmDelete(${Number(t.id)})" style="width:100%;min-height:44px;justify-content:center;margin-top:6px"><i class="ti ti-trash"></i>Termin löschen</button>`)}
+  let inhalt="";
+  if(!orga){
+    /* ── Ansicht „Training / Spiel“ ── */
+    let arbeit=[];
+    if(t.typ==="training")arbeit=[
+      {i:"ti-clipboard-list",l:"Trainingsplan",u:info.plan===true?"steht – ansehen":info.plan===false?"fehlt noch – jetzt planen":"planen oder ansehen",c:`tmJump('planung','${t.datum}')`,p:info.plan!==true},
+      /* v937: Vor dem Trainingstag gibt es noch keine Anwesenheit einzutragen – dann zeigt die Kachel, wer kommt
+         (Absagen und offene Antworten). Ab dem Tag selbst führt sie in die Anwesenheit. */
+      (kommt&&!istHeute)?{i:"ti-list-check",l:"Wer kommt?",u:info.ring?esc(info.ring.text):"Absagen und offene Antworten",c:`rsvpOverviewOpen(${Number(t.id)})`,p:false}
+        :{i:"ti-checkbox",l:vorbei?"Anwesenheit":"Anwesenheit eintragen",u:"wer war da?",c:`tmJump('anwesenheit','${t.datum}')`,p:false}];
+    else arbeit=(istHeute||!planerBtn)
+      ? [{...teamsBtn,u:"Wer kommt, Teams, Spiel",p:true,voll:!planerBtn}, planerBtn?{...planerBtn,u:"Felder, Spielplan, Gäste",p:false}:null]
+      : [{...planerBtn,u:"Felder, Spielplan, Gäste",p:true}, {...teamsBtn,u:"Wer kommt, Teams, Spiel",p:false}];
+    const auswaerts=istSpiel&&t.heim===false;
+    inhalt=`
+      ${abgesagt?`${sec(t.typ==="training"?"Fürs Training":"Für den Spieltag")}<div style="font-size:var(--s-text);color:var(--text2);line-height:1.5">Für diesen Termin ist nichts mehr zu planen. Soll er doch stattfinden, unten wieder auf <b>🟢 Findet statt</b> stellen.</div>`
+        :`${sec(t.typ==="training"?"Fürs Training":"Für den Spieltag")}${kacheln(arbeit)}`}
+      ${auswaerts?`${sec("Auswärts")}
+        ${t.ort?`<div style="font-size:var(--s-text);min-height:44px;display:flex;align-items:center;gap:8px"><i class="ti ti-map-pin" aria-hidden="true"></i>${mapsAnchor(t.ort,null,true)}</div>`:`<div style="font-size:var(--s-text);color:var(--text2);margin-bottom:6px">Noch keine Adresse am Termin hinterlegt.</div>`}
+        ${kacheln([routeAddr?{i:"ti-navigation",l:"Route",u:"in Karten öffnen",href:mapsUrl(routeAddr)}:null,
+                   {i:"ti-file-text",l:"Spielplan",u:"vom Gastgeber",c:`${zu2}window._spieltagPlanWunsch=true;spieltagZuTermin('${t.datum}','wer')`}])}
+        <div id="gegner-contact-tm"></div>`:""}
+      ${trainerBlock}
+      ${sec("Am Platz")}
+      <div id="wx-tm-${t.id}"></div>
+      ${notizClean?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:6px">${esc(notizClean)}</div>`:""}
+      ${ampelBlock}
+      ${nachBlock}
+      ${wechsel("orga","Termin verwalten (Orga)")}`;
+  }else{
+    /* ── Ansicht „Termin verwalten“ ── */
+    const er=o=>o&&elternRest.find(x=>x&&x.l===o);
+    const verwalten=[
+      {i:"ti-edit",l:"Bearbeiten",u:"Zeit, Platz, Halle",c:`tmEdit(${Number(t.id)})`},
+      istMeeting?null:{...er("Eltern-Info"),u:"was die Eltern sehen"},
+      (kommt&&!istMeeting)?{i:"ti-list-check",l:"Rückmeldungen",u:"wer hat geantwortet, mit Verlauf",c:`rsvpOverviewOpen(${Number(t.id)})`}:null,
+      (!istMeeting&&er("Ansage"))?{...er("Ansage"),u:"Nachricht an alle Eltern"}:null,
+      (!istMeeting&&er("Erinnerung"))?{...er("Erinnerung"),u:"per WhatsApp teilen"}:null,
+      kommt?{i:"ti-user-share",l:"Vertretung",u:"Termin übergeben",c:`handoverOpen(${Number(t.id)})`}:null,
+      {i:"ti-calendar-plus",l:"Kalender",u:"in meinen Kalender",c:`tmIcsOne(${Number(t.id)})`},
+      {i:"ti-photo",l:"Fotos",u:"Galerie zum Termin",c:`galerieOpen(${Number(t.id)},'${(t.titel||m.label).replace(/'/g,"")}')`},
+      (routeAddr&&!sportTyp)?{i:"ti-navigation",l:"Route",u:"in Karten öffnen",href:mapsUrl(routeAddr)}:null
+    ];
+    inhalt=`
+      ${!sportTyp?`${(t.ort||t.platz)?`<div style="font-size:var(--s-text);color:var(--text2);line-height:1.6">
+          ${t.ort?`<div><i class="ti ti-map-pin"></i> ${mapsAnchor(t.ort,null,true)}</div>`:""}</div>`:""}
+        <div id="wx-tm-${t.id}"></div>
+        ${notizClean?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:6px">${esc(notizClean)}</div>`:""}
+        ${abgesagt?"":`${sec("Was du hier tust")}<div style="display:flex;flex-direction:column;gap:6px">${gross.filter(Boolean).map(grossBtn).join("")}</div>`}
+        ${trainerBlock}`:""}
+      ${ampelBlock}
+      ${sec("Termin verwalten")}
+      ${kacheln(verwalten)}
+      ${(t.heim===true&&istSpiel&&kommt)?`<div id="bd-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:10px">🔥 Grillhütte: lädt …</div>`:""}
+      ${kommt?`<div id="helfer-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:6px"></div>`:""}
+      ${istMeeting?`<div id="meet-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:8px;line-height:1.5"></div>
+      <div style="font-size:var(--s-text);color:var(--text2);margin-top:6px;line-height:1.5">🔒 Diesen Termin sehen nur Trainer – Eltern und die öffentlichen Seiten bekommen ihn nicht zu Gesicht.</div>`:""}
+      ${!sportTyp?nachBlock:""}
+      <button class="btn btn-d" onclick="tmDelete(${Number(t.id)})" style="width:100%;min-height:48px;justify-content:center;margin-top:10px"><i class="ti ti-trash"></i>Termin löschen</button>
+      ${sportTyp?wechsel("sport",t.typ==="training"?"Zum Training":"Zum Spieltag-Überblick"):""}`;
+  }
+  return `<div class="tmd-karte" data-modus="${orga?"orga":"sport"}" style="--s-klein:var(--s-text);background:var(--surface);color:var(--text);border-radius:var(--rl);overflow:hidden;box-shadow:0 8px 30px rgba(15,23,42,.18)">
+    ${kopf}
+    ${typeof terminAbsageBanner==="function"?terminAbsageBanner(t):""}
+    <div style="padding:4px 14px 14px">${inhalt}
     </div>
   </div>`;
 }
@@ -509,6 +562,7 @@ function _tmdNachlader(t){
   if(t.heim===true&&(t.typ==="spiel"||t.typ==="turnier")){ try{ buedchenTrainerFill(t); }catch(e){} }
   if(["training","spiel","turnier"].includes(t.typ)&&t.datum<isoLokal()){ try{ pulsTrainerFill(t); }catch(e){} } // F4
   if(t.datum>=isoLokal()){ try{ helferTrainerFill(t); }catch(e){} } // G4
+  if(document.getElementById("gegner-contact-tm")&&typeof gegnerContactInto==="function"){ try{ gegnerContactInto("gegner-contact-tm",t.titel||t.gegner); }catch(e){} }   // v937: Gegner-Kontakt beim Auswärtstermin
 }
 /* Das Detailfenster zeichnet sich NICHT ueber tmLoad() mit: das steigt ohne die
    Terminliste im DOM sofort wieder aus (`if(!up||!pa)return`), und vom Startbildschirm
@@ -818,114 +872,8 @@ async function platzAmpelNote(id,val){
   const t=(TM_TERMINE||[]).find(x=>Number(x.id)===Number(id)); if(t)t.platz_status_note=note;
   toast("Hinweis gespeichert ✓");
 }
-/* „Mehr" auf-/zuklappen. Die Karte wird woanders per outerHTML ersetzt (Trainer-Chips,
-   Ergebnis) – der Zustand ueberlebt das bewusst NICHT: nach einem Neuaufbau ist wieder
-   alles zu, und das ist richtig, weil die Karte dann auch wieder von vorn gelesen wird. */
-function tmMehrToggle(id){
-  const box=document.getElementById("tm-mehr-"+id), btn=document.getElementById("tm-mehr-btn-"+id);
-  if(!box)return;
-  const offen=box.style.display==="none";
-  box.style.display=offen?"grid":"none";
-  if(btn)btn.setAttribute("aria-expanded",offen?"true":"false");
-}
-function tmCard(t){
-  const m=TM_META[t.typ]||TM_META.training;
-  const routeAddr=t.ort||(t.heim===true?VEREIN_ADRESSE:""); // F3: Route auch bei Heimspiel ohne Extra-Adresse
-  const d=new Date(t.datum+"T00:00:00");
-  const wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
-  const datumStr=wtag+" "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
-  const istSpiel=t.typ==="spiel"||t.typ==="turnier";
-  const zeitStr=t.uhrzeit?String(t.uhrzeit).slice(0,5):((/Uhrzeit:\s*(\d{1,2}:\d{2})/.exec(t.notiz||"")||[])[1]||"");
-  const sfBadge=(istSpiel&&t.spielform)?`<span style="font-size:var(--s-klein);font-weight:700;padding:2px 7px;border-radius:10px;background:${m.col}22;color:${m.col}">${esc(sfText(t.spielform))}</span>`:"";
-  const hb=heimLabel(t), hBadge=hb?`<span style="font-size:var(--s-klein);font-weight:700;padding:2px 7px;border-radius:10px;background:${t.heim?"#dcfce7":"#fef3c7"};color:${t.heim?"#15803d":"#b45309"}">${hb}</span>`:"";
-  const notizClean=(t.notiz&&!/^Uhrzeit:/.test(t.notiz))?t.notiz:"";
-  /* PO: „Die Kacheln sehen ungeordnet aus und sind teils bunt, teils weiss. Sind alle
-     noetig?" – Es waren ELF Knoepfe in einer umbrechenden Reihe, dazu ein rot abgesetzter
-     Papierkorb ganz rechts. Sie werden alle gebraucht, aber nicht alle gleich oft; was
-     ungeordnet aussieht, ist die fehlende Rangfolge, nicht die Zahl.
-     Deshalb STAFFELN statt loeschen: die Hauptaktion des Typs und „Rueckmeldungen" bleiben
-     sichtbar, alles Weitere liegt hinter „Mehr" in einem geordneten Zweispalter. Loeschen
-     wandert mit hinein – es war als einziger farbig abgesetzte Knopf am rechten Rand
-     optisch die auffaelligste Aktion der Karte, obwohl es die seltenste ist. */
-  const kommt=t.datum>=isoLokal();
-  /* v509 – PO: „Wäre schön, wenn ‚findet nicht statt' auch in allen anderen Ansichten
-     ersichtlich wäre." Auf der Karte heißt das: Schild oben, und die Hauptaktion fällt weg.
-     Für einen Termin, den es nicht gibt, wird nichts mehr geplant – Bearbeiten und Löschen
-     bleiben unter „Mehr" erreichbar, dort steht auch die Ampel zum Zurücknehmen. */
-  const faelltAus=typeof terminFaelltAus==="function"&&terminFaelltAus(t);
-  const mehr=[];                       // {i:icon, l:label, c:onclick} oder {href:…}
-  let haupt="";   // v878: Neben-Aktion je Karte – die eine Hauptaktion der Seite ist „Neuer Termin“
-  if(faelltAus){
-    haupt="";
-  }else if(t.typ==="training"){
-    haupt=`<button class="btn btn-sm" onclick="tmJump('planung','${t.datum}')"><i class="ti ti-clipboard-list"></i>Plan</button>`;
-  }else if(istSpiel){
-    /* v486: „Aufstellung" sprang in die alte Aufstellungs-Seite („Bitte Datum waehlen",
-       Fenster blieb offen). Seit v477 gehoert der Spieltag nach „Teams festlegen". */
-    haupt=`<button class="btn btn-sm" onclick="tmJump('spieltag','${t.datum}','${t.spielform||''}')"><i class="ti ti-users-group"></i>Teams festlegen</button>`;
-    mehr.push({i:"ti-bolt",l:"Auswertung",c:`tmJump('blitz','${t.datum}','${t.spielform||''}')`});
-  }else{ // Event (Grillfest & Co.) – keine Trainingsplanung/Aufstellung, sondern die Mitbringliste
-    haupt=`<button class="btn btn-sm" onclick="mitbringTrainerOpen()"><i class="ti ti-basket"></i>Mitbringliste</button>`;
-  }
-  mehr.push({i:"ti-edit",l:"Bearbeiten",c:`tmEdit(${Number(t.id)})`});
-  mehr.push({i:"ti-users",l:"Eltern-Info",c:`mdOpen('${t.datum}','${t.typ}')`});
-  // J6: Ansage direkt vom Termin – Text vorbefüllt, Rest tippt der Trainer
-  if(kommt)mehr.push({i:"ti-speakerphone",l:"Ansage",c:`ansageVomTermin(${Number(t.id)})`});
-  // UX 3: Erinnerung per WhatsApp – der Deep-Link (?portal&rsvp=…) fuehrt Eltern direkt zur
-  // Rueckmeldung. Fuellt nur die Nachricht vor; Absenden/Empfaenger waehlt der Trainer selbst.
-  if(kommt){
-    const deepLink=appRoot()+"?portal&rsvp="+t.id;
-    const waText=`🦅 SV Adler U9 – bitte kurz rückmelden fürs nächste ${m.label}:\n${t.titel||m.label} am ${datumStr}${zeitStr?" um "+zeitStr+" Uhr":""}${t.ort?" ("+t.ort+")":""}\n👉 Zu-/absagen: ${deepLink}`;
-    mehr.push({i:"ti-bell",l:"Erinnerung",href:`https://wa.me/?text=${encodeURIComponent(waText)}`});
-  }
-  mehr.push({i:"ti-calendar-plus",l:"Kalender",c:`tmIcsOne(${Number(t.id)})`});
-  if(routeAddr)mehr.push({i:"ti-navigation",l:"Route",href:mapsUrl(routeAddr)});
-  if(kommt)mehr.push({i:"ti-user-share",l:"Vertretung",c:`handoverOpen(${Number(t.id)})`});
-  mehr.push({i:"ti-photo",l:"Fotos",c:`galerieOpen(${Number(t.id)},'${(t.titel||m.label).replace(/'/g,"")}')`});
-  const mehrBtn=o=>o.href
-    ? `<a class="btn btn-sm" href="${o.href}" target="_blank" rel="noopener noreferrer" style="min-height:44px;justify-content:flex-start;text-decoration:none"><i class="ti ${o.i}"></i>${o.l}</a>`
-    : `<button class="btn btn-sm" onclick="${o.c}" style="min-height:44px;justify-content:flex-start"><i class="ti ${o.i}"></i>${o.l}</button>`;
-  /* Drei Knoepfe in EINER Zeile, aber in ihrer natuerlichen Breite. Zwei Sackgassen davor:
-     margin-left:auto schob „Mehr" an den rechten Rand (beim Spiel brach die Reihe um),
-     flex:1 machte alle gleich breit und schnitt dafuer „Rueckmeldungen" ab. Deshalb
-     stattdessen das WORT gekuerzt – „Antworten" sagt dasselbe und passt neben
-     „Aufstellung" und „Mehr" auf 390 px. flex-wrap bleibt als Notnagel. */
-  const actions=`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-      ${haupt}
-      ${(kommt&&!faelltAus)?`<button class="btn btn-sm" onclick="rsvpOverviewOpen(${Number(t.id)})" title="Wer hat schon geantwortet?"><i class="ti ti-list-check"></i>Rückmeldungen</button>`:""}
-      <button class="btn btn-sm" id="tm-mehr-btn-${t.id}" onclick="tmMehrToggle(${Number(t.id)})" aria-expanded="false" aria-controls="tm-mehr-${t.id}"><i class="ti ti-dots"></i>Mehr</button>
-    </div>
-    <div id="tm-mehr-${t.id}" style="display:none;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">
-      ${mehr.map(mehrBtn).join("")}
-      <button class="btn btn-sm btn-d" onclick="tmDelete(${Number(t.id)})" style="grid-column:1/-1;min-height:44px;justify-content:center"><i class="ti ti-trash"></i>Termin löschen</button>
-    </div>`;
-  return `<div id="tm-card-${t.id}" style="background:var(--surface);border:var(--border-s);border-radius:var(--rl);overflow:hidden;margin-bottom:10px;box-shadow:0 1px 3px rgba(15,23,42,.05);scroll-margin-top:60px">
-    ${faelltAus&&typeof terminAbsageBanner==="function"?terminAbsageBanner(t):""}
-    <div style="display:flex;align-items:center;gap:11px;padding:11px 13px;background:linear-gradient(90deg,${faelltAus?"var(--surface2)":m.col+"14"},transparent);border-left:4px solid ${faelltAus?"var(--text3)":m.col}">
-      <div style="width:40px;height:40px;flex:none;border-radius:12px;background:${m.col};display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);box-shadow:0 2px 6px ${m.col}55">${m.icon}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:var(--s-karte);font-weight:800;display:flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.25">${esc(t.titel||m.label)}${hBadge}${sfBadge}${(typeof ferienBadge==="function")?ferienBadge(t.datum):""}</div>
-        <div style="font-size:var(--s-klein);color:var(--text2);margin-top:2px">${datumStr}${zeitStr?" · "+zeitStr+" Uhr":""}${tmMeetingOffenZeile(t)}</div>
-      </div>
-    </div>
-    <div style="padding:10px 13px 12px">
-    ${t.ort?`<div style="font-size:var(--s-klein);color:var(--text2)"><i class="ti ti-map-pin" style="font-size:var(--s-klein)"></i> ${mapsAnchor(t.ort,null,true)}</div>`:""}
-    ${t.platz?`<div style="font-size:var(--s-klein);color:var(--text2)">🏟️ Platz: ${esc(t.platz)}</div>`:""}
-    ${t.datum>=isoLokal()?platzAmpelTrainer(t):""}
-    <div id="wx-tm-${t.id}"></div>
-    ${(t.heim===true&&(t.typ==="spiel"||t.typ==="turnier")&&t.datum>=isoLokal())?`<div id="bd-tm-${t.id}" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">🔥 Grillhütte: lädt …</div>`:""}
-    ${(["training","spiel","turnier"].includes(t.typ)&&t.datum<isoLokal())?`<div id="puls-tm-${t.id}" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px"></div>`:""}
-    ${t.datum>=isoLokal()?`<div id="helfer-tm-${t.id}" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px"></div>`:""}
-    ${t.datum>=isoLokal()?`<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-top:6px">
-      <span style="font-size:var(--s-klein);color:var(--text3);font-weight:700">Trainer dabei?</span>
-      ${trainerstabNamen(t.trainer_status).map(tn=>{const stt=(t.trainer_status||{})[tn];const fz=stt==="ja"?"green":stt==="unsicher"?"amber":stt==="nein"?"red":"";const bg=fz?`var(--${fz}-bg)`:"var(--surface2)";const col=fz?`var(--${fz})`:"var(--text2)";const mk=stt==="ja"?" ✓":stt==="unsicher"?" 🤔":stt==="nein"?" ✕":"";return `<button onclick="tmTrainerToggle(${Number(t.id)},'${tn.replace(/'/g,"")}')" title="Tippen wechselt: dabei → unsicher → nicht dabei → offen" style="min-height:44px;border:1px solid ${fz?col:"var(--rand-bedien)"};border-radius:12px;padding:2px 8px;font-size:var(--s-klein);font-weight:700;background:${bg};color:${col};cursor:pointer;font-family:inherit">${esc(tn)}${mk}</button>`;}).join("")}
-    </div>`:""}
-    ${notizClean?`<div style="font-size:var(--s-klein);color:var(--text3)">${esc(notizClean)}</div>`:""}
-    ${(istSpiel&&t.datum<=isoLokal())?`<div style="display:flex;align-items:center;gap:6px;margin:6px 0"><span style="font-size:var(--s-klein);color:var(--text2)">Ergebnis:</span><input type="text" value="${esc(t.ergebnis||"")}" placeholder="z. B. 3:2" onchange="tmSetResult(${Number(t.id)},this.value)" style="width:90px;padding:5px 8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:var(--s-text);font-family:inherit"></div>`:""}
-    ${actions}
-    </div>
-  </div>`;
-}
+/* v937: tmCard (volle Karte der Terminliste mit eigenen Knöpfen) und tmMehrToggle sind entfallen – die Liste besteht aus
+   Zeilen (tmRow), alles Weitere steht im Fenster „Termin verwalten“ (tmDetailOpen(id,'orga')). */
 async function tmSetResult(id,val){
   // Ergebnis fuettert das Saison-Cockpit – ein stiller Fehlschlag waere dort eine Luecke.
   try{
@@ -1086,18 +1034,23 @@ function tmEdit(id){
         <select id="te-hz" style="${fld}">${hzOpts}</select>
         <select id="te-dauer" style="${fld}">${dauerOpts}</select>
       </div></div>`:''}
-    <div style="border-top:var(--border-s);margin-top:12px;padding-top:10px">
+    ${/* v937 (Charles 21.11.): Beim Training braucht es selten Helfer – der Block ist dort zugeklappt, solange nichts
+          angefragt ist. Die Felder bleiben im Formular (zugeklappt, nicht entfernt), das Speichern liest sie wie bisher. */""}
+    ${isTraining?`<details id="te-helfer-klapp" class="kopf-klapp"${((Array.isArray(t.helfer_aufgaben)&&t.helfer_aufgaben.length)||t.helfer_hinweis)?" open":""} style="border-top:var(--border-s);margin-top:12px;padding-top:6px">
+      <summary style="list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:48px;font-size:var(--s-text);font-weight:700;color:var(--text)"><span style="flex:1">🙌 Eltern-Helfer anfragen <span style="font-weight:500;color:var(--text2)">(Tore, Aufbau, Abbau)</span></span><span style="color:var(--blue-text)">${(Array.isArray(t.helfer_aufgaben)&&t.helfer_aufgaben.length)?t.helfer_aufgaben.length+" angefragt":"öffnen"}</span></summary>`:""}
+    <div style="${isTraining?"":"border-top:var(--border-s);margin-top:12px;"}padding-top:${isTraining?4:10}px">
       <div id="te-helfer-titel" style="font-size:var(--s-klein);color:var(--text2);font-weight:700;margin-bottom:6px">${ausw?"Wer betreut die Kinder mit?":"Wer hilft"}</div>
       <div id="te-helfer-box">${tmHelferFreigabeHtml(t)}</div>
       ${isTraining?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <label style="font-size:var(--s-klein);color:var(--text2)">Funino-Tore<input type="number" id="te-funino" min="0" max="40" step="1" inputmode="numeric" placeholder="Anzahl" value="${t.helfer_funino==null?"":Number(t.helfer_funino)}" style="${fld}"></label>
-        <label style="font-size:var(--s-klein);color:var(--text2)">Jugendtore<input type="number" id="te-jugendtore" min="0" max="40" step="1" inputmode="numeric" placeholder="Anzahl" value="${t.helfer_jugendtore==null?"":Number(t.helfer_jugendtore)}" style="${fld}"></label>
+        <label style="font-size:var(--s-klein);color:var(--text2)">Wie viele Funino-Tore aufbauen?<input type="number" id="te-funino" min="0" max="40" step="1" inputmode="numeric" placeholder="Anzahl" value="${t.helfer_funino==null?"":Number(t.helfer_funino)}" style="${fld}"></label>
+        <label style="font-size:var(--s-klein);color:var(--text2)">Wie viele Jugendtore aufbauen?<input type="number" id="te-jugendtore" min="0" max="40" step="1" inputmode="numeric" placeholder="Anzahl" value="${t.helfer_jugendtore==null?"":Number(t.helfer_jugendtore)}" style="${fld}"></label>
       </div>
-      <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Anzahl Tore – steht im Text der Aufgabe, wenn du sie oben freigibst.</div>`:''}
+      <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Die Zahl der Tore steht im Text der Aufgabe, wenn du sie oben anhakst. Die Zahl rechts neben der Aufgabe ist die Zahl der Helfer.</div>`:''}
       <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px"><span id="te-hinweis-lbl">${ausw?"Hinweis für die Betreuung":"Hinweis für Helfer"}</span><input id="te-helfer-hinweis" maxlength="140" placeholder="z. B. was heute anders ist als sonst" value="${esc(t.helfer_hinweis||'')}" style="${fld}"></label>
       ${t.typ==="event"?`<label style="display:flex;align-items:center;gap:10px;min-height:44px;margin-top:8px;font-size:var(--s-text);cursor:pointer"><input type="checkbox" id="te-mitbringen" ${t.mitbringen?"checked":""} style="width:22px;height:22px;margin:0">Eltern sollen etwas mitbringen (Mitbringliste an)</label>`:''}
       ${(t.typ==="event"&&("eltern_turnier" in t))?`<label style="display:flex;align-items:center;gap:10px;min-height:44px;margin-top:4px;font-size:var(--s-text);cursor:pointer"><input type="checkbox" id="te-elternturnier" ${t.eltern_turnier?"checked":""} style="width:22px;height:22px;margin:0">Kinder-Eltern-Turnier (Eltern tragen ein, wer mitspielt)</label>`:''}<!-- v825: nur, wenn die Spalte da ist (nach der Migration) -->
     </div>
+    ${isTraining?"</details>":""}
     <div id="ta-slot" style="margin-top:14px;padding-top:10px;border-top:1px solid var(--rand-bedien)"></div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-p btn-sm" onclick="tmEditSave(${Number(t.id)})"><i class="ti ti-device-floppy"></i>Speichern</button>
@@ -1247,7 +1200,7 @@ function tmJump(ziel,datum,spielform){
     /* v475: das Datum allein reichte nicht – Trainer-Chips, Quelle, Prognose und der
        gespeicherte Plan blieben vom vorherigen Tag. tpVorplanJump laedt den ganzen Tag. */
     const setD=()=>{ if(typeof tpVorplanJump==="function")tpVorplanJump(datum); else if(typeof terminSelectEnsure==="function")terminSelectEnsure("tp-date",datum); else {const d=document.getElementById("tp-date");if(d)d.value=datum;} };
-    setTimeout(setD,120); setTimeout(()=>{setD();toast("Plan für "+datum);},450);
+    setTimeout(setD,120); setTimeout(()=>{setD();toast("Plan für "+new Date(datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}));},450);
   }else if(ziel==="anwesenheit"){
     /* v473: Die haeufigste Handlung des Trainingstags lag drei Ebenen tief (Home →
        Kachel → Menue → Seite) – der Plan hatte einen Sprungknopf, die Anwesenheit nicht. */

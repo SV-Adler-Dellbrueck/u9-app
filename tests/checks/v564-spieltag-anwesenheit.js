@@ -36,13 +36,14 @@ module.exports = async function (h) {
   // ── a) + d) Wohin die beiden Kacheln zeigen ───────────────────────────────
   const kacheln = await s.page.evaluate(() => {
     if (typeof _kachelInhalt !== "function") return { fehlt: "_kachelInhalt" };
-    return { spieltag: _kachelInhalt("spieltag"), training: _kachelInhalt("training"), karte: typeof spieltagDabeiKarteLoad === "function" ? String(spieltagDabeiKarteLoad) : "" };
+    return { spieltag: _kachelInhalt("spieltag"), training: _kachelInhalt("training"), karte: String(wocheOpen) + String(spieltagZuTermin) };
   });
   if (kacheln.fehlt) probleme.push(kacheln.fehlt + " fehlt");
   else {
     // v665: Statt der Kachel steht dort die Karte „Wer ist dabei?“ (st-dabei-karte); ihr Knopf nimmt denselben Weg.
     // v702: Der Knopf der Karte führt in den Schritt „Wer kommt?“ (spieltagZuTermin …'wer').
-    if (!/st-dabei-karte/.test(kacheln.spieltag) || !/spieltagZuTermin\(.*'wer'\)/.test(kacheln.karte || "")) probleme.push("Die Spieltag-Seite führt nicht zur Spieltags-Anwesenheit");
+    // v937: Die Karte ist in der Termin-Kachel aufgegangen (#spieltag-termine); ihr Tipp ruft wocheOpen → spieltagZuTermin, vor dem Spieltag mit Schritt „wer“.
+    if (!/id="spieltag-termine"/.test(kacheln.spieltag) || !/spieltagZuTermin\(datum\)/.test(kacheln.karte || "") || !/datum===heute\?null:"wer"/.test(kacheln.karte || "")) probleme.push("Die Spieltag-Seite führt nicht zur Spieltags-Anwesenheit");
     if (/kachelRun\('go','anwesenheit'\)/.test(kacheln.spieltag)) probleme.push("Die Spieltag-Kachel führt weiterhin zur Anwesenheit des Trainings");
     if (!/kachelRun\('go','anwesenheit'\)/.test(kacheln.training)) probleme.push("Die Trainings-Kachel führt nicht mehr zur Trainingsliste – die beiden Anwesenheiten müssen getrennt bleiben");
   }

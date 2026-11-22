@@ -44,13 +44,16 @@ module.exports = async function (h) {
       zweite: slot.querySelectorAll(".woche-zeile").length
     };
     // Terminliste: Karte und Kurzzeile
-    const kartenHtml = tmCard(t1);
+    /* v937: Die volle Karte der Terminliste gibt es nicht mehr – die Liste besteht aus Zeilen, „Termin verwalten“ ist das Fenster.
+       Geprüft wird deshalb die Sport-Ansicht des Fensters: Schild, Grund, und keine Planung für einen abgesagten Termin. */
+    TM_TERMINE = [t1]; _tmdModus = "sport";
+    const kartenHtml = _tmdKarte(t1);
     const zeilenHtml = tmRow(t1);
     const box = document.createElement("div"); box.innerHTML = kartenHtml; document.body.appendChild(box);
     const liste = {
       banner: /Fällt aus/.test(box.textContent),
       grund: /Platz gesperrt/.test(box.textContent),
-      haupt: [...box.querySelectorAll("button")].map(b => b.textContent.trim()).filter(t => /^Plan$|Teams festlegen|Mitbringliste|Antworten/.test(t)),
+      haupt: [...box.querySelectorAll("button")].map(b => b.textContent.trim()).filter(t => /^Trainingsplan|^Plan$|Teams festlegen|Zum Spieltag|Mitbringliste|Antworten/.test(t)),
       kurz: /Fällt aus/.test(zeilenHtml)
     };
     box.remove();

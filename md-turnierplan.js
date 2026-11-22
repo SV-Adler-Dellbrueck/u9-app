@@ -713,8 +713,8 @@ function spieltagKopfRender(){
   const knoepfe=[];
   if(heim) knoepfe.push(knopf(`onclick="spieltagHeimPlanen('${esc(t.datum)}')"><i class="ti ti-layout-grid"></i>${t.typ==="spiel"?"Heimspiel planen":"Festival planen"}`,"btn-p"));
   else knoepfe.push(knopf(`id="st-plan-knopf" onclick="spieltagPlanOpen()"><i class="ti ti-file-text"></i>${hatPlan?"Spielplan":"Spielplan hinzufügen"}`));
-  if(ort&&typeof mapsUrl==="function")knoepfe.push(`<a class="btn" href="${esc(mapsUrl(ort))}" target="_blank" rel="noopener noreferrer" style="min-height:48px;justify-content:center;text-decoration:none"><i class="ti ti-navigation"></i>Route</a>`);
-  if(typeof tmDetailOpen==="function")knoepfe.push(knopf(`onclick="tmDetailOpen(${Number(t.id)})"><i class="ti ti-info-circle"></i>Termin`));
+  if(ort&&!heim&&typeof mapsUrl==="function")knoepfe.push(`<a class="btn" href="${esc(mapsUrl(ort))}" target="_blank" rel="noopener noreferrer" style="min-height:48px;justify-content:center;text-decoration:none"><i class="ti ti-navigation"></i>Route</a>`);
+  if(typeof tmDetailOpen==="function")knoepfe.push(knopf(`onclick="tmDetailOpen(${Number(t.id)},'orga')"><i class="ti ti-info-circle"></i>Termin`));
   box.innerHTML=`<div id="st-kopf" style="margin-top:4px">
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:var(--s-text);color:var(--text2);line-height:1.5">
       <span style="font-weight:800;color:var(--text)">${heim?"🏠 Heim":"🚌 Auswärts"}</span>

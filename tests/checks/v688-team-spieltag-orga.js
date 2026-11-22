@@ -48,7 +48,7 @@ module.exports = async function (h) {
   if (r.leer.liste) probleme.push("a) Die leere Auswahlliste steht noch da");
   if (r.wahl.n !== 2 || r.wahl.h < 44 || !r.wahl.liste) probleme.push(`a) Namenskacheln: ${JSON.stringify(r.wahl)}`);
   if (!r.wahl.gewaehlt) probleme.push("a) Ein Tipp auf den Namen wählt das Kind nicht");
-  if (/0\/15 bewertet/.test(r.team) || !/Bewerten ab/.test(r.team)) probleme.push("c) Team-Kacheln zeigen während der Sperre „0/15 bewertet“");
+  if (/0\/15 bewertet/.test(r.team) || !/Bewerten\s*ab /.test(r.team)) probleme.push("c) Team-Kacheln zeigen während der Sperre „0/15 bewertet“");
   if (!(r.orga.termine.length === 2 && ["Termine", "Trainerplan"].every(t => r.orga.termine.some(x => x.includes(t))))) probleme.push(`d) Termine: ${JSON.stringify(r.orga.termine)}`);
   if (!["Meetings", "Grillhütte"].every(t => (r.orga.teamorga || []).some(x => x.includes(t)))) probleme.push(`d) Team-Orga ohne Meetings/Grillhütte: ${JSON.stringify(r.orga.teamorga)}`);
   if (!(r.orga.notizen.length === 3 && ["Gedanke", "Tagebuch", "Pinnwand"].every(t => r.orga.notizen.some(x => x.includes(t))))) probleme.push(`d) Notizen: ${JSON.stringify(r.orga.notizen)}`);

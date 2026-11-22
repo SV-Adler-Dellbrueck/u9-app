@@ -35,9 +35,10 @@ module.exports = async function (h) {
     document.getElementById("pin-gate")?.remove();
     document.getElementById("tm-upcoming")?.remove(); document.getElementById("tm-past")?.remove();
     TM_TERMINE = termine;
-    const knopf = id => { document.getElementById("tmd-modal")?.remove(); tmDetailOpen(id); const mo = document.getElementById("tmd-modal");
+    const knopf = id => { document.getElementById("tmd-modal")?.remove(); tmDetailOpen(id, "orga"); const mo = document.getElementById("tmd-modal");   // v937: Orga-Themen stehen unter „Termin verwalten“
       mo.querySelectorAll("details").forEach(d => d.open = true);
-      const b = [...mo.querySelectorAll("button")].find(x => /Rückmeldungen im Detail/.test(x.textContent)); return b ? Math.round(b.getBoundingClientRect().height) : 0; };
+      /* v937: keine eigene Kachel „im Detail“ mehr – die Kachel „Rückmeldungen“ öffnet den Stand, von dort ein Tipp zum Verlauf (rmdOpen). */
+      const b = [...mo.querySelectorAll("button.tmd-kachel")].find(x => /^Rückmeldungen/.test(x.textContent.trim()) && /rsvpOverviewOpen/.test(x.getAttribute("onclick") || "")); return b ? Math.round(b.getBoundingClientRect().height) : 0; };
     const out = { a: { training: knopf(4), spiel: knopf(3), meeting: knopf(8) } };
     document.getElementById("tmd-modal")?.remove();
     await rmdOpen(4); await w(250);
