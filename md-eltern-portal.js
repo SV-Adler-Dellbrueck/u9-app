@@ -1159,7 +1159,7 @@ async function elternDashLoad(){
     <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Zu erledigen</span><span style="display:block;font-size:var(--s-klein);color:var(--text2);font-weight:400;margin-top:1px">Rückmeldungen, Mitbringen, Grillhütte, „Wie war's"</span></span>
     <span id="eltern-todo-badge" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber);font-weight:800;font-size:var(--s-text);border-radius:12px;padding:2px 9px"></span>
     <span style="font-size:var(--s-teil);color:var(--text3)">›</span>
-  </button></div><div id="steckbrief-slot"></div><div id="push-hinweis-slot"></div></div>
+  </button></div><div id="steckbrief-slot"></div><div id="fund-hinweis-slot"></div><div id="boerse-hinweis-slot"></div><div id="push-hinweis-slot"></div></div>
     <div id="fe-punkte" class="fe-punkte" aria-hidden="true"></div></section>`;
   html+='<div id="eltern-live-slot"></div>';
   html+='<div id="ansage-slot"></div>'; // H1: ungelesene Trainer-Ansagen als Banner
@@ -1443,6 +1443,7 @@ async function elternDashLoad(){
   if(typeof rufeBadgeLoad==="function")rufeBadgeLoad();                    // v670: neue Adler-Rufe
   if(typeof nestBogenKarte==="function")nestBogenKarte(kids);
   if(typeof steckbriefKarte==="function")steckbriefKarte(kids);             // v922: Steckbrief-Karte (md-fanfakten.js, Welle 2)
+  fundHinweisKarten();                         // v945: Neues im Fundbüro und in der Börse
   fuerEuchStart();                             // v924: Karussell „Für euch“ beobachtet seine Slots
   elternTkStart();                             // v926: Termin-Karussell
   ksKarte();                                   // v943: Klugscheißer-Info des Tages
@@ -3499,6 +3500,44 @@ async function saisonGruss(termineHeute){
 function saisonWeg(id){
   try{ localStorage.setItem("saison_weg_"+id+"_"+isoLokal().slice(0,4),"1"); }catch(e){}
   const slot=document.getElementById("saison-slot"); if(slot)slot.innerHTML="";
+}
+
+/* ── v945 · Charles 22.11.: „Wenn etwas in die Fundbörse eingestellt wird, sollte auch da oben bei den Eltern eine
+   Nachricht kommen, was eingestellt wurde … und dann wird es auch wieder gelöscht. Beziehungsweise es kann wegge-X'd
+   werden.“ (Tiles: Fundbüro und Börse.) Je eine Karte in „📌 Für euch“: was neu ist (Name, bei mehreren „und n weitere“),
+   „Ansehen ›“ öffnet das Fundbüro bzw. die Börse. Die Karte verschwindet von selbst, wenn das Stück geklärt, reserviert
+   oder gelöscht ist; „✕“ blendet sie aus, bis etwas Neueres eingestellt wird (gemerkt wird die höchste gesehene id).
+   Nur Stücke der letzten 21 Tage, eigene Börse-Angebote nicht. Fundbüro über die RPC fundbuero_board (ohne Uploader). */
+const FH_TAGE=21;
+function _fhWeg(art){ try{ return Number(localStorage.getItem("adler_fh_weg_"+art))||0; }catch(e){ return 0; } }
+function fhKarteHtml(art,liste){
+  const fund=art==="fund", erst=liste[0], mehr=liste.length-1;
+  const titel=fund?"🧦 Neu im Fundbüro":"🛍️ Neu in der Adler-Börse";
+  const zusatz=fund?"Gehört das euch? Im Fundbüro könnt ihr es mit einem Tipp als eures markieren."
+    :(erst.preis||erst.groesse?[erst.groesse?"Gr. "+erst.groesse:"",erst.preis||""].filter(Boolean).join(" · ")+" – ":"")+"vielleicht passt es eurem Kind.";
+  return `<div class="fh-karte fh-${art}" role="region" aria-label="${titel.replace(/^\S+\s/,"")}">
+    <button type="button" class="fe-x" onclick="fhWeg('${art}',${Math.max(...liste.map(x=>Number(x.id)||0))})" aria-label="Hinweis ausblenden">✕</button>
+    <div class="fh-titel">${titel}</div>
+    <div class="fh-was">${esc(erst.titel||"")}${mehr>0?` <span class="fh-mehr">und ${mehr} ${mehr===1?"weiteres":"weitere"}</span>`:""}</div>
+    <div class="fh-text">${esc(zusatz)}</div>
+    <button type="button" class="btn fh-los" onclick="${fund?"fundbueroOpen()":"boerseOpen()"}">Ansehen ›</button></div>`;
+}
+async function fundHinweisKarten(){
+  const sf=document.getElementById("fund-hinweis-slot"), sb=document.getElementById("boerse-hinweis-slot"); if(!sf&&!sb)return;
+  const grenze=new Date(Date.now()-FH_TAGE*864e5), grenzeIso=isoLokal(grenze), ich=(typeof sbUserId==="function")?sbUserId():null;
+  const j=r=>(r&&r.ok)?r.json():null;
+  const [fu,bo]=await Promise.all([
+    fetch(`${SB_URL}/rest/v1/rpc/fundbuero_board`,{method:"POST",headers:sbAuthHeaders(),body:"{}"}).then(j).catch(()=>null),
+    fetch(`${SB_URL}/rest/v1/boerse_listings?select=id,titel,groesse,preis,created_by,reserviert_von,created_at&reserviert_von=is.null&created_at=gte.${grenze.toISOString()}&order=id.desc`,{headers:sbAuthHeaders()}).then(j).catch(()=>null)
+  ]);
+  const fund=(fu||[]).filter(x=>x&&x.status==="offen"&&String(x.gefunden_am||"")>=grenzeIso&&Number(x.id)>_fhWeg("fund")).sort((a,b)=>b.id-a.id);
+  const boerse=(bo||[]).filter(x=>x&&!x.reserviert_von&&x.created_by!==ich&&Number(x.id)>_fhWeg("boerse")).sort((a,b)=>b.id-a.id);
+  if(sf)sf.innerHTML=fund.length?fhKarteHtml("fund",fund):"";
+  if(sb)sb.innerHTML=boerse.length?fhKarteHtml("boerse",boerse):"";
+}
+function fhWeg(art,id){
+  try{ localStorage.setItem("adler_fh_weg_"+art,String(Math.max(_fhWeg(art),Number(id)||0))); }catch(e){}
+  const s=document.getElementById(art==="fund"?"fund-hinweis-slot":"boerse-hinweis-slot"); if(s)s.innerHTML="";
 }
 
 function elternPushHinweisWeg(){ if(typeof pushKarteWeg==="function")pushKarteWeg("push-hinweis-slot"); }

@@ -1944,3 +1944,11 @@ details.tk-erledigt[open]>summary::after{content:"▴"}
 .saison-gelb{--saison:#ca8a04;--saison-bg:rgba(250,204,21,.16)}
 .saison-orange{--saison:#c2410c;--saison-bg:rgba(234,88,12,.10)}
 .saison-blau{--saison:#1d4ed8;--saison-bg:rgba(29,78,216,.10)}
+
+/* v945: Neues im Fundbüro / in der Börse – Karte in „📌 Für euch“ */
+.fh-karte{position:relative;display:flex;flex-direction:column;border-radius:16px;background:var(--surface);color:var(--text);padding:14px;margin:10px 0;border:var(--border-s);border-left:5px solid var(--blue)}
+.fh-titel{font-size:var(--s-karte);font-weight:900;padding-right:44px}
+.fh-was{font-size:var(--s-karte);font-weight:700;margin:8px 0 4px}
+.fh-mehr{font-size:var(--s-text);font-weight:600;color:var(--text2)}
+.fh-text{font-size:var(--s-text);line-height:1.45;color:var(--text2);margin-bottom:10px}
+.fh-karte .btn.fh-los{margin-top:auto;width:100%;min-height:48px;justify-content:center;font-weight:800}
