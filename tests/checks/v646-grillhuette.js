@@ -95,7 +95,7 @@ module.exports = async function (h) {
     const m = document.getElementById("gh-tr-modal");
     const out = { text: m ? m.textContent.replace(/\s+/g, " ") : "", dialog: m && m.getAttribute("role") };
     const k = document.getElementById("gh-einteilen"); out.einteilen = k ? k.textContent.trim() : ""; if (k) k.click(); await w(150);
-    const sel = document.querySelector("#gh-tr-modal select");
+    const sel = document.querySelector("#gh-tr-modal select:not(.gh-zeit-form select)");   // v951: zuerst steht „Beide Eltern vor Ort?“
     if (sel) { sel.value = sel.options[2].value; sel.dispatchEvent(new Event("change")); }
     await w(150);
     return out;

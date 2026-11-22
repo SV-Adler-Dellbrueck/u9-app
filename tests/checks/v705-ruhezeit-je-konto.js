@@ -83,7 +83,9 @@ module.exports = async function (h) {
   const ps = lies("supabase/functions/push-send/index.ts"), pc = lies("supabase/functions/push-cron/index.ts"), rp = lies("supabase/functions/rufe-push/index.ts");
   const testZweig = ps.slice(ps.indexOf('if (body.art === "test")'), ps.indexOf('if (body.art === "kasse_erinnerung")'));
   // v728: vierter Weg (art „ticker_helfer“), v910: fünfter (art „grill_dienst“) – jeder Weg außer dem Test geht über verteilen()
-  if ((ps.match(/await verteilen\(/g) || []).length !== 5 || /verteilen/.test(testZweig)) probleme.push("f) push-send verteilt nicht überall über die Ruhezeit (oder auch den Test)");
+  /* v951: weitere Wege (grill_zeit, grill_wahl, grill_wahl_fertig/-auto über grillWahlMelden). Geprüft wird deshalb die
+     Regel selbst: webpush.sendNotification steht nur in verteilen() und im Test-Zweig, und der Test-Zweig verteilt nicht. */
+  if ((ps.match(/webpush\.sendNotification\(/g) || []).length !== 2 || (ps.match(/await verteilen\(/g) || []).length < 5 || /verteilen/.test(testZweig)) probleme.push("f) push-send verteilt nicht überall über die Ruhezeit (oder auch den Test)");
   if (!/push_ruhende/.test(pc) || !/push_warteschlange/.test(pc)) probleme.push("f) push-cron ohne Ruhezeit");
   if (!/push_warteschlange_faellig/.test(rp)) probleme.push("f) rufe-push holt die Warteschlange nicht nach");
   const views = lies("views.js"), doku = lies("doku/Uebersicht_Funktionen-Adler-App_v1.md");

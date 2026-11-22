@@ -2096,3 +2096,11 @@ details.tk-erledigt[open]>summary::after{content:"▴"}
 .ta-link{min-height:44px;border:0;background:transparent;color:#cbd5e1;text-decoration:underline;font:inherit;font-weight:700;font-size:var(--s-text);cursor:pointer}
 .ta-ende{text-align:center;margin-top:10vh;font-size:var(--s-text)}.ta-ende b{display:block;font-size:var(--s-seite);margin:8px 0}
 .ta-x:focus-visible,.ta-knoepfe button:focus-visible,.ta-p:focus-visible,.ta-link:focus-visible,.ta-alle:focus-visible,.ta-ganz:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+/* v951: Grillzeit je Termin (Trainer-Fenster) */
+.gh-zeit-form{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin:6px 0;max-width:100%}
+.gh-zeit-form label{display:flex;flex-direction:column;min-width:0;font-size:var(--s-klein);color:var(--text2);gap:2px}
+.gh-zeit-form input,.gh-zeit-form select{min-height:44px;border:1px solid var(--rand-bedien);border-radius:8px;font:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);padding:0 8px;width:100%;min-width:0;box-sizing:border-box}
+.gh-zeit-form .gh-zeit-speichern{grid-column:1/-1;min-height:44px;width:100%;box-sizing:border-box;justify-content:center}
+/* v950: weitere Termine im Karussell aufklappen */
+.tk-details{margin-top:10px;border-top:1px solid #e2e8f0;padding-top:8px}
+.tk-details-innen{font-size:var(--s-text)}

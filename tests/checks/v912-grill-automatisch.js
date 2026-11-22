@@ -7,6 +7,8 @@
    b) Das Fenster liegt über einem offenen Termin-Fenster (z-index höher).
    c) Im Fenster je Termin „Familien: 1 | 2“ mit aria-pressed; ein freier Platz zeigt nur die Marke, nicht zusätzlich Text.
    d) Auf 1 stellen bei zwei eingeteilten Familien: Rückfrage, Platz 2 wird gelöscht, termine.grill_plaetze = 1 gespeichert.
+      Seit v951 (Charles 22.11.: die beiden Familien wählen selbst) wird niemand ausgetragen: Rückfrage „Umstellen“, kein Löschen,
+      grill_plaetze = 1, Push art „grill_wahl“ an beide.
    e) ghAutoEinteilen: ruft dienst_einteilen und schickt nur den neu Eingeteilten einen Push; ist nichts offen, wird gar
       nichts geschrieben (kein RPC).
    f) Speichern eines Heimtermins und der Start der Trainer-App rufen die automatische Einteilung (Quelltext, geprüft mit typeof);
@@ -59,14 +61,14 @@ module.exports = async function (h) {
     // d) Termin 8 auf 1 stellen → Rückfrage bestätigen
     const p = grillPlaetzeSetzen(8, 1);
     for (let i = 0; i < 30 && !document.getElementById("frage-modal"); i++) await w(100);
-    const ja = [...document.querySelectorAll("#frage-modal button")].find(b => /Austragen/.test(b.textContent));
+    const ja = [...document.querySelectorAll("#frage-modal button")].find(b => /Umstellen/.test(b.textContent));   // v951
     out.rueckfrage = !!ja; if (ja) ja.click();
     await p; await w(300);
     const g8b = document.getElementById("gh-t-8");
     out.nachEins = g8b ? [...g8b.querySelectorAll(".gh-anzahl button")].map(b => b.textContent.trim() + ":" + b.getAttribute("aria-pressed")).join(" ") : "";
     return out;
   }, { tag });
-  const nachD = { rpcs: rpcs.length, pushes: JSON.parse(JSON.stringify(pushes)) };
+  const nachD = { rpcs: rpcs.length, pushes: JSON.parse(JSON.stringify(pushes.filter(b => b.art !== "grill_wahl"))), wahl: pushes.filter(b => b.art === "grill_wahl").map(b => b.termin_id) };
   // e) nichts offen → kein RPC
   const e2 = await t.page.evaluate(async () => { const vor = 0; await ghAutoEinteilen({ still: true }); return true; });
   const fehler = t.fehler(); await t.schliessen();
@@ -75,10 +77,10 @@ module.exports = async function (h) {
   if (!r.zOben) probleme.push("b) Grillhütten-Fenster liegt unter dem Termin-Fenster");
   if (r.schalter.join(" ") !== "1:false 2:true") probleme.push(`c) Schalter Termin 8: ${r.schalter.join(" ")}`);
   if (r.freiText) probleme.push("c) freier Platz zeigt zusätzlich „– noch nicht eingeteilt –“");
-  if (!r.rueckfrage || JSON.stringify(deletes) !== "[22]" || !patches.some(x => /id=eq\.8/.test(x.suche) && x.b.grill_plaetze === 1) || r.nachEins !== "1:true 2:false") probleme.push(`d) Rückfrage ${r.rueckfrage}, gelöscht ${JSON.stringify(deletes)}, gespeichert ${JSON.stringify(patches)}, Schalter ${r.nachEins}`);
+  if (!r.rueckfrage || deletes.length || JSON.stringify(nachD.wahl) !== "[8]" || !patches.some(x => /id=eq\.8/.test(x.suche) && x.b.grill_plaetze === 1) || r.nachEins !== "1:true 2:false") probleme.push(`d) Rückfrage ${r.rueckfrage}, gelöscht ${JSON.stringify(deletes)}, gespeichert ${JSON.stringify(patches)}, Schalter ${r.nachEins}`);
   // Nach d) lief ghAutoEinteilen: Termin 7 hatte 2 offene Plätze → genau ein RPC und Push nur an Kind 3
   if (nachD.rpcs !== 1 || nachD.pushes.length !== 1 || JSON.stringify(nachD.pushes[0].kind_ids) !== "[3]" || nachD.pushes[0].termin_id !== 7) probleme.push(`e) automatisch: ${nachD.rpcs} RPC, Pushes ${JSON.stringify(nachD.pushes)}`);
-  zeilen.push(`a) „${r.zeile}“ · b) Fenster oben ${r.zOben} · c) ${r.schalter.join(" ")} · d) Platz 2 ausgetragen, grill_plaetze 1 · e) ${nachD.rpcs} RPC, Push an [3]`);
+  zeilen.push(`a) „${r.zeile}“ · b) Fenster oben ${r.zOben} · c) ${r.schalter.join(" ")} · d) niemand ausgetragen, grill_plaetze 1, Push grill_wahl · e) ${nachD.rpcs} RPC, Push an [3]`);
 
   const kasse = fs.readFileSync(path.join(h.REPO, "md-kasse.js"), "utf8"), boot = fs.readFileSync(path.join(h.REPO, "boot.js"), "utf8");
   const geg = fs.readFileSync(path.join(h.REPO, "md-gegner.js"), "utf8"), kal = fs.readFileSync(path.join(h.REPO, "md-kalender.js"), "utf8");

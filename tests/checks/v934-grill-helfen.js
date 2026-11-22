@@ -72,7 +72,7 @@ module.exports = async function (h) {
   if (!h1 || !h1.eigen || !/Familie Kind C/.test(h1.text) || !/Ihr seid dran/.test(h1.text) || !h1.knoepfe.includes("Ersatz suchen") || !h1.knoepfe.includes("Übernehmen") || !/Familie Kind F.*Ersatz gesucht/.test(h1.text))
     probleme.push(`b) erstes Heimspiel: ${JSON.stringify(h1).slice(0, 220)}`);
   if (!h2 || h2.eigen || !/Familie Kind H/.test(h2.text) || !/vergeben/.test(h2.text) || h2.knoepfe.length) probleme.push(`b) zweites Heimspiel: ${JSON.stringify(h2).slice(0, 200)}`);
-  if (!h3 || !/wird ab \d\d\.\d\d\. eingeteilt/.test(h3.text)) probleme.push(`b) Heimspiel ohne Einteilung: ${JSON.stringify(h3).slice(0, 160)}`);
+  if (!h3 || !/wird gerade eingeteilt/.test(h3.text))   /* v951: ganze Saison – kein „wird ab …“ mehr */ probleme.push(`b) Heimspiel ohne Einteilung: ${JSON.stringify(h3).slice(0, 160)}`);
   // g) Rückrunde ab Februar 2027 noch nicht final (Charles 21.11.)
   if (!/Rückrunde ab Februar 2027 ist noch nicht endgültig/.test(r.hinweis)) probleme.push("g) Hinweis „Spielplan der Rückrunde noch nicht endgültig“ fehlt");
   if (String(r.vorl) !== "false,false,true") probleme.push(`g) „vorläufig“ steht an ${JSON.stringify(r.vorl)} statt nur am Heimspiel im März 2027`);
@@ -98,6 +98,6 @@ module.exports = async function (h) {
   const ausgabe = (sql.match(/json_build_object\([^;]*?\)/g) || []).join(" ");
   if (/'(email|telefon|phone|anzeigename)'/i.test(ausgabe) || /\b(u|p)\.(email|anzeigename)\b/.test(ausgabe)) probleme.push("f) Mail, Telefon oder Elternname im Ergebnis");
   [...hell.fe, ...dunkel.fe].slice(0, 2).forEach(x => probleme.push("Konsole: " + x));
-  if (!probleme.length) zeilen.push(`Kachel unter „Fürs Team“ · ${r.heim.length} Heimspiele (eigenes grün mit Ersatz suchen, Ersatz gesucht mit Übernehmen, „wird ab … eingeteilt“) · Tabelle alphabetisch, „ihr“ markiert, Team ${summe.slice(1).join("/")} · Termin „Familie Kind H ist dran“ · 360 px ohne Überstand, Kontrast hell ${hell.r.kontrast.toFixed(1)} / dunkel ${dunkel.r.kontrast.toFixed(1)}`);
+  if (!probleme.length) zeilen.push(`Kachel unter „Fürs Team“ · ${r.heim.length} Heimspiele (eigenes grün mit Ersatz suchen, Ersatz gesucht mit Übernehmen, „wird gerade eingeteilt“) · Tabelle alphabetisch, „ihr“ markiert, Team ${summe.slice(1).join("/")} · Termin „Familie Kind H ist dran“ · 360 px ohne Überstand, Kontrast hell ${hell.r.kontrast.toFixed(1)} / dunkel ${dunkel.r.kontrast.toFixed(1)}`);
   return h.ergebnis("v934 Grillhütte & Helfen: Heimspiele mit Familie, Zählung je Familie", !probleme.length, zeilen.concat(probleme));
 };
