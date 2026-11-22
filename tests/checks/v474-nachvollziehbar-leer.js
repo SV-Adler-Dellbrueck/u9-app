@@ -23,9 +23,10 @@ module.exports = async function (h) {
     // 1) Diese Woche: Quellenzeile + Rot nur beim nahen Termin
     /* v890: statt fester Zeiten nach go() auf das jeweils Gemessene warten (Obergrenze je 8 s; kommt es nie, wird es rot) */
     const bis = async f => { for (let i = 0; i < 160 && !f(); i++) await warte(50); };
-    go("home"); await bis(() => document.querySelector("#home-woche .woche-quelle") && document.querySelectorAll("#home-woche .woche-zeile").length >= 2
+    go("home"); await bis(() => document.querySelectorAll("#home-woche .woche-zeile").length >= 2
       && /kein Trainer/.test(document.querySelector("#home-woche .woche-zeile")?.textContent || ""));
-    const quelle = document.querySelector("#home-woche .woche-quelle")?.textContent.trim() || "";
+    /* v939: Die Quellenzeile unter der Karte ist entfallen (Charles 22.11.); die Quellen stehen in der Hilfe zu „Diese Woche“. */
+    const quelle = ((typeof HELP !== "undefined" ? HELP : []).flatMap(g => g.items || g.eintraege || [g]).find(x => x && x.t === "Diese Woche")?.d || "") + (document.querySelector("#home-woche .woche-quelle") ? " ALTE-QUELLENZEILE" : "");
     const zeilenEl = [...document.querySelectorAll("#home-woche .woche-zeile")];
     const chipRot = z => [...z.querySelectorAll("span")].filter(c => /zugesagt| dabei/.test(c.textContent)).map(c => /--red-bg/.test(c.getAttribute("style") || "") ? "rot" : "nicht rot");
     const zusage = zeilenEl.map(z => ({ text: z.textContent.replace(/\s+/g, " ").slice(0, 40), zugesagt: chipRot(z)[0], trainerRot: /--red-bg/.test([...z.querySelectorAll("span")].find(c => /kein Trainer/.test(c.textContent))?.getAttribute("style") || "") }));
@@ -60,7 +61,7 @@ module.exports = async function (h) {
     return { quelle, zusage, neuBtn, neuH, prog, fairNull, fairBtn, fairText: fairText.slice(0, 80), leerVor, panelVor, fboxVor, leerNach, panelNach, fboxNach };
   }, { K, nah, fern });
   const fehler = s.fehler(); await s.schliessen();
-  if (!/Rückmeldungen/.test(r.quelle)) probleme.push(`Diese Woche nennt keine Quelle: „${r.quelle}“`);
+  if (!/Rückmeldungen/.test(r.quelle) || /ALTE-QUELLENZEILE/.test(r.quelle)) probleme.push(`Hilfe zu „Diese Woche“ nennt keine Quelle (oder die alte Zeile steht noch da): „${r.quelle.slice(0, 80)}“`);
   if (r.zusage.length < 2) probleme.push(`nur ${r.zusage.length} Wochenzeilen`);
   else {
     /* v609: Beim Training zählt „N dabei“ (gilt als zugesagt) – der Kinder-Chip hat keinen

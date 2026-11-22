@@ -41,13 +41,13 @@ module.exports = async function (h) {
     go("home");
     for (let i = 0; i < 160; i++) {
       const z = [...document.querySelectorAll("#home-woche .woche-zeile")].map(z => z.textContent);
-      if (z.some(x => /Kinderfestival|Turnier/.test(x) && /dabei/.test(x)) && z.some(x => /Training/.test(x) && /dabei/.test(x)) && document.querySelector("#home-woche .woche-quelle")) break;
+      if (z.some(x => /Kinderfestival|Turnier/.test(x) && /dabei/.test(x)) && z.some(x => /Training/.test(x) && /dabei/.test(x))) break;
       await warte(50);
     }
     const zeilen = [...document.querySelectorAll("#home-woche .woche-zeile")].map(z => z.textContent.replace(/\s+/g, " "));
     const festZeile = zeilen.find(z => /Kinderfestival|Turnier/.test(z)) || "";
     const trainZeile = zeilen.find(z => /Training/.test(z)) || "";
-    const quelle = document.querySelector("#home-woche .woche-quelle")?.textContent || "";
+    const quelle = (typeof HELP !== "undefined" ? HELP : []).flatMap(g => g.items || g.eintraege || [g]).find(x => x && x.t === "Diese Woche")?.d || "";   // v939: Quelle steht in der Hilfe
     // 3) Terminkarte
     const t = { id: 1, datum: spiel, typ: "turnier", heim: true, titel: "Kinderfestival", uhrzeit: "10:15", trainer_status: {} };
     if (typeof TM_TERMINE !== "undefined") { TM_TERMINE.length = 0; TM_TERMINE.push(t); }
