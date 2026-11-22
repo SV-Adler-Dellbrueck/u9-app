@@ -1,6 +1,6 @@
 {
  "schema": "adler-kinderfragen/1",
- "stand": "2026-11-21-3",
+ "stand": "2026-11-22-1",
  "fragen": [
   {
    "id": "lf1-01",
@@ -4045,5 +4045,13 @@
    "merksatz": "Springt der Ball zu weit weg: zupacken!",
    "adler_pose": "schnappt sich den Ball mit dem Fuß"
   }
- ]
+ ],
+ "videos": {
+  "1": "video/lehrer-stunde1.mp4",
+  "2": "video/lehrer-stunde2.mp4",
+  "3": "video/lehrer-stunde3.mp4",
+  "4": "video/lehrer-stunde4.mp4",
+  "5": "video/lehrer-stunde5.mp4",
+  "6": "video/lehrer-stunde6.mp4"
+ }
 }

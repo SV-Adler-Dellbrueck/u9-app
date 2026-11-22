@@ -1,4 +1,4 @@
-const CACHE="u9i-adler-v937";
+const CACHE="u9i-adler-v938";
 const PRECACHE=[
   "./",
   "./index.html",
@@ -55,6 +55,10 @@ const PRECACHE=[
   "./md-termin-anhang.js",   // v789: Anhänge am Termin (Spielplan der Gastgeber)   // v670: Adler-Rufe (Team-Chat)
   "./boot.js",
   "./logo.png",
+  // v938: der Comic-Adler als Lehrer der Adler-Schule (Maskottchen/, README dort) – feste Dateien, eigener Cache
+  "./Maskottchen/master/adler_master/adler_master_klein.webp",
+  "./Maskottchen/varianten/adler_winkt_weihnachtsmuetze/adler_winkt_weihnachtsmuetze_klein.webp",
+  "./Maskottchen/varianten/adler_praesentiert_weihnachtsmuetze/adler_praesentiert_weihnachtsmuetze_klein.webp",
   "./badge-adler.png",   // v671: Adler weiß auf transparent – Symbol in der Statusleiste bei Push
   "./icon-trainer.png",
   "./icon-trainer-maskable.png",
@@ -95,8 +99,8 @@ const PRECACHE=[
    neu gefüllt. Nicht von Hand setzen – node tools/fest-cache.js --schreiben; der Prüflauf wird
    rot, wenn Name und Inhalt nicht zusammenpassen. Der Name darf nicht mit dem des Versionscaches
    beginnen: die Versionsanzeige liest die Cache-Namen. */
-const FEST_CACHE="adler-fest-37c3b2c8";
-const istFest=u=>/^\.\/vendor\/|\.png$/.test(u);
+const FEST_CACHE="adler-fest-82d10c7e";
+const istFest=u=>/^\.\/vendor\/|\.(png|webp)$/.test(u);   // v938: auch die Maskottchen-Bilder (webp)
 // Adressen der festen Dateien – erst beim ersten Abruf gebildet, nicht beim Laden der Datei
 let _festAdressen=null;
 function istFesteAdresse(url){
@@ -171,6 +175,10 @@ self.addEventListener("fetch",e=>{
      dabei – bei zwei Einzelregeln waere sie irgendwann vergessen, und das faellt nicht
      auf. Keine dieser Dateien gehoert in den PRECACHE. */
   if(/\/uebungen\/[^/]+\.json$/.test(url))return;
+  /* v938: Videos (video/…) gehen am Service Worker vorbei. Ein Video-Spieler fragt Stücke an (Range, Antwort 206); ein
+     einmal ganz gecachtes Video (200) lehnt Safari bei der nächsten Stück-Anfrage ab und spielt gar nicht. Offline gibt es
+     deshalb kein Video – die Stunde selbst geht ohne. */
+  if(/\/video\/[^/]+\.(mp4|webm)$/.test(url.split(/[?#]/)[0]))return;
   if(e.request.method!=="GET")return;
 
   /* NETWORK-FIRST fuer die Seite selbst und die Manifeste.
