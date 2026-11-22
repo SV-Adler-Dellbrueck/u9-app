@@ -1,6 +1,6 @@
 {
   "schema": "adler-uebungen/1",
-  "stand": "2026-11-20-3",
+  "stand": "2026-11-22-1",
   "uebungen": [
     {
       "name": "Warm up Adler",
@@ -9059,6 +9059,201 @@
             140,
             176,
             "Tor erst nach Seitenwechsel über die Linie"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Anbieten und Freilaufen – Einstimmen",
+      "kat": "aufwaermen",
+      "kurz": "Zwei Teams à 4 passen im Feld: anspielen erst nach Sichtkontakt und Namen",
+      "spieler": "8",
+      "feld": "15 × 15 m",
+      "dauer": "10",
+      "diff": 1,
+      "ablauf": "Zwei Teams zu je 4 Kindern, ein Ball je Team, beide im selben Feld. Stufe 1: Pass zum Mitspieler, der dem Zuspiel entgegenkommt, Annahme, Dribbling, nächsten Partner außerhalb des Deckungsschattens suchen. Stufe 2: Weiterleiten mit Richtungsänderung. Stufe 3: Passfolge 1→2, 3→4, 4→1. Angespielt wird erst, wenn sich der Mitspieler aktiv anbietet.",
+      "coaching": "Erst nach Sichtkontakt anspielen.\nVororientierung: vor der Annahme schauen.\nVom Gegner weg, dem Ball entgegen, raus aus dem Deckungsschatten.",
+      "varianten": "Leichter: größeres Feld, nur Stufe 1. Schwerer: höchstens zwei Kontakte, Empfänger erst spät ansagen, Reihenfolge umkehren.",
+      "ablauf_lang": "ZIEL\nVerbesserung des Anbietens und Freilaufens im Passspiel.\n\nKURZBESCHREIBUNG\nZwei Teams zu je vier Kindern passen sich im selben Feld den Ball zu. Angespielt wird nur, wer sich aktiv anbietet: Sichtkontakt, Namen rufen, raus aus dem Deckungsschatten.\n\nAUFBAU\nFeld 15 × 15 m. 8 Kinder in zwei Teams zu je 4, beide Teams gleichzeitig im Feld. Ein Ball je Team. Die Kinder eines Teams sind von 1 bis 4 durchnummeriert.\n\nABLAUF\nStufe 1: Kind 1 passt zu Kind 2, das sich auf das Zuspiel zubewegt. Nach der Annahme dribbelt es und sucht einen Partner außerhalb des Deckungsschattens; Sichtkontakt halten, Namen rufen.\nStufe 2: Kind 2 leitet mit einer Richtungsänderung zu Kind 3 weiter. Vorher das Umfeld scannen, mit Tempo in den Passweg einlaufen.\nStufe 3: Feste Passfolge 1 → 2, 3 → 4, 4 → 1. Ballkontakte begrenzen, die Reihenfolge umkehren oder die Nummer des nächsten Empfängers rufen.\n\nREGELN\nAngespielt wird erst, wenn sich der Mitspieler aktiv anbietet.\n\nCOACHING-ASPEKTE\n1. Erst nach Sichtkontakt anspielen.\n2. Vororientierung einfordern: vor der Annahme schauen, wohin es weitergeht.\n3. Vom Gegner weglaufen, entgegenkommen statt auf den Ball warten, den Deckungsschatten verlassen.\nKorrekturen: Wer steht und wartet, bekommt den Hinweis „Komm dem Ball entgegen“. Wer ohne Blick passt, wiederholt den Pass nach Blickkontakt. Wer hinter einem Kind des anderen Teams steht, macht zwei Schritte zur Seite.\n\nESKALATIONSSTUFEN\nLeichter: größeres Feld, beliebig viele Kontakte, nur Stufe 1.\nSchwerer: kleineres Feld, höchstens zwei Kontakte, Empfänger erst im letzten Moment ansagen, ein zweiter Ball je Team.\n\nZUSATZREGELN\nKeine festen Zusatzregeln. Möglich: Der Pass zählt nur, wenn der Name vorher gerufen wurde.\n\nVORTEILE\nViele Ballkontakte und Pässe in kurzer Zeit. Das zweite Team erzeugt ohne Zweikampf echte Deckungsschatten. Ruhiger Einstieg, der direkt zur Leitfrage „Wo stelle ich mich hin, damit ich den Ball kriege?“ führt.\n\nNACHTEILE\nKein Gegnerdruck, die Laufwege bleiben eher frei. Die feste Passfolge in Stufe 3 kann zum Abarbeiten statt Wahrnehmen verleiten.\n\nTYPISCHE FEHLERBILDER\nDer Empfänger wartet auf der Stelle oder steht hinter einem anderen Kind. Pässe ohne Blickkontakt. Ballannahme frontal statt offen in die nächste Richtung. Nur einer ruft, die anderen sind stumm.\n\nWORAUF ACHTEN\nNoch keine Einsatzerfahrung. Hinweise aus dem Einsatz kommen über den Projekt-Chat als Nachtrag hierher; Sterne und Einsätze zeigt die App aus den Einheiten-Bewertungen.",
+      "skizze": {
+        "z": [
+          [
+            65,
+            20,
+            150,
+            150
+          ]
+        ],
+        "s": [
+          [
+            85,
+            45,
+            "g",
+            "A"
+          ],
+          [
+            195,
+            45,
+            "g",
+            "B"
+          ],
+          [
+            195,
+            145,
+            "g",
+            "C"
+          ],
+          [
+            85,
+            145,
+            "g",
+            "D"
+          ],
+          [
+            115,
+            80,
+            "r"
+          ],
+          [
+            165,
+            80,
+            "r"
+          ],
+          [
+            165,
+            115,
+            "r"
+          ],
+          [
+            115,
+            115,
+            "r"
+          ]
+        ],
+        "b": [
+          [
+            93,
+            52
+          ]
+        ],
+        "p": [
+          [
+            110,
+            45,
+            172,
+            45,
+            "p",
+            1
+          ],
+          [
+            195,
+            68,
+            195,
+            122,
+            "p",
+            2
+          ],
+          [
+            172,
+            145,
+            108,
+            145,
+            "p",
+            3
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            12,
+            "Sichtkontakt – Namen rufen – anbieten"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Pylonen-Spiel – Läufer gegen Wächter",
+      "kat": "spass",
+      "kurz": "Läufer stößt fünf Pylonen um, zwei Wächter stellen sie wieder auf",
+      "spieler": "3–5 je Aufbau",
+      "feld": "6 × 6 m je Aufbau",
+      "dauer": "8",
+      "diff": 1,
+      "ablauf": "Fünf Pylonen im Abstand von 1–2 m, zwei Wächter im Pylonenfeld, ein Läufer davor. Auf Kommando stößt der Läufer so schnell wie möglich alle Pylonen um, die Wächter stellen sie so schnell wie möglich wieder auf. Schafft der Läufer es, dass alle gleichzeitig liegen? Rollen wechseln nach jedem Durchgang.",
+      "coaching": "Kurze, schnelle Schritte, tief beim Richtungswechsel.\nKopf hoch: die Pylone weit weg vom Wächter zuerst.\nWächter teilen die Pylonen auf.",
+      "varianten": "Schwerer: zwei Läufer, drei Wächter. Leichter: ein Wächter, Pylonen weiter auseinander.",
+      "ablauf_lang": "ZIEL\nVerbesserung von Schnelligkeit, Wendigkeit und Reaktion.\n\nKURZBESCHREIBUNG\nEin Läufer versucht, fünf Pylonen umzustoßen, zwei Wächter stellen sie so schnell wie möglich wieder auf. Schafft der Läufer es, dass alle gleichzeitig liegen?\n\nAUFBAU\nFünf Pylonen im Abstand von 1–2 m (Anordnung wie in der Skizze), Feld etwa 6 × 6 m je Aufbau. Zwei Wächter stehen im Pylonenfeld, ein Läufer davor. Je nach Kinderzahl mehrfach aufbauen (3–5 Kinder je Aufbau).\n\nABLAUF\nAuf Kommando versucht der Läufer, so schnell wie möglich alle Pylonen umzustoßen. Die Wächter stellen umgekippte Pylonen so schnell wie möglich wieder auf. Ein Durchgang endet, wenn alle Pylonen gleichzeitig liegen oder die Zeit abgelaufen ist. Danach wechseln die Rollen.\n\nREGELN\nPylonen nur mit der Hand umstoßen und aufstellen, nicht werfen oder treten. Kein Festhalten und kein Wegschubsen. Nach jedem Durchgang Rollenwechsel.\n\nCOACHING-ASPEKTE\n1. Kurze, schnelle Schritte und tiefer Körperschwerpunkt beim Richtungswechsel.\n2. Kopf hoch: zuerst die Pylone ansteuern, die am weitesten vom nächsten Wächter entfernt ist.\n3. Wächter sprechen sich ab und teilen die Pylonen auf.\nKorrekturen: Wer aufrecht läuft und weit ausholt, geht in die Knie. Wer immer nur zur nächsten Pylone rennt, schaut vorher, wo die Wächter sind.\n\nESKALATIONSSTUFEN\nLeichter: ein Wächter, Pylonen weiter auseinander, Durchgang länger.\nSchwerer: zwei Läufer gegen drei Wächter; Pylonen enger; Läufer muss nach jeder Pylone einmal um eine Startmarke laufen.\n\nZUSATZREGELN\nKeine festen Zusatzregeln. Möglich: Die Wächter dürfen nur mit der schwachen Hand aufstellen.\n\nVORTEILE\nHohe Intensität in kurzer Zeit, jedes Kind ist dauernd in Bewegung. Spielerischer Wettkampf ohne Ball, viele Richtungswechsel und schnelle Entscheidungen. Kaum Material, schnell aufgebaut.\n\nNACHTEILE\nOhne Ball, also keine Technik am Ball. Bei langen Durchgängen ermüden die Läufer schnell. Mehrere Aufbauten brauchen den Blick des Trainers auf alle Felder.\n\nTYPISCHE FEHLERBILDER\nWächter stehen nebeneinander an derselben Pylone. Läufer stoppen auf und warten statt sofort weiterzulaufen. Pylonen werden geworfen statt umgestoßen.\n\nWORAUF ACHTEN\nNoch keine Einsatzerfahrung. Hinweise aus dem Einsatz kommen über den Projekt-Chat als Nachtrag hierher; Sterne und Einsätze zeigt die App aus den Einheiten-Bewertungen. Der Begriff „Wächter“ gilt nur für dieses Spiel und hat nichts mit den Rollen Aufpasser, Flitzer und Jäger zu tun.",
+      "skizze": {
+        "z": [
+          [
+            90,
+            45,
+            100,
+            90
+          ]
+        ],
+        "h": [
+          [
+            120,
+            70,
+            "y"
+          ],
+          [
+            160,
+            70,
+            "y"
+          ],
+          [
+            140,
+            90,
+            "y"
+          ],
+          [
+            130,
+            110,
+            "y"
+          ],
+          [
+            150,
+            110,
+            "y"
+          ]
+        ],
+        "s": [
+          [
+            110,
+            100,
+            "r",
+            "W"
+          ],
+          [
+            170,
+            100,
+            "r",
+            "W"
+          ],
+          [
+            60,
+            90,
+            "g",
+            "L"
+          ]
+        ],
+        "p": [
+          [
+            80,
+            90,
+            108,
+            84,
+            "l",
+            1
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            160,
+            "Läufer stößt um – Wächter stellen auf"
           ]
         ]
       }

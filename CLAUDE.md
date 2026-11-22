@@ -154,6 +154,16 @@ Schlüssel und Geheimnisse (VAPID-Schlüssel, Cron-Token) liegen seit v643 im Su
 - Farbe darf nie der einzige Bedeutungsträger sein
 - Kontrast: Text mindestens 4.5:1, Bedienelemente 3:1 — auch im Aus-Zustand und im dunklen Modus
 
+## Übungsformen: ein Schema (Beschluss 22.11.2026)
+
+Jede Übungsform wird **(a) visualisiert** (Skizze im Feld `skizze`), **(b) immer im gleichen Schema** aufgebaut (`name`, `kat`, `kurz`, `spieler`, `feld`, `dauer`, `diff`, `ablauf`, `coaching`, `varianten`, `ablauf_lang`, `skizze`) und bekommt **(c) eine lange Beschreibung** zum Nachlesen für Trainer, die die Form nicht kennen.
+
+- **Kurzfassung** (`ablauf`, dazu `kurz` mit höchstens 80 Zeichen) ist überall sichtbar.
+- **Lange Beschreibung** steht in `ablauf_lang` – in der App aufklappbar als „📖 Ganze Beschreibung“, im lesenden Export als `export.trainingsformen.ablauf_lang`. Sie trägt immer diese Überschriften in dieser Reihenfolge (je eine Zeile in Großbuchstaben, darunter der Text): **Ziel · Kurzbeschreibung · Aufbau · Ablauf · Regeln · Coaching-Aspekte** (höchstens drei Kernpunkte, dazu Korrekturen) **· Eskalationsstufen** (leichter, schwerer) **· Zusatzregeln · Vorteile · Nachteile · Typische Fehlerbilder · Worauf achten** (Erfahrungswerte).
+- In der Oberfläche heißt es „Zusatzregel“, nicht „Provokationsregel“.
+- **Erfahrungswerte:** Sterne und Einsätze kommen automatisch aus den Einheiten-Bewertungen und werden nicht in den Text geschrieben. Besondere Hinweise aus dem Einsatz formuliert Charles im Projekt-Chat; sie kommen als Nachtrag in `uebungen/bibliothek.json` unter „Worauf achten“ (der Abgleich beim Öffnen zieht unbearbeitete Import-Übungen nach, v585).
+- Neue Übungen vor dem Schreiben mit `_euPruefung` und `_eiSkizzeFehler` (`md-einheit-import.js`) prüfen und den Namen gegen Bibliothek, `data.js` und die Datenbank abgleichen – vorhandene nie überschreiben.
+
 ## Aufbau der Dateien
 
 ```
