@@ -390,6 +390,8 @@ function elternKontoOpen(){
     ${abschn("Über mich")}
     ${zeile("konto-angaben","👤","Meine Angaben","Name, Handy, Geburtstag – und der Geburtstag deines Kindes","elternAngabenOpen()")}
     ${zeile("konto-passwort","🔑","Passwort ändern","Für die Anmeldung mit E-Mail und Passwort","elternPasswortOpen()")}
+    ${abschn("Meine Pokale")}
+    <div id="vitrine-slot"></div>
     ${abschn("Benachrichtigungen")}
     <div style="font-size:var(--s-text);color:var(--text3);margin-bottom:6px">Erinnerungen an Termine, offene Rückmeldungen und Neuigkeiten direkt aufs Handy.</div>
     <div id="push-slot-eltern"></div>
@@ -400,6 +402,7 @@ function elternKontoOpen(){
   </div>`;
   document.body.appendChild(m);
   if(typeof pushRenderInto==="function")pushRenderInto("push-slot-eltern","parent");
+  elternVitrine("vitrine-slot");   // v947: Pokal-Vitrine
   try{ if(typeof elternDarkActive==="function"&&elternDarkActive()&&typeof elternThemeSweep==="function")elternThemeSweep(m); }catch(e){}
   const mn=document.getElementById("ep-menue"); if(mn&&mn.style.display!=="none")elternMenueUmschalten();
   document.getElementById("konto-angaben")?.focus();
@@ -1159,7 +1162,7 @@ async function elternDashLoad(){
     <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Zu erledigen</span><span style="display:block;font-size:var(--s-klein);color:var(--text2);font-weight:400;margin-top:1px">Rückmeldungen, Mitbringen, Grillhütte, „Wie war's"</span></span>
     <span id="eltern-todo-badge" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber);font-weight:800;font-size:var(--s-text);border-radius:12px;padding:2px 9px"></span>
     <span style="font-size:var(--s-teil);color:var(--text3)">›</span>
-  </button></div><div id="steckbrief-slot"></div><div id="fund-hinweis-slot"></div><div id="boerse-hinweis-slot"></div><div id="push-hinweis-slot"></div></div>
+  </button></div><div id="steckbrief-slot"></div><div id="lob-slot"></div><div id="fund-hinweis-slot"></div><div id="boerse-hinweis-slot"></div><div id="push-hinweis-slot"></div></div>
     <div id="fe-punkte" class="fe-punkte" aria-hidden="true"></div></section>`;
   html+='<div id="eltern-live-slot"></div>';
   html+='<div id="ansage-slot"></div>'; // H1: ungelesene Trainer-Ansagen als Banner
@@ -1428,7 +1431,7 @@ async function elternDashLoad(){
   elternThemeInit();          // Observer für Modals/Slots (einmalig)
   elternThemeSweep(body);     // Dashboard bei Dark-Theme einfärben
   if(termin&&termin.eltern_turnier&&document.getElementById("mitspieler-card"))mitspielerLoad(termin.id,"mitspieler-card");   // v825
-  if(termin&&termin.datum)wetterInto("wetter-eltern",termin.datum,termin.ort,termin.uhrzeit); // Wetter am Termin-Ort + Uhrzeit
+  if(termin&&termin.datum)wetterInto("wetter-eltern",termin.datum,termin.ort,termin.uhrzeit,{spruch:true}); // Wetter am Termin-Ort + Uhrzeit
   if(termin&&termin.typ==="training")elternBetreuungLoad(termin.id,kids); // wer bleibt vor Ort
   if(termin)elternHelferKachelLoad(termin);                               // Helfer-Aufgaben kompakt
   if(termin&&document.getElementById("ht-spielplan-karte"))tdSpielplanLoad(termin,"ht-spielplan-karte");   // v920
@@ -1444,6 +1447,7 @@ async function elternDashLoad(){
   if(typeof nestBogenKarte==="function")nestBogenKarte(kids);
   if(typeof steckbriefKarte==="function")steckbriefKarte(kids);             // v922: Steckbrief-Karte (md-fanfakten.js, Welle 2)
   fundHinweisKarten();                         // v945: Neues im Fundbüro und in der Börse
+  try{ lobMonatKarte(termineListe,kids,rsvpAll); }catch(e){}   // v947: Monats-Lob
   fuerEuchStart();                             // v924: Karussell „Für euch“ beobachtet seine Slots
   elternTkStart();                             // v926: Termin-Karussell
   ksKarte();                                   // v943: Klugscheißer-Info des Tages
@@ -3497,6 +3501,18 @@ async function saisonGruss(termineHeute){
   let ferien=window._ferien||[];
   if(!ferien.length&&typeof ferienLoad==="function"){ try{ ferien=await ferienLoad(); }catch(e){} }
   const s=saisonFuer(iso,termineHeute,ferien);
+  /* v947: Einmal am Tag spricht der Adler zuerst – „Moin!“ als Sprechblase, 🔊 spielt Lennarts Stimme (nur auf Tipp, Browser
+     erlauben keinen Ton ohne Berührung). Danach wieder der Saison-Gruß. */
+  let moin=false; try{ moin=localStorage.getItem("adler_moin_tag")!==iso; if(moin)localStorage.setItem("adler_moin_tag",iso); }catch(e){}
+  if(moin){
+    const basisM=(typeof appRoot==="function")?appRoot():"../";
+    slot.innerHTML=`<div class="saison saison-moin saison-${s.farbe}" role="note" data-saison="moin">
+      <img class="saison-adler" src="${basisM}${SAISON_BILD(s.adler)}" alt="" width="54" height="68" decoding="async" onerror="this.style.display='none'">
+      <span class="saison-blase"><b>Moin! 👋</b> Schön, dass ihr da seid.</span>
+      <button type="button" class="saison-ton" onclick="moinVorlesen(this)" aria-label="Den Adler sprechen hören">🔊</button>
+      <button type="button" class="saison-weg" onclick="document.getElementById('saison-slot').innerHTML=''" aria-label="Gruß schließen">×</button></div>`;
+    return;
+  }
   try{ if(localStorage.getItem(_saisonWegKey(s,iso))){ slot.innerHTML=""; return; } }catch(e){}
   const basis=(typeof appRoot==="function")?appRoot():"../";
   slot.innerHTML=`<div class="saison saison-${s.farbe}" role="note" data-saison="${s.id}">
@@ -3545,6 +3561,43 @@ async function fundHinweisKarten(){
 function fhWeg(art,id){
   try{ localStorage.setItem("adler_fh_weg_"+art,String(Math.max(_fhWeg(art),Number(id)||0))); }catch(e){}
   const s=document.getElementById(art==="fund"?"fund-hinweis-slot":"boerse-hinweis-slot"); if(s)s.innerHTML="";
+}
+
+/* ── v947 · Kleine Freuden für Eltern (Charles 22.11., freigegeben; nur Eltern-App) ── */
+function moinVorlesen(btn){
+  const t=(typeof ELTERN_MOIN==="string")?ELTERN_MOIN:"Moin! Schön, dass ihr da seid.";
+  if(typeof kfVorlesen==="function")kfVorlesen([t],btn,()=>t);
+}
+/* Monats-Lob: Sind alle Termine dieses Monats, die eine Antwort brauchen (nicht Training – das gilt als zugesagt –, nicht
+   abgesagt), für alle eigenen Kinder beantwortet, sagt „📌 Für euch“ danke. „✕“ blendet bis zum nächsten Monat aus. */
+function lobMonatKarte(termine,kids,rsvpAll){
+  const slot=document.getElementById("lob-slot"); if(!slot)return;
+  const iso=isoLokal(), monat=iso.slice(0,7);
+  let weg=false; try{ weg=localStorage.getItem("adler_lob_weg_"+monat)==="1"; }catch(e){}
+  const ids=(kids||[]).map(k=>k.spieler_id);
+  const offen=(termine||[]).filter(t=>t&&String(t.datum).slice(0,7)===monat&&!(typeof _elAbgesagt==="function"&&_elAbgesagt(t))&&!(typeof elternGiltZugesagt==="function"&&elternGiltZugesagt(t)));
+  const alle=offen.length>0&&ids.length>0&&offen.every(t=>ids.every(id=>(rsvpAll||{})[t.id]&&(rsvpAll[t.id][id])));
+  if(weg||!alle){ slot.innerHTML=""; return; }
+  const mn=new Date(iso+"T00:00:00").toLocaleDateString("de-DE",{month:"long"});
+  slot.innerHTML=`<div class="lob-karte" role="region" aria-label="Danke">
+    <button type="button" class="fe-x" onclick="lobWeg()" aria-label="Danke ausblenden">✕</button>
+    <div class="lob-titel">✓ Alle Termine im ${esc(mn)} beantwortet</div>
+    <div class="lob-text">Danke! So kann das Trainerteam gut planen – ihr seid spitze. 💙</div></div>`;
+}
+function lobWeg(){ try{ localStorage.setItem("adler_lob_weg_"+isoLokal().slice(0,7),"1"); }catch(e){} const s=document.getElementById("lob-slot"); if(s)s.innerHTML=""; }
+/* Pokal-Vitrine unter „Mein Konto“: die Meilensteine für Antworten auf Termine (10/25/50/100, dieselben Stufen wie der
+   Pokal beim Öffnen). Erreichte Pokale golden, offene mit „noch n“. Nur die eigenen Antworten zählen. */
+async function elternVitrine(slotId){
+  const slot=document.getElementById(slotId); if(!slot)return;
+  const uid=(typeof sbUserId==="function")?sbUserId():null; let n=null;
+  if(uid){ try{ const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?select=id&updated_by=eq.${encodeURIComponent(uid)}`,{headers:sbAuthHeaders()}); if(r.ok)n=((await r.json())||[]).length; }catch(e){} }
+  if(n==null){ slot.innerHTML=`<div class="vitrine-leer">Die Pokale sind gerade nicht erreichbar.</div>`; return; }
+  const stufen=(typeof FR_STUFEN!=="undefined"&&FR_STUFEN.eltern)||[10,25,50,100];
+  slot.innerHTML=`<div class="vitrine" role="list" aria-label="Pokale für Antworten auf Termine">${stufen.map(st=>{
+    const da=n>=st;
+    return `<div class="vitrine-pokal${da?" da":""}" role="listitem"><span class="vitrine-bild" aria-hidden="true">${da?"🏆":"🔒"}</span>
+      <span class="vitrine-zahl">${st}</span><span class="vitrine-unter">${da?"geschafft":"noch "+(st-n)}</span></div>`; }).join("")}</div>
+    <div class="vitrine-stand">${n} ${n===1?"Antwort":"Antworten"} auf Termine bisher – danke!</div>`;
 }
 
 function elternPushHinweisWeg(){ if(typeof pushKarteWeg==="function")pushKarteWeg("push-hinweis-slot"); }

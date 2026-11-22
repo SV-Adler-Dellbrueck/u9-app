@@ -68,6 +68,7 @@ function eintraege() {
     const c = {}; vm.createContext(c);
     vm.runInContext(lt.replace(/const /g, "var ") + "\n" + lf.replace(/const /g, "var "), c);
     if (c.SCHULE_GRUSS) dazu("audio/schule", c.SCHULE_GRUSS, "Lehrer: Begrüßung");
+    if (c.ELTERN_MOIN) dazu("audio/schule", c.ELTERN_MOIN, "Eltern: Moin-Gruß (v947)");
     Object.keys(c.KF_LEITFRAGEN || {}).forEach(k => dazu("audio/schule", c.SCHULE_STUNDE_VOR + c.KF_LEITFRAGEN[k] + c.SCHULE_STUNDE_NACH, "Lehrer: Stunde " + k));
   } catch (e) {}
   return aus;

@@ -851,7 +851,18 @@ function wetterWarn(w){
   if(w.rain!=null&&w.rain>=85)return {lvl:"Starkregen",msg:"🌧️ Sehr hohe Regenwahrscheinlichkeit ("+w.rain+"%)."};
   return null;
 }
-async function wetterInto(elId,dateStr,place,timeStr){
+/* v947 · Charles 22.11. (kleine Freuden, nur Eltern): ein lockerer Satz zum Wetter über dem Packhinweis – kein Ersatz für die
+   Warnung, nur gute Laune. Regen geht vor, dann Kälte, Hitze, schönes Wetter. */
+function wetterSpruch(w){
+  if(!w)return "";
+  const t=w.hour?w.temp:(w.tmax!=null?w.tmax:w.tmin);
+  if(w.rain!=null&&w.rain>=55)return "☔ Echte Adler fliegen auch bei Regen!";
+  if(t!=null&&t<5)return "🥶 Kalt draußen – beim Kicken wird’s schnell warm!";
+  if(t!=null&&t>=27)return "☀️ Heiß heute – Trinkpausen gibt’s genug.";
+  if(t!=null&&t>=13&&(w.rain==null||w.rain<30))return "🌤️ Bestes Fußballwetter!";
+  return "";
+}
+async function wetterInto(elId,dateStr,place,timeStr,opt){
   const w=await wetterFetch(dateStr,place,timeStr);
   const el=document.getElementById(elId);
   if(!el||!w)return; // außer Reichweite / offline: nichts anzeigen
@@ -862,7 +873,8 @@ async function wetterInto(elId,dateStr,place,timeStr){
   const sy=document.getElementById(elId+"-symbol");
   if(sy){ sy.textContent=` · ${w.emoji} ${w.hour?w.temp:w.tmax}°`; sy.setAttribute("aria-label",`Wetter: ${w.text}, ${temp}`); }
   el.innerHTML=`<span style="display:inline-flex;align-items:center;gap:5px;font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border:var(--border);border-radius:20px;padding:3px 10px;margin-top:6px">${w.emoji} ${w.text} · ${temp}${rain}</span>`
-    +(tip?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">🎒 ${tip}</div>`:"");
+    +(tip?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">🎒 ${tip}</div>`:"")
+    +((opt&&opt.spruch&&wetterSpruch(w))?`<div class="wetter-spruch" style="font-size:var(--s-text);font-weight:700;color:var(--text);margin-top:6px">${wetterSpruch(w)}</div>`:"");
 }
 
 /* v821 · Terminkarte: das farbige Band für den nächsten Termin – bei Eltern und Trainern dieselbe Bildsprache.
@@ -2391,7 +2403,7 @@ function _frWappenTipp(e){
   if(_frTipps.length>=5){ _frTipps=[]; freudeAdlerFlug(); }
 }
 try{ document.addEventListener("click",_frWappenTipp,true); }catch(e){}
-const FR_STUFEN={trainer:[10,25,50,100],eltern:[10,25,50]};
+const FR_STUFEN={trainer:[10,25,50,100],eltern:[10,25,50,100]};   // v947: Eltern bis 100 (Pokal-Vitrine)
 function _frStufe(art,n){ return (FR_STUFEN[art]||[]).filter(s=>n>=s).pop()||0; }
 async function freudeMeilenstein(art,name){
   if(typeof sbToken!=="function"||!sbToken())return;

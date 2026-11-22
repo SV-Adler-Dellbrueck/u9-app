@@ -1590,6 +1590,7 @@ function kfSvg(feld,bild,o){
 /*LEHRER-TEXTE-ANFANG*/
 const SCHULE_GRUSS="Hallo! Heute stehen drei Stunden Sport auf dem Plan. Such dir eine aus! Und das Beste: Du musst nur zum Unterricht, wenn du willst.";
 const SCHULE_STUNDE_VOR="Heute lernen wir: ", SCHULE_STUNDE_NACH=" Erst schauen wir uns Bilder an. Dann bist du dran!";
+const ELTERN_MOIN="Moin! Schön, dass ihr da seid. Der Adler freut sich aufs nächste Training!";   // v947: Moin-Gruß der Eltern-Startseite
 /*LEHRER-TEXTE-ENDE*/
 function schuleStundeText(lf){ return SCHULE_STUNDE_VOR+KF_LEITFRAGEN[lf]+SCHULE_STUNDE_NACH; }
 const SCHULE_LEHRER={master:"Maskottchen/master/adler_master/adler_master_klein.webp",
