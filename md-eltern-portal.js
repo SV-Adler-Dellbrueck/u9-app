@@ -1151,6 +1151,7 @@ async function elternDashLoad(){
   /* v924 (Charles 21.11., Bild freigegeben): „Für euch“ – ein Karussell ganz oben mit allem, was Eltern gerade tun sollen.
      Die Karten bleiben in ihren Slots (Porträt-Bogen mit Frist zuerst, dann Weihnachtsfeier, dann Steckbrief); die Slots
      sind display:contents, so werden ihre Karten zu Gliedern der Bahn. fuerEuchSync zählt, blendet ein und aus. */
+  html+='<div id="saison-slot"></div>';   // v944: Saison-Gruß mit Adler (saisonGruss), direkt unter dem Kopf
   html+=`<section id="fuer-euch" class="fe" aria-label="Für euch" hidden>
     <div class="fe-kopf"><span class="fe-titel">📌 Für euch</span><span id="fe-zahl" class="fe-zahl" aria-live="polite"></span></div>
     <div id="fe-bahn" class="fe-bahn" tabindex="-1"><div id="eltern-offen-slot"></div><div id="nest-bogen-slot"></div><div id="feier-slot"></div><div id="fe-todo-slot"><button id="eltern-todo-btn" class="btn btn-zeile" onclick="elternCatOpen('todo')" style="display:none;">
@@ -1445,6 +1446,7 @@ async function elternDashLoad(){
   fuerEuchStart();                             // v924: Karussell „Für euch“ beobachtet seine Slots
   elternTkStart();                             // v926: Termin-Karussell
   ksKarte();                                   // v943: Klugscheißer-Info des Tages
+  saisonGruss(termineListe.filter(t=>t.datum===heute));   // v944: Saison-Gruß
   window._elternKids=kids;   // v699: die Mannschaftskasse zeigt den Stand der eigenen Kinder beim Öffnen
   elternKasseKachelStand(kids, kasse);   // v716: „Beitrag bezahlt / offen“ direkt auf der Kachel
   elternGenesungLoad(kids);                    // I-A: Genesungsgrüße für pausierte Teamkinder
@@ -3444,6 +3446,59 @@ async function ksKarte(){
 function ksWeiter(){
   window._ksSchritt=(window._ksSchritt||0)+1;
   ksKarte().then(()=>{ const b=document.querySelector("#klug-slot .ks-weiter"); if(b)b.focus(); });
+}
+
+/* ── v944: Saison-Optik (Charles 22.11.: Weihnachten + Silvester, Karneval + Halloween, Ostern + Ferien, Vereinstage,
+   Jahreszeiten). Ein Gruß-Streifen oben auf der Eltern-Startseite mit dem passenden Adler aus Maskottchen/varianten
+   (acht Saison-Adler, freigegeben 22.11.) und einem Satz. Reihenfolge: Spieltag heute → Weihnachten → Silvester/Neujahr
+   → Karneval → Ostern → Halloween → NRW-Ferien → Jahreszeit. Ostern wird berechnet (Gauß), Karneval hängt daran
+   (Weiberfastnacht = Ostern − 52, Veilchendienstag = Ostern − 47), Ferien kommen aus dem Ferien-Radar (ferienLoad).
+   „×“ blendet den Gruß aus, bis der nächste Anlass kommt (merkt sich je Anlass und Jahr). Kein Kindername, keine Zahl. */
+const SAISON_BILD=n=>"Maskottchen/varianten/adler_winkt_"+n+"/adler_winkt_"+n+"_klein.webp";
+function saisonOstern(j){
+  const a=j%19,b=Math.floor(j/100),c=j%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),
+    h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+    mo=Math.floor((h+l-7*m+114)/31),ta=((h+l-7*m+114)%31)+1;
+  return Date.UTC(j,mo-1,ta);
+}
+function saisonFuer(iso,termineHeute,ferien){
+  const j=+iso.slice(0,4), md=iso.slice(5), t=Date.UTC(j,+iso.slice(5,7)-1,+iso.slice(8,10)), tag=864e5;
+  const os=saisonOstern(j), zw=(a,b)=>md>=a&&md<=b;
+  const jz=zw("03-20","06-20")?{id:"fruehling",adler:"bluete",farbe:"gruen",text:"🌼 Frühling – raus auf den Platz!"}
+    :zw("06-21","09-22")?{id:"sommer",adler:"sonnenbrille",farbe:"gelb",text:"😎 Sommer, Sonne, Fußball!"}
+    :zw("09-23","12-20")?{id:"herbst",adler:"schal",farbe:"orange",text:"🍂 Herbstzeit ist Fußballzeit."}
+    :{id:"winter",adler:"vereinsmuetze",farbe:"blau",text:"❄️ Warm anziehen – der Winter ist da."};
+  const sp=(termineHeute||[]).find(x=>x&&(x.typ==="spiel"||x.typ==="turnier")&&!(typeof _elAbgesagt==="function"&&_elAbgesagt(x)));
+  if(sp)return {id:"spieltag-"+iso,adler:jz.adler,farbe:"blau",text:sp.typ==="turnier"?"🏆 Heute ist Turniertag – viel Spaß, Adler!":"⚽ Heute ist Spieltag – viel Spaß, Adler!"};
+  if(zw("12-24","12-26"))return {id:"weihnachten",adler:"weihnachtsmuetze",farbe:"rot",text:"🎄 Frohe Weihnachten von eurem Adler!"};
+  if(zw("12-01","12-23"))return {id:"advent",adler:"weihnachtsmuetze",farbe:"rot",text:"🎄 Eine schöne Adventszeit!"};
+  if(zw("12-27","12-31"))return {id:"silvester",adler:"partyhut",farbe:"gold",text:"🎆 Einen guten Rutsch ins neue Jahr!"};
+  if(zw("01-01","01-06"))return {id:"neujahr",adler:"partyhut",farbe:"gold",text:"🎆 Frohes neues Jahr, Adler!"};
+  if(md==="11-11")return {id:"elfter",adler:"narrenkappe",farbe:"bunt",text:"🎭 Kölle Alaaf – die Session beginnt!"};
+  if(t>=os-52*tag&&t<=os-47*tag)return {id:"karneval",adler:"narrenkappe",farbe:"bunt",text:"🎭 Kölle Alaaf!"};
+  if(t>=os-3*tag&&t<=os+1*tag)return {id:"ostern",adler:"hasenohren",farbe:"gruen",text:"🐣 Frohe Ostern!"};
+  if(zw("10-25","10-31"))return {id:"halloween",adler:"kuerbis",farbe:"orange",text:"🎃 Happy Halloween!"};
+  const f=(ferien||[]).find(x=>x&&iso>=x.von&&iso<=x.bis);
+  if(f)return {id:"ferien-"+f.von,adler:jz.adler,farbe:jz.farbe,text:"🏖️ Schöne "+f.name+"!"};
+  return jz;
+}
+function _saisonWegKey(s,iso){ return "saison_weg_"+s.id+"_"+iso.slice(0,4); }
+async function saisonGruss(termineHeute){
+  const slot=document.getElementById("saison-slot"); if(!slot)return;
+  const iso=isoLokal();
+  let ferien=window._ferien||[];
+  if(!ferien.length&&typeof ferienLoad==="function"){ try{ ferien=await ferienLoad(); }catch(e){} }
+  const s=saisonFuer(iso,termineHeute,ferien);
+  try{ if(localStorage.getItem(_saisonWegKey(s,iso))){ slot.innerHTML=""; return; } }catch(e){}
+  const basis=(typeof appRoot==="function")?appRoot():"../";
+  slot.innerHTML=`<div class="saison saison-${s.farbe}" role="note" data-saison="${s.id}">
+    <img class="saison-adler" src="${basis}${SAISON_BILD(s.adler)}" alt="" width="54" height="68" decoding="async" onerror="this.style.display='none'">
+    <span class="saison-text">${esc(s.text)}</span>
+    <button type="button" class="saison-weg" onclick="saisonWeg('${s.id}')" aria-label="Gruß ausblenden">×</button></div>`;
+}
+function saisonWeg(id){
+  try{ localStorage.setItem("saison_weg_"+id+"_"+isoLokal().slice(0,4),"1"); }catch(e){}
+  const slot=document.getElementById("saison-slot"); if(slot)slot.innerHTML="";
 }
 
 function elternPushHinweisWeg(){ if(typeof pushKarteWeg==="function")pushKarteWeg("push-hinweis-slot"); }

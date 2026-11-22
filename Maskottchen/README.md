@@ -94,4 +94,4 @@ Das Vereinswappen wird von der KI nicht nachgemalt, es würde nie exakt. Soll de
 
 ## Einbindung in die App
 
-Die App lädt diese Bilder derzeit nicht. Wer sie einbaut, beachtet die Pflichten aus `CLAUDE.md`: Dateien in `PRECACHE` und in `FEST_CACHE` (`sw.js`) eintragen, danach `node tools/fest-cache.js --schreiben` aufrufen und `sw.js` hochzählen.
+Seit v938 zeigt die Adler-Schule den Master und zwei Weihnachts-Posen, seit v944 der Saison-Gruß der Eltern-Startseite die neun winkenden Varianten (`_klein.webp`). Wer weitere einbaut, beachtet die Pflichten aus `CLAUDE.md`: Dateien in `PRECACHE` und in `FEST_CACHE` (`sw.js`) eintragen, danach `node tools/fest-cache.js --schreiben` aufrufen und `sw.js` hochzählen.
