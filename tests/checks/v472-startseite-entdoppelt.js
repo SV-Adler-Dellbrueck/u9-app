@@ -10,7 +10,10 @@ module.exports = async function (h) {
   const termine = [
     { id: 1, datum: t1, typ: "training", uhrzeit: "16:45", trainer_status: {} },
     { id: 2, datum: t2, typ: "spiel", titel: "Testspiel", uhrzeit: "10:15", heim: true, trainer_status: {} },
-    { id: 3, datum: t3, typ: "training", uhrzeit: "16:45", trainer_status: {} }
+    { id: 3, datum: t3, typ: "training", uhrzeit: "16:45", trainer_status: {} },
+    /* v939: „Alle N Termine“ steht seit v939 unten in „Diese Woche“ und erscheint nur, wenn es mehr Termine gibt als die Woche
+       zeigt – deshalb ein Termin außerhalb der sieben Tage. */
+    { id: 4, datum: h.tagePlus(20), typ: "training", uhrzeit: "16:45", trainer_status: {} }
   ];
   const s = await h.starten({ supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), termine, profiles: [{ name: "Charles", rolle: "trainer" }] }), hoehe: 1600 });
   await h.sichtbarMachen(s.page, "#home-content");
