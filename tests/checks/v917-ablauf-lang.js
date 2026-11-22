@@ -15,7 +15,8 @@ module.exports = async function (h) {
   const mitLang = bib.uebungen.filter(u => u.ablauf_lang);
   const zuLang = bib.uebungen.filter(u => String(u.ablauf || "").length > 2000);
   const kurzOk = mitLang.every(u => u.ablauf.length <= 1000 && u.ablauf_lang.length > u.ablauf.length);
-  if (mitLang.length !== 4 || zuLang.length || !kurzOk) probleme.push(`a) ${mitLang.length} mit langer Fassung, ${zuLang.length} Abläufe über 2.000, kurz ≤ 1.000: ${kurzOk}`);
+  /* v941: seit dem Grundsatz „ein Schema je Übungsform“ tragen neue Übungen immer eine lange Fassung – geprüft wird, dass es mindestens die vier aus v917 sind */
+  if (mitLang.length < 4 || zuLang.length || !kurzOk) probleme.push(`a) ${mitLang.length} mit langer Fassung, ${zuLang.length} Abläufe über 2.000, kurz ≤ 1.000: ${kurzOk}`);
   const raute = bib.uebungen.find(u => /^Raute mit Torwart/.test(u.name));
   if (!raute || !/^HAUPTZIEL \(Leitfrage 4\)/.test(raute.ablauf_lang || "") || !/Sturzflug/.test(raute.ablauf_lang || "")) probleme.push("a) lange Fassung der Raute nicht die ursprüngliche");
   if (String(bib.stand) <= "2026-11-20-2") probleme.push(`a) Stand „${bib.stand}“ nicht hochgesetzt`);
