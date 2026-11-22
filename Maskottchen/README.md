@@ -9,7 +9,7 @@ Dieser Ordner enthält nur den Adler, keine Kinderdaten und keine Fotos. Das Rep
 | Ordner | Inhalt |
 |---|---|
 | `master/` | Der Master-Adler ohne Zubehör, winkend. Ausgangspunkt jeder neuen Variante. Wird nie verändert. |
-| `varianten/` | Freigegebene Varianten, je Pose ein Unterordner. Stand 22.11.2026: Weihnachtsmütze in fünf Posen. |
+| `varianten/` | Freigegebene Varianten, je Pose ein Unterordner. Stand 22.11.2026: Weihnachtsmütze in fünf Posen, dazu acht winkende Saison-Varianten. |
 | `quellen/` | Die Original-Bilder mit einfarbig grauem Hintergrund (#BEBEBE), so wie die KI sie geliefert hat. Sie dienen als Referenz für neue Varianten, nicht für die Anzeige. |
 | `werkzeuge/` | `freistellen.py`, entfernt den grauen Hintergrund und schneidet zu. |
 
@@ -33,6 +33,14 @@ Namensmuster: `adler_<pose>[_<zubehoer>]_<groesse>.<endung>`, alles klein, Umlau
 | `adler_fliegt_weihnachtsmuetze` | Weihnachtsmütze | Anflug und Abflug, Szenenwechsel |
 | `adler_jubelt-ball_weihnachtsmuetze` | Weihnachtsmütze, Fußball | Dank, Schluss, Erfolge |
 | `adler_staunt_weihnachtsmuetze` | Weihnachtsmütze | Hervorhebungen |
+| `adler_winkt_narrenkappe` | Narrenkappe, rote Nase | Karneval (11.11., Weiberfastnacht bis Aschermittwoch) |
+| `adler_winkt_hasenohren` | Hasenohren, Osterei | Ostern |
+| `adler_winkt_kuerbis` | Kürbis (freundlich) | Halloween |
+| `adler_winkt_partyhut` | Partyhut, Wunderkerze | Silvester und Neujahr |
+| `adler_winkt_bluete` | gelbe Blüte am Kopf | Frühling |
+| `adler_winkt_sonnenbrille` | Sonnenbrille | Sommer. Ausnahme von der Checkliste: die Brille verdeckt die Augen gewollt |
+| `adler_winkt_schal` | blauer Schal, Ahornblatt | Herbst |
+| `adler_winkt_vereinsmuetze` | blaue Strickmütze mit Bommel, ohne Wappen | Winter außerhalb der Weihnachtszeit |
 
 ## Charakterbeschreibung
 
@@ -62,7 +70,7 @@ Regel: jede Variante entsteht aus dem Master, nie aus einer anderen Variante. So
 5. Mit `werkzeuge/freistellen.py` freistellen (`python3 freistellen.py eingabe.jpg ausgabe.png`, braucht Pillow, numpy und scipy) und die vier Größen exportieren.
 6. Original unter `quellen/`, Exporte unter `varianten/` ablegen und die Tabelle oben ergänzen.
 
-Ideen für Zubehör, noch nicht erzeugt: Sonnenbrille (Sommer), blaue Vereinsmütze (Winter), Schal, Pokal, Torwarthandschuhe, Trikot mit Nummer.
+Ideen für Zubehör, noch nicht erzeugt: Pokal, Torwarthandschuhe, Trikot mit Nummer. Die Saison-Varianten (22.11.2026) sind alle in der Pose „winkt“; weitere Posen je Saison bei Bedarf.
 
 ## Freigabe-Checkliste
 
