@@ -3451,7 +3451,7 @@ function ksWeiter(){
 
 /* ── v944: Saison-Optik (Charles 22.11.: Weihnachten + Silvester, Karneval + Halloween, Ostern + Ferien, Vereinstage,
    Jahreszeiten). Ein Gruß-Streifen oben auf der Eltern-Startseite mit dem passenden Adler aus Maskottchen/varianten
-   (acht Saison-Adler, freigegeben 22.11.) und einem Satz. Reihenfolge: Spieltag heute → Weihnachten → Silvester/Neujahr
+   (acht Saison-Adler, freigegeben 22.11.) und einem Satz. Reihenfolge: Vereinsgeburtstag (09.04., seit v946) → Spieltag heute → Weihnachten → Silvester/Neujahr
    → Karneval → Ostern → Halloween → NRW-Ferien → Jahreszeit. Ostern wird berechnet (Gauß), Karneval hängt daran
    (Weiberfastnacht = Ostern − 52, Veilchendienstag = Ostern − 47), Ferien kommen aus dem Ferien-Radar (ferienLoad).
    „×“ blendet den Gruß aus, bis der nächste Anlass kommt (merkt sich je Anlass und Jahr). Kein Kindername, keine Zahl. */
@@ -3462,6 +3462,7 @@ function saisonOstern(j){
     mo=Math.floor((h+l-7*m+114)/31),ta=((h+l-7*m+114)%31)+1;
   return Date.UTC(j,mo-1,ta);
 }
+const VEREIN_GEBURTSTAG="1922-04-09";   // v946: Gründung des SV Adler Dellbrück (Palmsonntag 1922, Charles 22.11.)
 function saisonFuer(iso,termineHeute,ferien){
   const j=+iso.slice(0,4), md=iso.slice(5), t=Date.UTC(j,+iso.slice(5,7)-1,+iso.slice(8,10)), tag=864e5;
   const os=saisonOstern(j), zw=(a,b)=>md>=a&&md<=b;
@@ -3469,6 +3470,12 @@ function saisonFuer(iso,termineHeute,ferien){
     :zw("06-21","09-22")?{id:"sommer",adler:"sonnenbrille",farbe:"gelb",text:"😎 Sommer, Sonne, Fußball!"}
     :zw("09-23","12-20")?{id:"herbst",adler:"schal",farbe:"orange",text:"🍂 Herbstzeit ist Fußballzeit."}
     :{id:"winter",adler:"vereinsmuetze",farbe:"blau",text:"❄️ Warm anziehen – der Winter ist da."};
+  /* v946 · Charles 22.11.: Der SV Adler Dellbrück wurde am 09.04.1922 gegründet (Palmsonntag). Der Vereinsgeburtstag geht
+     allem vor – er kommt nur einmal im Jahr –, an einem Spieltag mit dem Zusatz „und Spieltag“. */
+  if(md===VEREIN_GEBURTSTAG.slice(5)){
+    const x=j-(+VEREIN_GEBURTSTAG.slice(0,4)), spHeute=(termineHeute||[]).some(t=>t&&(t.typ==="spiel"||t.typ==="turnier")&&!(typeof _elAbgesagt==="function"&&_elAbgesagt(t)));
+    return {id:"vereinsgeburtstag",adler:"partyhut",farbe:"gold",text:`🎂 Happy Birthday, SV Adler! Heute vor ${x} Jahren wurde unser Verein gegründet${spHeute?" – und heute ist Spieltag":""}.`};
+  }
   const sp=(termineHeute||[]).find(x=>x&&(x.typ==="spiel"||x.typ==="turnier")&&!(typeof _elAbgesagt==="function"&&_elAbgesagt(x)));
   if(sp)return {id:"spieltag-"+iso,adler:jz.adler,farbe:"blau",text:sp.typ==="turnier"?"🏆 Heute ist Turniertag – viel Spaß, Adler!":"⚽ Heute ist Spieltag – viel Spaß, Adler!"};
   if(zw("12-24","12-26"))return {id:"weihnachten",adler:"weihnachtsmuetze",farbe:"rot",text:"🎄 Frohe Weihnachten von eurem Adler!"};
