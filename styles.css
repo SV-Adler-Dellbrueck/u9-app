@@ -1931,3 +1931,16 @@ details.tk-erledigt[open]>summary::after{content:"▴"}
 .ks-fuss{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .ks-quelle{font-size:var(--s-klein);color:var(--text2);text-decoration:underline}
 .ks-weiter{min-height:44px}
+
+/* v944: Saison-Gruß (Eltern-Startseite). Farbe nur als Schmuck – der Satz trägt die Bedeutung. */
+.saison{display:flex;align-items:center;gap:10px;background:var(--surface);color:var(--text);border-radius:14px;padding:6px 6px 6px 10px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05);border-left:5px solid var(--saison,#1d4ed8);background-image:linear-gradient(90deg,var(--saison-bg,transparent),transparent 70%)}
+.saison-adler{flex:none;width:54px;height:68px;object-fit:contain}
+.saison-text{flex:1;min-width:0;font-size:var(--s-karte);font-weight:800;line-height:1.3}
+.saison-weg{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:transparent;color:var(--text2);font-size:var(--s-teil);cursor:pointer}
+.saison-rot{--saison:#b91c1c;--saison-bg:rgba(185,28,28,.10)}
+.saison-gold{--saison:#b45309;--saison-bg:rgba(212,166,74,.18)}
+.saison-bunt{--saison:#7c3aed;--saison-bg:rgba(124,58,237,.10)}
+.saison-gruen{--saison:#15803d;--saison-bg:rgba(21,128,61,.10)}
+.saison-gelb{--saison:#ca8a04;--saison-bg:rgba(250,204,21,.16)}
+.saison-orange{--saison:#c2410c;--saison-bg:rgba(234,88,12,.10)}
+.saison-blau{--saison:#1d4ed8;--saison-bg:rgba(29,78,216,.10)}

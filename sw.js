@@ -1,4 +1,4 @@
-const CACHE="u9i-adler-v943";
+const CACHE="u9i-adler-v944";
 const PRECACHE=[
   "./",
   "./index.html",
@@ -59,6 +59,15 @@ const PRECACHE=[
   "./Maskottchen/master/adler_master/adler_master_klein.webp",
   "./Maskottchen/varianten/adler_winkt_weihnachtsmuetze/adler_winkt_weihnachtsmuetze_klein.webp",
   "./Maskottchen/varianten/adler_praesentiert_weihnachtsmuetze/adler_praesentiert_weihnachtsmuetze_klein.webp",
+  // v944: die acht Saison-Adler für den Saison-Gruß der Eltern-Startseite (zusammen rund 185 KB, einmal je Gerät)
+  "./Maskottchen/varianten/adler_winkt_narrenkappe/adler_winkt_narrenkappe_klein.webp",
+  "./Maskottchen/varianten/adler_winkt_hasenohren/adler_winkt_hasenohren_klein.webp",
+  "./Maskottchen/varianten/adler_winkt_kuerbis/adler_winkt_kuerbis_klein.webp",
+  "./Maskottchen/varianten/adler_winkt_partyhut/adler_winkt_partyhut_klein.webp",
+  "./Maskottchen/varianten/adler_winkt_bluete/adler_winkt_bluete_klein.webp",
+  "./Maskottchen/varianten/adler_winkt_sonnenbrille/adler_winkt_sonnenbrille_klein.webp",
+  "./Maskottchen/varianten/adler_winkt_schal/adler_winkt_schal_klein.webp",
+  "./Maskottchen/varianten/adler_winkt_vereinsmuetze/adler_winkt_vereinsmuetze_klein.webp",
   "./badge-adler.png",   // v671: Adler weiß auf transparent – Symbol in der Statusleiste bei Push
   "./icon-trainer.png",
   "./icon-trainer-maskable.png",
@@ -99,7 +108,7 @@ const PRECACHE=[
    neu gefüllt. Nicht von Hand setzen – node tools/fest-cache.js --schreiben; der Prüflauf wird
    rot, wenn Name und Inhalt nicht zusammenpassen. Der Name darf nicht mit dem des Versionscaches
    beginnen: die Versionsanzeige liest die Cache-Namen. */
-const FEST_CACHE="adler-fest-82d10c7e";
+const FEST_CACHE="adler-fest-a3a30420";
 const istFest=u=>/^\.\/vendor\/|\.(png|webp)$/.test(u);   // v938: auch die Maskottchen-Bilder (webp)
 // Adressen der festen Dateien – erst beim ersten Abruf gebildet, nicht beim Laden der Datei
 let _festAdressen=null;
