@@ -310,6 +310,14 @@ Begrüßung im Stundenplan und der Satz zu Beginn jeder Stunde. Ohne Namen des K
 | Stunde 5 | c165c6f0.mp3 | Heute lernen wir: Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht? Erst schauen wir uns Bilder an. Dann bist du dran! |
 | Stunde 6 | 9ff25f23.mp3 | Heute lernen wir: Wie hole ich mir den Ball zurück? Erst schauen wir uns Bilder an. Dann bist du dran! |
 
+## 5 Eltern-App – 1 Text(e) (Ziel: `audio/schule/`)
+
+Der Moin-Gruß der Eltern-Startseite (🔊 in der Sprechblase).
+
+| Wo | Datei | Sprechtext |
+|---|---|---|
+| Moin-Gruß (v947) | dd18d932.mp3 | Moin! Schön, dass ihr da seid. Der Adler freut sich aufs nächste Training! |
+
 ---
 
 **Vertonung offen – Texte von Charles freigeben lassen, dann im Projekt-Chat mit ElevenLabs/Lennart erzeugen.**
