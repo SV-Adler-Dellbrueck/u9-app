@@ -1069,6 +1069,7 @@ async function elternDashLoad(){
   try{if(typeof elTickerTimer!=="undefined"&&elTickerTimer){clearInterval(elTickerTimer);elTickerTimer=null;}}catch(e){} // Ticker-Poll endet beim Verlassen der Match-Ansicht
   const body=document.getElementById("ep-dash-body");
   if(!body)return;
+  if(typeof freudeStart==="function")freudeStart("eltern");   // v942: Geburtstag oder Meilenstein, einmal je Sitzung
   const card=(inner)=>`<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">${inner}</div>`;
   const heute=isoLokal();
   // UX 3: kam der Elternteil über einen Deep-Link (?rsvp=…)? Dann Nudge erzwingen + hinscrollen.
@@ -1182,6 +1183,7 @@ async function elternDashLoad(){
     <span style="font-size:var(--s-teil);color:#64748b">›</span>
   </button>`;
   html+='<div class="el-zone-ende" hidden></div>';   // v838: hier enden die Zonen
+  html+='<div id="klug-slot"></div>';   // v943: Klugscheißer-Info des Tages (ksKarte)
   // A1: persönlicher Nach-dem-Spiel-Gruß – der Slot steht jetzt UNTER den Terminen (s. u.).
   if(!termin){
     terminHtml=card('<div style="font-weight:700;margin-bottom:2px">📅 Nächster Termin</div><div style="color:#64748b;font-size:var(--s-text)">Aktuell ist kein Termin geplant.</div>');
@@ -1442,6 +1444,7 @@ async function elternDashLoad(){
   if(typeof steckbriefKarte==="function")steckbriefKarte(kids);             // v922: Steckbrief-Karte (md-fanfakten.js, Welle 2)
   fuerEuchStart();                             // v924: Karussell „Für euch“ beobachtet seine Slots
   elternTkStart();                             // v926: Termin-Karussell
+  ksKarte();                                   // v943: Klugscheißer-Info des Tages
   window._elternKids=kids;   // v699: die Mannschaftskasse zeigt den Stand der eigenen Kinder beim Öffnen
   elternKasseKachelStand(kids, kasse);   // v716: „Beitrag bezahlt / offen“ direkt auf der Kachel
   elternGenesungLoad(kids);                    // I-A: Genesungsgrüße für pausierte Teamkinder
@@ -1556,6 +1559,9 @@ async function elternRsvp(terminId,spielerId,status){
     if(!r.ok){toast("Konnte nicht speichern","err");return;}
   }catch(e){toast("Netzwerkfehler","err");return;}
   toast("Rückmeldung gespeichert ✓");
+  /* v942: kleines Danke bei einer Zusage, danach vielleicht ein Meilenstein (core.js) */
+  if(status==="zugesagt"&&typeof freudeHerz==="function")freudeHerz(["Danke! Das Team freut sich.","Super, ihr seid dabei!","Danke – so planen die Trainer leichter."][Math.floor(Math.random()*3)]);
+  if(typeof freudeMeilenstein==="function")setTimeout(()=>freudeMeilenstein("eltern"),2800);
   if(status==="zugesagt")window._epPop=1;   // v783: die Terminkarte bestätigt kurz (nach dem Neuzeichnen)
   // FEAT S: XP für Zusagen (idempotent pro Termin via quelle_id, Punktwert bestimmt der Server)
   if(status==="zugesagt"){const d=await xpAward(spielerId,"rsvp","t"+terminId);if(d>0)setTimeout(()=>toast(`${XP_ICON} +${d} ${XP_LABEL} gesammelt!`),1100);}
@@ -1571,7 +1577,9 @@ async function elternRsvpAllYes(terminId){
       if(r.ok){ok++; xpAward(k.spieler_id,"rsvp","t"+terminId).catch(()=>{});}
     }catch(e){}
   }
-  if(ok){toast(`👍 ${ok} Kind${ok>1?"er":""} zugesagt`); try{navigator.vibrate&&navigator.vibrate([30,40,30]);}catch(e){}}
+  if(ok){toast(`👍 ${ok} Kind${ok>1?"er":""} zugesagt`); try{navigator.vibrate&&navigator.vibrate([30,40,30]);}catch(e){}
+    if(typeof freudeHerz==="function")freudeHerz("Danke! Das Team freut sich.");   // v942
+    if(typeof freudeMeilenstein==="function")setTimeout(()=>freudeMeilenstein("eltern"),2800);}
   else toast("Konnte nicht speichern","err");
   elternDashLoad();
 }
@@ -3378,6 +3386,64 @@ function elternTkStart(){
   b._tkBeob=true;
   b.addEventListener("scroll",()=>{ clearTimeout(b._tkT); b._tkT=setTimeout(elternTkSync,80); },{passive:true});
   elternTkSync();
+}
+
+/* ── v943: Klugscheißer-Info des Tages (Charles 22.11.: unnützes Fußballwissen, „Heute vor X Jahren“, allgemeines
+   unnützes Wissen). Daten: uebungen/klugscheisser.json – wie kinderfragen.json frisch geholt (der Service Worker lässt
+   uebungen/ aus), offline der zuletzt geladene Stand dieses Geräts. Jeder Eintrag hat eine geöffnete Quelle und ist von
+   Charles freigegeben; die Karte zeigt die Quelle deshalb mit an. Gibt es zum heutigen Datum ein Ereignis, kommt es
+   zuerst („📅 Heute vor 73 Jahren“), sonst wechseln Fußball und Allgemeines Tag für Tag. „Noch eins“ blättert weiter,
+   nur in dieser Sitzung. Keine Kindernamen, keine Bewertungen – reines Wissen. */
+const KS_KEY="adler_klugscheisser_v1";
+let KS_DATEN=null;
+function ksPruefen(j){
+  if(!j||j.schema!=="adler-klugscheisser/1"||!Array.isArray(j.fakten))return null;
+  const ok=j.fakten.filter(f=>f&&typeof f.id==="string"&&["fussball","tag","allgemein"].includes(f.art)
+    &&typeof f.text==="string"&&f.text.length>0&&f.text.length<=200&&/^https:\/\//.test(String(f.quelle||""))
+    &&(f.art!=="tag"||(/^\d\d-\d\d$/.test(String(f.datum||""))&&/^\d{4}: /.test(f.text))));
+  return ok.length?{stand:j.stand||"",fakten:ok}:null;
+}
+async function ksLaden(){
+  if(KS_DATEN)return KS_DATEN;
+  try{ const basis=(typeof appRoot==="function")?appRoot():"../";
+    const r=await fetch(basis+"uebungen/klugscheisser.json",{cache:"no-store"});
+    if(r.ok){ const d=ksPruefen(await r.json()); if(d){ KS_DATEN=d; try{localStorage.setItem(KS_KEY,JSON.stringify(d));}catch(e){} return d; } } }catch(e){}
+  try{ const d=ksPruefen(Object.assign({schema:"adler-klugscheisser/1"},JSON.parse(localStorage.getItem(KS_KEY)||"null")||{})); if(d)KS_DATEN=d; }catch(e){}
+  return KS_DATEN;
+}
+/* Reihenfolge für einen Tag: erst die Ereignisse dieses Datums, dann die übrigen Fakten – Fußball und Allgemeines
+   abwechselnd, Startpunkt wandert mit dem Tag weiter, damit jeder Tag etwas anderes zeigt. */
+function ksReihe(daten,iso){
+  const md=iso.slice(5), tag=daten.fakten.filter(f=>f.art==="tag"&&f.datum===md);
+  const fb=daten.fakten.filter(f=>f.art==="fussball"), al=daten.fakten.filter(f=>f.art==="allgemein"), rest=[];
+  for(let i=0;i<Math.max(fb.length,al.length);i++){ if(fb[i])rest.push(fb[i]); if(al[i])rest.push(al[i]); }
+  const n=Math.floor(Date.UTC(+iso.slice(0,4),+iso.slice(5,7)-1,+iso.slice(8,10))/864e5);
+  const ab=rest.length?n%rest.length:0;
+  return tag.concat(rest.slice(ab),rest.slice(0,ab));
+}
+function ksKarteHtml(f,iso){
+  let kopf="🤓 Klugscheißer-Info des Tages", text=esc(f.text);
+  if(f.art==="tag"){
+    const jahr=+f.text.slice(0,4), x=(+iso.slice(0,4))-jahr;
+    kopf=x>0?`📅 Heute vor ${x} ${x===1?"Jahr":"Jahren"}`:"📅 Heute";
+    text=`<b>${jahr}:</b> ${esc(f.text.slice(6))}`;
+  }
+  return `<section class="ks-karte" aria-label="${esc(kopf)}">
+    <div class="ks-kopf">${kopf}</div>
+    <p class="ks-text">${text}</p>
+    <div class="ks-fuss"><a class="ks-quelle" href="${esc(f.quelle)}" target="_blank" rel="noopener">Quelle: ${esc(f.quelle_name||"Link")}</a>
+      <button type="button" class="btn ks-weiter" onclick="ksWeiter()">Noch eins ›</button></div></section>`;
+}
+async function ksKarte(){
+  const slot=document.getElementById("klug-slot"); if(!slot)return;
+  const d=await ksLaden(); if(!d){ slot.innerHTML=""; return; }
+  const iso=isoLokal(), reihe=ksReihe(d,iso); if(!reihe.length){ slot.innerHTML=""; return; }
+  const i=(window._ksSchritt||0)%reihe.length;
+  slot.innerHTML=ksKarteHtml(reihe[i],iso);
+}
+function ksWeiter(){
+  window._ksSchritt=(window._ksSchritt||0)+1;
+  ksKarte().then(()=>{ const b=document.querySelector("#klug-slot .ks-weiter"); if(b)b.focus(); });
 }
 
 function elternPushHinweisWeg(){ if(typeof pushKarteWeg==="function")pushKarteWeg("push-hinweis-slot"); }
