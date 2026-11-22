@@ -1,0 +1,35 @@
+{
+ "_hinweis": "Vorlage ohne echte Namen. Die echte Datei heißt weihnachtsvideo/kinder.json und wird nie eingecheckt.",
+ "kinder": [
+  {
+   "kuerzel": "A",
+   "anzeige_name": "Kind A",
+   "rolle": "Aufpasser",
+   "formation": "Raute",
+   "foto": "probe-a.jpg",
+   "text": "Das ist ein Platzhaltertext für die Karte. Hier steht später, was dieses Kind in der Hinrunde besonders gemacht hat: ein mutiger Pass, ein schönes Freilaufen oder ein Lachen nach einem Fehler. Der echte Text kommt aus dem Projekt-Chat, hat sechzig bis fünfundsiebzig Wörter und wird von Lennart langsam eingesprochen. Für die Probe zählt nur die Länge, nicht der Inhalt. Danke fürs Zuhören.",
+   "reihenfolge": 1,
+   "einverstanden": true
+  },
+  {
+   "kuerzel": "B",
+   "anzeige_name": "Kind B",
+   "rolle": "Flitzer",
+   "formation": "Raute",
+   "foto": "probe-b.jpg",
+   "text": "Das ist ein Platzhaltertext für die Karte. Hier steht später, was dieses Kind in der Hinrunde besonders gemacht hat: ein mutiger Pass, ein schönes Freilaufen oder ein Lachen nach einem Fehler. Der echte Text kommt aus dem Projekt-Chat, hat sechzig bis fünfundsiebzig Wörter und wird von Lennart langsam eingesprochen. Für die Probe zählt nur die Länge, nicht der Inhalt. Danke fürs Zuhören.",
+   "reihenfolge": 2,
+   "einverstanden": false
+  },
+  {
+   "kuerzel": "C",
+   "anzeige_name": "Kind C",
+   "rolle": "Jäger",
+   "formation": "Raute",
+   "foto": "",
+   "text": "Das ist ein Platzhaltertext für die Karte. Hier steht später, was dieses Kind in der Hinrunde besonders gemacht hat: ein mutiger Pass, ein schönes Freilaufen oder ein Lachen nach einem Fehler. Der echte Text kommt aus dem Projekt-Chat, hat sechzig bis fünfundsiebzig Wörter und wird von Lennart langsam eingesprochen. Für die Probe zählt nur die Länge, nicht der Inhalt. Danke fürs Zuhören.",
+   "reihenfolge": 3,
+   "einverstanden": true
+  }
+ ]
+}
