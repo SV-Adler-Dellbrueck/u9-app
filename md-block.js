@@ -142,7 +142,8 @@ async function blockPlanKarte(datum){
        ein leiser Link unter den beiden Hauptwegen. */
     el.innerHTML="";
     const neu=document.getElementById("tp-block-neu");
-    if(neu)neu.innerHTML=kommt?"":`<button class="btn btn-link" type="button" id="tp-block-link" onclick="blockEditorOpen()" style="min-height:44px;font-size:var(--s-text);text-align:left">🧱 Über mehrere Wochen planen: Trainingsblock anlegen</button>`;
+    /* v952: Der Link steht schon in der Startkarte (tps-block) – hier nicht ein zweites Mal. */
+    if(neu)neu.innerHTML=kommt||document.getElementById("tps-block")?"":`<button class="btn btn-link" type="button" id="tp-block-link" onclick="blockEditorOpen()" style="min-height:44px;font-size:var(--s-text);text-align:left">🧱 Über mehrere Wochen planen: Trainingsblock anlegen</button>`;
     return;
   }
   { const neu=document.getElementById("tp-block-neu"); if(neu)neu.innerHTML=""; }
@@ -613,6 +614,17 @@ async function tpStartRender(datum){
     auto:`<button type="button" class="tps-gross" id="tps-bauen" onclick="tpaBauen('${esc(datum)}')"><span aria-hidden="true">✓</span> Training bauen</button>`,
     leer:""}[zustand];
   const h=_tpsHinweis&&_tpsHinweis.datum===datum?_tpsHinweis:null;
+  /* v952 · Charles 22.11.: „Wenn ich noch Änderungen vornehme und dann ganz unten Plan speichern klicke, müsste ja oben der fertige
+     Plan verschwinden … vielleicht nochmal aufrufbar.“ Nach bewusstem Speichern eine Zeile; ändert sich die Kinderzahl, geht sie auf. */
+  const gz=zustand==="steht"?_tpsZuLesen(datum):null;
+  if(gz&&gz.n!==n){ _tpsZuWeg(datum); }
+  else if(gz&&!gz.offen){
+    const min=ablauf?ablauf.vor+ablauf.haupt+ablauf.nach:0;
+    el.innerHTML=`<section class="tps-zu" id="tps-zu" aria-label="Plan für diesen Termin"><span class="tps-zu-ok" aria-hidden="true">✓</span>
+      <span class="tps-zu-text"><b>Training steht</b><small>gespeichert ${esc(gz.zeit)} · ${n} ${n===1?"Kind":"Kinder"}${min?` · ${min} Min`:""}</small></span>
+      <button type="button" id="tps-zeigen" aria-expanded="false" onclick="tpStartZeigen('${esc(datum)}')">Zeigen ▾</button></section>`;
+    return;
+  }
   el.innerHTML=`<section class="tps" aria-label="Plan für diesen Termin">
     <div class="tps-haupt" id="tps-haupt">
       <div class="tps-ueber">⚡ ${zustand==="leer"?"Schnell planen":"Fertiger Plan"}</div>
@@ -626,6 +638,7 @@ async function tpStartRender(datum){
       ${haupt}
       ${zustand==="auto"?`<div class="tps-paar"><button type="button" class="tps-zweit" id="tps-andere-einheit" onclick="tpaAndere('${esc(datum)}')">🔄 Andere Einheit</button><button type="button" class="tps-zweit" id="tps-lf-aendern" onclick="tpaLfAendern('${esc(datum)}')">🎯 Leitfrage ändern</button></div><div id="tps-lf-wahl"></div>`
         :zustand==="leer"?"":`<button type="button" class="tps-zweit" id="tps-ansehen" onclick="tpStartAnsehen()">Ansehen und ändern</button>`}
+      ${gz&&gz.offen&&_tpsZu[datum]?`<button type="button" class="tps-einklappen" id="tps-einklappen" onclick="tpStartEinklappen('${esc(datum)}')">Einklappen ▴</button>`:""}
     </div>
     ${h?`<div class="tps-hinweis" id="tps-hinweis" role="status"><span aria-hidden="true">🔄</span><span>${esc(h.text)}</span>${_tpsRueck&&_tpsRueck.datum===datum?`<button type="button" onclick="tpStartRueckgaengig()">Rückgängig</button>`:""}</div>`:""}
     <div class="tps-oder">Heute lieber anders?</div>
@@ -705,6 +718,18 @@ async function tpStartUebernehmen(datum){
   if(_tpsHatPlan()){ _tpsLageMerken(datum); tpStartHerz(); }
   tpStartRender(datum);
 }
+/* v952: Merker „bewusst gespeichert“ je Termin (Zeit und Kinderzahl), übersteht das Neuladen */
+let _tpsZu={};
+function _tpsZuLesen(datum){ if(_tpsZu[datum])return _tpsZu[datum]; try{ const j=JSON.parse(localStorage.getItem("adler_tps_zu_"+datum)||"null"); if(j)_tpsZu[datum]=j; return j; }catch(e){ return null; } }
+function _tpsZuWeg(datum){ delete _tpsZu[datum]; try{ localStorage.removeItem("adler_tps_zu_"+datum); }catch(e){} }
+function tpStartGespeichert(datum){
+  if(!datum||!_tpsHatPlan())return;
+  const d=new Date(); _tpsZu[datum]={zeit:String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"),n:_tpsKinder(),offen:false};
+  try{ localStorage.setItem("adler_tps_zu_"+datum,JSON.stringify(_tpsZu[datum])); }catch(e){}
+  if((document.getElementById("tp-date")?.value||"")===datum)tpStartRender(datum);
+}
+function tpStartZeigen(datum){ const z=_tpsZuLesen(datum); if(z){ z.offen=true; } tpStartRender(datum).then(()=>document.getElementById("tps-haupt")?.focus?.()); }
+function tpStartEinklappen(datum){ const z=_tpsZuLesen(datum); if(z){ z.offen=false; } tpStartRender(datum).then(()=>document.getElementById("tps-zeigen")?.focus()); }
 async function tpStartSpeichern(){
   const k=document.getElementById("tps-speichern"); if(k)k.disabled=true;
   try{ if(typeof tpPlanSave==="function")await tpPlanSave(true); }

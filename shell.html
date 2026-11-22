@@ -626,13 +626,12 @@
     <div id="tp-block"></div><!-- v650: Einheit des Trainingsblocks für diesen Termin, Aufbau nach Kinderzahl -->
     <div id="tp-kopf"></div>
     <div id="tp-material"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 6px">
-      <button class="btn" onclick="if(typeof vorlageUebernehmenOpen===&quot;function&quot;)vorlageUebernehmenOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="min-height:56px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:8px"><span style="font-size:22px">📋</span><span style="font-size:var(--s-karte);font-weight:800">Vorlage übernehmen</span></button>
-      <button class="btn" onclick="tpGenerate()" title="Felder aus den angehakten Trainern, Übungen passend zu Gruppengröße und Thema" style="min-height:56px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:8px"><span style="font-size:22px">🪄</span><span style="font-size:var(--s-karte);font-weight:800">Training füllen</span></button>
+    <!-- v952 · Charles 22.11. („Ja, so aufräumen“): „Plan anpassen“ entfällt (der Plan passt sich beim Öffnen selbst an),
+         „Training füllen“ nur, solange kein Block belegt ist (tpDetailWege in boot.js), die Vorlage als leiser Link. -->
+    <div id="tp-detail-wege" style="margin:0 0 6px">
+      <button class="btn" id="tp-fuellen" onclick="tpGenerate()" title="Felder aus den angehakten Trainern, Übungen passend zu Gruppengröße und Thema" style="width:100%;min-height:56px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:8px"><span style="font-size:22px" aria-hidden="true">🪄</span><span style="font-size:var(--s-karte);font-weight:800">Training füllen</span></button>
+      <button class="btn btn-link" id="tp-andere-vorlage" onclick="if(typeof vorlageUebernehmenOpen===&quot;function&quot;)vorlageUebernehmenOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="min-height:44px;font-size:var(--s-text);text-align:left;padding-left:0">📋 Andere Vorlage wählen</button>
     </div>
-    <!-- v719: Plan steht schon, aber Zu- oder Absagen haben sich geändert -->
-    <button class="btn" id="tp-anpassen-knopf" onclick="tpAnpassen()" title="Felder, Gruppen und Übungen an die aktuellen Zu- und Absagen anpassen – mit Vorschau" style="width:100%;min-height:48px;margin:0 0 6px;font-size:var(--s-text);display:flex;align-items:center;justify-content:center;gap:8px"><span aria-hidden="true">🔄</span>Plan anpassen<span style="font-weight:600;color:var(--text2)">· an Zu- und Absagen</span></button>
-    <div style="font-size:var(--s-klein);color:var(--text2);margin:0 0 4px">Oder unten jeden Block selbst belegen.</div>
     <div id="tp-block-neu"></div><!-- v690: „Trainingsblock anlegen“ als leiser Weg unter den beiden Hauptwegen -->
     <div id="tp-diagnose"></div>
     <div id="tp-timeline"></div>

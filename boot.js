@@ -1884,6 +1884,7 @@ function _tpWahlAufSeite(mitHist){
     if((neu||w)&&typeof tpPickSync==="function")tpPickSync(s.id);
     if(mitHist&&w&&w.i!=null&&!w.erbt){ const hd=document.getElementById(s.id+"-hist"); if(hd&&typeof tpExerciseHistoryHtml==="function")hd.innerHTML=tpExerciseHistoryHtml(w.i); }
   });
+  try{ tpDetailWege(); }catch(e){}   // v952: „Training füllen“ nur bei leerem Plan
 }
 /* Prüfhilfe (Prüffall v883): wo weichen Auswahlfeld, Marken oder Picker-Knopf vom Zustand ab?
    Leere Liste = Seite und Zustand stimmen überein. Liest nur, ändert nichts.
@@ -2640,6 +2641,12 @@ function tpKlapp(si){
 /* Wer in einem offenen Block von Hand eine Übung wählt, arbeitet dort – der Block bleibt offen,
    auch wenn er damit vollständig wird. */
 document.addEventListener("change",e=>{ const t=e.target; if(!t||!t.classList||!t.classList.contains("tp-form-sel"))return; const sl=t.closest(".tp-slot"); if(sl&&sl.dataset.si!=null)_tpOffen.add(Number(sl.dataset.si)); },true);
+/* v952: „Training füllen“ steht nur, solange kein Block eine Übung trägt; danach reicht der Link „Andere Vorlage wählen“. */
+function tpDetailWege(){
+  const k=document.getElementById("tp-fuellen"); if(!k)return;
+  let voll=false; try{ voll=tpPlanEntries().length>0; }catch(e){}
+  k.hidden=voll; k.style.display=voll?"none":"flex";   // das Inline-display der .btn schlägt sonst hidden
+}
 function tpRenderTimeline(){
   const wrap=document.getElementById("tp-timeline");
   const sy=window.scrollY, fo=document.activeElement;
@@ -2653,6 +2660,7 @@ function tpRenderTimeline(){
   }
   const r=_tpRenderTimelineIntern();
   try{ tpKlappenAnwenden(); }catch(e){}   // v857: gefüllte Blöcke als eine Zeile
+  try{ tpDetailWege(); }catch(e){}       // v952: „Training füllen“ nur bei leerem Plan
   try{
     if(sel){ const el=document.querySelector(sel); if(el&&el.focus)el.focus({preventScroll:true}); }
     /* Direkt nach dem Zeichnen ist die Seite oft noch kürzer (Gruppen, Netto-Zeile, Prognose laden nach) – dann
@@ -3167,9 +3175,9 @@ function _tpRenderTimelineIntern(){
     html+=`<div class="tp-slot" data-si="${si}"${parallel?"":' data-kette="1"'} style="border-left:3px solid ${slot.farbe};${parallel?"margin-left:14px;":""}">
       <div class="tp-slot-head">
         ${griff}<span class="tp-slot-label">${parallel?tpParallelIcon(typ):""}${esc(tpSlotName(slot.label))}${tpTypMarke(typ)}</span>
+        <button class="tp-mehr" onclick="tpBlockMenu(${si},this)" aria-haspopup="menu" aria-expanded="false" aria-label="Mehr zu ${esc(tpSlotName(slot.label))}: verschieben, löschen" title="Verschieben, löschen">⋯</button>
         <span class="tp-slot-time">${startMin}' – ${endMin}'${parallel?` · parallel zu ${tpSlots[slot.parallelZu].label}`:""}</span>
-        ${parallel?"":tpDauerSelect(si,slot)}
-        <button class="tp-remove" onclick="tpRemoveSlot(${si})" aria-label="Block ${esc(tpSlotName(slot.label))} löschen" title="Block löschen"><i class="ti ti-trash"></i></button>
+        ${parallel?"":`<span class="tp-dauer"><button class="tp-dauer-k" onclick="tpDauerSchritt(${si},-1)" aria-label="${esc(tpSlotName(slot.label))} 5 Minuten kürzer">−</button>${tpDauerSelect(si,slot)}<button class="tp-dauer-k" onclick="tpDauerSchritt(${si},1)" aria-label="${esc(tpSlotName(slot.label))} 5 Minuten länger">+</button></span>`}
       </div>`;
     if(parallel){
       const mains=tpSlots.map((s2,i2)=>({s2,i2})).filter(x=>tpIstHauptteil(x.s2.typ));
@@ -3379,6 +3387,7 @@ function _tpRenderTimelineIntern(){
   tpGruppeHinweisAll();   // v571: Feldtext und Gruppengröße je Station (braucht die gesetzten Selects)
   _tpAbschlussNachladen(0);   // v792: Spielform und Teams im Abschlussspiel-Block (Welle 2, deshalb mit Warten)
   Object.keys(_tpStationGruppe).forEach(id=>tpBetreuungHinweis(id));   // v631: Feld ohne Trainer braucht eine Übung, die allein läuft
+  try{ tpDetailWege(); }catch(e){}   // v952
 }
 /* G3 → v605: Wie viele Kinder sind dabei? – PO: „Die Angabe Kinder erwartet ist wenig
    zielführend. Wichtiger wäre, wie viele tatsächlich zugesagt haben bzw. in der Anwesenheit
@@ -3737,6 +3746,28 @@ function tpDauerSelect(si,slot){
   return `<select class="tp-dauer-sel" aria-label="Dauer von ${esc(slot.label||"Block")} in Minuten" onchange="tpSetDauer(${si},this.value)">`
     +werte.map(d=>`<option value="${d}"${d===jetzt?" selected":""}>${d} Min.</option>`).join("")
     +`</select>`;
+}
+/* v952 · Charles 22.11. (Bild freigegeben): Minuten mit − / + direkt am Block; die Auswahl dazwischen bleibt für den großen Sprung. */
+function tpDauerSchritt(si,richtung){
+  const sl=tpSlots[si]; if(!sl)return;
+  const jetzt=Number(sl.dauer)||10, w=TP_DAUER_WERTE;
+  const ziel=richtung>0?(w.find(x=>x>jetzt)||jetzt):([...w].reverse().find(x=>x<jetzt)||jetzt);
+  if(ziel!==jetzt)tpSetDauer(si,ziel);
+}
+/* v952: ⋯ am Block – nach oben, nach unten, löschen. Ein kleines Menü am Knopf; Escape oder ein Tipp daneben schließt es. */
+function tpBlockMenuZu(){ const m=document.getElementById("tp-block-menu"); if(!m)return; const k=m._knopf; m.remove(); if(k){ k.setAttribute("aria-expanded","false"); } document.removeEventListener("pointerdown",_tpMenuAussen,true); document.removeEventListener("keydown",_tpMenuTaste,true); }
+function _tpMenuAussen(e){ const m=document.getElementById("tp-block-menu"); if(m&&!m.contains(e.target)&&e.target!==m._knopf)tpBlockMenuZu(); }
+function _tpMenuTaste(e){ if(e.key==="Escape"){ const m=document.getElementById("tp-block-menu"); const k=m&&m._knopf; tpBlockMenuZu(); if(k)k.focus(); e.stopPropagation(); } }
+function tpBlockMenu(si,knopf){
+  const offen=document.getElementById("tp-block-menu"); const war=offen&&offen._knopf===knopf; tpBlockMenuZu(); if(war)return;
+  const sl=tpSlots[si]; if(!sl)return;
+  const kette=_tpKette(), pos=kette.indexOf(si), name=esc(tpSlotName(sl.label));
+  const m=document.createElement("div"); m.id="tp-block-menu"; m.className="tp-block-menu"; m.setAttribute("role","menu"); m.setAttribute("aria-label","Block "+tpSlotName(sl.label)); m._knopf=knopf;
+  m.innerHTML=(pos>0?`<button role="menuitem" onclick="tpBlockMenuZu();tpSlotVerschieben(${si},${pos-1})">↑ Nach oben</button>`:"")
+    +(pos>=0&&pos<kette.length-1?`<button role="menuitem" onclick="tpBlockMenuZu();tpSlotVerschieben(${si},${pos+1})">↓ Nach unten</button>`:"")
+    +`<button role="menuitem" class="tp-remove" onclick="tpBlockMenuZu();tpRemoveSlot(${si})" aria-label="Block ${name} löschen"><i class="ti ti-trash" aria-hidden="true"></i> Block löschen</button>`;
+  knopf.parentElement.appendChild(m); knopf.setAttribute("aria-expanded","true");
+  setTimeout(()=>{ document.addEventListener("pointerdown",_tpMenuAussen,true); document.addEventListener("keydown",_tpMenuTaste,true); m.querySelector("button")?.focus(); },0);
 }
 function tpSetDauer(si,wert){
   if(!tpSlots[si])return;
@@ -4525,7 +4556,7 @@ async function tpPlanSave(erzwungen){
       if(_tpFokus.offen&&_tpFokus.datum===datum)tpFokusSichern();   // v795: der Fokus war gewählt, bevor es die Zeile gab
     }
     if(erzwungen){
-      if(r.ok||r.status===201)toast("Plan gespeichert ✓");
+      if(r.ok||r.status===201){ toast("Plan gespeichert ✓"); if(typeof tpStartGespeichert==="function")tpStartGespeichert(datum); }   // v952: Startkarte klappt zu
       else toast("Plan nicht gespeichert – "+((r.status===401||r.status===403)?"kein Trainer-Recht":"Server antwortet "+r.status),"err");
     }
     if(!(r.ok||r.status===201))tpSpeicherFehler(datum);
