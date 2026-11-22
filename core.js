@@ -2341,3 +2341,94 @@ async function namenSchreibSetzen(wort,art,alias){
   await namenSchreibLaden(true);
   return true;
 }
+
+/* ═══ v942 · Kleine Freuden in Trainer- und Eltern-App (Charles 22.11.2026: „Easter Eggs … damit die Trainer zwischendurch
+   schmunzeln können“; „sollten wir auch in der Eltern-App umsetzen“). Alles dezent, ohne Kindernamen, ohne Ton; wer am Handy
+   „weniger Bewegung“ eingestellt hat, bekommt nur den Text. Gezeigt wird je Anlass einmal (localStorage, Fehler schlucken).
+   · Geburtstag des angemeldeten Trainers (profiles.geburtstag) bzw. Elternteils (eltern_angaben.geburtstag): Konfetti + Gruß
+   · Meilensteine: Trainer – gespeicherte Pläne (10/25/50/100), Eltern – Antworten auf Termine (10/25/50)
+   · Fünfmal schnell aufs Wappen tippen: der Comic-Adler fliegt einmal quer über den Bildschirm
+   · freudeHerz(text): ein Herz mit kurzem Satz (Plan gespeichert, Zusage) */
+function _frRuhig(){ try{ return matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } }
+function _frMerk(k){ try{ if(localStorage.getItem("freude_"+k))return false; localStorage.setItem("freude_"+k,"1"); return true; }catch(e){ return false; } }
+function _frKarte(id,html,ms){
+  document.getElementById(id)?.remove();
+  const d=document.createElement("div"); d.id=id; d.className="fr-karte"; d.setAttribute("role","status");
+  d.innerHTML=html; document.body.appendChild(d);
+  setTimeout(()=>d.classList.add("fr-weg"),ms||3200); setTimeout(()=>d.remove(),(ms||3200)+500);
+  return d;
+}
+function freudeHerz(text){
+  document.getElementById("fr-herz")?.remove();
+  const d=document.createElement("div"); d.id="fr-herz"; d.setAttribute("role","status");
+  d.innerHTML=`<span class="fr-herz-bild" aria-hidden="true">❤️</span><span class="fr-herz-text">${esc(String(text||""))}</span>`;
+  document.body.appendChild(d); setTimeout(()=>d.remove(),2600);
+}
+function freudeKonfetti(){
+  if(_frRuhig())return;
+  const box=document.createElement("div"); box.className="fr-konfetti"; box.setAttribute("aria-hidden","true");
+  const farben=["#1d4ed8","#D4A64A","#ffffff","#60a5fa","#f59e0b"];
+  for(let i=0;i<46;i++){ const s=document.createElement("i"); s.style.left=(Math.random()*100)+"%"; s.style.background=farben[i%farben.length];
+    s.style.animationDelay=(Math.random()*.6).toFixed(2)+"s"; s.style.animationDuration=(2+Math.random()*1.4).toFixed(2)+"s"; s.style.transform=`rotate(${Math.round(Math.random()*360)}deg)`; box.appendChild(s); }
+  document.body.appendChild(box); setTimeout(()=>box.remove(),4200);
+}
+function _frHeuteGeburtstag(iso){ const d=String(iso||""); return /^\d{4}-\d\d-\d\d$/.test(d)&&d.slice(5)===isoLokal().slice(5); }   // lokales Datum, nie UTC (v707)
+function freudeAdlerFlug(){
+  if(document.getElementById("fr-adler"))return;
+  const m=new Date().getMonth()+1, t=new Date().getDate(), xmas=(m===11&&t>=15)||m===12||(m===1&&t<=6);
+  const basis=location.origin+location.pathname.replace(/(?:trainer|eltern|kinder)\/[^/]*$/,"");
+  const src=basis+(xmas?"Maskottchen/varianten/adler_fliegt_weihnachtsmuetze/adler_fliegt_weihnachtsmuetze_klein.webp":"Maskottchen/master/adler_master/adler_master_klein.webp");
+  const img=document.createElement("img"); img.id="fr-adler"; img.alt=""; img.setAttribute("aria-hidden","true"); img.src=src;
+  img.className="fr-adler"+(_frRuhig()?" fr-adler-ruhig":"");
+  img.onerror=()=>img.remove();
+  document.body.appendChild(img); setTimeout(()=>img.remove(),_frRuhig()?1800:3200);
+}
+let _frTipps=[];
+function _frWappenTipp(e){
+  const ziel=e.target&&e.target.closest?e.target.closest('img[src$="logo.png"]'):null;
+  if(!ziel||ziel.closest('[role="dialog"]'))return;
+  const jetzt=Date.now(); _frTipps=_frTipps.filter(x=>jetzt-x<2500); _frTipps.push(jetzt);
+  if(_frTipps.length>=5){ _frTipps=[]; freudeAdlerFlug(); }
+}
+try{ document.addEventListener("click",_frWappenTipp,true); }catch(e){}
+const FR_STUFEN={trainer:[10,25,50,100],eltern:[10,25,50]};
+function _frStufe(art,n){ return (FR_STUFEN[art]||[]).filter(s=>n>=s).pop()||0; }
+async function freudeMeilenstein(art,name){
+  if(typeof sbToken!=="function"||!sbToken())return;
+  let n=0;
+  try{
+    if(art==="trainer"){ if(!name)return;
+      const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?select=datum&gespeichert_von=eq.${encodeURIComponent(name)}`,{headers:sbAuthHeaders()}); if(!r.ok)return; n=((await r.json())||[]).length; }
+    else{ const uid=(typeof sbUserId==="function")?sbUserId():null; if(!uid)return;
+      const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?select=id&updated_by=eq.${encodeURIComponent(uid)}`,{headers:sbAuthHeaders()}); if(!r.ok)return; n=((await r.json())||[]).length; }
+  }catch(e){ return; }
+  const s=_frStufe(art,n); if(!s)return;
+  if(!_frMerk(`ms_${art}_${s}_${name||((typeof sbUserId==="function"&&sbUserId())||"")}`))return;
+  const vn=String(name||"").trim().split(/\s+/)[0];
+  const text=art==="trainer"?`Dein ${s}. geplantes Training${vn?" – danke, "+vn:""}!`:`${s} Antworten auf Termine – danke, dass ihr so zuverlässig seid!`;
+  _frKarte("fr-pokal",`<span class="fr-pokal-bild" aria-hidden="true">🏆</span><span><b>Meilenstein</b><br>${esc(text)}</span>`,3600);
+}
+/* Einmal je Sitzung beim Öffnen der Startseite: Geburtstag, dann Meilenstein. */
+let _frGestartet={};
+async function freudeStart(art){
+  if(_frGestartet[art])return; _frGestartet[art]=true;
+  if(typeof sbToken!=="function"||!sbToken())return;
+  let name="", geb="";
+  try{
+    const uid=(typeof sbUserId==="function")?sbUserId():null;
+    if(art==="trainer"){
+      name=(typeof trainerMe==="function")?String(await trainerMe()||""):"";
+      if(uid){ const r=await fetch(`${SB_URL}/rest/v1/profiles?select=geburtstag&id=eq.${encodeURIComponent(uid)}`,{headers:sbAuthHeaders()}); if(r.ok){ const z=await r.json(); geb=(z&&z[0]&&z[0].geburtstag)||""; } }
+    }else if(uid){
+      const r=await fetch(`${SB_URL}/rest/v1/eltern_angaben?select=vorname,geburtstag&user_id=eq.${encodeURIComponent(uid)}&limit=1`,{headers:sbAuthHeaders()});
+      if(r.ok){ const z=await r.json(); name=(z&&z[0]&&z[0].vorname)||""; geb=(z&&z[0]&&z[0].geburtstag)||""; }
+    }
+  }catch(e){}
+  const vn=String(name||"").trim().split(/\s+/)[0];
+  if(_frHeuteGeburtstag(geb)&&_frMerk(`geb_${art}_${(typeof isoLokal==="function"?isoLokal():"")}`)){
+    freudeKonfetti();
+    _frKarte("fr-geburtstag",`<span class="fr-pokal-bild" aria-hidden="true">🎂</span><span><b>Alles Gute zum Geburtstag${vn?", "+esc(vn):""}!</b><br>${art==="trainer"?"Das ganze Trainerteam gratuliert.":"Das wünscht dir das ganze Team."}</span>`,5200);
+    return;   // an diesem Tag reicht ein Gruß
+  }
+  setTimeout(()=>freudeMeilenstein(art,name),1500);
+}

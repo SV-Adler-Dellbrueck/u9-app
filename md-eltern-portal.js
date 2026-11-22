@@ -1069,6 +1069,7 @@ async function elternDashLoad(){
   try{if(typeof elTickerTimer!=="undefined"&&elTickerTimer){clearInterval(elTickerTimer);elTickerTimer=null;}}catch(e){} // Ticker-Poll endet beim Verlassen der Match-Ansicht
   const body=document.getElementById("ep-dash-body");
   if(!body)return;
+  if(typeof freudeStart==="function")freudeStart("eltern");   // v942: Geburtstag oder Meilenstein, einmal je Sitzung
   const card=(inner)=>`<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">${inner}</div>`;
   const heute=isoLokal();
   // UX 3: kam der Elternteil über einen Deep-Link (?rsvp=…)? Dann Nudge erzwingen + hinscrollen.
@@ -1556,6 +1557,9 @@ async function elternRsvp(terminId,spielerId,status){
     if(!r.ok){toast("Konnte nicht speichern","err");return;}
   }catch(e){toast("Netzwerkfehler","err");return;}
   toast("Rückmeldung gespeichert ✓");
+  /* v942: kleines Danke bei einer Zusage, danach vielleicht ein Meilenstein (core.js) */
+  if(status==="zugesagt"&&typeof freudeHerz==="function")freudeHerz(["Danke! Das Team freut sich.","Super, ihr seid dabei!","Danke – so planen die Trainer leichter."][Math.floor(Math.random()*3)]);
+  if(typeof freudeMeilenstein==="function")setTimeout(()=>freudeMeilenstein("eltern"),2800);
   if(status==="zugesagt")window._epPop=1;   // v783: die Terminkarte bestätigt kurz (nach dem Neuzeichnen)
   // FEAT S: XP für Zusagen (idempotent pro Termin via quelle_id, Punktwert bestimmt der Server)
   if(status==="zugesagt"){const d=await xpAward(spielerId,"rsvp","t"+terminId);if(d>0)setTimeout(()=>toast(`${XP_ICON} +${d} ${XP_LABEL} gesammelt!`),1100);}
@@ -1571,7 +1575,9 @@ async function elternRsvpAllYes(terminId){
       if(r.ok){ok++; xpAward(k.spieler_id,"rsvp","t"+terminId).catch(()=>{});}
     }catch(e){}
   }
-  if(ok){toast(`👍 ${ok} Kind${ok>1?"er":""} zugesagt`); try{navigator.vibrate&&navigator.vibrate([30,40,30]);}catch(e){}}
+  if(ok){toast(`👍 ${ok} Kind${ok>1?"er":""} zugesagt`); try{navigator.vibrate&&navigator.vibrate([30,40,30]);}catch(e){}
+    if(typeof freudeHerz==="function")freudeHerz("Danke! Das Team freut sich.");   // v942
+    if(typeof freudeMeilenstein==="function")setTimeout(()=>freudeMeilenstein("eltern"),2800);}
   else toast("Konnte nicht speichern","err");
   elternDashLoad();
 }

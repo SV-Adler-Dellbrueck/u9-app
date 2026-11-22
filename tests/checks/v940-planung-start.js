@@ -51,7 +51,7 @@ module.exports = async function (h) {
     // b)
     window.frageJaNein = async () => true;
     await tpStartUebernehmen(datum); await w(300);
-    out.b = { text: txt(document.getElementById("tps-haupt")), speichern: !!document.getElementById("tps-speichern"), herz: txt(document.getElementById("tps-herz")) };
+    out.b = { text: txt(document.getElementById("tps-haupt")), speichern: !!document.getElementById("tps-speichern"), herz: txt(document.getElementById("fr-herz")) };
     // c) automatische Anpassung (Rechnung gestellt: dieselbe wie „Plan anpassen“, eigene Prüfungen v719)
     const altV = window.tpAnpassenVorschlag, altU = window.tpAnpassenUebernehmen;
     window.tpAnpassenVorschlag = () => ({ kinderZahl: 9, trainer: ["Trainer A"], raus: ["Kind A", "Kind B"], rein: [], vorher: 2, nachher: 1, tausch: [], nichts: false });

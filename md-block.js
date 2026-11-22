@@ -724,12 +724,10 @@ async function tpStartNachLaden(datum){
 /* Kleiner Gruß nach dem Speichern: ein Herz fliegt hoch, dazu ein Satz mit dem Vornamen des angemeldeten Trainers. */
 const TPS_GRUESSE=["Danke, {n}! Die Kinder freuen sich.","Stark, {n} – das wird ein gutes Training.","Plan steht, {n}. Viel Spaß auf dem Platz!","Merci, {n}! Ohne dich kein Training.","Top, {n}! Jetzt nur noch Bälle aufpumpen."];
 async function tpStartHerz(){
-  let name=""; try{ name=String((typeof trainerMe==="function"?await trainerMe():"")||"").trim().split(/\s+/)[0]||""; }catch(e){}
-  const satz=TPS_GRUESSE[Math.floor(Math.random()*TPS_GRUESSE.length)].replace("{n}",name||"Trainer");
-  document.getElementById("tps-herz")?.remove();
-  const d=document.createElement("div"); d.id="tps-herz"; d.setAttribute("role","status");
-  d.innerHTML=`<span class="tps-herz-bild" aria-hidden="true">❤️</span><span class="tps-herz-text">${esc(satz)}</span>`;
-  document.body.appendChild(d);
-  setTimeout(()=>d.remove(),2600);
+  let name=""; try{ name=String((typeof trainerMe==="function"?await trainerMe():"")||"").trim(); }catch(e){}
+  const vn=name.split(/\s+/)[0]||"";
+  const satz=TPS_GRUESSE[Math.floor(Math.random()*TPS_GRUESSE.length)].replace("{n}",vn||"Trainer");
+  if(typeof freudeHerz==="function")freudeHerz(satz);   // v942: gemeinsam mit der Eltern-App (core.js)
+  if(typeof freudeMeilenstein==="function"&&name)setTimeout(()=>freudeMeilenstein("trainer",name),2700);
 }
 function blockModulDa(){ return true; }
