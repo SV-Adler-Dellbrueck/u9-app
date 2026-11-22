@@ -11,6 +11,8 @@
    d) „Andere Leitfrage“ bietet „Vorwoche wiederholen“ (Leitfrage aus dem Block der Vorwoche) und öffnet die Vorlagen
       gefiltert auf diese Leitfrage.
    e) Termin ohne Block und ohne Plan: „Noch kein Plan“, Hauptknopf „Leitfrage wählen“, dazu „Trainingsblock anlegen“.
+      Seit v949: ohne Leitfrage des Monats Hinweis „keine Leitfrage festgelegt“ mit den Leitfragen zum Antippen, der Block als Link;
+      nur noch zwei Kacheln (Selbst bauen, Mit KI).
    f) 360 px: nichts läuft über, Schrift ≥ 14 px; die Kacheln haben den 3D-Schatten. */
 "use strict";
 module.exports = async function (h) {
@@ -82,7 +84,7 @@ module.exports = async function (h) {
     document.getElementById("vu-modal")?.remove();
     // e) ohne Block
     await oeffnen(ohne);
-    out.e = { text: txt(document.getElementById("tps-haupt")), wahl: !!document.getElementById("tps-leitfrage") };
+    out.e = { text: txt(document.getElementById("tps-haupt")), wahl: document.querySelectorAll("#tps-haupt .tps-lf-chip").length, block: !!document.getElementById("tps-block") };   // v949
     return out;
   }, { trainings, F, ohne: h.tagePlus(30) }).catch(e => ({ fehler: String(e) }));
   const fehler = s.fehler().filter(x => !/Failed to load resource/.test(x)); await s.schliessen();
@@ -90,7 +92,8 @@ module.exports = async function (h) {
   const P = x => probleme.push(x);
   if (!/Dein Training ist bereit/.test(r.a.text) || !r.a.text.includes(F) || !/Einheit A · Training 4 von 6/.test(r.a.text) || !/Aufwärmen\s*10 Min/.test(r.a.text) || !/Abschluss\s*20 Min/.test(r.a.text) || !/rechnet mit \d+ Kindern/.test(r.a.text)) P(`a) Karte: „${r.a.text.slice(0, 260)}“`);
   if (!/Plan übernehmen/.test(r.a.knopf) || r.a.kh < 56) P(`a) Hauptknopf „${r.a.knopf}“ ${r.a.kh} px`);
-  if (r.a.wege.length !== 3 || !/Andere Leitfrage/.test(r.a.wege[0]) || !/Selbst bauen/.test(r.a.wege[1]) || !/Mit KI/.test(r.a.wege[2]) || Math.max(...r.a.wb) - Math.min(...r.a.wb) > 1 || Math.min(...r.a.wh) < 140) P(`a) Kacheln: ${JSON.stringify([r.a.wege, r.a.wb, r.a.wh])}`);
+  /* v949: „Andere Leitfrage“ entfällt als Kachel (Leitfrage des Monats direkt in der Karte) – zwei Kacheln */
+  if (r.a.wege.length !== 2 || !/Selbst bauen/.test(r.a.wege[0]) || !/Mit KI/.test(r.a.wege[1]) || Math.max(...r.a.wb) - Math.min(...r.a.wb) > 1 || Math.min(...r.a.wh) < 140) P(`a) Kacheln: ${JSON.stringify([r.a.wege, r.a.wb, r.a.wh])}`);
   if (!/Dein Training steht/.test(r.b.text) || !r.b.speichern || !/❤️/.test(r.b.herz)) P(`b) nach Übernehmen: ${JSON.stringify(r.b).slice(0, 240)}`);
   if (!posts.length) P("b) kein Plan geschrieben");
   if (!r.c.auto || r.c.uebernommen !== 1 || !/Angepasst wegen 2 Absagen: 1 statt 2 Felder · eine Übung getauscht/.test(r.c.hinweis) || !r.c.rueck) P(`c) Anpassung: ${JSON.stringify(r.c)}`);
@@ -98,9 +101,9 @@ module.exports = async function (h) {
   if (r.c.ohneLage !== 0 || r.c.andereLage !== 1 || !r.c.gemerkt) P(`c) Schwelle: ohne Lage ${r.c.ohneLage}, andere Lage ${r.c.andereLage}, gemerkt ${r.c.gemerkt}`);
   if (!r.c.nein || r.c.wieder !== false) P(`c) Rückgängig: gemerkt ${r.c.nein}, erneut angepasst ${r.c.wieder}`);
   if (!/Vorwoche wiederholen/.test(r.d.modal) || !r.d.modal.includes(F) || !r.d.vu || r.d.filter !== F) P(`d) Andere Leitfrage: ${JSON.stringify(r.d).slice(0, 240)}`);
-  if (!/Noch kein Plan/.test(r.e.text) || !r.e.wahl || !/Trainingsblock anlegen/.test(r.e.text)) P(`e) ohne Block: ${JSON.stringify(r.e).slice(0, 200)}`);
+  if (!/Noch kein Plan/.test(r.e.text) || !r.e.wahl || !/keine Leitfrage festgelegt/.test(r.e.text) || !r.e.block) P(`e) ohne Block: ${JSON.stringify(r.e).slice(0, 200)}`);
   if (r.a.ueber > 0 || r.a.schrift < 14 || !r.a.schatten) P(`f) 360 px: über ${r.a.ueber}, Schrift ${r.a.schrift}, Schatten ${r.a.schatten}`);
   if (fehler.length) P("Konsole: " + fehler.slice(0, 2).join(" | "));
-  zeilen.push(`a) „${r.a.knopf}“ ${r.a.kh} px · Kacheln ${r.a.wb.join("/")} × ${Math.min(...r.a.wh)} px · Schrift ≥ ${r.a.schrift} px`, `c) „${r.c.hinweis}“ · eingefroren ${!r.c.frier} · d) Vorwoche → Filter „${r.d.filter.slice(0, 30)}…“ · e) ohne Block „Leitfrage wählen“`);
+  zeilen.push(`a) „${r.a.knopf}“ ${r.a.kh} px · Kacheln ${r.a.wb.join("/")} × ${Math.min(...r.a.wh)} px · Schrift ≥ ${r.a.schrift} px`, `c) „${r.c.hinweis}“ · eingefroren ${!r.c.frier} · d) Vorwoche → Filter „${r.d.filter.slice(0, 30)}…“ · e) ohne Block Hinweis + Leitfragen`);
   return h.ergebnis("v940 Planung: fertiger Plan zuerst, drei Wege, automatische Anpassung", !probleme.length, zeilen.concat(probleme));
 };

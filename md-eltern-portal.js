@@ -1954,6 +1954,7 @@ function elternAnfahrtHtml(t){
   return zeile+`<a href="${(typeof mapsRouteUrl==="function"?mapsRouteUrl:mapsUrl)(t.ort)}" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:44px;margin-top:8px;border:1.5px solid #1e3a8a;border-radius:10px;background:#eef2ff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:800;text-decoration:none">🧭 Route starten <span style="font-weight:600">(mit Verkehr)</span></a>`;
 }
 async function terminDetailOpen(id){
+  tkDetailsAlleZu();   // v950: die td-…-Felder gibt es nur einmal – eine offene Karte im Karussell klappt zu
   const t=(ELTERN_TERMINE||[]).find(x=>Number(x.id)===Number(id)); if(!t){toast("Termin nicht gefunden","err");return;}
   const kids=window._elternKids||[];
   const m=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ,col:"#1e3a8a"};
@@ -1980,18 +1981,39 @@ async function terminDetailOpen(id){
     }).join("");
     return `<div style="margin-top:8px"><div style="font-size:var(--s-text);font-weight:700;margin-bottom:4px">${esc(kd.name||"Kind")}</div><div style="display:flex;gap:6px">${btns}</div></div>`;
   }).join("");
-  const infoRow=(icon,label,val)=> val?`<div style="display:flex;gap:8px;font-size:var(--s-text);padding:4px 0"><span style="width:20px">${icon}</span><span style="color:var(--text3);min-width:72px">${label}</span><span style="flex:1;font-weight:600;min-width:0">${val}</span></div>`:"";
-  // Rohwerte aus dem Termin ("funino"/"4+1"/"5+1") sagen Eltern nichts - deshalb ausschreiben.
-  const SF_KLARTEXT={funino:"FUNiño (3 gegen 3 auf 4 Minitore, ohne Torwart)","3+1":"3+1 (drei Feldspieler + Torwart)","4+1":"4+1 (vier Feldspieler + Torwart)","5+1":"5+1 (fünf Feldspieler + Torwart)"};
-  /* v708: mehrere Formen (auswärts bietet der Gastgeber oft zwei an) – je Form eine Zeile. */
-  const sfL=sfListe(t.spielform).map(x=>SF_KLARTEXT[x.toLowerCase()]||x);
-  const spielformLbl = (istSpiel&&sfL.length)?`${sfL.map(esc).join("<br>")}${t.spieldauer_min?`<br>${t.halbzeiten||1}× ${t.spieldauer_min} Min`:""}`:"";
   c.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px">
       <div style="font-size:var(--s-teil);font-weight:800;min-width:0">${m.icon} ${esc(t.titel||t.gegner||m.label)}</div>
       <button class="btn btn-sm" aria-label="Schließen" onclick="document.getElementById('td-modal').remove()" style="flex:none;min-width:44px;justify-content:center;font-size:var(--s-karte)">×</button>
     </div>
     <div style="font-size:var(--s-text);color:var(--text3);margin-bottom:10px">${d.toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})}${zeit?" · "+zeit:""}</div>
+    ${tdDetailOben(t)}
+    <div style="border-top:var(--border);margin-top:12px;padding-top:10px">
+      <div style="font-weight:700;font-size:var(--s-text);margin-bottom:2px">✅ Rückmeldung</div>
+      ${rsvpRows||'<div style="font-size:var(--s-text);color:var(--text3)">Kein Kind zugeordnet.</div>'}
+    </div>
+    ${tdDetailUnten(t)}
+    <button class="btn" onclick="document.getElementById('td-modal').remove()" style="width:100%;justify-content:center;margin-top:8px">Schließen</button>`;
+  modal.appendChild(c);document.body.appendChild(modal);
+  window._tdTermin=t; // fürs Nachladen der Mitbringliste nach dem Eintragen
+  tdDetailLaden(t,kids);
+}
+/* v950 · Charles 22.11.: „In der Kachel-Karussellansicht sollen die weiteren Termine auch mit allen Details in der Kachel angezeigt
+   werden wie die vom aktuellen Termin. Kann auch eingeklappt sein, muss sich dann aber direkt aufklappen und keine neue Kachel laden.“
+   Die Teile des Termin-Fensters sind deshalb eigene Bausteine: tdDetailOben (Wetter, Ort, Platz, Spielform, Anhänge, Spielplan),
+   tdDetailUnten (Mitbringen, Vorbericht, Nominierung, Betreuung, Büdchen, Helfer, Mitbringliste, Fotos) und tdDetailLaden. Das
+   Fenster und die aufgeklappte Karte im Karussell nutzen dieselben – es gibt also nur eine Fassung. Die Lader schreiben in die
+   festen td-…-Felder; deshalb ist immer nur eine Stelle offen (Karte oder Fenster). */
+function _tdIstSpiel(t){ return t&&(t.typ==="spiel"||t.typ==="turnier"); }
+function tdDetailOben(t){
+  const istSpiel=_tdIstSpiel(t), faelltAus=_elAbgesagt(t);
+  const infoRow=(icon,label,val)=> val?`<div style="display:flex;gap:8px;font-size:var(--s-text);padding:4px 0"><span style="width:20px">${icon}</span><span style="color:var(--text3);min-width:72px">${label}</span><span style="flex:1;font-weight:600;min-width:0">${val}</span></div>`:"";
+  // Rohwerte aus dem Termin ("funino"/"4+1"/"5+1") sagen Eltern nichts - deshalb ausschreiben.
+  const SF_KLARTEXT={funino:"FUNiño (3 gegen 3 auf 4 Minitore, ohne Torwart)","3+1":"3+1 (drei Feldspieler + Torwart)","4+1":"4+1 (vier Feldspieler + Torwart)","5+1":"5+1 (fünf Feldspieler + Torwart)"};
+  /* v708: mehrere Formen (auswärts bietet der Gastgeber oft zwei an) – je Form eine Zeile. */
+  const sfL=sfListe(t.spielform).map(x=>SF_KLARTEXT[x.toLowerCase()]||x);
+  const spielformLbl = (istSpiel&&sfL.length)?`${sfL.map(esc).join("<br>")}${t.spieldauer_min?`<br>${t.halbzeiten||1}× ${t.spieldauer_min} Min`:""}`:"";
+  return `
     <div id="td-wetter" style="margin-bottom:6px"></div>
     ${istSpiel?infoRow(t.heim===true?"🏠":t.heim===false?"✈️":"❓","Spielort", t.heim===true?"Heimspiel":t.heim===false?"Auswärtsspiel":'<span style="color:var(--amber)">Heim/Auswärts trägt der Trainer noch nach</span>'):""}
     ${infoRow("📍","Adresse", tdAdresse(t))}
@@ -2001,10 +2023,10 @@ async function terminDetailOpen(id){
     ${faelltAus&&typeof elternPlatzHinweisHtml==="function"?elternPlatzHinweisHtml(t):""}
     <div id="td-anhang"></div>
     <div id="td-spielplan"></div>
-    <div style="border-top:var(--border);margin-top:12px;padding-top:10px">
-      <div style="font-weight:700;font-size:var(--s-text);margin-bottom:2px">✅ Rückmeldung</div>
-      ${rsvpRows||'<div style="font-size:var(--s-text);color:var(--text3)">Kein Kind zugeordnet.</div>'}
-    </div>
+`;
+}
+function tdDetailUnten(t){
+  return `
     ${tdWasMussMit(t)}
     <div id="td-vorbericht"></div>
     <div id="td-nom"></div>
@@ -2015,9 +2037,10 @@ async function terminDetailOpen(id){
     ${(t.typ==="event"&&typeof feierFuerTermin==="function"&&feierFuerTermin(t))?'<div id="td-feier"></div>':""}
     ${t.typ==="event"?'<div id="td-mitbring"></div>':""}
     ${t.datum>isoLokal()?"":`<button onclick="galerieOpen(${Number(t.id)},'${(t.titel||t.gegner||"").replace(/'/g,"")}')" class="btn" style="width:100%;justify-content:center;margin-top:14px">📸 ${fotoLabel(t.typ)} ansehen &amp; hochladen</button>`}
-    <button class="btn" onclick="document.getElementById('td-modal').remove()" style="width:100%;justify-content:center;margin-top:8px">Schließen</button>`;
-  modal.appendChild(c);document.body.appendChild(modal);
-  window._tdTermin=t; // fürs Nachladen der Mitbringliste nach dem Eintragen
+`;
+}
+function tdDetailLaden(t,kids){
+  const istSpiel=_tdIstSpiel(t);
   if(istSpiel&&(t.gegner||t.titel))tdVorberichtLoad(t);
   if(t.datum)wetterInto("td-wetter",t.datum,t.ort,t.uhrzeit);
   if(typeof taEltern==="function")taEltern(t.id);   // v789: Anhänge am Termin (z. B. Spielplan der Gastgeber)
@@ -2726,7 +2749,7 @@ async function tdRsvp(terminId,spielerId,status){
       if(!r.ok){toast("Konnte nicht speichern","err");return;}
     }
   }catch(e){toast("Netzwerkfehler","err");return;}
-  terminDetailOpen(terminId); // Fenster frisch zeichnen
+  tdNeuZeichnen(terminId); // Fenster bzw. aufgeklappte Karte frisch zeichnen (v950)
   /* v771: Die Liste hinter dem Fenster („Danach“, Karte „Nächster Termin“) zeigte weiter die alte Antwort, bis die Seite neu
      geladen wurde – PO 04.11.: abgesagt, aber als „Zusage“ angezeigt. Wie elternRsvp: Startseite neu laden. */
   if(typeof elternDashLoad==="function")elternDashLoad();
@@ -2778,7 +2801,7 @@ async function betreuungSetzen(terminId,ids,stay,wo){
   }
   if(!ok){toast("Konnte nicht speichern","err");return;}
   toast(stay?"Danke – du bleibst vor Ort ✓":"Notiert – du bleibst nicht vor Ort");
-  if(wo==="td"&&typeof terminDetailOpen==="function")terminDetailOpen(terminId); else elternDashLoad();
+  if(wo==="td"&&typeof terminDetailOpen==="function")tdNeuZeichnen(terminId); else elternDashLoad();
 }
 async function tdBetreuungLoad(t,kids){
   const box=document.getElementById("td-betreuung"); if(!box)return;
@@ -3367,8 +3390,35 @@ function elternTerminKarteKlein(t,kids,rsvpAll){
       ${(typeof elternAnfahrtHtml==="function")?elternAnfahrtHtml(t):""}
       ${rsvpRows}
       ${hilfe.length?`<div class="tk-hilfe" style="margin-top:10px;font-size:var(--s-text);color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:8px 10px">🙌 Hilfe gesucht: ${hilfe.map(esc).join(" · ")}</div>`:""}
-      <button type="button" class="btn" onclick="terminDetailOpen(${Number(t.id)})" style="width:100%;justify-content:center;margin-top:10px">Alles zum Termin ›</button>
+      <button type="button" class="btn tk-details-knopf" aria-expanded="false" aria-controls="tk-details-${Number(t.id)}" onclick="tkDetailsUmschalten(${Number(t.id)})" style="width:100%;justify-content:center;margin-top:10px">Alle Details ▾</button>
+      <div class="tk-details" id="tk-details-${Number(t.id)}" hidden></div>
     </div></div>`;
+}
+/* v950: weitere Termine im Karussell direkt in der Karte aufklappen – mit denselben Bausteinen wie das Termin-Fenster. */
+let _tkOffen=null;
+function tkDetailsAlleZu(){
+  document.querySelectorAll(".tk-details").forEach(b=>{ b.innerHTML=""; b.hidden=true; });
+  document.querySelectorAll(".tk-details-knopf").forEach(k=>{ k.setAttribute("aria-expanded","false"); k.textContent="Alle Details ▾"; });
+  _tkOffen=null;
+}
+function tkDetailsZeigen(id){
+  const t=(typeof ELTERN_TERMINE!=="undefined"?ELTERN_TERMINE:[]).find(x=>Number(x.id)===Number(id)); if(!t)return;
+  const box=document.getElementById("tk-details-"+Number(id)); if(!box)return;
+  document.getElementById("td-modal")?.remove();
+  box.innerHTML=`<div class="tk-details-innen">${tdDetailOben(t)}${tdDetailUnten(t)}</div>`;
+  box.hidden=false; _tkOffen=Number(id); window._tdTermin=t;
+  const k=document.querySelector(`.tk-details-knopf[aria-controls="tk-details-${Number(id)}"]`); if(k){ k.setAttribute("aria-expanded","true"); k.textContent="Weniger ▴"; }
+  try{ if(typeof elternDarkActive==="function"&&elternDarkActive()&&typeof elternThemeSweep==="function")elternThemeSweep(box); }catch(e){}
+  tdDetailLaden(t,window._elternKids||[]);
+}
+function tkDetailsUmschalten(id){
+  const offen=_tkOffen===Number(id);
+  tkDetailsAlleZu();
+  if(!offen)tkDetailsZeigen(id);
+}
+function tdNeuZeichnen(id){
+  if(_tkOffen===Number(id)&&document.getElementById("tk-details-"+Number(id)))tkDetailsZeigen(id);
+  else terminDetailOpen(id);
 }
 function elternTkZeigen(id){
   const b=document.getElementById("tk-bahn"), k=b&&[...b.children].find(x=>Number(x.dataset.termin)===Number(id));
@@ -3399,8 +3449,7 @@ function elternTkStart(){
    unnützes Wissen). Daten: uebungen/klugscheisser.json – wie kinderfragen.json frisch geholt (der Service Worker lässt
    uebungen/ aus), offline der zuletzt geladene Stand dieses Geräts. Jeder Eintrag hat eine geöffnete Quelle und ist von
    Charles freigegeben; die Karte zeigt die Quelle deshalb mit an. Gibt es zum heutigen Datum ein Ereignis, kommt es
-   zuerst („📅 Heute vor 73 Jahren“), sonst wechseln Fußball und Allgemeines Tag für Tag. „Noch eins“ blättert weiter,
-   nur in dieser Sitzung. Keine Kindernamen, keine Bewertungen – reines Wissen. */
+   zuerst („📅 Heute vor 73 Jahren“), sonst wechseln Fußball und Allgemeines Tag für Tag. Seit v950 nur eine Info am Tag – kein „Noch eins“. Keine Kindernamen, keine Bewertungen – reines Wissen. */
 const KS_KEY="adler_klugscheisser_v1";
 let KS_DATEN=null;
 function ksPruefen(j){
@@ -3439,18 +3488,13 @@ function ksKarteHtml(f,iso){
     <div class="ks-kopf">${kopf}</div>
     <p class="ks-text">${text}</p>
     <div class="ks-fuss"><a class="ks-quelle" href="${esc(f.quelle)}" target="_blank" rel="noopener">Quelle: ${esc(f.quelle_name||"Link")}</a>
-      <button type="button" class="btn ks-weiter" onclick="ksWeiter()">Noch eins ›</button></div></section>`;
+</div></section>`;
 }
 async function ksKarte(){
   const slot=document.getElementById("klug-slot"); if(!slot)return;
   const d=await ksLaden(); if(!d){ slot.innerHTML=""; return; }
   const iso=isoLokal(), reihe=ksReihe(d,iso); if(!reihe.length){ slot.innerHTML=""; return; }
-  const i=(window._ksSchritt||0)%reihe.length;
-  slot.innerHTML=ksKarteHtml(reihe[i],iso);
-}
-function ksWeiter(){
-  window._ksSchritt=(window._ksSchritt||0)+1;
-  ksKarte().then(()=>{ const b=document.querySelector("#klug-slot .ks-weiter"); if(b)b.focus(); });
+  slot.innerHTML=ksKarteHtml(reihe[0],iso);   // v950 (Charles 22.11.): eine Info am Tag, keine weitere zum Blättern
 }
 
 /* ── v944: Saison-Optik (Charles 22.11.: Weihnachten + Silvester, Karneval + Halloween, Ostern + Ferien, Vereinstage,

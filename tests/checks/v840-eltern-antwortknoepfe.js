@@ -29,6 +29,10 @@ module.exports = async function (h) {
     if (typeof tmDetailOpen === "function" || typeof elternTerminDetail === "function") { /* Termin-Fenster */ }
     const oeffner = document.querySelector('#tk-bahn .tk-karte-klein [onclick*="terminDetailOpen"]');
     if (oeffner) { oeffner.click(); await w(900); }
+    else {   // v950: Die kleinen Karten klappen „Alle Details“ in der Karte auf; das Termin-Fenster selbst gibt es weiter (große Karte, Links)
+      const k = document.querySelector('#tk-bahn .tk-karte-klein .tk-details-knopf'), id = k && Number(String(k.getAttribute("aria-controls")).replace("tk-details-", ""));
+      if (id && typeof terminDetailOpen === "function") { await terminDetailOpen(id); await w(900); }
+    }
     const fenster = [...document.querySelectorAll('[role="dialog"]')].find(d => d.querySelector('button[onclick^="tdRsvp("]'));
     out.fenster = lies(fenster, 'button[onclick^="tdRsvp("]'); if (fenster) fenster.remove();
     await elternTermineOpen(); await w(1200);

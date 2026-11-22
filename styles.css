@@ -1969,6 +1969,16 @@ details.tk-erledigt[open]>summary::after{content:"▴"}
 .vitrine-unter{font-size:var(--s-klein);font-weight:700}
 .vitrine-stand,.vitrine-leer{font-size:var(--s-klein);color:var(--text2);margin-top:6px}
 
+/* v949: Training automatisch – Leitfrage des Monats */
+.tps-wege.tps-wege-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.tps-lf-einheit{display:block;font-size:var(--s-text);font-weight:600;opacity:.92;margin-top:4px}
+.tps-lf-fehlt{border:2px dashed rgba(255,255,255,.7)}
+.tps-paar{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tps-paar .tps-zweit{font-size:var(--s-text)}
+.tps-lf-chips{display:flex;flex-direction:column;gap:6px;margin:10px 0 4px}
+.tps-lf-chip{min-height:48px;text-align:left;border-radius:12px;border:1px solid rgba(255,255,255,.6);background:rgba(255,255,255,.1);color:#fff;font-size:var(--s-text);font-family:inherit;padding:8px 12px;cursor:pointer}
+.tps-lf-chip[aria-pressed="true"]{background:#fff;color:#1e3a8a;font-weight:800}
+.tps-block-link{display:block;margin:10px auto 0;min-height:44px;font-size:var(--s-text)}
 /* v948: Sprachlob-Fenster */
 .bot-schritt{font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);margin:12px 0 8px}
 .bot-aufnahme{display:flex;align-items:center;gap:14px;min-height:88px}
@@ -1996,3 +2006,6 @@ details.tk-erledigt[open]>summary::after{content:"▴"}
 .gh-zeit-form label{display:flex;flex-direction:column;min-width:0;font-size:var(--s-klein);color:var(--text2);gap:2px}
 .gh-zeit-form input,.gh-zeit-form select{min-height:44px;border:1px solid var(--rand-bedien);border-radius:8px;font:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);padding:0 8px;width:100%;min-width:0;box-sizing:border-box}
 .gh-zeit-form .gh-zeit-speichern{grid-column:1/-1;min-height:44px;width:100%;box-sizing:border-box;justify-content:center}
+/* v950: weitere Termine im Karussell aufklappen */
+.tk-details{margin-top:10px;border-top:1px solid #e2e8f0;padding-top:8px}
+.tk-details-innen{font-size:var(--s-text)}

@@ -591,37 +591,105 @@ async function tpStartRender(datum){
   if((document.getElementById("tp-date")?.value||datum)!==datum)return;
   const b=blockFuerDatum(datum);
   let z=null, zu=[]; if(b){ zu=blockZuordnung(await _tbTrainings(String(b.von),String(b.bis)),b); z=zu.find(x=>x.datum===datum)||null; }
-  const v=z?_tbVorlage(z.vorlage):null;
+  let v=z?_tbVorlage(z.vorlage):null;
   const hatPlan=_tpsHatPlan();
+  /* v949 · Charles 22.11.: „Eine Kachel, die alles automatisch baut fürs Training aus vorbereiteten Einheiten. Eine Leitfrage
+     sollte schon festgelegt worden sein. Sollte sie fehlen, sollte ein Hinweis erscheinen und sie wird bestimmt.“ Ohne Block gilt
+     die Leitfrage des Monats (periodisierung.leitfrage); die Einheit ist die nächste noch nicht trainierte der Folge. */
+  let auto=null, monatLf="", ohneLf=false;
+  if(!b&&!hatPlan){
+    monatLf=await tpaMonatLeitfrage(datum);
+    if((document.getElementById("tp-date")?.value||datum)!==datum)return;
+    if(monatLf){ const k=await tpaKandidaten(datum,monatLf); if(k.liste.length){ const i=(_tpaVersatz[datum]||0)%k.liste.length; auto={v:k.liste[i],nr:i+1,von:k.liste.length,offen:k.offen,folge:k.folge}; v=auto.v; } }
+    else ohneLf=true;
+  }
   const n=_tpsKinder(), tr=_tpsTrainer();
   const ablauf=hatPlan?_tpsAblauf(typeof tpSlots!=="undefined"?tpSlots:[]):(v&&typeof vuPlanAusVorlage==="function"?_tpsAblauf(vuPlanAusVorlage(v).slots):null);
-  const lf=b&&z?String(b.leitfrage||""):"";
-  const zustand=hatPlan?"steht":(v?"bereit":"leer");
-  const titel={steht:"Dein Training steht",bereit:"Dein Training ist bereit",leer:"Noch kein Plan für diesen Termin"}[zustand];
+  const lf=b&&z?String(b.leitfrage||""):(auto?monatLf:"");
+  const zustand=hatPlan?"steht":(auto?"auto":(v?"bereit":"leer"));
+  const titel={steht:"Dein Training steht",bereit:"Dein Training ist bereit",auto:"Dein Training ist bereit",leer:"Noch kein Plan für diesen Termin"}[zustand];
   const haupt={steht:`<button type="button" class="tps-gross" id="tps-speichern" onclick="tpStartSpeichern()"><span aria-hidden="true">✓</span> Passt – speichern</button>`,
     bereit:`<button type="button" class="tps-gross" id="tps-uebernehmen" onclick="tpStartUebernehmen('${esc(datum)}')"><span aria-hidden="true">✓</span> Plan übernehmen</button>`,
-    leer:`<button type="button" class="tps-gross" id="tps-leitfrage" onclick="tpStartLeitfrage('${esc(datum)}')"><span aria-hidden="true">🎯</span> Leitfrage wählen</button>`}[zustand];
+    auto:`<button type="button" class="tps-gross" id="tps-bauen" onclick="tpaBauen('${esc(datum)}')"><span aria-hidden="true">✓</span> Training bauen</button>`,
+    leer:""}[zustand];
   const h=_tpsHinweis&&_tpsHinweis.datum===datum?_tpsHinweis:null;
   el.innerHTML=`<section class="tps" aria-label="Plan für diesen Termin">
     <div class="tps-haupt" id="tps-haupt">
       <div class="tps-ueber">⚡ ${zustand==="leer"?"Schnell planen":"Fertiger Plan"}</div>
       <div class="tps-titel">${titel}</div>
-      ${lf?`<div class="tps-lf"><span class="tps-lf-klein">Leitfrage des Blocks · Einheit ${esc(z.buchstabe)} · Training ${z.nr} von ${zu.length}</span>${esc(lf)}</div>`
+      ${auto?`<div class="tps-lf"><span class="tps-lf-klein">Leitfrage des Monats · Einheit ${esc(String(auto.v.name).split(" ")[0])}${auto.offen?"":" · alle schon trainiert, von vorn"}</span>${esc(lf)}<span class="tps-lf-einheit">${esc(String(auto.v.name).replace(/^L\d+-\d+\s*/,""))}</span></div>`
+      :ohneLf?`<div class="tps-lf tps-lf-fehlt" role="status"><span class="tps-lf-klein">Hinweis</span>Für ${esc(_tpaMonatName(datum))} ist noch keine Leitfrage festgelegt. Tippe eine an – sie gilt für den ganzen Monat und alle Trainer, dann baut die App das Training.</div>${tpaLfChips(datum,"")}`
+      :lf?`<div class="tps-lf"><span class="tps-lf-klein">Leitfrage des Blocks · Einheit ${esc(z.buchstabe)} · Training ${z.nr} von ${zu.length}</span>${esc(lf)}</div>`
         :`<div class="tps-lf"><span class="tps-lf-klein">Kein Trainingsblock für diesen Termin</span>${hatPlan?"Der Plan unten gilt.":"Wähle eine Leitfrage – der Plan entsteht aus der passenden Einheit."}</div>`}
       ${ablauf?`<div class="tps-ablauf"><div style="flex:${Math.max(1,ablauf.vor)}">Aufwärmen<span>${ablauf.vor} Min</span></div><div style="flex:${Math.max(1,ablauf.haupt)}">Hauptteil${tr>1?` · ${tr} Felder`:""}<span>${ablauf.haupt} Min</span></div><div style="flex:${Math.max(1,ablauf.nach)}">Abschluss<span>${ablauf.nach} Min</span></div></div>`:""}
       <div class="tps-rechnet">👥 rechnet mit ${n} ${n===1?"Kind":"Kindern"}${tr?` · ${tr} ${tr===1?"Trainer":"Trainern"}`:""}</div>
       ${haupt}
-      ${zustand==="leer"&&!b?`<button type="button" class="tps-zweit" onclick="blockEditorOpen()">🧱 Trainingsblock anlegen</button>`
-        :`<button type="button" class="tps-zweit" id="tps-ansehen" onclick="tpStartAnsehen()">Ansehen und ändern</button>`}
+      ${zustand==="auto"?`<div class="tps-paar"><button type="button" class="tps-zweit" id="tps-andere-einheit" onclick="tpaAndere('${esc(datum)}')">🔄 Andere Einheit</button><button type="button" class="tps-zweit" id="tps-lf-aendern" onclick="tpaLfAendern('${esc(datum)}')">🎯 Leitfrage ändern</button></div><div id="tps-lf-wahl"></div>`
+        :zustand==="leer"?"":`<button type="button" class="tps-zweit" id="tps-ansehen" onclick="tpStartAnsehen()">Ansehen und ändern</button>`}
     </div>
     ${h?`<div class="tps-hinweis" id="tps-hinweis" role="status"><span aria-hidden="true">🔄</span><span>${esc(h.text)}</span>${_tpsRueck&&_tpsRueck.datum===datum?`<button type="button" onclick="tpStartRueckgaengig()">Rückgängig</button>`:""}</div>`:""}
     <div class="tps-oder">Heute lieber anders?</div>
-    <div class="tps-wege">
-      <button type="button" class="tps-weg" id="tps-andere" onclick="tpStartLeitfrage('${esc(datum)}')"><span class="tps-i" aria-hidden="true">🔁</span><b>Andere Leitfrage</b><small>wählen oder die Vorwoche wiederholen</small></button>
+    <div class="tps-wege tps-wege-2">
       <button type="button" class="tps-weg" id="tps-selbst" onclick="tpStartAnsehen()"><span class="tps-i" aria-hidden="true">✏️</span><b>Selbst bauen</b><small>jeden Block selbst belegen · ${n} Kinder</small></button>
       <button type="button" class="tps-weg" id="tps-ki" onclick="tpStartKi()"><span class="tps-i" aria-hidden="true">✨</span><b>Mit KI</b><small>Ziel nennen, Übung vom Adler-Coach</small></button>
     </div>
+    ${b?"":`<button type="button" class="btn btn-link tps-block-link" id="tps-block" onclick="blockEditorOpen()">🧱 Über mehrere Wochen planen: Trainingsblock anlegen</button>`}
   </section>`;
+}
+/* ── v949 · „Training automatisch“: Leitfrage des Monats und nächste Einheit der Folge ── */
+let _tpaVersatz={}, _tpaLf={};
+function _tpaMonatName(datum){ return new Date(String(datum).slice(0,10)+"T12:00:00").toLocaleDateString("de-DE",{month:"long"}); }
+async function tpaMonatLeitfrage(datum){
+  const m=String(datum).slice(0,7); if(_tpaLf[m]!==undefined)return _tpaLf[m];
+  let lf="";
+  try{ const r=await fetch(`${SB_URL}/rest/v1/periodisierung?monat=eq.${m}&select=leitfrage`,{headers:sbAuthHeaders()}); if(r.ok)lf=String((((await r.json())||[])[0]||{}).leitfrage||""); }catch(e){}
+  if(lf&&!_tbLeitfragen().includes(lf))lf="";   // nur Leitfragen, zu denen es eine Folge gibt
+  _tpaLf[m]=lf; return lf;
+}
+/* Einheiten der Folge: noch nicht trainierte zuerst (im Saisonformat 3+1/FUNiño vorn, sonst in der Reihenfolge der Folge),
+   danach die schon trainierten. „Trainiert“ heißt: In einem Plan dieses Monats vor dem Termin stehen mindestens 60 % ihrer Übungen. */
+async function tpaKandidaten(datum,lf){
+  const folge=_tbFolge(lf).filter(v=>Number(v.folge_nr)>0);
+  const m=String(datum).slice(0,7); let plaene=[];
+  try{ const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?select=datum,plan&datum=gte.${m}-01&datum=lt.${String(datum).slice(0,10)}`,{headers:sbAuthHeaders()}); if(r.ok)plaene=(await r.json())||[]; }catch(e){}
+  const mengen=plaene.map(p=>new Set((Array.isArray(p.plan)?p.plan:[]).map(x=>String(x&&x.formName||"")).filter(Boolean)));
+  const trainiert=v=>{ let namen=[]; try{ namen=[...new Set(((typeof vuPlanAusVorlage==="function"?vuPlanAusVorlage(v).plan:[])||[]).map(x=>String(x&&x.formName||"")).filter(Boolean))]; }catch(e){}
+    return namen.length>0&&mengen.some(s=>namen.filter(n=>s.has(n)).length>=Math.ceil(namen.length*0.6)); };
+  const offen=folge.filter(v=>!trainiert(v)), fertig=folge.filter(v=>trainiert(v));
+  const liste=offen.filter(_tbSaison).concat(offen.filter(v=>!_tbSaison(v)),fertig);
+  return {liste,offen:offen.length>0,folge};
+}
+function tpaLfChips(datum,aktiv){
+  const L=_tbLeitfragen();
+  return `<div class="tps-lf-chips" role="group" aria-label="Leitfrage des Monats">${L.map((f,i)=>`<button type="button" class="tps-lf-chip" aria-pressed="${f===aktiv}" onclick="tpaLfSetzen('${esc(datum)}',${i})"><b>L${_tbKuerzel((_tbFolge(f)[0]||{}).name)[0]}</b> ${esc(f)}</button>`).join("")}</div>`;
+}
+function tpaLfAendern(datum){ const el=document.getElementById("tps-lf-wahl"); if(!el)return; el.innerHTML=el.innerHTML?"":tpaLfChips(datum,_tpaLf[String(datum).slice(0,7)]||""); }
+async function tpaLfSetzen(datum,i){
+  const f=_tbLeitfragen()[i]; if(!f)return;
+  const m=String(datum).slice(0,7);
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/periodisierung?monat=eq.${m}&select=monat`,{headers:sbAuthHeaders()});
+    const da=r.ok&&((await r.json())||[]).length>0;
+    const w=da?await fetch(`${SB_URL}/rest/v1/periodisierung?monat=eq.${m}`,{method:"PATCH",headers:{...sbAuthHeaders(),'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({leitfrage:f,updated_at:new Date().toISOString()})})
+      :await fetch(`${SB_URL}/rest/v1/periodisierung`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({monat:m,thema:f,leitfrage:f,updated_at:new Date().toISOString()})});
+    if(typeof sbCheck401==="function"&&sbCheck401(w))return;
+    if(!w.ok){ toast("Leitfrage konnte nicht gespeichert werden","err"); return; }
+  }catch(e){ toast("Kein Netz – Leitfrage nicht gespeichert","err"); return; }
+  _tpaLf[m]=f; _tpaVersatz[datum]=0;
+  toast(`🎯 Leitfrage für ${_tpaMonatName(datum)} festgelegt`);
+  tpStartRender(datum);
+}
+function tpaAndere(datum){ _tpaVersatz[datum]=(_tpaVersatz[datum]||0)+1; tpStartRender(datum); }
+async function tpaBauen(datum){
+  const lf=await tpaMonatLeitfrage(datum); if(!lf)return tpStartRender(datum);
+  const k=await tpaKandidaten(datum,lf); if(!k.liste.length){ toast("Zu dieser Leitfrage gibt es keine Einheit","err"); return; }
+  const v=k.liste[(_tpaVersatz[datum]||0)%k.liste.length];
+  if(typeof vorlageUebernehmenSetzen!=="function"){ toast("Die Vorlagen laden noch – gleich nochmal","err"); return; }
+  const knopf=document.getElementById("tps-bauen"); if(knopf)knopf.disabled=true;
+  _vuAuswahl=v.id;
+  try{ await vorlageUebernehmenSetzen(); } finally{ _vuAuswahl=null; if(knopf)knopf.disabled=false; }
+  if(_tpsHatPlan()){ _tpsLageMerken(datum); tpStartHerz(); }
+  tpStartRender(datum);
 }
 function tpStartAnsehen(){
   const ziel=document.querySelector("#train-sub-planung .tp-schritt")||document.getElementById("tp-timeline");
