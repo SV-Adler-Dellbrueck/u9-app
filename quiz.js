@@ -1583,20 +1583,26 @@ function kfSvg(feld,bild,o){
    Beste: Du musst nur zum Unterricht gehen, wenn du willst. Können wir das Maskottchen auch mit einbinden als Lehrer –
    bildlich, mit Audio und evtl. Videos?“ (Entwurf im Bild freigegeben.)
    Der Lehrer hat noch keinen Namen – der wird an der Weihnachtsfeier abgestimmt. Sein Bild liegt als Datei im Repo, sobald
-   Charles es geschickt hat (SCHULE_LEHRER_BILD); bis dahin steht der Adler als Zeichen da.
+   Das Bild ist der Comic-Adler aus Maskottchen/ (README dort: Master nie verändern, Varianten nur aus dem Master).
+   In der Weihnachtszeit (15.11.–6.1.) trägt er die Mütze – winkend im Stundenplan, präsentierend zu Beginn einer Stunde –,
+   sonst steht der Master da. Fehlt eine Datei, bleibt das Adler-Zeichen (onerror).
    Die Sprechtexte zwischen den beiden Marken liest auch tools/quiz-audio-namen.js (Aufnahmen unter audio/schule/). */
 /*LEHRER-TEXTE-ANFANG*/
 const SCHULE_GRUSS="Hallo! Heute stehen drei Stunden Sport auf dem Plan. Such dir eine aus! Und das Beste: Du musst nur zum Unterricht, wenn du willst.";
 const SCHULE_STUNDE_VOR="Heute lernen wir: ", SCHULE_STUNDE_NACH=" Erst schauen wir uns Bilder an. Dann bist du dran!";
 /*LEHRER-TEXTE-ENDE*/
 function schuleStundeText(lf){ return SCHULE_STUNDE_VOR+KF_LEITFRAGEN[lf]+SCHULE_STUNDE_NACH; }
-const SCHULE_LEHRER_BILD="";   // z. B. "maskottchen.png" – leer, solange das Bild fehlt
+const SCHULE_LEHRER={master:"Maskottchen/master/adler_master/adler_master_klein.webp",
+  winkt:"Maskottchen/varianten/adler_winkt_weihnachtsmuetze/adler_winkt_weihnachtsmuetze_klein.webp",
+  praesentiert:"Maskottchen/varianten/adler_praesentiert_weihnachtsmuetze/adler_praesentiert_weihnachtsmuetze_klein.webp"};
+function schuleWeihnachtszeit(d){ d=d||new Date(); const m=d.getMonth()+1, t=d.getDate(); return (m===11&&t>=15)||m===12||(m===1&&t<=6); }
+function schuleLehrerBild(pose){ return schuleWeihnachtszeit()?(SCHULE_LEHRER[pose]||SCHULE_LEHRER.master):SCHULE_LEHRER.master; }
 const SCHULE_AUSFALL=[["🔢","Mathe","Bis 3 zählen kannst du schon: 3 gegen 1","fällt aus 🎉"],["📖","Deutsch","„Toooor!“ kannst du schon schreiben","fällt aus 🎉"],["🧪","Chemie","Kommt erst in Klasse 7","😴 gähn"]];
-function schuleLehrerHtml(text,fett){
-  const bild=SCHULE_LEHRER_BILD?`<img src="${kfBasis()+SCHULE_LEHRER_BILD}" alt="" style="width:100%;height:100%;object-fit:contain">`:`<span aria-hidden="true" style="font-size:50px;line-height:1">🦅</span>`;
+function schuleLehrerHtml(text,fett,pose){
+  const bild=`<img class="sl-bild" src="${kfBasis()+schuleLehrerBild(pose||"winkt")}" alt="" draggable="false" style="width:100%;height:100%;object-fit:contain;object-position:50% 100%" onerror="this.outerHTML='<span aria-hidden=&quot;true&quot; style=&quot;font-size:50px;line-height:1&quot;>🦅</span>'">`;
   const t=jsq(text);
   return `<div class="sl-lehrer" style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px">
-    <div class="sl-figur k3" role="img" aria-label="Dein Lehrer, der Adler" style="flex:none;width:88px;height:100px;border-radius:20px;background:linear-gradient(180deg,#1d4ed8,#1e3a8a);display:flex;align-items:center;justify-content:center;overflow:hidden">${bild}</div>
+    <div class="sl-figur k3" role="img" aria-label="Dein Lehrer, der Adler" style="flex:none;width:96px;height:112px;border-radius:20px;background:radial-gradient(circle at 50% 35%,#ffffff,#dbeafe 70%);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;padding:4px 2px 0">${bild}</div>
     <div class="sl-blase k3" style="flex:1;min-width:0;background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);border-radius:18px 18px 18px 4px;padding:12px">
       <div style="font-size:16px;line-height:1.35;font-weight:600">${fett||esc(text)}</div>
       <button type="button" class="btn btn-sm sl-vorlesen" onclick="kfVorlesen(['${t}'],this.querySelector('.sl-ton'),()=>'${t}')" aria-label="Vorlesen" style="min-height:44px;margin-top:8px;border-radius:999px"><span class="sl-ton" aria-hidden="true">🔊</span> Vorlesen</button>
@@ -1607,7 +1613,7 @@ function schuleSportStand(pp){
   return {kf:[1,2,3,4,5,6].filter(lf=>tqGemeistert(kfBlockStand(lf))).length, tk:TQ_BLOCKS.filter((b,i)=>tqGemeistert(pp[i])).length};
 }
 function schuleStundenplanKopf(){
-  return schuleLehrerHtml(SCHULE_GRUSS,"Hallo "+esc(tqPlayer)+"! Heute stehen drei Stunden Sport auf dem Plan. Such dir eine aus!")
+  return schuleLehrerHtml(SCHULE_GRUSS,"Hallo "+esc(tqPlayer)+"! Heute stehen drei Stunden Sport auf dem Plan. Such dir eine aus!","winkt")
     +`<div id="schule-beste" style="background:#fef9c3;color:#1f2937;border:2px dashed #ca8a04;border-radius:16px;padding:10px 12px;font-size:15px;font-weight:700;margin-bottom:10px">🎉 Das Beste: Du musst nur zum Unterricht, wenn du willst.</div>
     <div style="font-size:17px;font-weight:800;color:var(--text);margin:4px 2px 0">📅 Mein Stundenplan</div>`;
 }
@@ -1670,8 +1676,8 @@ function kfBlock(lf){
       <span aria-hidden="true" style="flex:none;font-size:40px;line-height:1">${bild}</span>
       <span style="min-width:0"><span style="display:block;font-size:19px;font-weight:800;line-height:1.2">${titel}</span><span style="display:block;font-size:15px;font-weight:500;line-height:1.3">${unter}</span></span></button>`;
   kfPanel(`<div style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🎓 Adler-Schule · ${KF_ICON[lf]}</div>
-    ${schuleLehrerHtml(schuleStundeText(lf),`${esc(SCHULE_STUNDE_VOR)}<b>${esc(KF_LEITFRAGEN[lf])}</b>${esc(SCHULE_STUNDE_NACH)}`)}
-    ${video?weg("🎬","kf-video","📺","Video ansehen","Der Lehrer zeigt es dir",`kfVideo(${lf})`,false):""}
+    ${schuleLehrerHtml(schuleStundeText(lf),`${esc(SCHULE_STUNDE_VOR)}<b>${esc(KF_LEITFRAGEN[lf])}</b>${esc(SCHULE_STUNDE_NACH)}`,"praesentiert")}
+    ${video?weg("🎬","kf-video","📺","Video ansehen","Der Lehrer erklärt dir die Stunde",`kfVideo(${lf})`,false):""}
     ${karten.length?weg(1,"kf-anschauen","👀","Erst anschauen",`${karten.length} Bilder mit Merksatz`,`kfKarten(${lf})`,false):""}
     ${weg(karten.length?2:1,"kf-los","⚽",karten.length?"Dann spielen":"Los geht's!",`${n} Fragen`,`kfLos(${lf})`,true)}
     <div id="kf-stand" class="k3" style="background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);border-radius:16px;padding:12px;font-size:15px;font-weight:700">${bp?`So weit bist du: ${bp.score} von ${bp.total} richtig ${tqMedaille(bp.score,bp.total)}`:"Das ist deine erste Stunde hier. Viel Spaß!"}</div>
@@ -1679,11 +1685,12 @@ function kfBlock(lf){
 }
 /* v938: Platz für ein Video je Stunde. Es erscheint nur, wenn uebungen/kinderfragen.json unter „videos“ einen Pfad im Ordner
    video/ nennt (keine fremden Adressen) – solange es keine Clips gibt, sieht niemand etwas davon. */
+/* „#t=0.1“: Safari auf dem iPhone zeigt sonst bis zum Abspielen nur Schwarz statt des ersten Bilds. */
 function kfVideo(lf){
   const v=(KF_DATEN&&KF_DATEN.videos||{})[lf]; if(!v)return;
   kfStopp();
   kfPanel(`<div style="font-size:17px;font-weight:800;color:var(--text);margin-bottom:10px">🎬 ${esc(KF_LEITFRAGEN[lf])}</div>
-    <video id="kf-video-spieler" src="${kfBasis()+esc(v)}" controls playsinline preload="metadata" style="width:100%;border-radius:14px;background:#000"></video>
+    <video id="kf-video-spieler" src="${kfBasis()+esc(v)}#t=0.1" controls playsinline preload="metadata" style="width:100%;border-radius:14px;background:#000"></video>
     <button class="btn" style="margin-top:12px;min-height:48px" onclick="kfBlock(${lf})"><i class="ti ti-arrow-left"></i>Zurück zur Stunde</button>`);
 }
 function kfLos(lf){

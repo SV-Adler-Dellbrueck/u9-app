@@ -4,6 +4,7 @@
 # Erlaubt sind nur Adressen auf elevenlabsusercontent.com und Dateinamen, die die App annimmt
 # (^[A-Za-z0-9._-]+\.mp4$, dieselbe Regel wie kfDatenPruefen in quiz.js). Die signierten Adressen
 # laufen nach einigen Stunden ab und enthalten keinen Schlüssel.
+# ffmpeg läuft mit -nostdin: sonst liest es aus der Liste mit und verschluckt Zeichen des nächsten Namens (v938).
 # Jedes Video wird für das Handy verkleinert (640 px breit, H.264, faststart), damit die App schlank bleibt.
 name: Videos holen
 
@@ -43,7 +44,7 @@ jobs:
             if ! [[ "$name" =~ ^[A-Za-z0-9._-]+\.mp4$ ]]; then echo "::error::Dateiname nicht erlaubt: $name"; exit 1; fi
             if ! [[ "$url" =~ ^https://elevenlabsusercontent\.com/ ]]; then echo "::error::Adresse nicht erlaubt für $name"; exit 1; fi
             curl -fsSL --max-filesize 104857600 -o "/tmp/roh/$name" "$url"
-            ffmpeg -v error -y -i "/tmp/roh/$name" -vf "scale=640:-2" -c:v libx264 -preset slow -crf 26 \
+            ffmpeg -nostdin -v error -y -i "/tmp/roh/$name" -vf "scale=640:-2" -c:v libx264 -preset slow -crf 26 \
               -pix_fmt yuv420p -c:a aac -b:a 96k -movflags +faststart "video/$name"
             echo "$name: $(du -k "/tmp/roh/$name" | cut -f1) KB → $(du -k "video/$name" | cut -f1) KB"
             anzahl=$((anzahl+1))

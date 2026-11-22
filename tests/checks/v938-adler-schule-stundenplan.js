@@ -44,7 +44,7 @@ module.exports = async function (h) {
       const rufe = []; const alt = window.kfVorlesen; window.kfVorlesen = (st) => { rufe.push(st); };
       panel.querySelector(".sl-vorlesen").click(); window.kfVorlesen = alt;
       out.f = { text: (rufe[0] || [])[0] || "", datei: typeof kfAudioUrl === "function" ? kfAudioUrl((rufe[0] || [])[0] || "") : "" };
-      await kfStart(); await w(120); kfBlock(1); await w(120);
+      await kfStart(); await w(120); const echteVideos = KF_DATEN.videos; KF_DATEN.videos = {}; kfBlock(1); await w(120);  // d) prüft den Zustand ohne Clip; die echten Lehrer-Videos prüft v938-lehrer-videos
       const wege = [...panel.querySelectorAll(".sl-weg")];
       out.d = { blase: txt(panel.querySelector(".sl-blase")), wege: wege.map(b => txt(b)), h: wege.map(b => Math.round(b.getBoundingClientRect().height)), b: wege.map(b => Math.round(b.getBoundingClientRect().width)),
         haupt: panel.querySelectorAll(".btn-p").length, stand: txt(document.getElementById("kf-stand")), zurueck: [...panel.querySelectorAll("button")].some(b => /Andere Themen/.test(b.textContent)), video: !!document.getElementById("kf-video") };
@@ -53,7 +53,7 @@ module.exports = async function (h) {
       out.e = { pruef: kfDatenPruefen({ schema: "adler-kinderfragen/1", fragen: KF_DATEN.fragen, merkkarten: [], videos: { 1: "video/ball-behalten.mp4", 2: "https://fremd.example/x.mp4", 3: "../geheim.mp4", 9: "video/x.mp4" } }).videos };
       KF_DATEN.videos = { 1: "video/ball-behalten.mp4" }; kfBlock(1); await w(80);
       out.e.kachel = !!document.getElementById("kf-video"); document.getElementById("kf-video").click(); await w(80);
-      out.e.spieler = (document.getElementById("kf-video-spieler") || {}).getAttribute?.("src") || "";
+      out.e.spieler = (document.getElementById("kf-video-spieler") || {}).getAttribute?.("src") || ""; KF_DATEN.videos = echteVideos;
       return out;
     }, h.kontrastHelfer).catch(e => ({ fehler: String(e) }));
     const f = s.fehler().filter(x => !/ball-behalten\.mp4|Failed to load resource/.test(x)); await s.schliessen();
@@ -67,7 +67,7 @@ module.exports = async function (h) {
     if (!/Heute lernen wir: Wie behalte ich den Ball, wenn einer kommt\? Erst schauen wir uns Bilder an\. Dann bist du dran!/.test(r.d.blase)) P(`d) Lehrer: „${r.d.blase}“`);
     if (r.d.wege.length !== 2 || !/^1 .*Erst anschauen\s*4 Bilder/.test(r.d.wege[0]) || !/^2 .*Dann spielen\s*10 Fragen/.test(r.d.wege[1]) || r.d.h.some(x => x < 100) || Math.abs(r.d.b[0] - r.d.b[1]) > 1 || r.d.haupt !== 1) P(`d) Kacheln: ${JSON.stringify([r.d.wege, r.d.h, r.d.b, r.d.haupt])}`);
     if (!/So weit bist du: 8 von 10 richtig/.test(r.d.stand) || !r.d.zurueck || r.d.video) P(`d) Stand „${r.d.stand}“, Rückweg ${r.d.zurueck}, Video ohne Clip ${r.d.video}`);
-    if (JSON.stringify(r.e.pruef) !== '{"1":"video/ball-behalten.mp4"}' || !r.e.kachel || !/video\/ball-behalten\.mp4$/.test(r.e.spieler)) P(`e) Video: ${JSON.stringify(r.e)}`);
+    if (JSON.stringify(r.e.pruef) !== '{"1":"video/ball-behalten.mp4"}' || !r.e.kachel || !/video\/ball-behalten\.mp4(#t=[\d.]+)?$/.test(r.e.spieler)) P(`e) Video: ${JSON.stringify(r.e)}`);
     if (/Kind A/.test(r.f.text) || !/^Hallo! Heute stehen drei Stunden Sport/.test(r.f.text) || !liste.some(e => r.f.datei.endsWith("/audio/schule/" + e.datei))) P(`f) Vorlesen: „${r.f.text}“ → ${r.f.datei}`);
     for (const [n, g] of [["Stundenplan", r.g1], ["Stundenbeginn", r.g2]]) { if (g.ueber > 0) P(`g) ${n} läuft ${g.ueber} px über`); if (g.minSchrift < 13) P(`g) ${n}: Schrift ${g.minSchrift} px`); if (!(g.kontrast >= 4.5)) P(`g) ${n}: Kontrast ${g.kontrast}`); }
     if (f.length) P("Konsole: " + f.slice(0, 2).join(" | "));
