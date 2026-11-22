@@ -3,6 +3,8 @@
    v728 (Version 8): art „ticker_helfer“ – Mitteilung an ein freigeschaltetes Elternkonto.
    v910 (Version 9): art „grill_dienst“ – die für einen Heimtermin eingeteilten Familien.
    v951 (Version 12): art „grill_zeit“ – dieselben Familien erfahren Grillzeit und ob beide Elternteile vor Ort helfen.
+                      art „grill_wahl“ (Trainer stellt auf 1 Familie um), „grill_wahl_fertig“ (Familie hat gewählt) und
+                      „grill_wahl_auto“ (Job alle 10 Minuten mit Cron-Geheimnis: wählt nach der Frist und meldet es beiden).
 
    v643: Die VAPID-Schlüssel standen bis dahin als Konstante im Code dieser Funktion. Jetzt
    liegen sie im Supabase Vault (adler_vapid_public / adler_vapid_private) und werden über
@@ -55,12 +57,55 @@ async function verteilen(admin: any, subs: any[], payload: any) {
   return { sent, wartet: warten.length, removed: gone.length };
 }
 
+/* v951: Konten der Familien zu Kinder-IDs (über eltern_kinder → profiles) */
+async function familienKonten(admin: any, kinder: number[]) {
+  kinder = [...new Set(kinder.filter((k) => k != null).map(Number))];
+  if (!kinder.length) return { ids: [] as string[], familien: 0 };
+  const { data: ek } = await admin.from("eltern_kinder").select("email,spieler_id").in("spieler_id", kinder);
+  const mails = [...new Set((ek || []).map((x: any) => String(x.email || "").toLowerCase()).filter(Boolean))];
+  const { data: profs } = mails.length ? await admin.from("profiles").select("id").in("email", mails) : { data: [] };
+  return { ids: (profs || []).map((p: any) => p.id) as string[], familien: new Set((ek || []).map((x: any) => x.spieler_id)).size };
+}
+const grillTag = (datum: string) => new Date(datum + "T00:00:00").toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" });
+/* v951: Ergebnis einer Wahl beiden Familien melden – genau einmal (termine.grill_wahl.gemeldet) */
+async function grillWahlMelden(admin: any, tid: number) {
+  const { data: t } = await admin.from("termine").select("id,datum,grill_wahl").eq("id", tid).maybeSingle();
+  const w = t?.grill_wahl; if (!t || !w || w.gemeldet) return { sent: 0 };
+  await admin.from("termine").update({ grill_wahl: { ...w, gemeldet: true } }).eq("id", tid);
+  await vapid(admin);
+  const dat = grillTag(t.datum); let sent = 0;
+  const b = await familienKonten(admin, [w.bleibt]);
+  if (b.ids.length) {
+    const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth,user_id").in("user_id", b.ids);
+    sent += (await verteilen(admin, subs || [], { title: "🔥 Grillhütte " + dat, body: w.auto ? "Die App hat gewählt: Ihr übernehmt die Grillhütte. Danke!" : "Ihr übernehmt die Grillhütte. Danke!", url: "./eltern/?portal", tag: "adler-grillwahl-" + tid })).sent;
+  }
+  const g = await familienKonten(admin, [w.weg]);
+  if (g.ids.length) {
+    const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth,user_id").in("user_id", g.ids);
+    sent += (await verteilen(admin, subs || [], { title: "🔥 Grillhütte " + dat, body: "Die andere Familie übernimmt – ihr müsst nichts tun und seid bei der nächsten Einteilung wieder dabei.", url: "./eltern/?portal", tag: "adler-grillwahl-" + tid })).sent;
+  }
+  return { sent };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
     const url = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const admin = createClient(url, serviceKey);
+
+    /* v951: Job „adler-grill-wahl“ (alle 10 Minuten, Cron-Geheimnis aus dem Vault) – vor der Anmeldeprüfung, denn der Job hat
+       kein Benutzerkonto. Wählt nach der Frist (grill_wahl_auto) und meldet beiden Familien das Ergebnis. */
+    if (req.headers.get("x-cron-secret")) {
+      let cron = ""; try { cron = await geheimnis(admin, "adler_cron_secret"); } catch (_e) { return json({ error: "forbidden" }, 403); }
+      if (req.headers.get("x-cron-secret") !== cron) return json({ error: "forbidden" }, 403);
+      const b = await req.json().catch(() => ({}));
+      if (b.art !== "grill_wahl_auto") return json({ error: "unbekannt" }, 400);
+      const { data: gew, error } = await admin.rpc("grill_wahl_auto");
+      if (error) return json({ error: error.message }, 500);
+      let sent = 0; for (const g of (gew || []) as any[]) sent += (await grillWahlMelden(admin, Number(g.termin_id))).sent;
+      return json({ ok: true, gewaehlt: (gew || []).length, sent });
+    }
 
     const jwt = (req.headers.get("Authorization") || "").replace("Bearer ", "");
     const { data: userData } = await admin.auth.getUser(jwt);
@@ -217,6 +262,40 @@ Deno.serve(async (req) => {
       const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth,user_id").in("user_id", ids);
       const v = await verteilen(admin, subs || [], payload);
       return json({ ok: true, familien, sent: v.sent, wartet: v.wartet });
+    }
+
+    /* v951: Trainer stellt einen Termin auf 1 Familie um, zwei sind eingeteilt – beide sollen sich in der App einigen. */
+    if (body.art === "grill_wahl") {
+      if (!prof || prof.role !== "trainer") return json({ error: "nur Trainer duerfen benachrichtigen" }, 403);
+      const tid = Number(body.termin_id);
+      if (!Number.isFinite(tid) || tid <= 0) return json({ error: "Termin fehlt" }, 400);
+      const { data: t } = await admin.from("termine").select("id,datum").eq("id", tid).maybeSingle();
+      if (!t) return json({ error: "Termin nicht gefunden" }, 404);
+      const { data: ds } = await admin.from("dienst_einteilung").select("kind_id,status,uebernommen_kind").eq("termin_id", tid).eq("dienst", "grillhuette");
+      const k = await familienKonten(admin, (ds || []).map((d: any) => d.status === "uebernommen" && d.uebernommen_kind != null ? d.uebernommen_kind : d.kind_id));
+      if (!k.ids.length) return json({ ok: true, familien: k.familien, sent: 0 });
+      const { data: frist } = await admin.rpc("grill_frist", { p_termin: tid });
+      const bis = frist ? new Date(frist).toLocaleString("de-DE", { timeZone: "Europe/Berlin", weekday: "short", hour: "2-digit", minute: "2-digit" }) : "kurz vorher";
+      await vapid(admin);
+      const payload = { title: "🔥 Grillhütte " + grillTag(t.datum), body: `Nur eine Familie wird gebraucht. Einigt euch in der App bis ${bis} Uhr – sonst wählt die App.`, url: "./eltern/?portal", tag: "adler-grillwahl-" + tid };
+      const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth,user_id").in("user_id", k.ids);
+      const v = await verteilen(admin, subs || [], payload);
+      return json({ ok: true, familien: k.familien, sent: v.sent, wartet: v.wartet });
+    }
+
+    /* v951: Eine Familie hat gewählt (RPC grill_wahl). Gemeldet wird, was in termine.grill_wahl steht – nur einmal und nur
+       innerhalb von 15 Minuten nach der Wahl; der Aufrufer muss zu einer der beiden Familien gehören. */
+    if (body.art === "grill_wahl_fertig") {
+      const tid = Number(body.termin_id);
+      if (!Number.isFinite(tid) || tid <= 0) return json({ error: "Termin fehlt" }, 400);
+      const { data: t } = await admin.from("termine").select("grill_wahl").eq("id", tid).maybeSingle();
+      const w = t?.grill_wahl;
+      if (!w || w.gemeldet || Date.now() - new Date(w.wann).getTime() > 15 * 60 * 1000) return json({ ok: true, sent: 0 });
+      const email = (userData?.user?.email || "").toLowerCase();
+      const { data: ek } = email ? await admin.from("eltern_kinder").select("spieler_id").ilike("email", email) : { data: [] };
+      const meine = new Set((ek || []).map((x: any) => Number(x.spieler_id)));
+      if (!meine.has(Number(w.bleibt)) && !meine.has(Number(w.weg))) return json({ error: "nicht beteiligt" }, 403);
+      return json({ ok: true, ...(await grillWahlMelden(admin, tid)) });
     }
 
     /* v728 (Version 8): Ticker-Helfer freigeschaltet. Nur das Trainerteam, nur an das Konto, das für
