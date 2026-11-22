@@ -879,35 +879,63 @@ async function botschaftRender(){
     ${liste?`<div style="margin-top:12px"><div style="font-weight:800;color:var(--text);margin-bottom:2px">Schon gesendet</div>${liste}</div>`:""}`;
 }
 function botschaftZu(){ try{ if(_botRec&&_botRec.state==="recording")_botRec.stop(); }catch(e){} document.getElementById("botschaft-modal")?.remove(); }
-async function botschaftOpen(){
+/* v948 · Charles 22.11. (Bildschirmfoto): „Wenn ich auf die Kachel für das Sprachlob klicke, lande ich in der Spielerverwaltung.
+   Eigentlich müsste ich direkt zu einer Seite kommen, um das Sprachlob aufzunehmen – entweder ans ganze Team oder an einzelne.
+   Und die Optik ist nicht auf dem neuesten Stand.“ Das Fenster ist jetzt der gemeinsame Weg für beides: aus dem To-do (mit dem
+   Termin) und aus dem Spieltag. Oben die Aufnahme als großer runder Knopf, darunter „Ganzes Team“ oder „Einzelne Kinder“, Text
+   bleibt möglich. Empfänger: wer laut Nominierung des Termins dabei war; gibt es keine, das ganze aktive Team. */
+async function botschaftKinderFuer(t){
+  const kader=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.aktiv!==false&&_botKindId(k)!=null);
+  if(!t||!t.datum)return {kinder:kader,quelle:"team"};
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/nominierungen?datum=eq.${encodeURIComponent(String(t.datum).slice(0,10)+"__nom")}&select=data`,{headers:sbAuthHeaders()});
+    if(r.ok){ const d=(((await r.json())||[])[0]||{}).data||{};
+      const dabei=kader.filter(k=>d[String(_botKindId(k))]==="dabei"||d[k.name]==="dabei");
+      if(dabei.length)return {kinder:dabei,quelle:"nominierung"}; }
+  }catch(e){}
+  return {kinder:kader,quelle:"team"};
+}
+let _botModus="team", _botQuelle="nominierung";
+async function botschaftOpen(tVorgabe){
   if(!sbToken()){ toast("Bitte als Trainer anmelden","err"); return; }
-  const t=_botTermin||await botschaftTermin(); if(!t){ toast("Kein Spiel oder Turnier an diesem Tag","err"); return; }
-  _botTermin=t; _botKinder=botschaftKinder(); _botSend=new Set(_botKinder.map(_botKindId)); _botBlob=null; _botChunks=[]; _botBusy=false;
-  if(!_botKinder.length){ toast("Noch kein Kind als „dabei“ eingeteilt","err"); return; }
-  document.getElementById("botschaft-modal")?.remove();
-  const m=document.createElement("div"); m.id="botschaft-modal";
-  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Nachricht an die Kinder");
-  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10003;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
-  m.onclick=e=>{ if(e.target===m)botschaftZu(); };
-  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
-    ${mdlHead("botschaft-modal","💬","Nachricht an die Kinder",esc(botschaftBetreff(t)),"#db2777")}
-    <label for="bot-text" style="display:block;font-weight:800;margin:4px 0 4px">Text <span style="font-weight:500;color:var(--text2)">(oder Sprache)</span></label>
-    <textarea id="bot-text" maxlength="${BOT_MAX}" rows="5" oninput="botschaftZaehler()" placeholder="z. B. Ihr habt heute toll zusammengespielt – danke für euren Einsatz!" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)"></textarea>
-    <div id="bot-zaehler" style="font-size:var(--s-klein);color:var(--text2);text-align:right;margin-bottom:8px">0 / ${BOT_MAX}</div>
-    <div style="font-weight:800;margin:4px 0">Sprache aufnehmen <span style="font-weight:500;color:var(--text2)">(optional)</span></div>
-    <div id="bot-aufnahme" style="margin-bottom:10px"></div>
-    <div style="font-weight:800;margin:4px 0">Empfänger <span id="bot-anzahl" style="font-weight:500;color:var(--text2)"></span></div>
-    <div id="bot-kinder" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
-    <div style="font-size:var(--s-klein);color:var(--text2);line-height:1.5;background:var(--surface2);border-radius:10px;padding:8px 10px;margin-bottom:10px">Die Kinder lesen und hören die Nachricht in ihrer Kabine, die Eltern bekommen einen Push mit dem Vornamen ihres Kindes. Bitte <b>keine Namen anderer Kinder, keine Noten und keine Vergleiche</b> – jedes Kind liest dieselbe Nachricht.</div>
-    <div id="bot-meldung" role="status" style="font-size:var(--s-text);color:#b91c1c;min-height:20px;margin-bottom:6px"></div>
-    <div id="bot-knoepfe" style="display:flex;gap:8px"><button type="button" class="btn" style="flex:1;min-height:48px" onclick="botschaftZu()">Abbrechen</button><button type="button" id="bot-senden" class="btn btn-p" style="flex:2;min-height:48px;justify-content:center" onclick="botschaftPruefen()">Prüfen und senden</button></div>
-  </div>`;
-  document.body.appendChild(m);
+  const t=(tVorgabe&&tVorgabe.id)?tVorgabe:(_botTermin||await botschaftTermin()); if(!t){ toast("Kein Spiel oder Turnier an diesem Tag","err"); return; }
+  _botTermin=t;
+  if(tVorgabe&&tVorgabe.id){ const k=await botschaftKinderFuer(t); _botKinder=k.kinder; _botQuelle=k.quelle; }
+  else { _botKinder=botschaftKinder(); _botQuelle="nominierung"; if(!_botKinder.length){ const k=await botschaftKinderFuer(t); _botKinder=k.kinder; _botQuelle=k.quelle; } }
+  _botSend=new Set(_botKinder.map(_botKindId)); _botModus="team"; _botBlob=null; _botChunks=[]; _botBusy=false;
+  if(!_botKinder.length){ toast("Kein Kind im Kader gefunden","err"); return; }
+  const {grund,karte}=fensterAuf("botschaft-modal",{breite:480});
+  grund.setAttribute("aria-label","Sprachlob an die Kinder");
+  grund.addEventListener("click",e=>{ if(e.target===grund)botschaftZu(); });
+  karte.innerHTML=`${mdlHead("botschaft-modal","🎤","Sprachlob an die Kinder",esc(botschaftBetreff(t)),"#db2777")}
+    <div class="bot-schritt">1 · Aufnehmen</div>
+    <div id="bot-aufnahme" class="bot-aufnahme"></div>
+    <details class="bot-text-auf"><summary>✏️ Lieber schreiben (oder zusätzlich)</summary>
+      <textarea id="bot-text" maxlength="${BOT_MAX}" rows="4" oninput="botschaftZaehler()" placeholder="z. B. Ihr habt heute toll zusammengespielt – danke für euren Einsatz!"></textarea>
+      <div id="bot-zaehler" class="bot-zaehler">0 / ${BOT_MAX}</div></details>
+    <div class="bot-schritt">2 · An wen?</div>
+    <div class="bot-modus" role="group" aria-label="Empfänger">
+      <button type="button" id="bot-m-team" class="bot-m" aria-pressed="true" onclick="botschaftModus('team')">👥 Ganzes Team<span id="bot-m-team-n"></span></button>
+      <button type="button" id="bot-m-einzeln" class="bot-m" aria-pressed="false" onclick="botschaftModus('einzeln')">👤 Einzelne Kinder</button></div>
+    <div class="bot-quelle">${_botQuelle==="nominierung"?"Alle, die an dem Tag dabei waren.":"Keine Nominierung gefunden – das ganze aktive Team."} <span id="bot-anzahl"></span></div>
+    <div id="bot-kinder" class="bot-kinder" hidden></div>
+    <div class="bot-hinweis">Die Kinder hören die Nachricht in ihrer Kabine, die Eltern bekommen einen Push mit dem Vornamen ihres Kindes. Bitte <b>keine Namen anderer Kinder</b> nennen.</div>
+    <div id="bot-meldung" role="status" class="bot-meldung"></div>
+    <div id="bot-knoepfe" style="display:flex;gap:8px"><button type="button" class="btn" style="flex:1;min-height:48px" onclick="botschaftZu()">Abbrechen</button><button type="button" id="bot-senden" class="btn btn-p" style="flex:2;min-height:48px;justify-content:center" onclick="botschaftPruefen()">Weiter</button></div>`;
   botschaftAufnahmeUI("idle"); botschaftKinderRender();
+}
+function botschaftModus(m){
+  _botModus=m==="einzeln"?"einzeln":"team";
+  if(_botModus==="team")_botSend=new Set(_botKinder.map(_botKindId)); else _botSend=new Set();
+  botschaftKinderRender();
 }
 function botschaftZaehler(){ const el=document.getElementById("bot-text"), z=document.getElementById("bot-zaehler"); if(el&&z)z.textContent=`${el.value.length} / ${BOT_MAX}`; }
 function botschaftKinderRender(){
   const box=document.getElementById("bot-kinder"); if(!box)return;
+  const mt=document.getElementById("bot-m-team"), me=document.getElementById("bot-m-einzeln");
+  if(mt){ mt.setAttribute("aria-pressed",String(_botModus==="team")); me.setAttribute("aria-pressed",String(_botModus==="einzeln")); }
+  const tn=document.getElementById("bot-m-team-n"); if(tn)tn.textContent=` · ${_botKinder.length}`;
+  box.hidden=_botModus!=="einzeln";
   box.innerHTML=_botKinder.map(k=>{ const id=_botKindId(k), an=_botSend.has(id);
     return `<button type="button" class="btn btn-sm" aria-pressed="${an}" onclick="botschaftKindUm(${Number(id)})" style="min-height:44px;${an?"background:var(--blue-bg);border:2px solid var(--blue);color:var(--text);font-weight:800":"color:var(--text2)"}">${an?"✓ ":""}${esc((k.name||"").split(" ")[0])}</button>`; }).join("");
   const n=document.getElementById("bot-anzahl"); if(n)n.textContent=`· ${_botSend.size} von ${_botKinder.length}`;
@@ -915,9 +943,9 @@ function botschaftKinderRender(){
 function botschaftKindUm(id){ if(_botSend.has(id))_botSend.delete(id); else _botSend.add(id); botschaftKinderRender(); }
 function botschaftAufnahmeUI(zustand){
   const el=document.getElementById("bot-aufnahme"); if(!el)return;
-  if(zustand==="recording") el.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><span style="font-size:28px">🔴</span><span style="flex:1;color:#dc2626;font-weight:700">Aufnahme läuft …</span><button type="button" class="btn btn-p" style="min-height:48px" onclick="botschaftAufnahmeStopp()"><i class="ti ti-player-stop"></i>Stopp</button></div>`;
-  else if(zustand==="ready") el.innerHTML=`<audio controls src="${_botBlob?URL.createObjectURL(_botBlob):""}" style="width:100%"></audio><div style="margin-top:6px"><button type="button" class="btn btn-sm" style="min-height:44px" onclick="botschaftAufnahmeStart()"><i class="ti ti-refresh"></i>Neu aufnehmen</button> <button type="button" class="btn btn-sm" style="min-height:44px" onclick="botschaftAufnahmeWeg()">Aufnahme verwerfen</button></div>`;
-  else el.innerHTML=`<button type="button" class="btn" style="min-height:48px" onclick="botschaftAufnahmeStart()"><i class="ti ti-microphone"></i>Aufnahme starten</button>`;
+  if(zustand==="recording") el.innerHTML=`<button type="button" class="bot-mic an" onclick="botschaftAufnahmeStopp()" aria-label="Aufnahme stoppen"><span aria-hidden="true">⏹</span></button><div class="bot-mic-text"><b style="color:#b91c1c">Aufnahme läuft …</b><br>Tippen zum Stoppen</div>`;
+  else if(zustand==="ready") el.innerHTML=`<div class="bot-fertig"><audio controls src="${_botBlob?URL.createObjectURL(_botBlob):""}"></audio><div style="display:flex;gap:8px;margin-top:8px"><button type="button" class="btn btn-sm" style="min-height:44px" onclick="botschaftAufnahmeStart()">🔁 Neu aufnehmen</button><button type="button" class="btn btn-sm" style="min-height:44px" onclick="botschaftAufnahmeWeg()">🗑 Verwerfen</button></div></div>`;
+  else el.innerHTML=`<button type="button" class="bot-mic" onclick="botschaftAufnahmeStart()" aria-label="Aufnahme starten"><span aria-hidden="true">🎤</span></button><div class="bot-mic-text"><b>Tippen und loslegen</b><br>Ein kurzes Lob, 20 bis 30 Sekunden reichen.</div>`;
 }
 async function botschaftAufnahmeStart(){
   if(!(navigator.mediaDevices&&window.MediaRecorder)){ toast("Aufnahme wird hier nicht unterstützt","err"); return; }
