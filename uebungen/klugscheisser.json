@@ -1,0 +1,790 @@
+{
+ "schema": "adler-klugscheisser/1",
+ "stand": "2026-11-22-1",
+ "hinweis": "Klugscheißer-Info des Tages (Eltern-App, v943). Jeder Eintrag mit geöffneter Quelle, von Charles am 22.11.2026 freigegeben. Neue Einträge nur mit Quelle und Freigabe. Bei art „tag“ beginnt der Text mit der Jahreszahl und „: “, datum ist MM-TT.",
+ "fakten": [
+  {
+   "id": "fb-001",
+   "art": "fussball",
+   "text": "Das Tor ist 7,32 Meter breit und 2,44 Meter hoch. Das sind genau 8 Yards und 8 Fuß – alte englische Maße.",
+   "quelle": "https://www.theifab.com/laws/latest/the-field-of-play/",
+   "quelle_name": "IFAB – Laws of the Game 2026/27",
+   "geprueft": "Abstand der Pfosten 7,32 m (8 yds), Unterkante Latte 2,44 m (8 ft)."
+  },
+  {
+   "id": "fb-002",
+   "art": "fussball",
+   "text": "Ein Fußball für Erwachsene wiegt beim Anpfiff 410 bis 450 Gramm und hat einen Umfang von 68 bis 70 Zentimetern.",
+   "quelle": "https://www.theifab.com/laws/latest/the-ball/",
+   "quelle_name": "IFAB – Laws of the Game 2026/27",
+   "geprueft": "Regel 2: Umfang 68–70 cm, Gewicht 410–450 g zu Spielbeginn."
+  },
+  {
+   "id": "fb-003",
+   "art": "fussball",
+   "text": "Ein Fußballplatz darf zwischen 90 und 120 Meter lang sein. Die Seitenlinie muss immer länger sein als die Torlinie.",
+   "quelle": "https://www.theifab.com/laws/latest/the-field-of-play/",
+   "quelle_name": "IFAB – Laws of the Game 2026/27",
+   "geprueft": "Regel 1.3: Seitenlinie mindestens 90 m, höchstens 120 m, und länger als die Torlinie."
+  },
+  {
+   "id": "fb-004",
+   "art": "fussball",
+   "text": "Der Elfmeterpunkt liegt 11 Meter vom Tor entfernt – daher der Name Elfmeter.",
+   "quelle": "https://www.theifab.com/laws/latest/the-field-of-play/",
+   "quelle_name": "IFAB – Laws of the Game 2026/27",
+   "geprueft": "Regel 1: Strafstoßmarke 11 m (12 yds) von der Mitte zwischen den Pfosten."
+  },
+  {
+   "id": "fb-005",
+   "art": "fussball",
+   "text": "Beim Freistoß muss die Mauer 9,15 Meter Abstand halten. Das sind genau 10 Yards.",
+   "quelle": "https://www.theifab.com/laws/latest/free-kicks/",
+   "quelle_name": "IFAB – Laws of the Game 2026/27",
+   "geprueft": "Regel 13: Gegner mindestens 9,15 m (10 yds) vom Ball entfernt."
+  },
+  {
+   "id": "fb-006",
+   "art": "fussball",
+   "text": "Direkt vom Anstoß ins gegnerische Tor? Das zählt! Ein Tor darf direkt aus dem Anstoß erzielt werden.",
+   "quelle": "https://www.theifab.com/laws/latest/the-start-and-restart-of-play/",
+   "quelle_name": "IFAB – Laws of the Game 2026/27",
+   "geprueft": "Regel 8: Ein Tor kann direkt aus dem Anstoß gegen den Gegner erzielt werden."
+  },
+  {
+   "id": "fb-007",
+   "art": "fussball",
+   "text": "Aus einem Einwurf kann man kein Tor erzielen. Wirft man den Ball ins eigene Tor, gibt es Ecke für die anderen.",
+   "quelle": "https://www.theifab.com/laws/latest/the-throw-in/",
+   "quelle_name": "IFAB – Laws of the Game 2026/27",
+   "geprueft": "Regel 15: Kein direktes Tor aus dem Einwurf; Ball ins eigene Tor ergibt Eckstoß für den Gegner."
+  },
+  {
+   "id": "fb-008",
+   "art": "fussball",
+   "text": "Eine Ecke darf direkt ins Tor gehen – aber nur ins Tor der Gegner.",
+   "quelle": "https://www.theifab.com/laws/latest/the-corner-kick/",
+   "quelle_name": "IFAB – Laws of the Game 2026/27",
+   "geprueft": "Regel 17: Ein Tor kann direkt aus dem Eckstoß erzielt werden, aber nur gegen die gegnerische Mannschaft."
+  },
+  {
+   "id": "fb-009",
+   "art": "fussball",
+   "text": "Hat eine Mannschaft weniger als 7 Spieler auf dem Feld, darf ein Erwachsenen-Spiel nicht beginnen oder weiterlaufen.",
+   "quelle": "https://www.theifab.com/laws/latest/the-players/",
+   "quelle_name": "IFAB – Laws of the Game 2026/27",
+   "geprueft": "Regel 3: Höchstens elf Spieler; Spiel darf nicht beginnen oder fortgesetzt werden mit weniger als sieben."
+  },
+  {
+   "id": "fb-010",
+   "art": "fussball",
+   "text": "Hält ein Torwart den Ball länger als 8 Sekunden in den Händen, bekommen die Gegner eine Ecke.",
+   "quelle": "https://www.theifab.com/laws/latest/fouls-and-misconduct/",
+   "quelle_name": "IFAB – Laws of the Game 2026/27",
+   "geprueft": "Regel 12.3: Eckstoß, wenn der Torwart den Ball im Strafraum länger als acht Sekunden mit den Händen kontrolliert."
+  },
+  {
+   "id": "fb-011",
+   "art": "fussball",
+   "text": "Die ersten weltweit gültigen Fußballregeln entstanden 1863 in England. Seit 1886 wacht das IFAB über die Regeln.",
+   "quelle": "https://www.theifab.com/background/",
+   "quelle_name": "IFAB – Background",
+   "geprueft": "1863 erste ‚universelle‘ Regeln in England; IFAB 1886 von den vier britischen Verbänden gegründet."
+  },
+  {
+   "id": "fb-012",
+   "art": "fussball",
+   "text": "Die Idee für Gelbe und Rote Karten kam einem Schiedsrichter an der Ampel. Bei der WM 1970 wurden sie zum ersten Mal benutzt.",
+   "quelle": "https://de.wikipedia.org/wiki/Gelbe_Karte",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Ken Aston kam beim Warten an Ampeln auf die Idee; erstmals bei der WM 1970 verwendet."
+  },
+  {
+   "id": "fb-013",
+   "art": "fussball",
+   "text": "Bei der WM 1970 durfte zum ersten Mal ausgewechselt werden: zwei Spieler pro Mannschaft und Spiel.",
+   "quelle": "https://de.wikipedia.org/wiki/Fu%C3%9Fball-Weltmeisterschaft_1970",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "1970 waren erstmals Auswechslungen erlaubt (zwei Spieler pro Mannschaft und Spiel)."
+  },
+  {
+   "id": "fb-014",
+   "art": "fussball",
+   "text": "Den Elfmeter gibt es seit 1891. Erfunden hat ihn ein Torwart aus Irland.",
+   "quelle": "https://de.wikipedia.org/wiki/Strafsto%C3%9F",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Der Strafstoß wurde 1891 in Irland erfunden; als Erfinder gilt der Torhüter William McCrum."
+  },
+  {
+   "id": "fb-015",
+   "art": "fussball",
+   "text": "Der Geißbock Hennes vom 1. FC Köln war ein Geschenk: 1950 bekam der Verein ihn bei einer Karnevalssitzung von einer Zirkuschefin.",
+   "quelle": "https://de.wikipedia.org/wiki/1._FC_K%C3%B6ln",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Am 13.02.1950 schenkte Zirkus-Prinzipalin Carola Williams dem FC bei einer Karnevalssitzung einen jungen Geißbock."
+  },
+  {
+   "id": "fb-016",
+   "art": "fussball",
+   "text": "Der älteste noch spielende Fußballverein der Welt ist der Sheffield FC in England – gegründet 1857.",
+   "quelle": "https://en.wikipedia.org/wiki/Sheffield_F.C.",
+   "quelle_name": "Wikipedia (en)",
+   "geprueft": "Gegründet im Oktober 1857; von der FIFA als ältester bestehender Verein anerkannt."
+  },
+  {
+   "id": "fb-017",
+   "art": "fussball",
+   "text": "Der FA Cup in England ist der älteste nationale Fußball-Wettbewerb der Welt. Er wurde zum ersten Mal 1871/72 ausgespielt.",
+   "quelle": "https://en.wikipedia.org/wiki/FA_Cup",
+   "quelle_name": "Wikipedia (en)",
+   "geprueft": "Erstmals 1871–72 ausgetragen, ältester nationaler Fußballwettbewerb der Welt."
+  },
+  {
+   "id": "fb-018",
+   "art": "fussball",
+   "text": "Der klassische Ball aus 32 Feldern wurde 1962 entwickelt. Berühmt wurde er als schwarz-weißer „Telstar“.",
+   "quelle": "https://en.wikipedia.org/wiki/Ball_(association_football)",
+   "quelle_name": "Wikipedia (en)",
+   "geprueft": "32-Felder-Design 1962 entwickelt, bekannt geworden durch den schwarz-weißen Adidas Telstar."
+  },
+  {
+   "id": "fb-019",
+   "art": "fussball",
+   "text": "Pelé war erst 17 Jahre alt, als er 1958 im WM-Finale traf – bis heute der jüngste Torschütze in einem WM-Endspiel.",
+   "quelle": "https://en.wikipedia.org/wiki/1958_FIFA_World_Cup_final",
+   "quelle_name": "Wikipedia (en)",
+   "geprueft": "Rekord als jüngster Torschütze eines WM-Finales: Pelé mit 17 Jahren und 249 Tagen."
+  },
+  {
+   "id": "fb-020",
+   "art": "fussball",
+   "text": "Bei der WM 2007 kassierte Deutschlands Torhüterin Nadine Angerer im ganzen Turnier kein einziges Gegentor.",
+   "quelle": "https://de.wikipedia.org/wiki/Fu%C3%9Fball-Weltmeisterschaft_der_Frauen_2007",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Torfrau Nadine Angerer blieb während des gesamten Turniers ohne Gegentor; Deutschland wurde Weltmeister."
+  },
+  {
+   "id": "fb-021",
+   "art": "fussball",
+   "text": "Die Dick, Kerr Ladies aus England waren eines der ersten Frauenteams. Von 755 Spielen gewannen sie 682.",
+   "quelle": "https://en.wikipedia.org/wiki/Dick,_Kerr_Ladies_F.C.",
+   "quelle_name": "Wikipedia (en)",
+   "geprueft": "Team bestand 1917–1965 und spielte 755 Spiele, davon 682 Siege."
+  },
+  {
+   "id": "fb-022",
+   "art": "fussball",
+   "text": "Bei der ersten WM 1930 in Uruguay fanden alle Spiele in einer einzigen Stadt statt: in Montevideo.",
+   "quelle": "https://de.wikipedia.org/wiki/Fu%C3%9Fball-Weltmeisterschaft_1930",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Gastgeber Uruguay; alle Spiele wurden in der Hauptstadt Montevideo ausgetragen."
+  },
+  {
+   "id": "fb-023",
+   "art": "fussball",
+   "text": "In der F-Jugend wird oft 3 gegen 3 auf vier Minitore gespielt. Jedes Team verteidigt also zwei Tore.",
+   "quelle": "https://www.dfb.de/kinder",
+   "quelle_name": "DFB – Kinderfußball",
+   "geprueft": "F-Jugend (U8/U9): Drei-gegen-Drei mit Regeln wie in der G-Jugend: vier Minitore, jede Mannschaft verteidigt zwei Tore."
+  },
+  {
+   "id": "fb-024",
+   "art": "fussball",
+   "text": "Bei den neuen Kinderfußball-Spielformen entscheiden die Kinder selbst über Aus und Foul – wie auf dem Bolzplatz.",
+   "quelle": "https://www.dfb.de/mehr-fussball/kinderfussball-irrtuemer",
+   "quelle_name": "DFB – Kinderfußball: Irrtümer",
+   "geprueft": "Die Entscheidung über Aus oder Foulspiel regeln die Kinder selbst; Erwachsene helfen nur bei Bedarf."
+  },
+  {
+   "id": "fb-025",
+   "art": "fussball",
+   "text": "Seit 2018 gibt es den Ballon d’Or auch für Fußballerinnen. Die erste Gewinnerin war Ada Hegerberg aus Norwegen.",
+   "quelle": "https://en.wikipedia.org/wiki/Ballon_d%27Or_F%C3%A9minin",
+   "quelle_name": "Wikipedia (en)",
+   "geprueft": "Erstmals 2018 verliehen, erste Preisträgerin Ada Hegerberg (Norwegen)."
+  },
+  {
+   "id": "tag-001",
+   "art": "tag",
+   "datum": "01-06",
+   "text": "1966: Die Auslosung der WM-Gruppen wird zum ersten Mal im Fernsehen übertragen.",
+   "quelle": "https://de.wikipedia.org/wiki/Fu%C3%9Fball-Weltmeisterschaft_1966",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Auslosung am 6. Januar 1966 in London, erstmals im Fernsehen übertragen."
+  },
+  {
+   "id": "tag-002",
+   "art": "tag",
+   "datum": "01-14",
+   "text": "1934: Hans Stubb trifft per Freistoß aus 60 bis 70 Metern – das weiteste Tor der deutschen Länderspielgeschichte.",
+   "quelle": "https://de.wikipedia.org/wiki/Deutsche_Fu%C3%9Fballnationalmannschaft",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Tor aus größter Distanz: Stubb am 14. Januar 1934 gegen Ungarn per Freistoß aus 60–70 m."
+  },
+  {
+   "id": "tag-003",
+   "art": "tag",
+   "datum": "01-21",
+   "text": "1950: Der Deutsche Fußball-Bund wird nach dem Krieg in Stuttgart neu gegründet.",
+   "quelle": "https://de.wikipedia.org/wiki/Deutscher_Fu%C3%9Fball-Bund",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Wiedergründung des DFB am 21. Januar 1950 in Stuttgart beschlossen."
+  },
+  {
+   "id": "tag-004",
+   "art": "tag",
+   "datum": "01-28",
+   "text": "1900: In Leipzig wird der Deutsche Fußball-Bund (DFB) gegründet.",
+   "quelle": "https://de.wikipedia.org/wiki/Deutscher_Fu%C3%9Fball-Bund",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "DFB gegründet am 28. Januar 1900 in Leipzig."
+  },
+  {
+   "id": "tag-005",
+   "art": "tag",
+   "datum": "01-31",
+   "text": "2004: Die neue Fußballarena des 1. FC Köln wird eröffnet – gebaut Tribüne für Tribüne, während weitergespielt wurde.",
+   "quelle": "https://de.wikipedia.org/wiki/1._FC_K%C3%B6ln",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Arena am 31. Januar 2004 eröffnet; Bau schrittweise während des laufenden Spielbetriebs."
+  },
+  {
+   "id": "tag-006",
+   "art": "tag",
+   "datum": "02-13",
+   "text": "1948: Der 1. FC Köln wird gegründet – aus dem Kölner BC 01 und der SpVgg Sülz 07.",
+   "quelle": "https://de.wikipedia.org/wiki/1._FC_K%C3%B6ln",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Gegründet am 13. Februar 1948 durch Zusammenschluss von Kölner BC 01 und SpVgg Sülz 07."
+  },
+  {
+   "id": "tag-007",
+   "art": "tag",
+   "datum": "02-21",
+   "text": "1948: Der SC Fortuna Köln wird gegründet – nur acht Tage nach dem 1. FC Köln.",
+   "quelle": "https://de.wikipedia.org/wiki/SC_Fortuna_K%C3%B6ln",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Gegründet am 21. Februar 1948, acht Tage nach dem 1. FC Köln."
+  },
+  {
+   "id": "tag-008",
+   "art": "tag",
+   "datum": "03-16",
+   "text": "1872: Das allererste Finale des FA Cups wird gespielt. Die Wanderers gewinnen den ältesten Pokal der Welt.",
+   "quelle": "https://en.wikipedia.org/wiki/FA_Cup",
+   "quelle_name": "Wikipedia (en)",
+   "geprueft": "Wanderers gewannen das Finale am 16. März 1872; ältester nationaler Wettbewerb."
+  },
+  {
+   "id": "tag-009",
+   "art": "tag",
+   "datum": "03-24",
+   "text": "1965: Der 1. FC Köln scheidet gegen Liverpool per Münzwurf aus – die Scheibe blieb beim ersten Wurf senkrecht im Rasen stecken.",
+   "quelle": "https://de.wikipedia.org/wiki/1._FC_K%C3%B6ln",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Entscheidungsspiel am 24. März 1965; Holzscheibe blieb aufrecht stecken, zweiter Wurf zeigte Rot (Liverpool)."
+  },
+  {
+   "id": "tag-010",
+   "art": "tag",
+   "datum": "04-04",
+   "text": "1909: Erster Sieg einer deutschen Nationalmannschaft: 1:0 gegen die Schweiz in Karlsruhe.",
+   "quelle": "https://de.wikipedia.org/wiki/Deutsche_Fu%C3%9Fballnationalmannschaft",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Am 4. April 1909 besiegte Deutschland die Schweiz in Karlsruhe mit 1:0 – erster Sieg."
+  },
+  {
+   "id": "tag-011",
+   "art": "tag",
+   "datum": "04-05",
+   "text": "1908: Deutschland bestreitet in Basel gegen die Schweiz sein erstes offizielles Länderspiel.",
+   "quelle": "https://de.wikipedia.org/wiki/Deutsche_Fu%C3%9Fballnationalmannschaft",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Erstes offizielles Länderspiel am 5. April 1908 in Basel gegen die Schweiz."
+  },
+  {
+   "id": "tag-012",
+   "art": "tag",
+   "datum": "04-06",
+   "text": "1912: In Dellbrück wird der FK Preußen Dellbrück gegründet – ein Vorgänger des heutigen FC Viktoria Köln.",
+   "quelle": "https://de.wikipedia.org/wiki/Viktoria_K%C3%B6ln",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Preußen Dellbrück am 6. April 1912 als FK Preußen Dellbrück gegründet; später Teil des SC Viktoria Köln."
+  },
+  {
+   "id": "tag-013",
+   "art": "tag",
+   "datum": "05-21",
+   "text": "1904: In Paris wird der Weltfußballverband FIFA gegründet.",
+   "quelle": "https://de.wikipedia.org/wiki/FIFA",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "FIFA am 21. Mai 1904 in Paris gegründet."
+  },
+  {
+   "id": "tag-014",
+   "art": "tag",
+   "datum": "05-26",
+   "text": "1972: Das Münchner Olympiastadion wird mit einem Länderspiel eingeweiht: Deutschland schlägt die Sowjetunion 4:1.",
+   "quelle": "https://de.wikipedia.org/wiki/Deutsche_Fu%C3%9Fballnationalmannschaft",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Am 26. Mai 1972 zur Einweihung des Olympiastadions 4:1 gegen die Sowjetunion."
+  },
+  {
+   "id": "tag-015",
+   "art": "tag",
+   "datum": "06-02",
+   "text": "1886: In London trifft sich zum ersten Mal das IFAB – bis heute hütet es die Fußballregeln.",
+   "quelle": "https://en.wikipedia.org/wiki/International_Football_Association_Board",
+   "quelle_name": "Wikipedia (en)",
+   "geprueft": "Erste Sitzung des IFAB am 2. Juni 1886 in London (Holborn Viaduct)."
+  },
+  {
+   "id": "tag-016",
+   "art": "tag",
+   "datum": "06-11",
+   "text": "1983: Kölner Pokalfinale in Müngersdorf: Der 1. FC Köln gewinnt 1:0 gegen Fortuna Köln.",
+   "quelle": "https://de.wikipedia.org/wiki/SC_Fortuna_K%C3%B6ln",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "DFB-Pokalfinale am 11. Juni 1983 in Müngersdorf, Fortuna verlor 0:1 gegen den 1. FC Köln."
+  },
+  {
+   "id": "tag-017",
+   "art": "tag",
+   "datum": "06-18",
+   "text": "1972: Deutschland wird in Brüssel zum ersten Mal Europameister.",
+   "quelle": "https://en.wikipedia.org/wiki/UEFA_Euro_1972_final",
+   "quelle_name": "Wikipedia (en)",
+   "geprueft": "Finale am 18. Juni 1972 (Brüssel), Westdeutschland gewann den Titel."
+  },
+  {
+   "id": "tag-018",
+   "art": "tag",
+   "datum": "06-22",
+   "text": "2010: Der FC Viktoria Köln wird gegründet. Seine Wurzeln reichen bis ins Jahr 1904 zurück.",
+   "quelle": "https://de.wikipedia.org/wiki/Viktoria_K%C3%B6ln",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Verein am 22. Juni 2010 gegründet; Wurzeln reichen bis 1904 (FC Germania Kalk)."
+  },
+  {
+   "id": "tag-019",
+   "art": "tag",
+   "datum": "06-29",
+   "text": "1958: Brasilien wird in Schweden Weltmeister – im Finale trifft auch der erst 17-jährige Pelé.",
+   "quelle": "https://en.wikipedia.org/wiki/1958_FIFA_World_Cup_final",
+   "quelle_name": "Wikipedia (en)",
+   "geprueft": "Finale am 29. Juni 1958; Pelé jüngster Finaltorschütze (17 Jahre, 249 Tage)."
+  },
+  {
+   "id": "tag-020",
+   "art": "tag",
+   "datum": "06-30",
+   "text": "1996: Deutschland wird in Wembley Europameister – Oliver Bierhoff trifft per Golden Goal zum 2:1.",
+   "quelle": "https://en.wikipedia.org/wiki/UEFA_Euro_1996_final",
+   "quelle_name": "Wikipedia (en)",
+   "geprueft": "Finale am 30. Juni 1996 in Wembley; Bierhoff erzielte das Golden Goal zum 2:1."
+  },
+  {
+   "id": "tag-021",
+   "art": "tag",
+   "datum": "07-02",
+   "text": "1989: Die deutschen Frauen werden in Osnabrück Europameisterinnen – vor 23.000 Fans gegen Norwegen.",
+   "quelle": "https://de.wikipedia.org/wiki/Deutsche_Fu%C3%9Fballnationalmannschaft_der_Frauen",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Finale am 2. Juli 1989 in Osnabrück vor 23.000 Zuschauern gegen Norwegen; Titel 1989 im Artikel bestätigt."
+  },
+  {
+   "id": "tag-022",
+   "art": "tag",
+   "datum": "07-04",
+   "text": "1954: Deutschland wird in Bern zum ersten Mal Fußball-Weltmeister.",
+   "quelle": "https://de.wikipedia.org/wiki/Fu%C3%9Fball-Weltmeisterschaft_1954",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Mit dem Finale am 4. Juli 1954 wurde Deutschland erstmals Weltmeister."
+  },
+  {
+   "id": "tag-023",
+   "art": "tag",
+   "datum": "07-07",
+   "text": "1974: Deutschland wird in München zum zweiten Mal Weltmeister.",
+   "quelle": "https://de.wikipedia.org/wiki/Fu%C3%9Fball-Weltmeisterschaft_1974",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Mit dem Finale am 7. Juli 1974 zum zweiten Mal Weltmeister."
+  },
+  {
+   "id": "tag-024",
+   "art": "tag",
+   "datum": "07-08",
+   "text": "1990: Deutschland wird in Rom zum dritten Mal Fußball-Weltmeister.",
+   "quelle": "https://de.wikipedia.org/wiki/Fu%C3%9Fball-Weltmeisterschaft_1990",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "WM in Italien endete am 8. Juli 1990; Deutschland Weltmeister."
+  },
+  {
+   "id": "tag-025",
+   "art": "tag",
+   "datum": "07-13",
+   "text": "2014: Deutschland wird in Rio de Janeiro zum vierten Mal Weltmeister.",
+   "quelle": "https://de.wikipedia.org/wiki/Fu%C3%9Fball-Weltmeisterschaft_2014",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "WM 2014 in Brasilien endete am 13. Juli 2014; Deutschland Weltmeister."
+  },
+  {
+   "id": "tag-026",
+   "art": "tag",
+   "datum": "07-28",
+   "text": "1962: In Dortmund beschließt der DFB die Gründung der Bundesliga.",
+   "quelle": "https://de.wikipedia.org/wiki/Fu%C3%9Fball-Bundesliga",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "DFB-Bundestag beschloss am 28. Juli 1962 in Dortmund die Einführung der Bundesliga."
+  },
+  {
+   "id": "tag-027",
+   "art": "tag",
+   "datum": "07-30",
+   "text": "1930: Uruguay gewinnt das allererste WM-Finale gegen Argentinien.",
+   "quelle": "https://de.wikipedia.org/wiki/Fu%C3%9Fball-Weltmeisterschaft_1930",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "WM vom 13. bis 30. Juli 1930; im Finale schlug Uruguay Argentinien."
+  },
+  {
+   "id": "tag-028",
+   "art": "tag",
+   "datum": "07-31",
+   "text": "2022: 87.192 Fans sehen in Wembley das EM-Finale der Frauen – ein Zuschauerrekord für eine EM-Endrunde.",
+   "quelle": "https://en.wikipedia.org/wiki/UEFA_Women%27s_Euro_2022_final",
+   "quelle_name": "Wikipedia (en)",
+   "geprueft": "Finale am 31. Juli 2022 vor 87.192 Zuschauern, Rekord für ein EM-Endrundenspiel."
+  },
+  {
+   "id": "tag-029",
+   "art": "tag",
+   "datum": "08-12",
+   "text": "2023: Viktoria Köln wirft im DFB-Pokal den Bundesligisten Werder Bremen mit 3:2 raus.",
+   "quelle": "https://de.wikipedia.org/wiki/Viktoria_K%C3%B6ln",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Am 12. August 2023 besiegte Viktoria Köln in Runde 1 Werder Bremen 3:2."
+  },
+  {
+   "id": "tag-030",
+   "art": "tag",
+   "datum": "08-24",
+   "text": "1963: Der erste Bundesliga-Spieltag – das allererste Tor fällt schon nach 58 Sekunden.",
+   "quelle": "https://de.wikipedia.org/wiki/Fu%C3%9Fball-Bundesliga",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Erster Spieltag am 24. August 1963; erstes Tor nach 58 Sekunden."
+  },
+  {
+   "id": "tag-031",
+   "art": "tag",
+   "datum": "09-22",
+   "text": "1950: Die FIFA nimmt den DFB wieder auf – deutsche Teams dürfen wieder international spielen.",
+   "quelle": "https://de.wikipedia.org/wiki/Deutscher_Fu%C3%9Fball-Bund",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Wiederaufnahme in die FIFA am 22. September 1950 in Brüssel beschlossen."
+  },
+  {
+   "id": "tag-032",
+   "art": "tag",
+   "datum": "09-23",
+   "text": "1956: Trotz Verbot spielt in Essen eine deutsche Frauenauswahl vor 17.000 Fans gegen die Niederlande.",
+   "quelle": "https://de.wikipedia.org/wiki/Deutsche_Fu%C3%9Fballnationalmannschaft_der_Frauen",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Am 23. September 1956 (inoffizielles) Länderspiel in Essen vor 17.000 Zuschauern gegen die Niederlande."
+  },
+  {
+   "id": "tag-033",
+   "art": "tag",
+   "datum": "09-30",
+   "text": "2007: Die deutschen Frauen werden in Shanghai zum zweiten Mal Weltmeisterinnen – ganz ohne Gegentor.",
+   "quelle": "https://de.wikipedia.org/wiki/Fu%C3%9Fball-Weltmeisterschaft_der_Frauen_2007",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Endspiel am 30. September 2007 in Shanghai; Sieger Deutschland; Torfrau ohne Gegentor im Turnier."
+  },
+  {
+   "id": "tag-034",
+   "art": "tag",
+   "datum": "10-12",
+   "text": "2003: Die deutschen Frauen werden in den USA zum ersten Mal Weltmeisterinnen – mit einem Golden Goal.",
+   "quelle": "https://de.wikipedia.org/wiki/Fu%C3%9Fball-Weltmeisterschaft_der_Frauen_2003",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Finale am 12. Oktober 2003 in Carson: 2:1 n. GG gegen Schweden, erster WM-Titel."
+  },
+  {
+   "id": "tag-035",
+   "art": "tag",
+   "datum": "10-23",
+   "text": "2015: In Dortmund öffnet das Deutsche Fußballmuseum.",
+   "quelle": "https://de.wikipedia.org/wiki/Deutscher_Fu%C3%9Fball-Bund",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Deutsches Fußballmuseum am 23. Oktober 2015 in Dortmund eröffnet."
+  },
+  {
+   "id": "tag-036",
+   "art": "tag",
+   "datum": "10-26",
+   "text": "1863: In London wird die Football Association gegründet – der erste Fußballverband der Welt mit festen Regeln.",
+   "quelle": "https://en.wikipedia.org/wiki/The_Football_Association",
+   "quelle_name": "Wikipedia (en)",
+   "geprueft": "Erstes Treffen der FA am 26. Oktober 1863 in der Freemasons’ Tavern, London."
+  },
+  {
+   "id": "tag-037",
+   "art": "tag",
+   "datum": "10-31",
+   "text": "1970: Der DFB hebt das Frauenfußball-Verbot auf. Endlich dürfen Frauen wieder in den Vereinen spielen.",
+   "quelle": "https://de.wikipedia.org/wiki/Frauenfu%C3%9Fball_in_Deutschland",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Am 31. Oktober 1970 hob der DFB in Travemünde das Frauenfußballverbot auf."
+  },
+  {
+   "id": "tag-038",
+   "art": "tag",
+   "datum": "11-10",
+   "text": "1982: Die deutsche Frauen-Nationalmannschaft bestreitet ihr erstes offizielles Länderspiel – 5:1 gegen die Schweiz.",
+   "quelle": "https://de.wikipedia.org/wiki/Deutsche_Fu%C3%9Fballnationalmannschaft_der_Frauen",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Erstes offizielles Länderspiel am 10. November 1982 gegen die Schweiz, 5:1-Sieg."
+  },
+  {
+   "id": "tag-039",
+   "art": "tag",
+   "datum": "11-21",
+   "text": "1990: Der Nordostdeutsche Fußballverband tritt dem DFB bei – Fußball-Deutschland ist wieder vereint.",
+   "quelle": "https://de.wikipedia.org/wiki/Deutscher_Fu%C3%9Fball-Bund",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Am 21. November 1990 trat der Nordostdeutsche Fußballverband dem DFB bei."
+  },
+  {
+   "id": "tag-040",
+   "art": "tag",
+   "datum": "11-25",
+   "text": "1953: Ungarn gewinnt im Londoner Wembley-Stadion 6:3 gegen England.",
+   "quelle": "https://de.wikipedia.org/wiki/Fu%C3%9Fball-Weltmeisterschaft_1954",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Am 25. November 1953 besiegte Ungarn England im Wembley-Stadion mit 6:3."
+  },
+  {
+   "id": "tag-041",
+   "art": "tag",
+   "datum": "11-30",
+   "text": "1872: Das erste offizielle Länderspiel der Welt: Schottland gegen England endet 0:0.",
+   "quelle": "https://en.wikipedia.org/wiki/1872_Scotland_v_England_football_match",
+   "quelle_name": "Wikipedia (en)",
+   "geprueft": "Von der FIFA als erstes Länderspiel anerkannt; 30. November 1872 in Glasgow, 0:0."
+  },
+  {
+   "id": "tag-042",
+   "art": "tag",
+   "datum": "11-30",
+   "text": "1991: Die USA gewinnen in China das allererste WM-Finale der Frauen mit 2:1 gegen Norwegen.",
+   "quelle": "https://en.wikipedia.org/wiki/1991_FIFA_Women%27s_World_Cup_final",
+   "quelle_name": "Wikipedia (en)",
+   "geprueft": "Finale am 30. November 1991 in Guangzhou, USA schlugen Norwegen 2:1."
+  },
+  {
+   "id": "tag-043",
+   "art": "tag",
+   "datum": "12-12",
+   "text": "1898: In Paris spielt zum ersten Mal eine deutsche Auswahl ein Länderspiel – offiziell zählt es der DFB aber nicht.",
+   "quelle": "https://de.wikipedia.org/wiki/Deutsche_Fu%C3%9Fballnationalmannschaft",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Ur-Länderspiel am 12. Dezember 1898 in Paris, vom DFB nicht als offiziell gezählt."
+  },
+  {
+   "id": "tag-044",
+   "art": "tag",
+   "datum": "12-19",
+   "text": "1990: In Stuttgart spielt zum ersten Mal eine gesamtdeutsche Nationalmannschaft – gegen die Schweiz.",
+   "quelle": "https://de.wikipedia.org/wiki/Deutsche_Fu%C3%9Fballnationalmannschaft",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Am 19. Dezember 1990 in Stuttgart trat erstmals eine gesamtdeutsche Mannschaft an (gegen die Schweiz)."
+  },
+  {
+   "id": "tag-045",
+   "art": "tag",
+   "datum": "12-23",
+   "text": "1970: Schalke gegen Wolfsburg: das erste offizielle Elfmeterschießen in einem deutschlandweiten Wettbewerb.",
+   "quelle": "https://de.wikipedia.org/wiki/Elfmeterschie%C3%9Fen",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Erstes offizielles Elfmeterschießen bundesweit am 23. Dezember 1970 im DFB-Pokal Schalke – Wolfsburg."
+  },
+  {
+   "id": "tag-046",
+   "art": "tag",
+   "datum": "12-26",
+   "text": "1920: 53.000 Fans sehen in Liverpool ein Frauenspiel der Dick, Kerr Ladies – ein Rekord für 98 Jahre.",
+   "quelle": "https://en.wikipedia.org/wiki/Dick,_Kerr_Ladies_F.C.",
+   "quelle_name": "Wikipedia (en)",
+   "geprueft": "Am Boxing Day (26.12.) 1920 im Goodison Park 53.000 Zuschauer, Rekord für Frauen-Vereinsspiele über 98 Jahre."
+  },
+  {
+   "id": "tag-047",
+   "art": "tag",
+   "datum": "12-31",
+   "text": "1964: Bundesliga an Silvester: Der 1. FC Nürnberg und der VfB Stuttgart spielen 1:1.",
+   "quelle": "https://de.wikipedia.org/wiki/Fu%C3%9Fball-Bundesliga",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Am 31. Dezember 1964 spielte Nürnberg gegen Stuttgart 1:1 – Partie am Silvestertag."
+  },
+  {
+   "id": "all-001",
+   "art": "allgemein",
+   "text": "Die Raumstation ISS umkreist die Erde etwa alle 90 Minuten. So erleben die Astronauten 16 Sonnenaufgänge an einem Tag.",
+   "quelle": "https://www.nasa.gov/international-space-station/space-station-facts-and-figures/",
+   "quelle_name": "NASA – Space Station Facts and Figures",
+   "geprueft": "ISS umkreist die Erde etwa alle 90 Minuten, 16 Umläufe und 16 Sonnenauf- und -untergänge in 24 Stunden."
+  },
+  {
+   "id": "all-002",
+   "art": "allgemein",
+   "text": "Die ISS ist 109 Meter lang – etwa so lang wie ein Fußballplatz.",
+   "quelle": "https://www.nasa.gov/international-space-station/space-station-facts-and-figures/",
+   "quelle_name": "NASA – Space Station Facts and Figures",
+   "geprueft": "Die Station misst 109 m (356 ft) von Ende zu Ende."
+  },
+  {
+   "id": "all-003",
+   "art": "allgemein",
+   "text": "Astronauten auf der ISS treiben jeden Tag mindestens zwei Stunden Sport.",
+   "quelle": "https://www.nasa.gov/international-space-station/space-station-facts-and-figures/",
+   "quelle_name": "NASA – Space Station Facts and Figures",
+   "geprueft": "Astronauten trainieren mindestens zwei Stunden am Tag."
+  },
+  {
+   "id": "all-004",
+   "art": "allgemein",
+   "text": "Die ISS ist größer als ein Haus mit sechs Schlafzimmern. Es gibt dort zwei Badezimmer und einen Fitnessraum.",
+   "quelle": "https://www.nasa.gov/international-space-station/space-station-facts-and-figures/",
+   "quelle_name": "NASA – Space Station Facts and Figures",
+   "geprueft": "Größer als ein Haus mit sechs Schlafzimmern, sechs Schlafplätze, zwei Bäder, ein Fitnessraum."
+  },
+  {
+   "id": "all-005",
+   "art": "allgemein",
+   "text": "Seit November 2000 leben ohne Pause Menschen auf der Raumstation ISS.",
+   "quelle": "https://www.nasa.gov/international-space-station/space-station-facts-and-figures/",
+   "quelle_name": "NASA – Space Station Facts and Figures",
+   "geprueft": "Die Station ist seit November 2000 durchgehend bewohnt."
+  },
+  {
+   "id": "all-006",
+   "art": "allgemein",
+   "text": "Die Raumsonde Voyager 1 ist so weit weg, dass ein Funksignal seit November 2026 einen ganzen Tag bis zu ihr braucht.",
+   "quelle": "https://www.nasa.gov/news-release/nasas-voyager-1-makes-history-reaching-one-light-day-from-earth/",
+   "quelle_name": "NASA – Pressemitteilung 19.11.2026",
+   "geprueft": "Voyager 1 erreichte am 18.11.2026 einen Lichttag Entfernung (Strecke, die Licht in 24 Stunden zurücklegt)."
+  },
+  {
+   "id": "all-007",
+   "art": "allgemein",
+   "text": "Ein Krake hat drei Herzen – und blaues Blut.",
+   "quelle": "https://de.wikipedia.org/wiki/Gew%C3%B6hnlicher_Krake",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Der Gewöhnliche Krake hat drei Herzen, die das blaue Blut durch den Körper pumpen."
+  },
+  {
+   "id": "all-008",
+   "art": "allgemein",
+   "text": "Der Gepard ist das schnellste Landtier. Gemessen wurden 93 km/h – aber nur für ein bis zwei Sekunden.",
+   "quelle": "https://de.wikipedia.org/wiki/Gepard",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Schnellstes Landtier; nachweisbar bis 93 km/h gemessen, nur etwa ein bis zwei Sekunden durchzuhalten."
+  },
+  {
+   "id": "all-009",
+   "art": "allgemein",
+   "text": "Eine Giraffe hat trotz ihres langen Halses nur sieben Halswirbel – so wie fast alle Säugetiere.",
+   "quelle": "https://de.wikipedia.org/wiki/Giraffen",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Halswirbelsäule wie bei fast allen Säugetieren aus nur sieben, stark verlängerten Halswirbeln."
+  },
+  {
+   "id": "all-010",
+   "art": "allgemein",
+   "text": "Mauersegler bleiben außerhalb der Brutzeit etwa zehn Monate fast ohne Pause in der Luft.",
+   "quelle": "https://de.wikipedia.org/wiki/Mauersegler",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Außerhalb der Brutzeit etwa zehn Monate nahezu ohne Unterbrechung in der Luft."
+  },
+  {
+   "id": "all-011",
+   "art": "allgemein",
+   "text": "Babys haben über 300 Knochen. Viele wachsen später zusammen – Erwachsene haben etwa 206.",
+   "quelle": "https://de.wikipedia.org/wiki/Skelett_des_Menschen",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Erwachsene 206 bis 212 Knochen (je nach Zählweise); Säuglinge über 300, einige wachsen zusammen."
+  },
+  {
+   "id": "all-012",
+   "art": "allgemein",
+   "text": "Kolibris schlagen 40- bis 50-mal pro Sekunde mit den Flügeln. Sie können sogar rückwärts fliegen.",
+   "quelle": "https://de.wikipedia.org/wiki/Kolibris",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Schwirrflug mit 40 bis 50 Flügelschlägen pro Sekunde; auch seitwärts und rückwärts fliegen möglich."
+  },
+  {
+   "id": "all-013",
+   "art": "allgemein",
+   "text": "Der Blauwal wird bis zu 33 Meter lang und bis zu 200 Tonnen schwer – eines der größten Tiere, die je gelebt haben.",
+   "quelle": "https://de.wikipedia.org/wiki/Blauwal",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Bis zu 33 m und 200 t; eines der größten und schwersten bekannten Tiere der Erdgeschichte."
+  },
+  {
+   "id": "all-014",
+   "art": "allgemein",
+   "text": "Der höchste Berg im Sonnensystem steht auf dem Mars: der Vulkan Olympus Mons, etwa zweieinhalbmal so hoch wie der Mount Everest.",
+   "quelle": "https://de.wikipedia.org/wiki/Olympus_Mons",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Rund zweieinhalb Mal so hoch wie der Mount Everest; höchster Berg im Sonnensystem."
+  },
+  {
+   "id": "all-015",
+   "art": "allgemein",
+   "text": "Wombats aus Australien machen würfelförmige Köttel. So rollen sie nicht weg.",
+   "quelle": "https://de.wikipedia.org/wiki/Wombats",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Der Kot ist würfelförmig; vermutlich damit die Markierungen nicht von exponierten Stellen herabrollen."
+  },
+  {
+   "id": "all-016",
+   "art": "allgemein",
+   "text": "Die Venus dreht sich so langsam, dass eine Umdrehung 243 Erdtage dauert – länger als ihr ganzes Jahr mit 225 Tagen.",
+   "quelle": "https://de.wikipedia.org/wiki/Venus_(Planet)",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Siderische Rotation 243,025 Erdtage, länger als die Umlaufperiode von 224,701 Erdtagen."
+  },
+  {
+   "id": "all-017",
+   "art": "allgemein",
+   "text": "Der Mond entfernt sich jedes Jahr etwa 3,8 Zentimeter von der Erde.",
+   "quelle": "https://de.wikipedia.org/wiki/Mond",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Mittlerer Erde-Mond-Abstand wächst jährlich um etwa 3,8 cm."
+  },
+  {
+   "id": "all-018",
+   "art": "allgemein",
+   "text": "Beim Kaiserpinguin passt der Papa auf das Ei auf: Er trägt es auf seinen Füßen, unter einer warmen Bauchfalte.",
+   "quelle": "https://de.wikipedia.org/wiki/Kaiserpinguin",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Das Männchen legt sich das Ei auf die Füße und bedeckt es mit seiner Bauchfalte."
+  },
+  {
+   "id": "all-019",
+   "art": "allgemein",
+   "text": "Der Afrikanische Elefant ist das größte lebende Landsäugetier der Welt.",
+   "quelle": "https://de.wikipedia.org/wiki/Afrikanischer_Elefant",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Der Afrikanische Elefant ist das größte lebende Landsäugetier."
+  },
+  {
+   "id": "all-020",
+   "art": "allgemein",
+   "text": "Manche Seesterne stülpen zum Fressen ihren Magen aus dem Körper – und verdauen ihre Beute außen.",
+   "quelle": "https://de.wikipedia.org/wiki/Seesterne",
+   "quelle_name": "Wikipedia (de)",
+   "geprueft": "Bei vielen räuberischen Arten ist der Magen ausstülpbar; die Verdauung findet außerhalb des Körpers statt."
+  }
+ ]
+}
