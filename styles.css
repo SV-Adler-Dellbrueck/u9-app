@@ -1968,3 +1968,25 @@ details.tk-erledigt[open]>summary::after{content:"▴"}
 .vitrine-zahl{font-size:var(--s-karte);font-weight:900}
 .vitrine-unter{font-size:var(--s-klein);font-weight:700}
 .vitrine-stand,.vitrine-leer{font-size:var(--s-klein);color:var(--text2);margin-top:6px}
+
+/* v948: Sprachlob-Fenster */
+.bot-schritt{font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);margin:12px 0 8px}
+.bot-aufnahme{display:flex;align-items:center;gap:14px;min-height:88px}
+.bot-mic{flex:none;width:84px;height:84px;border-radius:50%;border:0;background:linear-gradient(135deg,#ec4899,#be185d);color:#fff;font-size:34px;box-shadow:0 6px 18px rgba(190,24,93,.35);cursor:pointer}
+.bot-mic:active{transform:scale(.96)}
+.bot-mic.an{background:linear-gradient(135deg,#ef4444,#b91c1c);animation:botpuls 1.2s ease-in-out infinite}
+@keyframes botpuls{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.5)}50%{box-shadow:0 0 0 14px rgba(239,68,68,0)}}
+@media (prefers-reduced-motion:reduce){.bot-mic.an{animation:none}}
+.bot-mic-text{font-size:var(--s-text);line-height:1.45;color:var(--text2)}
+.bot-mic-text b{color:var(--text)}
+.bot-fertig{flex:1}.bot-fertig audio{width:100%}
+.bot-text-auf{margin:10px 0 0}.bot-text-auf summary{cursor:pointer;font-size:var(--s-text);font-weight:700;min-height:44px;display:flex;align-items:center}
+.bot-text-auf textarea{width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)}
+.bot-zaehler{font-size:var(--s-klein);color:var(--text2);text-align:right}
+.bot-modus{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bot-m{min-height:56px;border-radius:14px;border:2px solid var(--rand-bedien);background:var(--surface);color:var(--text);font-size:var(--s-text);font-weight:800;cursor:pointer;font-family:inherit}
+.bot-m[aria-pressed="true"]{border-color:#be185d;background:rgba(236,72,153,.10)}
+.bot-quelle{font-size:var(--s-klein);color:var(--text2);margin:6px 2px 8px}
+.bot-kinder{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.bot-hinweis{font-size:var(--s-klein);color:var(--text2);line-height:1.5;background:var(--surface2);border-radius:10px;padding:8px 10px;margin:10px 0}
+.bot-meldung{font-size:var(--s-text);color:#b91c1c;min-height:20px;margin-bottom:6px}
