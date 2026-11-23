@@ -2594,41 +2594,86 @@ function tpSlotKurz(el){
   const regel=((typeof tpSlots!=="undefined"&&tpSlots[Number(el.dataset.si)])||{}).regel;   // die Zusatzregel steht sonst nur im offenen Block
   return (namen.length?[...new Set(namen)].join(" · "):"freies Spiel – keine Übung")+(regel?` · Regel: ${regel}`:"");
 }
+/* v954 · Charles 22./23.11. (Bild freigegeben): „Die Blöcke … sind immer noch optisch nicht ansehnlich und nicht gut
+   strukturiert. Muss intuitiver und einfacher sein.“ Statt langer Karten steht jeder Block als eine Zeile (Name, Minuten, je
+   Feld Übung und Trainer, Fehlendes orange). Antippen öffnet den Block als Fenster von unten (dieselbe Karte, alle Felder und
+   IDs bleiben im DOM – Werte, Speichern und Prüfwege unverändert). Ohne jede gewählte Übung bleiben die Karten offen
+   (Erstplanung); „Alle Blöcke ausführlich“ zeigt sie wie bisher (_tpAlleOffen). Löst das Einklappen aus v857 ab. */
+let _tpSheet=null, _tpSheetSlot=null;   // offen ist ein BLOCK, nicht eine Position – wandert beim Verschieben/Löschen mit (wie v891)
+function _tpBlockZeileHtml(el){
+  const si=Number(el.dataset.si), sl=(typeof tpSlots!=="undefined"&&tpSlots[si])||{}, typ=sl.typ||"main";
+  const alle=(typeof tpAllForms==="function")?tpAllForms():[], ids=tpWahlFelder(si);
+  const zeilen=ids.map(id=>{ const i=tpWahlIdx(id), n=i==null?null:((alle[i]||{}).name||null), g=(typeof _tpStationGruppe!=="undefined"&&_tpStationGruppe[id])||null;
+    const tr=(typeof tpCoaches!=="undefined"&&tpCoaches[id])||"";
+    const grp=el.querySelector(`[data-station="${id}"]`)?.closest(".tp-station")?.querySelector(".tp-station-nr")?.textContent||"";
+    return `<span class="tp-z-zeile">${grp&&!/^\d+$/.test(grp.trim())?esc(grp.trim())+" ":""}${n?esc(n):'<b class="tp-z-fehlt">Übung fehlt</b>'}${tr?` · ${esc(tr)}`:(ids.length>1?' · <span class="tp-z-leer">Trainer?</span>':"")}</span>`; });
+  const regel=sl.regel?`<span class="tp-z-zeile">Regel: ${esc(sl.regel)}</span>`:"";
+  const frei=!ids.length?`<span class="tp-z-zeile">${typ==="abschluss"||typ==="turnier"?"Abschlussspiel / Trainingsturnier":"freies Spiel – keine Übung"}</span>`:"";
+  return [...new Set(zeilen)].join("")+frei+regel;
+}
 function tpKlappenAnwenden(){
   const tl=document.getElementById("tp-timeline"); if(!tl)return;
   const slots=[...tl.querySelectorAll(".tp-slot")];
   const hat=slots.some(el=>tpWahlFelder(Number(el.dataset.si)).some(id=>tpWahlIdx(id)!=null));
-  let zu=0, klappbare=0;
+  const liste=hat&&!_tpAlleOffen;
+  tl.classList.toggle("tp-liste",liste);
+  if(_tpSheetSlot){ const i=(typeof tpSlots!=="undefined")?tpSlots.indexOf(_tpSheetSlot):-1; _tpSheet=i>=0?i:null; } else _tpSheet=null;
+  if(_tpSheet!=null&&!slots.some(el=>Number(el.dataset.si)===_tpSheet))_tpSheet=null;
   slots.forEach(el=>{
     const si=Number(el.dataset.si), head=el.querySelector(".tp-slot-head"); if(!head)return;
-    el.querySelector(":scope > .tp-kurz")?.remove(); head.querySelector(".tp-klapp")?.remove();
-    const label=head.querySelector(".tp-slot-label");
-    const klappbar=hat&&tpSlotGefuellt(el);
-    const offen=!klappbar||_tpAlleOffen||_tpOffen.has(si);
-    el.classList.toggle("tp-zu",!offen);
-    if(label){ label.onclick=klappbar?()=>tpKlapp(si):null; label.style.cursor=klappbar?"pointer":""; }
-    if(!klappbar)return;
-    klappbare++;
-    const name=label?label.textContent.trim():"Block";
-    const b=document.createElement("button"); b.type="button"; b.className="tp-klapp";
-    b.setAttribute("aria-expanded",offen?"true":"false"); b.setAttribute("aria-label",`${name} ${offen?"einklappen":"aufklappen"}`);
-    b.textContent=offen?"▾":"▸"; b.onclick=()=>tpKlapp(si);
-    head.insertBefore(b,label||head.firstChild);
-    if(!offen){
-      zu++;
-      const k=document.createElement("button"); k.type="button"; k.className="tp-kurz"; k.textContent=tpSlotKurz(el);
-      k.setAttribute("aria-label",`${name}: ${k.textContent} – aufklappen`); k.onclick=()=>tpKlapp(si);
-      el.appendChild(k);
+    el.querySelector(":scope > .tp-kurz")?.remove(); el.querySelector(":scope > .tp-sheet-fuss")?.remove();
+    head.querySelector(".tp-klapp")?.remove(); head.querySelector(".tp-sheet-zu")?.remove();
+    el.classList.remove("tp-zu");
+    const label=head.querySelector(".tp-slot-label"), name=label?label.textContent.trim():"Block";
+    const sheet=liste&&_tpSheet===si;
+    el.classList.toggle("tp-sheet",sheet); el.classList.toggle("tp-zeile",liste&&!sheet);
+    if(sheet){ el.setAttribute("role","dialog"); el.setAttribute("aria-modal","true"); el.setAttribute("aria-label",`${name} bearbeiten`); }
+    else { el.removeAttribute("role"); el.removeAttribute("aria-modal"); el.removeAttribute("aria-label"); }
+    if(label){ label.onclick=liste&&!sheet?()=>tpBlockOeffnen(si):null; label.style.cursor=liste&&!sheet?"pointer":""; }
+    const zt=head.querySelector(".tp-slot-time"); if(zt){ const sl0=(typeof tpSlots!=="undefined"&&tpSlots[si])||{}; if(liste&&!sheet&&sl0.dauer)zt.dataset.min=sl0.dauer+" Min"; else delete zt.dataset.min; }
+    if(!liste)return;
+    if(sheet){
+      const x=document.createElement("button"); x.type="button"; x.className="tp-sheet-zu"; x.setAttribute("aria-label",`${name} schließen`); x.textContent="✕"; x.onclick=()=>tpBlockSchliessen();
+      head.appendChild(x);
+      const kette=_tpKette(), pos=kette.indexOf(si), f=document.createElement("div"); f.className="tp-sheet-fuss";
+      f.innerHTML=(pos>0?`<button type="button" onclick="tpBlockSchliessen();tpSlotVerschieben(${si},${pos-1})">↑ Nach oben</button>`:"")
+        +(pos>=0&&pos<kette.length-1?`<button type="button" onclick="tpBlockSchliessen();tpSlotVerschieben(${si},${pos+1})">↓ Nach unten</button>`:"")
+        +`<button type="button" class="tp-remove" onclick="tpBlockSchliessen();tpRemoveSlot(${si})" aria-label="Block ${esc(name)} löschen">🗑 Löschen</button>`;
+      el.appendChild(f);
+      return;
     }
+    const k=document.createElement("button"); k.type="button"; k.className="tp-kurz"; k.innerHTML=`<span class="tp-z-text">${_tpBlockZeileHtml(el)}</span><span class="tp-z-pfeil" aria-hidden="true">›</span>`;
+    k.setAttribute("aria-label",`${name}: ${k.textContent.replace("›","").trim()} – bearbeiten`); k.onclick=()=>tpBlockOeffnen(si);
+    el.appendChild(k);
   });
+  let dim=document.getElementById("tp-sheet-dim");
+  if(liste&&_tpSheet!=null){ if(!dim){ dim=document.createElement("div"); dim.id="tp-sheet-dim"; dim.className="tp-sheet-dim"; dim.setAttribute("role","presentation");   /* sonst macht _dialogKennzeichnen ihn zum Dialog und die Fokus-Falle hielte den Fokus dort */ dim.onclick=()=>tpBlockSchliessen(); document.body.appendChild(dim); } document.body.classList.add("tp-sheet-offen"); }
+  else { dim?.remove(); document.body.classList.remove("tp-sheet-offen"); }
   document.getElementById("tp-klapp-alle")?.remove();
-  if(!klappbare)return;
-  const sch=document.createElement("button"); sch.type="button"; sch.id="tp-klapp-alle"; sch.className="btn btn-sm";
-  sch.textContent=zu?"Alle aufklappen":"Alle einklappen";
-  sch.onclick=()=>{ if(zu){_tpAlleOffen=true;}else{_tpAlleOffen=false;_tpOffen.clear();} tpKlappenAnwenden(); };
-  const erster=slots[0]; if(erster)erster.parentNode.insertBefore(sch,erster);
+  if(!hat)return;
+  const sch=document.createElement("button"); sch.type="button"; sch.id="tp-klapp-alle"; sch.className="btn btn-link tp-klapp-alle";
+  sch.textContent=liste?"Alle Blöcke ausführlich zeigen":"Blöcke als Liste zeigen";
+  sch.onclick=()=>{ _tpAlleOffen=liste; _tpOffen.clear(); _tpSheet=null; _tpSheetSlot=null; tpKlappenAnwenden(); };
+  const letzte=slots[slots.length-1]; if(letzte)letzte.parentNode.insertBefore(sch,letzte.nextSibling);
 }
+function tpBlockOeffnen(si){
+  _tpSheet=si; _tpSheetSlot=(typeof tpSlots!=="undefined"&&tpSlots[si])||null; tpKlappenAnwenden();
+  const el=document.querySelector(`#tp-timeline .tp-slot[data-si="${si}"]`);
+  if(el){ el.scrollTop=0; (el.querySelector(".tp-sheet-zu")||el).focus({preventScroll:true}); }
+}
+function tpBlockSchliessen(){
+  const si=_tpSheet; _tpSheet=null; _tpSheetSlot=null; tpKlappenAnwenden();
+  const k=document.querySelector(`#tp-timeline .tp-slot[data-si="${si}"] .tp-kurz`); if(k)k.focus({preventScroll:true});
+}
+window.addEventListener("keydown",e=>{   // am Fenster (window), damit es vor den Escape-Wächtern am document läuft
+  if(e.key!=="Escape"||_tpSheet==null)return;
+  const anderer=[...document.querySelectorAll('[role="dialog"][aria-modal="true"]')].some(d=>!d.classList.contains("tp-sheet")&&!d.classList.contains("tp-sheet-dim")&&d.getClientRects().length&&getComputedStyle(d).visibility!=="hidden");
+  if(anderer)return;   // ein Fenster darüber (Übungswahl, Rückfrage) schließt zuerst
+  e.stopPropagation(); tpBlockSchliessen();
+},true);
 function tpKlapp(si){
+  const tl0=document.getElementById("tp-timeline");
+  if(tl0&&tl0.classList.contains("tp-liste")){ if(_tpSheet===si)tpBlockSchliessen(); else tpBlockOeffnen(si); return; }   // v954
   const el=document.querySelector(`#tp-timeline .tp-slot[data-si="${si}"]`); if(!el)return;
   if(el.classList.contains("tp-zu")){ _tpOffen.add(si); }
   else{
@@ -3813,6 +3858,7 @@ function tpRemoveSlot(idx){
   const kindAlt=TP_ZUSTAND.kind[idx];
   const twAlt=Array.isArray(TP_ZUSTAND.tw[idx])?TP_ZUSTAND.tw[idx].slice():undefined;
   const offenAlt=_tpOffen.has(idx);   // v891: Klappzustand kommt mit zurück
+  const sheetAlt=typeof _tpSheetSlot!=="undefined"&&_tpSheetSlot===slot;   // v954: offenes Block-Fenster kommt mit zurück
   const coaches={}; Object.keys(tpCoaches).forEach(k=>{ const m=k.match(/^tp-form-(\d+)-(\d+)$/); if(m&&+m[1]===idx)coaches[m[2]]=tpCoaches[k]; });
   const kopie=JSON.parse(JSON.stringify(slot));
   if(kopie.parallelZu!=null&&kopie.parallelZu>idx)kopie.parallelZu--;
@@ -3830,6 +3876,7 @@ function tpRemoveSlot(idx){
     if(twAlt!==undefined&&_tpFeldArt(tpSlots[n])==="tw")TP_ZUSTAND.tw[n]=twAlt.slice();   // v890: Haken wie vor dem Löschen
     else tpTwSetzen(n,null);                                                               // nie geändert: Vorgabe (alle)
     if(offenAlt)_tpOffen.add(n); else _tpOffen.delete(n);   // v891: tpSlotsNeuOrdnen zieht ihn an die alte Stelle
+    if(sheetAlt)_tpSheetSlot=kopie;
     const reihe=tpSlots.map((_,i)=>i); reihe.pop(); reihe.splice(Math.min(idx,reihe.length),0,n);
     tpSlotsNeuOrdnen(reihe);
   },8000);

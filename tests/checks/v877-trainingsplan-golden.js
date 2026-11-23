@@ -260,7 +260,7 @@ const SZENARIEN = [
     haelt: "Fehlerbild 3 – behoben in v891: der Klappzustand wandert beim Verschieben mit dem Block mit (vorher blieb er am Index, danach war ein anderer Block offen). Der gespeicherte Körper hängt vom Klappen nicht ab.",
     schritte: (() => {
       const bild = () => [...document.querySelectorAll("#tp-timeline .tp-slot")].map(el => ({ si: Number(el.dataset.si), label: tpSlotName((tpSlots[Number(el.dataset.si)] || {}).label || ""),
-        zu: el.classList.contains("tp-zu"), kurz: (el.querySelector(":scope > .tp-kurz") || {}).textContent || null }));
+        zu: el.classList.contains("tp-zu") || el.classList.contains("tp-zeile"), kurz: (el.querySelector(":scope > .tp-kurz") || {}).textContent || null }));   // v954: „zu“ = Zeile der Liste
       const b = `(${bild.toString()})()`;
       return [
         ["Training füllen", p => p.evaluate(async () => { await tpGenerate(); })],
