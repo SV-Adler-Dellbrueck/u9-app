@@ -32,11 +32,11 @@ module.exports = async function (h) {
     const knopf = t => [...box.querySelectorAll("button")].find(b => b.textContent.includes(t));
     out.plan = { schritte,
       termin: idx(document.getElementById("tp-vorplan")), trainer: idx(document.getElementById("tp-trainer-checks")),
-      vorlage: idx(knopf("Vorlage übernehmen")), auto: idx(knopf("Training füllen")), ablauf: idx(document.getElementById("tp-timeline")),
+      vorlage: idx(knopf("Andere Vorlage wählen")), auto: idx(knopf("Training füllen")), ablauf: idx(document.getElementById("tp-timeline")),
       netto: idx(document.getElementById("tp-netto")), speichern: idx(knopf("Plan speichern")), start: idx(knopf("Trainingsstart")),
       s: [1, 2].map(sIdx), klapp: idx(document.getElementById("tp-klapp")), klappZu: !document.getElementById("tp-klapp").open,
       klappText: (document.querySelector("#tp-klapp-zeile .kk-text") || {}).textContent || "",
-      nebeneinander: knopf("Vorlage übernehmen") && knopf("Training füllen") && knopf("Vorlage übernehmen").parentElement === knopf("Training füllen").parentElement,
+      nebeneinander: knopf("Andere Vorlage wählen") && knopf("Training füllen") && knopf("Andere Vorlage wählen").parentElement === knopf("Training füllen").parentElement,   // v952: Vorlage als Link „Andere Vorlage wählen“ im selben Bereich
       hStart: Math.round(knopf("Trainingsstart").getBoundingClientRect().height), hSpeichern: Math.round(knopf("Plan speichern").getBoundingClientRect().height) };
     // b)
     go("anwesenheit"); await w(1200);

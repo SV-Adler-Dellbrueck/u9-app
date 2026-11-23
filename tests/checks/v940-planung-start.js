@@ -5,6 +5,7 @@
       Training n von m, Ablauf Aufwärmen · Hauptteil · Abschluss, „rechnet mit N Kindern“; Hauptknopf „Plan übernehmen“
       (≥ 56 px); darunter drei gleich breite Kacheln (≥ 140 px hoch): Andere Leitfrage, Selbst bauen, Mit KI.
    b) „Plan übernehmen“ schreibt den Plan; danach „Dein Training steht“ mit „Passt – speichern“; ein Herz mit Gruß erscheint.
+      Seit v952 ist der übernommene Plan gespeichert und die Seite zeigt die Übersicht mit „Training starten“.
    c) Automatische Anpassung (nur wenn sich Kinder- oder Trainerzahl seit dem letzten Öffnen auf dem Gerät geändert haben): ändert sich etwas, wird übernommen und der Hinweis „Angepasst wegen …“ mit „Rückgängig“
       erscheint; zwei Stunden vor Beginn nicht; nicht erneut für einen zurückgenommenen Stand. „Rückgängig“ schreibt
       den vorherigen Plan zurück.
@@ -53,7 +54,7 @@ module.exports = async function (h) {
     // b)
     window.frageJaNein = async () => true;
     await tpStartUebernehmen(datum); await w(300);
-    out.b = { text: txt(document.getElementById("tps-haupt")), speichern: !!document.getElementById("tps-speichern"), herz: txt(document.getElementById("fr-herz")) };
+    out.b = { text: txt(document.getElementById("tps-fertig")), speichern: !!document.getElementById("tpu-start"), herz: txt(document.getElementById("fr-herz")) };
     // c) automatische Anpassung (Rechnung gestellt: dieselbe wie „Plan anpassen“, eigene Prüfungen v719)
     const altV = window.tpAnpassenVorschlag, altU = window.tpAnpassenUebernehmen;
     window.tpAnpassenVorschlag = () => ({ kinderZahl: 9, trainer: ["Trainer A"], raus: ["Kind A", "Kind B"], rein: [], vorher: 2, nachher: 1, tausch: [], nichts: false });
@@ -94,7 +95,7 @@ module.exports = async function (h) {
   if (!/Plan übernehmen/.test(r.a.knopf) || r.a.kh < 56) P(`a) Hauptknopf „${r.a.knopf}“ ${r.a.kh} px`);
   /* v949: „Andere Leitfrage“ entfällt als Kachel (Leitfrage des Monats direkt in der Karte) – zwei Kacheln */
   if (r.a.wege.length !== 2 || !/Selbst bauen/.test(r.a.wege[0]) || !/Mit KI/.test(r.a.wege[1]) || Math.max(...r.a.wb) - Math.min(...r.a.wb) > 1 || Math.min(...r.a.wh) < 140) P(`a) Kacheln: ${JSON.stringify([r.a.wege, r.a.wb, r.a.wh])}`);
-  if (!/Dein Training steht/.test(r.b.text) || !r.b.speichern || !/❤️/.test(r.b.herz)) P(`b) nach Übernehmen: ${JSON.stringify(r.b).slice(0, 240)}`);
+  if (!/Training steht/.test(r.b.text) || !r.b.speichern || !/❤️/.test(r.b.herz)) P(`b) nach Übernehmen: ${JSON.stringify(r.b).slice(0, 240)}`);
   if (!posts.length) P("b) kein Plan geschrieben");
   if (!r.c.auto || r.c.uebernommen !== 1 || !/Angepasst wegen 2 Absagen: 1 statt 2 Felder · eine Übung getauscht/.test(r.c.hinweis) || !r.c.rueck) P(`c) Anpassung: ${JSON.stringify(r.c)}`);
   if (r.c.frier !== false) P("c) zwei Stunden vor Beginn trotzdem angepasst");

@@ -36,7 +36,9 @@ module.exports = async function (h) {
     tpRenderTimeline();
     const sel = document.getElementById("tp-form-1-0"); sel.value = sel.options[4].value; tpOnSelectChange(sel);
     const gewaehlt = sel.value;
-    out.label = document.querySelector('.tp-slot[data-si="0"] .tp-remove')?.getAttribute("aria-label") || "";
+    /* v952: Löschen steckt im ⋯-Menü des Blocks – Menü öffnen, Beschriftung des Löschen-Eintrags lesen */
+    tpBlockMenu(0, document.querySelector('.tp-slot[data-si="0"] .tp-mehr'));
+    out.label = document.querySelector('#tp-block-menu .tp-remove')?.getAttribute("aria-label") || ""; tpBlockMenuZu();
     tpRemoveSlot(1);
     out.nach = tpSlots.map(x => x.label);
     const knopf = [...document.querySelectorAll("#undo-toast button")].find(b => /rückgängig/i.test(b.textContent));

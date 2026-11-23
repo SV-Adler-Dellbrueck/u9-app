@@ -28,9 +28,11 @@ module.exports = async function (h) {
     out.a = { sfq: !!document.getElementById("tp-sfq"), anteilText: /Spielform-Anteil/.test(box.textContent), netto, gesamtRechnung: tpGesamtMinuten(), gesamtZeile: (gesamtZeile.match(/Gesamt:\s*(\d+)/) || [])[1] };
     // b)
     if (typeof blockPlanKarte === "function") { await blockPlanKarte(); await w(200); }
-    const link = document.getElementById("tp-block-link");
-    const hin = [...box.querySelectorAll("div")].find(d => d.textContent.trim() === "Oder unten jeden Block selbst belegen.");
-    out.b = { link: !!link, nachHinweis: !!(link && hin && (hin.compareDocumentPosition(link) & Node.DOCUMENT_POSITION_FOLLOWING)), breiterKnopf: !!document.querySelector("#tp-block .btn") };
+    /* v952: Der Block-Link steht nur noch einmal – in der Startkarte (tps-block), sonst unter „Plan im Detail“ (tp-block-link);
+       der Erklärsatz „Oder unten jeden Block selbst belegen.“ entfällt. Geprüft: genau ein leiser Link, kein breiter Knopf. */
+    const links = ["tp-block-link", "tps-block"].map(id => document.getElementById(id)).filter(Boolean);
+    const link = links[0];
+    out.b = { link: links.length === 1, nachHinweis: !!(link && /btn-link/.test(link.className)), breiterKnopf: !!document.querySelector("#tp-block .btn") };
     // c)
     if (typeof tpRenderMindsetTip === "function") tpRenderMindsetTip();
     const add = document.getElementById("tp-add-slot");

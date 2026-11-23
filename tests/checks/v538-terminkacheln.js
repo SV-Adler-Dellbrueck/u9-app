@@ -117,8 +117,9 @@ module.exports = async function (h) {
   if (!vu) probleme.push("„Vorlage übernehmen“ fehlt");
   /* v687: „Vorlage übernehmen“ steht als Kachel neben „Auto-Plan“ in Schritt 2 („Plan“, bis v799: Schritt 3 „Inhalt wählen“) –
      beide füllen den Plan und sind gleichrangig. Geprüft wird die Kachel (≥ 88 px), nicht mehr die volle Breite. */
-  else if (!/min-height:56px/.test(vu[0])) probleme.push("„Vorlage übernehmen“ steht nicht als Kachel in „Plan“");
-  else zeilen.push("Knöpfe: „Vorlage übernehmen“ als Kachel neben „Auto-Plan“, „Einheit importieren“ entfallen");
+  /* v952: Seit der fertige Plan oben steht, ist die Vorlage nur noch der leise Link „Andere Vorlage wählen“ (≥ 44 px). */
+  else if (!/id="tp-andere-vorlage"/.test(vu[0]) || !/min-height:44px/.test(vu[0])) probleme.push("„Andere Vorlage wählen“ fehlt in „Plan im Detail“");
+  else zeilen.push("Knöpfe: „Andere Vorlage wählen“ als Link (v952), „Einheit importieren“ entfallen");
 
   return h.ergebnis("Trainingsplan-Kopf: sechs Kacheln statt Dropdown", !probleme.length, zeilen.concat(probleme));
 };

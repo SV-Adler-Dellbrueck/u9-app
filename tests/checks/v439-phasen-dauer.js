@@ -28,7 +28,7 @@ module.exports = async function (h) {
     const kopf = [...document.querySelectorAll(".tp-slot-head")].map(k => {
       const b = k.getBoundingClientRect();
       const raus = [...k.children].filter(c => c.getBoundingClientRect().right > b.right + 0.5).length;
-      return { ueberstand: Math.round(k.scrollWidth - k.clientWidth), raus, papierkorb: !!k.querySelector(".tp-remove") };
+      return { ueberstand: Math.round(k.scrollWidth - k.clientWidth), raus, papierkorb: !!k.querySelector(".tp-mehr") };   // v952: Löschen steckt im ⋯-Menü
     });
     return { start, nachLoeschen, nachVerlaengern, hatFeld: !!sel, hoehen, kopf, gesamtDauer: tpSlots.reduce((a, x) => a + (x.dauer || 0), 0) };
   }, h.KINDER);
@@ -43,7 +43,7 @@ module.exports = async function (h) {
   if (r.gesamtDauer !== 75) probleme.push(`Gesamtdauer ${r.gesamtDauer}, erwartet 75`);
   if (!/frei/.test(r.nachLoeschen.gesamt)) probleme.push(`nach dem Loeschen fehlt der Hinweis „noch … Min. frei": „${r.nachLoeschen.gesamt}"`);
   if (r.hoehen.some(x => x < 44)) probleme.push("Dauer-Feld unter 44 px: " + r.hoehen.join("/"));
-  r.kopf.forEach((k, i) => { if (k.ueberstand > 0 || k.raus) probleme.push(`Kopfzeile ${i + 1}: ${k.ueberstand}px Ueberstand, ${k.raus} Element(e) draussen`); if (!k.papierkorb) probleme.push(`Kopfzeile ${i + 1}: Papierkorb fehlt`); });
+  r.kopf.forEach((k, i) => { if (k.ueberstand > 0 || k.raus) probleme.push(`Kopfzeile ${i + 1}: ${k.ueberstand}px Ueberstand, ${k.raus} Element(e) draussen`); if (!k.papierkorb) probleme.push(`Kopfzeile ${i + 1}: ⋯-Menü (Löschen) fehlt`); });
   if (fehler.length) probleme.push(...fehler.slice(0, 3));
   return h.ergebnis("Phasendauer im Trainingsplan: loeschen, verlaengern, Rest anzeigen", !probleme.length,
     [`${r.start.phasen.length} → ${r.nachLoeschen.phasen.length} Phasen · Abschluss ${ab && ab.dauer} Min. · „${r.nachLoeschen.gesamt}" · Feldhoehen ${r.hoehen.join("/")}`].concat(probleme));

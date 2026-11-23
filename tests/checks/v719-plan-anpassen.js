@@ -143,8 +143,10 @@ module.exports = async function (h) {
   else zeilen.push("d) nichts geändert → „Alles passt“, kein Übernehmen");
 
   // e)
-  if (a0.knopf < 44 || a.knoepfe.some(x => x < 44)) probleme.push(`e) Knöpfe ${a0.knopf}/${a.knoepfe.join("/")} px`);
-  else zeilen.push(`e) „Plan anpassen“ ${a0.knopf} px, Fensterknöpfe ${a.knoepfe.join("/")} px`);
+  /* v952 · Charles 22.11. („Ja, so aufräumen“): Der Knopf „Plan anpassen“ entfällt – der Plan passt sich beim Öffnen selbst an
+     (v940). tpAnpassen bleibt der Rechenweg; geprüft wird, dass der Knopf weg ist und die Fensterknöpfe ≥ 44 px bleiben. */
+  if (a0.knopf || a.knoepfe.some(x => x < 44)) probleme.push(`e) Knopf „Plan anpassen“ ${a0.knopf ? "noch da" : "weg"}, Fensterknöpfe ${a.knoepfe.join("/")} px`);
+  else zeilen.push(`e) Knopf „Plan anpassen“ entfallen (v952), Fensterknöpfe ${a.knoepfe.join("/")} px`);
 
   return h.ergebnis(titel, !probleme.length, zeilen.concat(probleme));
 };

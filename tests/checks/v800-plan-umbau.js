@@ -1,5 +1,5 @@
 /* v800 · Trainingsplan-Umbau (Charles 07.11.: „Bau den Seitenumbau“), nach dem UX-Audit:
-   a) Zwei Zeilen im Blockkopf: voller Name oben, Zeitspanne und Dauer darunter; nichts abgeschnitten, Papierkorb ≥ 44 px
+   a) Zwei Zeilen im Blockkopf: voller Name oben, Zeitspanne und Dauer darunter; nichts abgeschnitten, Papierkorb ≥ 44 px (seit v952: ⋯-Menü)
    b) Neuzeichnen behält Scrollstand und Fokus (Dauer ändern, Papierkorb fokussiert)
    c) „Block hinzufügen“ ist ein Dialog (role, aria-modal) und schließt per Esc
    d) „Einheit bewerten“ zeigt sofort eine Ladezeile, nicht erst nach den Abfragen */
@@ -18,17 +18,17 @@ module.exports = async function (h) {
     ["Hauptteil 1", "Hauptteil 2", "Hauptteil 3", "Hauptteil 4"].forEach((l, i) => tpSlots.push({ label: l, dauer: 15, farbe: "#1a56db", typ: "main" }));
     tpRenderTimeline(); await w(200);
     const kopf = document.querySelector('.tp-slot[data-si="0"] .tp-slot-head');
-    const lab = kopf.querySelector(".tp-slot-label"), zeit = kopf.querySelector(".tp-slot-time"), rm = kopf.querySelector(".tp-remove");
+    const lab = kopf.querySelector(".tp-slot-label"), zeit = kopf.querySelector(".tp-slot-time"), rm = kopf.querySelector(".tp-mehr");   // v952: ⋯ statt Papierkorb im Kopf
     out.a = { zweiZeilen: zeit.getBoundingClientRect().top >= lab.getBoundingClientRect().bottom - 2, vollerName: lab.scrollWidth <= lab.clientWidth + 1,
       rmH: Math.round(rm.getBoundingClientRect().height), rmB: Math.round(rm.getBoundingClientRect().width), quer: document.documentElement.scrollWidth <= innerWidth + 1 };
     // b) Scroll + Fokus
     tpRenderTimeline(); await w(600);   // erst einschwingen lassen (Gruppen-Abgleich ändert die Höhe einmal)
     window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }); await w(150);   // ganz unten: beim Leeren der Leiste würde der Bildschirm nach oben springen
-    document.querySelector('.tp-slot[data-si="4"] .tp-remove').focus({ preventScroll: true });
+    document.querySelector('.tp-slot[data-si="4"] .tp-mehr').focus({ preventScroll: true });
     const y0 = Math.round(document.querySelector('.tp-slot[data-si="4"]').getBoundingClientRect().top);
     
     const dbg = [Math.round(scrollY)]; tpRenderTimeline(); dbg.push(Math.round(scrollY)); await w(700); dbg.push(Math.round(scrollY)); out.dbg = dbg;
-    out.b = { y0, y1: Math.round(document.querySelector('.tp-slot[data-si="4"]').getBoundingClientRect().top), fokus: document.activeElement && document.activeElement.classList.contains("tp-remove") && document.activeElement.closest(".tp-slot")?.dataset.si };
+    out.b = { y0, y1: Math.round(document.querySelector('.tp-slot[data-si="4"]').getBoundingClientRect().top), fokus: document.activeElement && document.activeElement.classList.contains("tp-mehr") && document.activeElement.closest(".tp-slot")?.dataset.si };
     // c) Dialog
     tpAddSlot(); await w(100);
     const m = document.getElementById("tp-add-modal");
