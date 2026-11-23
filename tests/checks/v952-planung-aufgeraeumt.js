@@ -53,7 +53,7 @@ module.exports = async function (h) {
       raus: [...document.querySelectorAll(".tp-slot-head")].some(k => { const b = k.getBoundingClientRect(); return [...k.querySelectorAll("*")].some(c => c.offsetParent && c.getBoundingClientRect().right > b.right + 1); }) };
     tpRenderTimeline(); await w(200);   // gefüllte Blöcke bekommen ihren Aufklapp-Pfeil (v857)
     out.d.griffVerdeckt = [...document.querySelectorAll("#tp-timeline .tp-griff")].filter(g => { g.scrollIntoView({ block: "center" }); const r = g.getBoundingClientRect(), o = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return !o || o.closest(".tp-griff") !== g; }).length;
-    out.d.klapp = document.querySelectorAll("#tp-timeline .tp-klapp").length;
+    out.d.klapp = document.querySelectorAll("#tp-timeline .tp-klapp, #tp-timeline .tp-slot.tp-zeile").length;   // v954: Zeilen der Liste statt Pfeile
     _tpAlleOffen = true; tpRenderTimeline(); await w(200);   // für Menü und − / + alle Blöcke offen
     const mehrJetzt = document.querySelector(`.tp-slot[data-si="${si}"] .tp-mehr`) || mehr; mehrJetzt.click(); await w(100);
     out.d.menu = [...document.querySelectorAll("#tp-block-menu button")].map(txt);
@@ -119,7 +119,7 @@ module.exports = async function (h) {
     if (JSON.stringify(r.d.menu.map(x => x.replace(/^[^A-Za-zÄÖÜ]+/, ""))) !== JSON.stringify(["Nach oben", "Nach unten", "Block löschen"]) || !r.d.fokus || !r.d.zu) probleme.push(`d) Menü ${JSON.stringify(r.d.menu)}, Fokus ${r.d.fokus}, Escape ${r.d.zu}`);
     if (JSON.stringify(r.d.schritt) !== "[15,10]") probleme.push("d) − / + " + JSON.stringify(r.d.schritt));
     if (r.d.raus || r.quer) probleme.push(`d) ragt hinaus: Kopf ${r.d.raus}, Seite ${r.quer}`);
-    if (!r.d.klapp) probleme.push("d) kein Aufklapp-Pfeil im Testplan – Griff-Prüfung ohne Wirkung");
+    if (!r.d.klapp) probleme.push("d) weder Aufklapp-Pfeil noch Listenzeile im Testplan – Griff-Prüfung ohne Wirkung");
     if (r.d.griffVerdeckt) probleme.push(`d) ${r.d.griffVerdeckt} Ziehgriff(e) verdeckt (Aufklapp-Pfeile: ${r.d.klapp})`);
   }
   const fehler = fe.filter(x => !/Failed to load resource/.test(x)); if (fehler.length) probleme.push("Konsole: " + fehler.slice(0, 2).join(" | "));

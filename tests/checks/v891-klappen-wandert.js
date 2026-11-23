@@ -8,7 +8,8 @@
       der an seine alte Stelle rückt, bleibt zu.
    b) Hauptteil 2 aufgeklappt, der Block davor (Aufwärmen) wird gelöscht: Hauptteil 2 bleibt offen,
       kein anderer Block klappt auf; Rückgängig: Aufwärmen kommt zu zurück, Hauptteil 2 bleibt offen.
-   c) Hauptteil 2 aufgeklappt, gelöscht, Rückgängig: kommt offen zurück. Gegen v890 rot. */
+   c) Hauptteil 2 aufgeklappt, gelöscht, Rückgängig: kommt offen zurück. Gegen v890 rot.
+   Seit v954 ist „offen“ das Block-Fenster von unten (.tp-sheet, immer nur eines); die Regel bleibt: es hängt am Block. */
 "use strict";
 const golden = require("./v877-trainingsplan-golden.js").intern;
 
@@ -20,7 +21,7 @@ module.exports = async function (h) {
   const p = s.page;
   try {
     await p.evaluate(async () => {
-      window._offen = () => [...document.querySelectorAll("#tp-timeline .tp-slot")].filter(el => !el.classList.contains("tp-zu"))
+      window._offen = () => [...document.querySelectorAll("#tp-timeline .tp-slot")].filter(el => document.getElementById("tp-timeline").classList.contains("tp-liste") ? el.classList.contains("tp-sheet") : !el.classList.contains("tp-zu"))
         .map(el => tpSlotName((tpSlots[Number(el.dataset.si)] || {}).label || "")).filter(n => !/Fenster|Abschluss/.test(n));
       window._undo = () => { const k = [...document.querySelectorAll("#undo-toast button")].find(x => /Rückgängig/.test(x.textContent)); if (k) k.click(); return !!k; };
       window._si = re => tpSlots.findIndex(x => re.test(x.label || ""));

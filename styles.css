@@ -2104,3 +2104,26 @@ details.tk-erledigt[open]>summary::after{content:"▴"}
 /* v950: weitere Termine im Karussell aufklappen */
 .tk-details{margin-top:10px;border-top:1px solid #e2e8f0;padding-top:8px}
 .tk-details-innen{font-size:var(--s-text)}
+
+/* v954 · „Plan ändern“ als Liste: eine Zeile je Block, Antippen öffnet ihn als Fenster von unten */
+#tp-timeline.tp-liste .tp-slot.tp-zeile{padding-bottom:0}
+#tp-timeline.tp-liste .tp-slot.tp-zeile>:not(.tp-slot-head):not(.tp-kurz){display:none!important}
+#tp-timeline.tp-liste .tp-slot.tp-zeile .tp-slot-head{border-bottom:0;margin-bottom:0}
+#tp-timeline.tp-liste .tp-slot.tp-zeile .tp-dauer,#tp-timeline.tp-liste .tp-slot.tp-zeile .tp-mehr,#tp-timeline.tp-liste .tp-slot.tp-sheet .tp-mehr{display:none!important}
+#tp-timeline.tp-liste .tp-slot.tp-zeile .tp-slot-head{grid-template-areas:"griff klapp label mehr" "griff klapp zeit mehr"}
+.tp-kurz{display:flex;align-items:center;gap:8px;width:calc(100% - 24px);margin:0 12px 10px 12px;min-height:44px;border:0;background:var(--surface2);border-radius:12px;padding:8px 10px;text-align:left;font:inherit;font-size:var(--s-text);color:var(--text);cursor:pointer}
+.tp-z-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;line-height:1.35}
+.tp-z-zeile{display:block}.tp-z-fehlt{color:var(--warn-text,#b45309)}.tp-z-leer{color:var(--text2)}
+.tp-z-pfeil{flex:none;font-size:var(--s-teil);font-weight:800;color:var(--blue,#1d4ed8)}
+.tp-sheet-dim{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:9990}
+#tp-timeline .tp-slot.tp-sheet{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:9995;max-height:88vh;overflow-y:auto;margin:0 auto;max-width:560px;border-radius:22px 22px 0 0;border-left:0!important;box-shadow:0 -8px 24px rgba(0,0,0,.25);padding-bottom:calc(14px + env(safe-area-inset-bottom));transform:none!important}
+#tp-timeline .tp-slot.tp-sheet .tp-slot-head{position:sticky;top:0;background:var(--surface);z-index:2;padding-top:10px;border-top:5px solid var(--surface2);border-radius:22px 22px 0 0;grid-template-areas:"griff klapp label zu" "griff klapp zeit dauer"}
+#tp-timeline .tp-slot.tp-sheet .tp-griff{display:none}
+.tp-sheet-zu{grid-area:zu;min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text);border-radius:12px;font-size:var(--s-karte);cursor:pointer}
+.tp-sheet-fuss{display:flex;gap:8px;margin:12px 12px 0;flex-wrap:wrap}
+.tp-sheet-fuss button{flex:1 1 30%;min-height:48px;border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text);border-radius:12px;font:inherit;font-weight:700;font-size:var(--s-text);cursor:pointer}
+.tp-sheet-fuss .tp-remove{color:var(--red,#b91c1c)!important}
+body.tp-sheet-offen{overflow:hidden}
+.tp-klapp-alle{display:block;margin:4px 0 8px;min-height:44px;font-size:var(--s-text)}
+.tp-sheet-zu{justify-self:end;width:44px}
+#tp-timeline.tp-liste .tp-slot.tp-zeile .tp-slot-time[data-min]::after{content:" · " attr(data-min);font-weight:700;color:var(--text)}
