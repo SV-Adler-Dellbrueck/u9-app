@@ -713,6 +713,13 @@ async function pauseLoad(force){
 function pauseClear(){ _pauseAt=0; }
 /* Termin vorbei? Mit Endzeit (uhrzeit_ende) verschwindet ein Spiel/Turnier noch am selben
    Tag aus den aktiven Listen; ohne Endzeit gilt wie bisher der ganze Tag. */
+/* v958 · Charles 23.11.: „Familie <Vorname>“ liest sich wie ein Nachname. Entschieden: „<Vorname>s Familie“ – kurz,
+   natürlich, wie bisher im Trainerbereich. Endet der Vorname auf s, ß, x oder z, steht ein Apostroph („Kind S’ Familie“).
+   Geschwister („A & B“) je Name: „Kind As & Kind Bs Familie“. Klartext, nicht escaped. */
+function familieVon(name){
+  const n=String(name||"").trim(); if(!n)return "eine Familie";
+  return n.split(/\s*&\s*/).map(t=>/(s|ß|x|z)$/i.test(t)?t+"’":t+"s").join(" & ")+" Familie";
+}
 function terminVorbei(t){
   if(!t||!t.datum)return false;
   const heute=isoLokal();

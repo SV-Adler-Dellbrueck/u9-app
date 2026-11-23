@@ -298,7 +298,7 @@ async function elternWaescheLoad(kids){
   const langeNichtDran=tageHer===null||tageHer>49; // ~7 Wochen oder noch nie
   const fmt=d=>new Date(d+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
   const verlauf=log.length
-    ? log.slice(0,5).map(x=>`<div style="display:flex;gap:6px;font-size:var(--s-text);padding:3px 0;border-top:1px solid #f1f5f9"><span style="color:var(--text3);width:44px">${fmt(x.datum)}</span><span>${esc((x.kader&&x.kader.name)||"—")}s Familie</span></div>`).join("")
+    ? log.slice(0,5).map(x=>`<div style="display:flex;gap:6px;font-size:var(--s-text);padding:3px 0;border-top:1px solid #f1f5f9"><span style="color:var(--text3);width:44px">${fmt(x.datum)}</span><span>${esc(familieVon((x.kader&&x.kader.name)||"—"))}</span></div>`).join("")
     : `<div style="font-size:var(--s-text);color:var(--text3);padding:4px 0">Noch niemand eingetragen.</div>`;
   const kidBtns=(kids||[]).map(k=>`<button class="btn" onclick="waescheUebernehmen(${k.spieler_id},'${jsq((k.kader&&k.kader.name)||"")}')" style="flex:1;min-width:130px;min-height:44px;font-size:var(--s-text);justify-content:center">🧺 ${esc((k.kader&&k.kader.name)||"Kind")} übernimmt</button>`).join("");
   slot.innerHTML=`<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
@@ -312,7 +312,7 @@ async function elternWaescheLoad(kids){
 }
 async function waescheUebernehmen(spielerId,name){
   if(!await frageJaNein({emoji:"🧺",titel:"Nächste Wäsche übernehmen?",
-    text:`${name||"Dein Kind"}s Familie wäscht die Trikots nach dem nächsten Spiel.\n\nDanke! Es gibt 100 Federn fürs Kind.`,
+    text:`${name?familieVon(name):"Eure Familie"} wäscht die Trikots nach dem nächsten Spiel.\n\nDanke! Es gibt 100 Federn fürs Kind.`,
     ja:"Wir übernehmen",nein:"Abbrechen"}))return;
   const heute=isoLokal();
   try{
@@ -445,7 +445,8 @@ function ghElternChip(d){
   const c=(t,f,bg,stark)=>`<span class="gh-chip" style="display:inline-block;font-size:var(--s-klein);font-weight:${stark?800:700};color:${f};background:${bg};border:1px solid ${f};border-radius:999px;padding:1px 9px">${t}</span>`;
   if(eigen&&(st==="eingeteilt"||st==="uebernommen"))return c("🔥 Ihr seid dran","var(--green)","var(--green-bg)",true);
   if(st==="freigegeben")return c("Ersatz gesucht","var(--amber)","var(--amber-bg)");
-  if(st==="eingeteilt"||st==="uebernommen")return c("vergeben","var(--text2)","var(--surface2)");
+  /* v958 · Charles 23.11.: „Das Wort ‚vergeben‘ ist nicht direkt verständlich.“ – „Keine Marke“: wer dasteht, ist dran. */
+  if(st==="eingeteilt"||st==="uebernommen")return "";
   return c("noch nicht eingeteilt","var(--text2)","var(--surface2)");
 }
 function ghTag(datum,uhrzeit){
@@ -506,7 +507,7 @@ const GH_KNOPF="width:100%;min-height:48px;margin-top:8px;justify-content:center
 function ghDienstHtml(d){
   if(ghWahlOffen(d.plaetze,_ghAnzahl[d.termin_id])){   // v951
     const z=_ghZeiten[d.termin_id]||{};
-    return (d.eigene?"":`<div style="font-size:var(--s-text)">${d.familie?"Familie "+esc(d.familie):"Eine andere Familie"} wählt gerade mit – ihr müsst nichts tun.</div>`)+(d.eigene?ghWahlHtml(d.dienst_id,d.termin_id,ghFristText(d.datum,d.uhrzeit,z.grill_zeit),true):"");
+    return (d.eigene?"":`<div style="font-size:var(--s-text)">${d.familie?esc(familieVon(d.familie)):"Eine andere Familie"} wählt gerade mit – ihr müsst nichts tun.</div>`)+(d.eigene?ghWahlHtml(d.dienst_id,d.termin_id,ghFristText(d.datum,d.uhrzeit,z.grill_zeit),true):"");
   }
   if(d.geteilt)return d.eigene?`<div class="gh-geteilt" style="font-size:var(--s-text);line-height:1.5">Ihr teilt euch die Grillhütte mit einer anderen Familie – jede hilft die halbe Zeit. Danke!</div>`
     :`<div class="gh-geteilt" style="font-size:var(--s-text)">Zwei Familien teilen sich den Dienst – ihr müsst nichts tun.</div>`;   // v956
@@ -517,8 +518,8 @@ function ghDienstHtml(d){
   if(d.kann_uebernehmen)return `<div style="font-size:var(--s-text);line-height:1.5">Die eingeteilte Familie sucht Ersatz. Könnt ihr?</div>
       <button class="gh-uebernehmen btn" onclick="ghUebernehmen(${Number(d.dienst_id)})" style="${GH_KNOPF}">Übernehmen</button>`;
   // v934 (Charles 21.11.: „Mit Namen und Zählung“): die Familie steht mit Namen da, wie in „Grillhütte & Helfen“
-  if(d.status==="uebernommen")return `<div style="font-size:var(--s-text)">Übernommen von ${d.familie?"Familie "+esc(d.familie):esc(d.name||"einer anderen Familie")} – ihr müsst nichts tun.</div>`;
-  if(d.status==="eingeteilt")return `<div style="font-size:var(--s-text)">${d.familie?"Familie "+esc(d.familie)+" ist dran":"Eine andere Familie ist dran"} – ihr müsst nichts tun.</div>`;
+  if(d.status==="uebernommen")return `<div style="font-size:var(--s-text)">Übernommen von ${d.familie?esc(familieVon(d.familie)):esc(d.name||"einer anderen Familie")} – ihr müsst nichts tun.</div>`;
+  if(d.status==="eingeteilt")return `<div style="font-size:var(--s-text)">${d.familie?esc(familieVon(d.familie))+" ist dran":"Eine andere Familie ist dran"} – ihr müsst nichts tun.</div>`;
   return `<div style="font-size:var(--s-text);color:var(--text2)">Das Trainerteam teilt noch ein.</div>`;
 }
 /* Startseite: der eigene Dienst in den nächsten 14 Tagen und offene Dienste zum Übernehmen.
@@ -613,7 +614,7 @@ async function elternHelfenOpen(){
     const zeilen=ds.map(x=>{
       const knopf=wahl||x.geteilt_mit?"":x.eigene&&x.status==="eingeteilt"?`<button class="gh-ersatz btn" onclick="ghErsatzSuchen(${Number(x.dienst_id)})" style="${GH_KNOPF}">Ersatz suchen</button>`
         :x.kann_uebernehmen?`<button class="gh-uebernehmen btn" onclick="ghUebernehmen(${Number(x.dienst_id)})" style="${GH_KNOPF}">Übernehmen</button>`:"";
-      return `<div style="margin-top:2px"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b style="color:var(--text);font-size:var(--s-karte)">Familie ${esc(x.familie||"?")}${x.geteilt_mit?" &amp; Familie "+esc(x.geteilt_mit):""}</b>${ghElternChip(x)}${x.geteilt_mit?GH_GETEILT_CHIP:""}</div>${knopf}</div>`;
+      return `<div style="margin-top:2px"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b style="color:var(--text);font-size:var(--s-karte)">${esc(familieVon(x.familie||"?"))}${x.geteilt_mit?" &amp; "+esc(familieVon(x.geteilt_mit)):""}</b>${ghElternChip(x)}${x.geteilt_mit?GH_GETEILT_CHIP:""}</div>${knopf}</div>`;
     }).join("");
     const ich=ds.find(x=>x.eigene), wahlBox=wahl?ghWahlHtml(ich?ich.dienst_id:0,h.termin_id,ghFristText(h.datum,h.uhrzeit,(_ghZeiten[h.termin_id]||{}).grill_zeit),!!ich):"";
     return `<div class="hf-heim${eigen?" hf-eigen":""}" style="background:var(--surface);border:${eigen?"2px solid var(--green)":"1px solid var(--rand-bedien)"};border-radius:14px;padding:10px 12px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start">${tag}<div style="flex:1;min-width:0">${zeilen}<div style="font-size:var(--s-klein);color:var(--text3);margin-top:2px">${wann}</div>${ghZeitHtml(_ghZeiten[h.termin_id])}${wahlBox}</div></div>`;
@@ -662,13 +663,13 @@ async function ghTrainerDaten(){
 function _ghKindName(id){ const k=(typeof KADER!=="undefined"?KADER:[]).find(x=>String((typeof kaderId==="function")?kaderId(x):x.id)===String(id)); return k?k.name:""; }
 function _ghTrZeile(d){
   if(!d)return "– noch nicht eingeteilt –";
-  const fam=d.kind_id!=null?`${esc(_ghKindName(d.kind_id)||"Kind")}s Familie`:"ohne Familie";
+  const fam=d.kind_id!=null?`${esc(familieVon(_ghKindName(d.kind_id)||"Kind"))}`:"ohne Familie";
   /* v956: geteilt – beide Familien nebeneinander, ohne den Umweg über „übernommen von“ */
   if(d.geteilt_kind!=null){ const eff=d.status==="uebernommen"&&d.uebernommen_kind!=null?d.uebernommen_kind:d.kind_id;
-    return `${esc(_ghKindName(eff)||"Kind")}s Familie &amp; ${esc(_ghKindName(d.geteilt_kind)||"Kind")}s Familie (geteilt · je ½)`; }
+    return `${esc(familieVon(_ghKindName(eff)||"Kind"))} &amp; ${esc(familieVon(_ghKindName(d.geteilt_kind)||"Kind"))} (geteilt · je ½)`; }
   /* v672: übernommen – angerechnet wird der übernehmenden Familie; sie steht mit Namen da. */
   if(d.status==="uebernommen"){ const p=(_ghTr.profile||[]).find(x=>x.id===d.uebernommen_von);
-    const neu=d.uebernommen_kind!=null&&_ghKindName(d.uebernommen_kind)?`${esc(_ghKindName(d.uebernommen_kind))}s Familie`:esc((p&&p.anzeigename)||"einer anderen Familie");
+    const neu=d.uebernommen_kind!=null&&_ghKindName(d.uebernommen_kind)?`${esc(familieVon(_ghKindName(d.uebernommen_kind)))}`:esc((p&&p.anzeigename)||"einer anderen Familie");
     return `${fam} → übernommen von ${neu} (zählt für sie)`; }
   return fam;
 }
@@ -678,7 +679,7 @@ function _ghTeilenHtml(d,kids,kid,sel){
   if(!d||d.kind_id==null)return "";
   const eff=String(d.status==="uebernommen"&&d.uebernommen_kind!=null?d.uebernommen_kind:d.kind_id);
   const opt=`<option value=""${d.geteilt_kind==null?" selected":""}>Nicht geteilt</option>`+kids.filter(k=>String(kid(k))!==eff)
-    .map(k=>`<option value="${esc(String(kid(k)))}"${String(d.geteilt_kind)===String(kid(k))?" selected":""}>${esc(k.name)}s Familie · je ½</option>`).join("");
+    .map(k=>`<option value="${esc(String(kid(k)))}"${String(d.geteilt_kind)===String(kid(k))?" selected":""}>${esc(familieVon(k.name))} · je ½</option>`).join("");
   return `<label class="gh-teilen" style="font-size:var(--s-klein);color:var(--text2)">Geteilt mit<select onchange="grillTeilen(${Number(d.id)},this.value)" style="${sel}">${opt}</select></label>`;
 }
 async function grillTeilen(id,kindId){
@@ -726,7 +727,7 @@ function grillTrainerRender(){
   const P0=_ghTr.plaetze||2, Pt=t=>Number(t.grill_plaetze)||P0;   // v912: je Termin einstellbar
   const jeTermin=t=>_ghTr.dienste.filter(x=>x.termin_id===t.id);
   const ohne=_ghTr.termine.filter(ghImFenster).reduce((a,t)=>a+Math.max(0,Pt(t)-jeTermin(t).length),0);   // v951: die ganze Saison
-  const famOpt=`<option value="">– Familie wählen –</option>`+kids.map(k=>`<option value="${esc(String(kid(k)))}">${esc(k.name)}s Familie</option>`).join("");
+  const famOpt=`<option value="">– Familie wählen –</option>`+kids.map(k=>`<option value="${esc(String(kid(k)))}">${esc(familieVon(k.name))}</option>`).join("");
   const sel="width:100%;min-height:44px;margin-top:2px;border:1px solid var(--rand-bedien);border-radius:8px;font:inherit;background:var(--surface2);color:var(--text)";
   box.innerHTML=`<button class="btn" id="gh-einteilen" style="width:100%" onclick="grillEinteilen()" ${ohne?"":"disabled"}>Grillhütte einteilen${ohne?` (${ohne} ${ohne===1?"Platz":"Plätze"} offen)`:""}</button>
     <div style="font-size:var(--s-klein);color:var(--text2);margin:6px 0 12px">Die App teilt die Heimtermine der ganzen Saison von selbst ein – reihum, wer in dieser Saison am seltensten dran war, zuerst; gesperrte Tage werden übersprungen, Bestehendes bleibt stehen. Je Termin 1 oder 2 Familien.</div>
@@ -745,7 +746,7 @@ function grillTrainerRender(){
           return `<div style="margin:4px 0 2px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="min-width:4.5em;color:var(--text2)">Familie ${i+1}</span>${d?`<span>${_ghTrZeile(d)}</span>${ghChip(d.status)}`:(ghImFenster(t)?ghChip("offen"):`<span class="gh-spaeter" style="color:var(--text2);font-size:var(--s-klein)">wird ab ${esc(ghAbDatum(t.datum))} eingeteilt</span>`)}</div>
           <label style="font-size:var(--s-klein);color:var(--text2)">Umbuchen auf<select onchange="grillUmbuchen(${Number(t.id)},this.value,${i+1})" style="${sel}">${famOpt}</select></label>${d&&d.geteilt_kind==null&&Pt(t)>1?"":_ghTeilenHtml(d,kids,kid,sel)}`; }).join("")}
         ${fam.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn btn-sm gh-push" onclick="grillPush(${Number(t.id)})"><i class="ti ti-bell"></i>Erinnern (Push)</button><button class="btn btn-sm gh-ruf" onclick="grillRufOpen(${Number(t.id)})"><i class="ti ti-message"></i>Nachricht an die Familien</button></div>`:""}
-        <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">${sp.length?`Kann an dem Tag nicht: ${sp.map(x=>`${esc(_ghKindName(x.kind_id)||"Kind")}s Familie <button class="btn btn-sm" onclick="grillSperreWeg(${Number(x.id)})" aria-label="Sperre für ${esc(_ghKindName(x.kind_id)||"Kind")}s Familie aufheben">aufheben</button>`).join(" ")}`:""}</div>
+        <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">${sp.length?`Kann an dem Tag nicht: ${sp.map(x=>`${esc(familieVon(_ghKindName(x.kind_id)||"Kind"))} <button class="btn btn-sm" onclick="grillSperreWeg(${Number(x.id)})" aria-label="Sperre für ${esc(familieVon(_ghKindName(x.kind_id)||"Kind"))} aufheben">aufheben</button>`).join(" ")}`:""}</div>
         <label style="font-size:var(--s-klein);color:var(--text2)">Familie kann an dem Tag nicht<select onchange="grillSperren(${JSON.stringify(String(t.datum)).replace(/"/g,"&quot;")},this.value)" style="${sel}">${famOpt}</select></label>
       </div>`; }).join(""):'<div style="color:var(--text2)">Keine künftigen Heimtermine im Kalender.</div>'}
     ${grillVorbeiHtml(kids,kid,sel)}
@@ -769,9 +770,9 @@ function grillBefreitHtml(kids,kid,sel){
   const frei=kids.filter(k=>!bef.some(b=>String(b.kind_id)===String(kid(k))));
   return `<div id="gh-befreit" style="border-top:2px solid var(--surface2);margin-top:12px;padding-top:10px">
     <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;color:var(--text2);margin-bottom:6px">Vom Dienst befreit (z. B. Trainerfamilien)</div>
-    ${bef.length?bef.map(b=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;color:var(--text)"><span style="flex:1">${esc(_ghKindName(b.kind_id)||"Kind")}s Familie · ${esc(b.grund||"")}</span>
-      <button class="btn btn-sm" onclick="grillBefreitWeg(${Number(b.kind_id)})" aria-label="Befreiung für ${esc(_ghKindName(b.kind_id)||"Kind")}s Familie aufheben">aufheben</button></div>`).join(""):`<div style="color:var(--text2)">Niemand befreit.</div>`}
-    <label style="font-size:var(--s-klein);color:var(--text2)">Familie befreien<select onchange="grillBefreien(this.value)" style="${sel}"><option value="">– Familie wählen –</option>${frei.map(k=>`<option value="${esc(String(kid(k)))}">${esc(k.name)}s Familie</option>`).join("")}</select></label>
+    ${bef.length?bef.map(b=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;color:var(--text)"><span style="flex:1">${esc(familieVon(_ghKindName(b.kind_id)||"Kind"))} · ${esc(b.grund||"")}</span>
+      <button class="btn btn-sm" onclick="grillBefreitWeg(${Number(b.kind_id)})" aria-label="Befreiung für ${esc(familieVon(_ghKindName(b.kind_id)||"Kind"))} aufheben">aufheben</button></div>`).join(""):`<div style="color:var(--text2)">Niemand befreit.</div>`}
+    <label style="font-size:var(--s-klein);color:var(--text2)">Familie befreien<select onchange="grillBefreien(this.value)" style="${sel}"><option value="">– Familie wählen –</option>${frei.map(k=>`<option value="${esc(String(kid(k)))}">${esc(familieVon(k.name))}</option>`).join("")}</select></label>
   </div>`;
 }
 async function grillBefreien(kindId){
@@ -876,7 +877,7 @@ async function grillPlaetzeSetzen(terminId,n){
     if(!await frageJaNein({emoji:"🔥",titel:"Nur eine Familie?",text:`Beide eingeteilten Familien bekommen einen Push und wählen in der App, wer übernimmt – bis ${ghFristText(t.datum,t.uhrzeit,t.grill_zeit)}. Danach wählt die App, wer in dieser Saison seltener dran war.`,ja:"Umstellen",nein:"Abbrechen"}))return;
     zuviel=[];
   }
-  if(zuviel.length&&!await frageJaNein({emoji:"🔥",titel:"Familie austragen?",text:`An diesem Termin ist auf Platz ${zuviel.map(d=>d.platz).join(", ")} schon ${zuviel.map(d=>(_ghKindName(d.kind_id)||"eine")+"s Familie").join(" und ")} eingeteilt. Bei ${n} Familie${n===1?"":"n"} wird sie ausgetragen – sagt ihr Bescheid?`,ja:"Austragen",nein:"Abbrechen"}))return;
+  if(zuviel.length&&!await frageJaNein({emoji:"🔥",titel:"Familie austragen?",text:`An diesem Termin ist auf Platz ${zuviel.map(d=>d.platz).join(", ")} schon ${zuviel.map(d=>familieVon(_ghKindName(d.kind_id))).join(" und ")} eingeteilt. Bei ${n} Familie${n===1?"":"n"} wird sie ausgetragen – sagt ihr Bescheid?`,ja:"Austragen",nein:"Abbrechen"}))return;
   try{
     for(const d of zuviel){ const r=await fetch(`${SB_URL}/rest/v1/dienst_einteilung?id=eq.${Number(d.id)}`,{method:"DELETE",headers:sbAuthHeaders({'Prefer':'return=minimal'})}); if(!r.ok){ toast(`Nicht ausgetragen – Server antwortet ${r.status}`,"err"); return; } }
     const r=await fetch(`${SB_URL}/rest/v1/termine?id=eq.${Number(terminId)}`,{method:"PATCH",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify({grill_plaetze:n})});
@@ -929,7 +930,7 @@ function grillRufOpen(terminId){
   m.style.zIndex=(typeof zOben==="function")?zOben(10004):10004;
   m.onclick=e=>{ if(e.target===m)m.remove(); };
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:520px;width:100%;margin:auto">
-    ${mdlHead("gh-ruf-modal","✉️","Nachricht an die Familien",`${fam.map(d=>esc(_ghKindName(d.kind_id)||"Kind")+"s Familie").join(" · ")} · in ihren privaten Adler-Rufe-Raum`,"var(--amber)")}
+    ${mdlHead("gh-ruf-modal","✉️","Nachricht an die Familien",`${fam.map(d=>esc(familieVon(_ghKindName(d.kind_id)||"Kind"))).join(" · ")} · in ihren privaten Adler-Rufe-Raum`,"var(--amber)")}
     <label for="gh-ruf-text" style="font-size:var(--s-klein);color:var(--text2)">Text (änderbar)</label>
     <textarea id="gh-ruf-text" rows="5" style="width:100%;margin-top:4px;border:1px solid var(--rand-bedien);border-radius:10px;padding:10px;font:inherit;background:var(--surface2);color:var(--text);resize:vertical">${esc(_ghRufText(t))}</textarea>
     <button class="btn btn-p" id="gh-ruf-senden" style="width:100%;margin-top:10px;min-height:48px" onclick="grillRufSenden(${Number(terminId)})"><i class="ti ti-send"></i>An ${fam.length} Familie${fam.length===1?"":"n"} senden</button>

@@ -6,7 +6,7 @@
       c) rufePrivatEinstieg öffnet die Adler-Rufe und wechselt in den privaten Raum (Eltern: ohne Kind, Trainer: Kind).
       d) Trainer: „💬 Im Chat antworten“ am Gesprächswunsch hakt ihn ab und öffnet den Raum dieser Familie.
    2. „eingeteilt“ bei der Grillhütte las sich bei allen Familien wie „ihr seid dran“.
-      e) Eigene Familie: „🔥 Ihr seid dran“ und „Eure Familie ist … eingeteilt“; andere Familie: grau „vergeben“ und
+      e) Eigene Familie: „🔥 Ihr seid dran“ und „Eure Familie ist … eingeteilt“; andere Familie: grau „vergeben“ (seit v958 keine Marke) und
          „ihr müsst nichts tun“ – nirgends mehr „Eine Familie ist eingeteilt“ und kein grünes Etikett für Fremde. */
 module.exports = async function (h) {
   const fs = require("fs"), path = require("path");
@@ -67,7 +67,7 @@ module.exports = async function (h) {
     if (!p || p.body.status !== "erledigt" || !/5/.test(p.suche)) probleme.push("d) „Im Chat antworten“ hakt den Wunsch nicht ab");
   }
   if (!/Ihr seid dran/.test(r.eigen.text) || !/Eure Familie ist für die Grillhütte eingeteilt/.test(r.eigen.text)) probleme.push(`e) eigene Familie sieht „${r.eigen.text.slice(0, 90)}“`);
-  if (!/vergeben/.test(r.fremd.text) || !/ihr müsst nichts tun/.test(r.fremd.text) || /Ihr seid dran|Eine Familie ist eingeteilt/.test(r.fremd.text)) probleme.push(`e) andere Familie sieht „${r.fremd.text.slice(0, 90)}“`);
+  if (/vergeben/.test(r.fremd.text) || !/ihr müsst nichts tun/.test(r.fremd.text) || /Ihr seid dran|Eine Familie ist eingeteilt/.test(r.fremd.text)) probleme.push(`e) andere Familie sieht „${r.fremd.text.slice(0, 90)}“`);
   if (/green/.test(r.fremd.farbe)) probleme.push("e) andere Familie bekommt ein grünes Etikett");
   if (!/ihr müsst nichts tun/.test(r.fremdUeb.text)) probleme.push(`e) übernommen (fremd): „${r.fremdUeb.text.slice(0, 90)}“`);
   const kasse = fs.readFileSync(path.join(h.REPO, "md-kasse.js"), "utf8");

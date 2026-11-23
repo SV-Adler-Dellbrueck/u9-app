@@ -4,7 +4,7 @@
    a) ghHalb: 0 → „0“, 0,5 → „½“, 1,5 → „1½“, 2 → „2“.
    b) Trainer: am Termin mit 1 Familie „Geteilt mit“ → PATCH dienst_einteilung geteilt_kind; danach steht
       „(geteilt · je ½)“ in der Zeile; „Nicht geteilt“ schreibt null.
-   c) Eltern (Grillhütte & Helfen): „Familie A & Familie B“ mit Marke „geteilt · je ½“, kein „Ersatz suchen“;
+   c) Eltern (Grillhütte & Helfen): „Kind As Familie & Kind Bs Familie“ (seit v958) mit Marke „geteilt · je ½“, kein „Ersatz suchen“;
       Tabelle 1½ / ½, Team 2. Bei offener Wahl drei Knöpfe; „Wir teilen uns die Zeit“ ruft grill_wahl mit p_teilen.
    d) ghDienstHtml (Startseite, Termin): geteilt → „Ihr teilt euch …“ bzw. „Zwei Familien teilen sich …“.
    e) Migration: geteilt_kind, dienst_anteil (je ½), dienst_einteilen nach Anteil und ohne die zweite Familie,
@@ -87,7 +87,7 @@ module.exports = async function (h) {
   if (re.fehler) probleme.push("Eltern: " + re.fehler);
   else {
     if (!/Ihr teilt euch die Grillhütte/.test(re.dEigen) || !/Zwei Familien teilen sich/.test(re.dAndere)) probleme.push(`d) ghDienstHtml „${re.dEigen}“ / „${re.dAndere}“`);
-    if (!/Familie Kind A & Familie Kind B/.test(re.geteilt) || !re.chip) probleme.push("c) geteilter Dienst „" + re.geteilt + "“");
+    if (!/Kind As Familie & Kind Bs Familie/.test(re.geteilt) || !re.chip) probleme.push("c) geteilter Dienst „" + re.geteilt + "“");
     if (re.ersatz) probleme.push("c) „Ersatz suchen“ beim geteilten Dienst");
     if (JSON.stringify(re.tabelle) !== JSON.stringify(["1½", "½", "2"])) probleme.push("c) Tabelle " + JSON.stringify(re.tabelle));
     if (re.knoepfe.length !== 3 || !/^Wir teilen uns die Zeit/.test(re.knoepfe[2]) || re.knoepfe.some(k => Number(k.split(":")[1]) < 44)) probleme.push("c) Knöpfe " + JSON.stringify(re.knoepfe));
