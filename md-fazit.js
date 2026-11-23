@@ -352,7 +352,18 @@ const NB_GRUENDE = [
   { k:"sonstiges",         t:"Anderer Grund" }
 ];
 function nbGrundText(k){ const g = NB_GRUENDE.find(x=>x.k===k); return g ? g.t : ""; }
-function nbAltbestand(datum){ return !!datum && String(datum).slice(0,10) <= NB_ALTBESTAND_BIS; }
+/* v957 · Charles 23.11.: „Nur offene Rückmeldungen der letzten 10 Tage anzeigen. Danach automatisch archivieren.“
+   Neben der festen Grenze gilt jetzt ein rollendes Fenster: was älter als EB_OFFEN_TAGE (views.js) ist, ist abgelegt –
+   für Liste, To-dos, Spiel- und Festival-Erinnerung und das Tagebuch. */
+function nbAblageGrenze(){
+  const tage = (typeof EB_OFFEN_TAGE!=="undefined") ? EB_OFFEN_TAGE : 10;
+  return isoLokal(new Date(Date.now() - tage*864e5));
+}
+function nbAltbestand(datum){
+  if(!datum) return false;
+  const d = String(datum).slice(0,10);
+  return d <= NB_ALTBESTAND_BIS || d < nbAblageGrenze();
+}
 /* Menge der abgelegten Schlüssel („d2026-10-08“, „t123“) dieses Trainers; ohne Verbindung oder vor der Migration leer. */
 async function nbVerzichtLaden(autor){
   const out = new Set();
