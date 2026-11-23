@@ -1,6 +1,6 @@
 {
   "schema": "adler-uebungen/1",
-  "stand": "2026-11-22-1",
+  "stand": "2026-11-23-1",
   "uebungen": [
     {
       "name": "Warm up Adler",
@@ -9173,7 +9173,7 @@
     },
     {
       "name": "Pylonen-Spiel – Läufer gegen Wächter",
-      "kat": "spass",
+      "kat": "aufwaermen",
       "kurz": "Läufer stößt fünf Pylonen um, zwei Wächter stellen sie wieder auf",
       "spieler": "3–5 je Aufbau",
       "feld": "6 × 6 m je Aufbau",
