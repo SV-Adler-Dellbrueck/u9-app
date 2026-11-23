@@ -5,7 +5,7 @@
    b) Mit Löschantrag, Elterngespräch und fälligen Bewertungen stehen diese als Karten in „Für dich“ – der Löschantrag
       (Frist) vorn –, „1 von n“ und Punkte zählen mit; Wischen zeigt die nächste Karte.
    c) „Diese Woche“ beginnt im ersten Bildschirm (390 × 844).
-   d) Ohne offene Punkte ist „Für dich“ unsichtbar; „Nachbereiten – Training, Spiel, Festival“ steht als Zeile
+   d) Ohne offene Punkte ist „Für dich“ unsichtbar; „Nachbereiten“ steht (seit v957 nur bei Offenem) als Zeile
       darunter, nicht als Karte im Karussell. */
 "use strict";
 module.exports = async function (h) {
@@ -44,7 +44,7 @@ module.exports = async function (h) {
       if (karten.length > 1) { bahn.scrollLeft = karten[1].offsetLeft - karten[0].offsetLeft; bahn.dispatchEvent(new Event("scroll")); await w(200); out.zahlNach = document.getElementById("fd-zahl").textContent; }
       const woche = document.getElementById("home-woche");
       out.wocheOben = Math.round(woche.getBoundingClientRect().top);
-      out.nachbereitenUnten = !!document.querySelector("#home-nachbereiten button") && !document.querySelector("#fd-bahn button[onclick^='einheitBewertenOpen()']");
+      out.nachbereitenUnten = !document.querySelector("#fd-bahn button[onclick^='einheitBewertenOpen()']") && !document.querySelector("#trainer-todo-slot .eb-einstieg");   // v957: ohne Offenes fehlt die Zeile ganz – nie im Karussell
       return out;
     }, mitPunkten);
     const fe = s.fehler();

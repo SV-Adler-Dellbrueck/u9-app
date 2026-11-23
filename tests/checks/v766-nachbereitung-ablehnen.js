@@ -117,7 +117,7 @@ module.exports = async function (h) {
     knopf("Doch eintragen").click(); await bis(() => !dlg()); await bis(() => slot.textContent.trim() !== "" && document.querySelectorAll(".tb-verzicht-zeile").length === 1);
     out.e.nachZurueck = { karte: slot.textContent.replace(/\s+/g, " ").trim().slice(0, 100), zeilen: document.querySelectorAll(".tb-verzicht-zeile").length };
     // g) Altbestand
-    out.g = { acht: nbAltbestand("2026-11-01"), neun: nbAltbestand("2026-11-02"), fruehe: nbAltbestand("2026-09-30"), leer: nbAltbestand("") };   // v955: Grenze 01.11.2026 (vorher 08.10.)
+    out.g = { acht: nbAltbestand("2026-11-01"), neun: nbAltbestand(isoLokal(new Date(Date.now() - 3 * 864e5))) && isoLokal(new Date(Date.now() - 3 * 864e5)) > "2026-11-01", fruehe: nbAltbestand("2026-09-30"), leer: nbAltbestand(""), elf: nbAltbestand(isoLokal(new Date(Date.now() - 11 * 864e5))) };   // v955: Grenze 01.11.2026; v957: rollend 10 Tage – vor 3 Tagen offen, vor 11 Tagen abgelegt
     return out;
   }, { gestern });
   if (r.fehlt) { await s.schliessen(); return h.ergebnis("v766 Nachbereitung ablehnen", false, ["nbVerzichtOpen oder wieWarsKarte fehlt"]); }
@@ -179,7 +179,7 @@ module.exports = async function (h) {
   if (f.einheit.weg < 44 || f.einheit.bogen < 44 || !f.einheit.fensterZu || f.spiel.weg < 44 || f.spiel.bogen < 44 || !f.spiel.fensterZu) probleme.push("f) " + JSON.stringify(f));
   zeilen.push("f) „Einheit bewerten“ und „Spiel nachbereiten“: Knopf im Einstieg und im Bogen, Ablegen schließt das Fenster");
   // g)
-  if (!r.g.acht || r.g.neun || !r.g.fruehe || r.g.leer) probleme.push("g) " + JSON.stringify(r.g));
+  if (!r.g.acht || r.g.neun || !r.g.fruehe || r.g.leer || !r.g.elf) probleme.push("g) " + JSON.stringify(r.g));
   zeilen.push("g) Altbestand: 08.10.2026 und früher erledigt, 09.10. nicht");
   // h) Dateien
   const migDir = path.join(h.REPO, "supabase/migrations");

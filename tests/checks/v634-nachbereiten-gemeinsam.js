@@ -10,7 +10,9 @@
    a) Ein Einstieg „📝 Nachbereiten“ steht auf der Startseite, auch wenn kein To-Do offen ist.
    b) Er zeigt Training, Spiel und Festival in einer Liste, je mit Art, Stand und Stempel.
    c) Ein Tipp auf Spiel oder Festival schließt die Liste und öffnet dessen Nachbereitung.
-   (Das gestrichene Ergebnis-To-Do prüfen v471/v521/v524.) */
+   (Das gestrichene Ergebnis-To-Do prüfen v471/v521/v524.)
+   Seit v957 heißt der Einstieg „📝 Nachbereiten – N offen“ und steht nur, wenn etwas offen ist; alle drei Termine hier
+   liegen in den letzten 10 Tagen und sind für Charles offen. */
 "use strict";
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -43,7 +45,7 @@ module.exports = async function (h) {
     await trainerTodoLoad();
     const voll = [...slot.querySelectorAll("button")].map(b => (b.textContent || "").trim());
     // v929: ohne To-do steht der Einstieg unter „Für dich“ (#home-nachbereiten), nicht im To-do-Slot
-    const einstieg = [...slot.querySelectorAll("button"), ...(document.getElementById("home-nachbereiten") || document.createElement("i")).querySelectorAll("button")].find(b => /Nachbereiten – Training, Spiel, Festival/.test(b.textContent || ""));
+    const einstieg = [...slot.querySelectorAll("button"), ...(document.getElementById("home-nachbereiten") || document.createElement("i")).querySelectorAll("button")].find(b => /Nachbereiten – \d+ offen/.test(b.textContent || ""));
     einstieg?.click();
     for (let i = 0; i < 40 && !document.querySelector("#eb-card [role=button]"); i++) await warte(50);
     const zeilen = [...document.querySelectorAll("#eb-card [role=button]")].map(z => z.textContent.replace(/\s+/g, " ").trim());
@@ -55,9 +57,10 @@ module.exports = async function (h) {
   });
   const fe = s.fehler(); await s.schliessen();
 
-  if (!r.leer.some(t => /Nachbereiten – Training, Spiel, Festival/.test(t))) probleme.push("a) Ohne offene To-Dos fehlt der Einstieg: " + JSON.stringify(r.leer));
-  if (!r.voll.some(t => /Nachbereiten – Training, Spiel, Festival/.test(t))) probleme.push("a) Unter den To-Dos fehlt der Einstieg");
+  if (!r.leer.some(t => /Nachbereiten – \d+ offen/.test(t))) probleme.push("a) Ohne offene To-Dos fehlt der Einstieg: " + JSON.stringify(r.leer));
+  if (!r.voll.some(t => /Nachbereiten – \d+ offen/.test(t))) probleme.push("a) Unter den To-Dos fehlt der Einstieg");
   const z = t => r.zeilen.find(x => x.includes(t)) || "";
+  if (!r.leer.some(t => /Nachbereiten – 3 offen/.test(t))) probleme.push("a) Zahl im Einstieg: " + JSON.stringify(r.leer));
   if (r.zeilen.length !== 3) probleme.push(`b) ${r.zeilen.length} Zeilen statt 3: ${r.zeilen.join(" | ")}`);
   if (!/Training/.test(z("Training"))) probleme.push("b) Das Training fehlt in der Liste");
   if (!/von dir noch offen/.test(z("Festival")) || !/nachbereitet von Peter/.test(z("Festival"))) probleme.push("b) Festival ohne Stand oder Stempel: " + z("Festival"));

@@ -5,7 +5,7 @@
 
    a) Speichern schreibt die Einheit MIT Autor und Konflikt auf datum+autor – Peters Bewertung
       desselben Tages bleibt stehen.
-   b) Die Liste sagt, wer bewertet hat („bewertet von Charles, Peter“).
+   b) Die Liste sagt, wer bewertet hat („bewertet von Charles, Peter“). Seit v957: Bewertetes steht nicht mehr in der Liste.
    c) Im Fenster stehen die eigenen Sterne (nicht Peters), der Stempel „✍️ Charles“ und, zum Lesen,
       Peters Bewertung mit Stempel und Notiz.
    d) Übungen: Peters Bewertung derselben „Alle“-Übung steht darunter und bleibt beim Speichern;
@@ -80,7 +80,9 @@ module.exports = async function (h) {
   const p = posts[0] || { url: "", body: {} };
   if (p.body.autor !== "Charles" || !/on_conflict=datum(%2C|,)autor/.test(p.url)) probleme.push(`a) gespeichert: ${JSON.stringify({ url: p.url.slice(-40), autor: p.body.autor })}`);
   // b
-  if (!/bewertet von Charles, Peter/.test(r.b)) probleme.push("b) Liste: " + r.b.slice(0, 200));
+  /* v957: Die Liste zeigt nur noch Offenes – Charles hat den Termin bewertet, also steht er dort nicht mehr; der Stempel
+     „Auch bewertet von Peter“ steht weiter im Fenster (c). */
+  if (/bewertet von Charles/.test(r.b) || !/Nichts offen/.test(r.b)) probleme.push("b) Liste: " + r.b.slice(0, 200));
   // c
   if (r.c.spass !== 5 || r.c.notiz === PETER_E.notiz) probleme.push(`c) eigene Werte: Spaß ${r.c.spass}, Notiz „${r.c.notiz}“`);
   if (!/✍️ Charles/.test(r.c.text) || !/Auch bewertet von Peter/.test(r.c.text) || !/zu viel Wartezeit/.test(r.c.text) || !/✍️ Peter · 25\.09\.2026/.test(r.c.text)) probleme.push("c) Stempel/Peter: " + r.c.text.slice(0, 260));
