@@ -342,7 +342,9 @@ async function fazitOffene(tage){
    abgelegten Termine in einem eigenen Abschnitt.
    Altbestand: alles bis einschließlich 08.10.2026 gilt als erledigt (PO 13.10.: „alle vergangenen
    Bewertungen, Stand 08.10.2026, als erledigt ablegen“) – ohne Eintrag, ohne Zeile je Trainer. */
-const NB_ALTBESTAND_BIS = "2026-10-08";
+/* v955 · Charles 23.11.: „Alle Rückmeldungen, die älter sind als 2.11.26, ablegen und aus der Erinnerungsliste rausnehmen.“
+   Die Grenze rückt auf den 01.11.2026 – für alle Trainer, ohne Zeile je Trainer (wie der Altbestand bis 08.10.). */
+const NB_ALTBESTAND_BIS = "2026-11-01";
 const NB_GRUENDE = [
   { k:"nicht_dabei",       t:"War nicht dabei" },
   { k:"keine_zeit",        t:"Keine Zeit" },
