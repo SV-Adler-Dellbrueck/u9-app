@@ -2600,7 +2600,7 @@ function tpSlotKurz(el){
    IDs bleiben im DOM – Werte, Speichern und Prüfwege unverändert). Ohne jede gewählte Übung bleiben die Karten offen
    (Erstplanung); „Alle Blöcke ausführlich“ zeigt sie wie bisher (_tpAlleOffen). Löst das Einklappen aus v857 ab. */
 let _tpSheet=null, _tpSheetSlot=null;   // offen ist ein BLOCK, nicht eine Position – wandert beim Verschieben/Löschen mit (wie v891)
-function _tpZeileHtml(el){
+function _tpBlockZeileHtml(el){
   const si=Number(el.dataset.si), sl=(typeof tpSlots!=="undefined"&&tpSlots[si])||{}, typ=sl.typ||"main";
   const alle=(typeof tpAllForms==="function")?tpAllForms():[], ids=tpWahlFelder(si);
   const zeilen=ids.map(id=>{ const i=tpWahlIdx(id), n=i==null?null:((alle[i]||{}).name||null), g=(typeof _tpStationGruppe!=="undefined"&&_tpStationGruppe[id])||null;
@@ -2642,7 +2642,7 @@ function tpKlappenAnwenden(){
       el.appendChild(f);
       return;
     }
-    const k=document.createElement("button"); k.type="button"; k.className="tp-kurz"; k.innerHTML=`<span class="tp-z-text">${_tpZeileHtml(el)}</span><span class="tp-z-pfeil" aria-hidden="true">›</span>`;
+    const k=document.createElement("button"); k.type="button"; k.className="tp-kurz"; k.innerHTML=`<span class="tp-z-text">${_tpBlockZeileHtml(el)}</span><span class="tp-z-pfeil" aria-hidden="true">›</span>`;
     k.setAttribute("aria-label",`${name}: ${k.textContent.replace("›","").trim()} – bearbeiten`); k.onclick=()=>tpBlockOeffnen(si);
     el.appendChild(k);
   });
