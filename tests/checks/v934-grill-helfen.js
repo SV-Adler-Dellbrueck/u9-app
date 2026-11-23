@@ -69,9 +69,9 @@ module.exports = async function (h) {
   // b)
   if (!r.dialog) probleme.push("b) Fenster ist kein Dialog");
   const [h1, h2, h3] = r.heim;
-  if (!h1 || !h1.eigen || !/Familie Kind C/.test(h1.text) || !/Ihr seid dran/.test(h1.text) || !h1.knoepfe.includes("Ersatz suchen") || !h1.knoepfe.includes("Übernehmen") || !/Familie Kind F.*Ersatz gesucht/.test(h1.text))
+  if (!h1 || !h1.eigen || !/Kind Cs Familie/.test(h1.text) || !/Ihr seid dran/.test(h1.text) || !h1.knoepfe.includes("Ersatz suchen") || !h1.knoepfe.includes("Übernehmen") || !/Kind Fs Familie.*Ersatz gesucht/.test(h1.text))
     probleme.push(`b) erstes Heimspiel: ${JSON.stringify(h1).slice(0, 220)}`);
-  if (!h2 || h2.eigen || !/Familie Kind H/.test(h2.text) || !/vergeben/.test(h2.text) || h2.knoepfe.length) probleme.push(`b) zweites Heimspiel: ${JSON.stringify(h2).slice(0, 200)}`);
+  if (!h2 || h2.eigen || !/Kind Hs Familie/.test(h2.text) || /vergeben/.test(h2.text) || h2.knoepfe.length) probleme.push(`b) zweites Heimspiel: ${JSON.stringify(h2).slice(0, 200)}`);
   if (!h3 || !/wird gerade eingeteilt/.test(h3.text))   /* v951: ganze Saison – kein „wird ab …“ mehr */ probleme.push(`b) Heimspiel ohne Einteilung: ${JSON.stringify(h3).slice(0, 160)}`);
   // g) Rückrunde ab Februar 2027 noch nicht final (Charles 21.11.)
   if (!/Rückrunde ab Februar 2027 ist noch nicht endgültig/.test(r.hinweis)) probleme.push("g) Hinweis „Spielplan der Rückrunde noch nicht endgültig“ fehlt");
@@ -84,7 +84,7 @@ module.exports = async function (h) {
   if (!summe || summe[0] !== "Team" || summe.slice(1).join(",") !== "2,3,1,1,9") probleme.push(`c) Summe: ${JSON.stringify(summe)}`);
   if (String(r.kopf.slice(1).map(t => t.split(" ")[0])) !== "Grillhütte,Tee,Aufgebaut,Abgebaut,Betreut") probleme.push(`c) Spalten: ${r.kopf}`);
   // d)
-  if (!/Familie Kind H ist dran/.test(r.termin)) probleme.push(`d) Termin zeigt „${r.termin.slice(0, 120)}“`);
+  if (!/Kind Hs Familie ist dran/.test(r.termin)) probleme.push(`d) Termin zeigt „${r.termin.slice(0, 120)}“`);
   // e)
   for (const [n, x] of [["hell", hell.r], ["dunkel", dunkel.r]]) {
     if (x.breit && x.breit.length) probleme.push(`e) ${n}: ragt über den Rand – ${x.breit.join(", ")}`);
