@@ -117,7 +117,7 @@ module.exports = async function (h) {
     knopf("Doch eintragen").click(); await bis(() => !dlg()); await bis(() => slot.textContent.trim() !== "" && document.querySelectorAll(".tb-verzicht-zeile").length === 1);
     out.e.nachZurueck = { karte: slot.textContent.replace(/\s+/g, " ").trim().slice(0, 100), zeilen: document.querySelectorAll(".tb-verzicht-zeile").length };
     // g) Altbestand
-    out.g = { acht: nbAltbestand("2026-10-08"), neun: nbAltbestand("2026-10-09"), fruehe: nbAltbestand("2026-09-30"), leer: nbAltbestand("") };
+    out.g = { acht: nbAltbestand("2026-11-01"), neun: nbAltbestand("2026-11-02"), fruehe: nbAltbestand("2026-09-30"), leer: nbAltbestand("") };   // v955: Grenze 01.11.2026 (vorher 08.10.)
     return out;
   }, { gestern });
   if (r.fehlt) { await s.schliessen(); return h.ergebnis("v766 Nachbereitung ablehnen", false, ["nbVerzichtOpen oder wieWarsKarte fehlt"]); }
