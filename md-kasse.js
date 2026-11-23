@@ -480,20 +480,24 @@ function ghWahlHtml(dienstId,terminId,frist,eigen){
     <div style="font-size:var(--s-klein);color:var(--text2);line-height:1.45;margin-top:2px">${eigen?"Einigt euch mit der anderen Familie":"Die beiden Familien einigen sich"} bis ${esc(frist)} – sonst wählt die App, wer in dieser Saison seltener dran war. Wer abgibt, ist bei der nächsten Einteilung wieder dabei.</div>
     ${eigen?`<div class="gh-wahl-knoepfe" style="display:grid;grid-template-columns:minmax(0,1fr);gap:8px;margin-top:8px">
       <button class="btn gh-wahl-ja" onclick="ghGrillWaehlen(${Number(dienstId)},${Number(terminId)},true)" style="min-height:48px;justify-content:center">Wir übernehmen</button>
-      <button class="btn gh-wahl-nein" onclick="ghGrillWaehlen(${Number(dienstId)},${Number(terminId)},false)" style="min-height:48px;justify-content:center">Wir geben ab</button></div>`:""}
+      <button class="btn gh-wahl-nein" onclick="ghGrillWaehlen(${Number(dienstId)},${Number(terminId)},false)" style="min-height:48px;justify-content:center">Wir geben ab</button>
+      <button class="btn gh-wahl-teilen" onclick="ghGrillWaehlen(${Number(dienstId)},${Number(terminId)},'teilen')" style="min-height:48px;justify-content:center">Wir teilen uns die Zeit</button></div>`:""}
   </div>`;
 }
+/* v956 · Charles 23.11.: „Am Samstag haben sich zwei Eltern den Grillhüttendienst geteilt. Beide haben 45 Minuten gemacht.“
+   Dritte Wahl: beide Familien bleiben eingeteilt, jede hilft die halbe Zeit und bekommt ½ Dienst (grill_wahl p_teilen). */
 async function ghGrillWaehlen(dienstId,terminId,uebernehmen){
-  if(!await frageJaNein({emoji:"🔥",titel:uebernehmen?"Grillhütte übernehmen?":"Grillhütte abgeben?",
-    text:uebernehmen?"Dann seid ihr an diesem Tag allein für die Grillhütte eingeteilt; die andere Familie ist frei.":"Dann übernimmt die andere Familie. Ihr seid bei der nächsten Einteilung wieder dabei.",
-    ja:uebernehmen?"Wir übernehmen":"Wir geben ab",nein:"Abbrechen"}))return;
+  const teilen=uebernehmen==="teilen"; if(teilen)uebernehmen=false;
+  if(!await frageJaNein({emoji:"🔥",titel:teilen?"Grillhütte teilen?":uebernehmen?"Grillhütte übernehmen?":"Grillhütte abgeben?",
+    text:teilen?"Dann bleiben beide Familien eingeteilt und jede hilft die halbe Zeit. Jede Familie bekommt ½ Dienst angerechnet.":uebernehmen?"Dann seid ihr an diesem Tag allein für die Grillhütte eingeteilt; die andere Familie ist frei.":"Dann übernimmt die andere Familie. Ihr seid bei der nächsten Einteilung wieder dabei.",
+    ja:teilen?"Wir teilen uns die Zeit":uebernehmen?"Wir übernehmen":"Wir geben ab",nein:"Abbrechen"}))return;
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/rpc/grill_wahl`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_id:dienstId,p_uebernehmen:!!uebernehmen})});
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/grill_wahl`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_id:dienstId,p_uebernehmen:!!uebernehmen,p_teilen:teilen})});
     if(typeof sbCheck401==="function"&&sbCheck401(r))return;
     if(!r.ok){ toast("Das ging nicht – vielleicht hat die andere Familie schon gewählt.","err"); ghNeuLaden(); return; }
   }catch(e){ toast("Ohne Netz geht das nicht","err"); return; }
   try{ await fetch(`${SB_URL}/functions/v1/push-send`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({art:"grill_wahl_fertig",termin_id:terminId})}); }catch(e){}
-  toast(uebernehmen?"🔥 Ihr übernehmt – danke!":"Abgegeben – die andere Familie übernimmt");
+  toast(teilen?"🔥 Ihr teilt euch die Zeit – danke!":uebernehmen?"🔥 Ihr übernehmt – danke!":"Abgegeben – die andere Familie übernimmt");
   ghNeuLaden();
 }
 /* v878: Fläche und Farbe aus den Knopf-Bauarten (.btn), hier nur Platz */
@@ -504,6 +508,8 @@ function ghDienstHtml(d){
     const z=_ghZeiten[d.termin_id]||{};
     return (d.eigene?"":`<div style="font-size:var(--s-text)">${d.familie?"Familie "+esc(d.familie):"Eine andere Familie"} wählt gerade mit – ihr müsst nichts tun.</div>`)+(d.eigene?ghWahlHtml(d.dienst_id,d.termin_id,ghFristText(d.datum,d.uhrzeit,z.grill_zeit),true):"");
   }
+  if(d.geteilt)return d.eigene?`<div class="gh-geteilt" style="font-size:var(--s-text);line-height:1.5">Ihr teilt euch die Grillhütte mit einer anderen Familie – jede hilft die halbe Zeit. Danke!</div>`
+    :`<div class="gh-geteilt" style="font-size:var(--s-text)">Zwei Familien teilen sich den Dienst – ihr müsst nichts tun.</div>`;   // v956
   if(d.eigene&&d.status==="eingeteilt")return `<div style="font-size:var(--s-text);line-height:1.5">Eure Familie ist für die Grillhütte eingeteilt. Könnt ihr nicht, sucht Ersatz – bis eine andere Familie übernimmt, bleibt der Dienst bei euch.</div>
       <button class="gh-ersatz btn" onclick="ghErsatzSuchen(${Number(d.dienst_id)})" style="${GH_KNOPF}">Ersatz suchen</button>`;
   if(d.eigene&&d.status==="freigegeben")return `<div style="font-size:var(--s-text);line-height:1.5">Ersatz wird gesucht. Bis eine andere Familie übernimmt, bleibt der Dienst bei euch.</div>`;
@@ -605,15 +611,15 @@ async function elternHelfenOpen(){
     }
     const eigen=ds.some(x=>x.eigene), wahl=ghWahlOffen(h.plaetze,ds.length);   // v951
     const zeilen=ds.map(x=>{
-      const knopf=wahl?"":x.eigene&&x.status==="eingeteilt"?`<button class="gh-ersatz btn" onclick="ghErsatzSuchen(${Number(x.dienst_id)})" style="${GH_KNOPF}">Ersatz suchen</button>`
+      const knopf=wahl||x.geteilt_mit?"":x.eigene&&x.status==="eingeteilt"?`<button class="gh-ersatz btn" onclick="ghErsatzSuchen(${Number(x.dienst_id)})" style="${GH_KNOPF}">Ersatz suchen</button>`
         :x.kann_uebernehmen?`<button class="gh-uebernehmen btn" onclick="ghUebernehmen(${Number(x.dienst_id)})" style="${GH_KNOPF}">Übernehmen</button>`:"";
-      return `<div style="margin-top:2px"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b style="color:var(--text);font-size:var(--s-karte)">Familie ${esc(x.familie||"?")}</b>${ghElternChip(x)}</div>${knopf}</div>`;
+      return `<div style="margin-top:2px"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b style="color:var(--text);font-size:var(--s-karte)">Familie ${esc(x.familie||"?")}${x.geteilt_mit?" &amp; Familie "+esc(x.geteilt_mit):""}</b>${ghElternChip(x)}${x.geteilt_mit?GH_GETEILT_CHIP:""}</div>${knopf}</div>`;
     }).join("");
     const ich=ds.find(x=>x.eigene), wahlBox=wahl?ghWahlHtml(ich?ich.dienst_id:0,h.termin_id,ghFristText(h.datum,h.uhrzeit,(_ghZeiten[h.termin_id]||{}).grill_zeit),!!ich):"";
     return `<div class="hf-heim${eigen?" hf-eigen":""}" style="background:var(--surface);border:${eigen?"2px solid var(--green)":"1px solid var(--rand-bedien)"};border-radius:14px;padding:10px 12px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start">${tag}<div style="flex:1;min-width:0">${zeilen}<div style="font-size:var(--s-klein);color:var(--text3);margin-top:2px">${wann}</div>${ghZeitHtml(_ghZeiten[h.termin_id])}${wahlBox}</div></div>`;
   }).join("")||`<div style="color:var(--text2);margin-bottom:8px">Kein Heimspiel in Sicht.</div>`;
-  const fam=d.familien||[], zahl=n=>n?String(n):"–";
-  const sum=k=>fam.reduce((a,f)=>a+(Number(f[k])||0),0);
+  const fam=d.familien||[], zahl=n=>Number(n)?ghHalb(n):"–";
+  const sum=k=>ghHalb(fam.reduce((a,f)=>a+(Number(f[k])||0),0));
   const SP=[["grill","🔥","Grillhütte"],["tee","🫖","Tee mitgebracht"],["aufbau","🥅","Aufgebaut (Tore, Aufbau)"],["abbau","🧹","Abgebaut"],["betreuung","👀","Betreut (beim Training geblieben, am Spieltag)"]];
   const ab=new Date(String(d.saison_ab||"").slice(0,10)+"T00:00:00");
   const saison=isNaN(ab)?"diese Saison":`Saison ${ab.getFullYear()}/${String(ab.getFullYear()+1).slice(2)}`;
@@ -628,13 +634,21 @@ async function elternHelfenOpen(){
     <div style="font-size:var(--s-klein);color:var(--text2);line-height:1.45;margin-top:8px">Sortiert nach Namen, nicht nach Anzahl. Gezählt wird, was schon war, ab Saisonbeginn. „Betreut“ zählt die Zusage „ich bleibe beim Training“ und die Betreuung am Spieltag. Helfen ohne Eintrag in der App kennt die Liste nicht.</div>`;
 }
 
+/* v956: geteilte Dienste zählen je ½ – 1,5 steht als „1½“, 0,5 als „½“ */
+function ghHalb(n){ n=Math.round((Number(n)||0)*2)/2; const g=Math.floor(n), h=n-g; return h?(g?String(g):"")+"½":String(g); }
+const GH_GETEILT_CHIP=`<span class="gh-chip gh-geteilt-chip" style="display:inline-block;font-size:var(--s-klein);font-weight:700;color:var(--blue);background:var(--surface2);border:1px solid var(--blue);border-radius:999px;padding:1px 9px">geteilt · je ½</span>`;
+
 /* ── Trainerbereich: einteilen und umbuchen ──────────────────────────────────── */
 let _ghTr=null;
 async function ghTrainerDaten(){
   const heute=isoLokal();
   let termine=[], dienste=[], profile=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/termine?heim=is.true&typ=in.(spiel,turnier)&datum=gte.${heute}&select=id,datum,uhrzeit,gegner,titel,typ,grill_plaetze,grill_zeit,grill_beide&order=datum.asc`,{headers:sbAuthHeaders()});if(r.ok)termine=await r.json();}catch(e){}
-  try{const r=await fetch(`${SB_URL}/rest/v1/dienst_einteilung?dienst=eq.grillhuette&select=id,termin_id,kind_id,status,uebernommen_von,uebernommen_kind,platz&order=platz.asc`,{headers:sbAuthHeaders()});if(r.ok)dienste=await r.json();}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/dienst_einteilung?dienst=eq.grillhuette&select=id,termin_id,kind_id,status,uebernommen_von,uebernommen_kind,geteilt_kind,platz&order=platz.asc`,{headers:sbAuthHeaders()});if(r.ok)dienste=await r.json();}catch(e){}
+  /* v956: zurückliegende Heimspiele der letzten 14 Tage – dort trägt das Trainerteam nachträglich ein, wer sich den Dienst geteilt hat */
+  let vorbei=[];
+  try{const ab=isoLokal(new Date(Date.now()-14*864e5));
+    const r=await fetch(`${SB_URL}/rest/v1/termine?heim=is.true&typ=in.(spiel,turnier)&datum=gte.${ab}&datum=lt.${heute}&select=id,datum,uhrzeit,gegner,titel&order=datum.desc`,{headers:sbAuthHeaders()});if(r.ok)vorbei=await r.json();}catch(e){}
   let plaetze=2, sperren=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/team_config?id=eq.1&select=dienst_plaetze`,{headers:sbAuthHeaders()});if(r.ok){const x=(await r.json())[0];if(x&&Number(x.dienst_plaetze))plaetze=Number(x.dienst_plaetze);}}catch(e){}
   try{const r=await fetch(`${SB_URL}/rest/v1/dienst_sperre?dienst=eq.grillhuette&datum=gte.${heute}&select=id,kind_id,datum&order=datum.asc`,{headers:sbAuthHeaders()});if(r.ok)sperren=await r.json();}catch(e){}
@@ -642,18 +656,39 @@ async function ghTrainerDaten(){
   try{const r=await fetch(`${SB_URL}/rest/v1/dienst_befreit?dienst=eq.grillhuette&select=kind_id,grund`,{headers:sbAuthHeaders()});if(r.ok)befreit=await r.json();}catch(e){}
   const uids=[...new Set(dienste.map(d=>d.uebernommen_von).filter(Boolean))];
   if(uids.length){try{const r=await fetch(`${SB_URL}/rest/v1/profiles?id=in.(${uids.join(",")})&select=id,anzeigename`,{headers:sbAuthHeaders()});if(r.ok)profile=await r.json();}catch(e){}}
-  _ghTr={termine,dienste,profile,plaetze,sperren,befreit};
+  _ghTr={termine,dienste,profile,plaetze,sperren,befreit,vorbei};
   return _ghTr;
 }
 function _ghKindName(id){ const k=(typeof KADER!=="undefined"?KADER:[]).find(x=>String((typeof kaderId==="function")?kaderId(x):x.id)===String(id)); return k?k.name:""; }
 function _ghTrZeile(d){
   if(!d)return "– noch nicht eingeteilt –";
   const fam=d.kind_id!=null?`${esc(_ghKindName(d.kind_id)||"Kind")}s Familie`:"ohne Familie";
+  /* v956: geteilt – beide Familien nebeneinander, ohne den Umweg über „übernommen von“ */
+  if(d.geteilt_kind!=null){ const eff=d.status==="uebernommen"&&d.uebernommen_kind!=null?d.uebernommen_kind:d.kind_id;
+    return `${esc(_ghKindName(eff)||"Kind")}s Familie &amp; ${esc(_ghKindName(d.geteilt_kind)||"Kind")}s Familie (geteilt · je ½)`; }
   /* v672: übernommen – angerechnet wird der übernehmenden Familie; sie steht mit Namen da. */
   if(d.status==="uebernommen"){ const p=(_ghTr.profile||[]).find(x=>x.id===d.uebernommen_von);
     const neu=d.uebernommen_kind!=null&&_ghKindName(d.uebernommen_kind)?`${esc(_ghKindName(d.uebernommen_kind))}s Familie`:esc((p&&p.anzeigename)||"einer anderen Familie");
     return `${fam} → übernommen von ${neu} (zählt für sie)`; }
   return fam;
+}
+/* v956 · Charles 23.11.: „Beide haben 45 Minuten gemacht.“ Je eingeteilter Familie: mit wem sie sich den Dienst geteilt hat.
+   Die zweite Familie steht in geteilt_kind; beide zählen je ½ – für die Reihum-Einteilung und „Grillhütte & Helfen“. */
+function _ghTeilenHtml(d,kids,kid,sel){
+  if(!d||d.kind_id==null)return "";
+  const eff=String(d.status==="uebernommen"&&d.uebernommen_kind!=null?d.uebernommen_kind:d.kind_id);
+  const opt=`<option value=""${d.geteilt_kind==null?" selected":""}>Nicht geteilt</option>`+kids.filter(k=>String(kid(k))!==eff)
+    .map(k=>`<option value="${esc(String(kid(k)))}"${String(d.geteilt_kind)===String(kid(k))?" selected":""}>${esc(k.name)}s Familie · je ½</option>`).join("");
+  return `<label class="gh-teilen" style="font-size:var(--s-klein);color:var(--text2)">Geteilt mit<select onchange="grillTeilen(${Number(d.id)},this.value)" style="${sel}">${opt}</select></label>`;
+}
+async function grillTeilen(id,kindId){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/dienst_einteilung?id=eq.${Number(id)}`,{method:"PATCH",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify({geteilt_kind:kindId?Number(kindId):null})});
+    if(sbCheck401(r))return;
+    if(!r.ok){ toast(`Nicht gespeichert – Server antwortet ${r.status}`,"err"); return; }
+  }catch(e){ toast("Kein Netz – nicht gespeichert","err"); return; }
+  toast(kindId?"Geteilt – beide Familien bekommen ½ Dienst":"Nicht mehr geteilt – der Dienst zählt wieder ganz");
+  _ghHelfen=null; await ghTrainerDaten(); grillTrainerRender();
 }
 /* Die Zeile in der Trainer-Terminliste (ersetzt „🍿 Büdchen“). */
 async function buedchenTrainerFill(t){
@@ -708,12 +743,23 @@ function grillTrainerRender(){
         <div class="gh-anzahl" role="group" aria-label="Familien an diesem Termin" style="display:flex;gap:6px;align-items:center;margin:6px 0 2px"><span style="color:var(--text2);font-size:var(--s-klein)">Familien:</span>${[1,2].map(n=>`<button type="button" class="btn btn-sm" aria-pressed="${Pt(t)===n}" onclick="grillPlaetzeSetzen(${Number(t.id)},${n})" style="min-width:48px;justify-content:center">${n}</button>`).join("")}</div>
         ${Array.from({length:Math.max(Pt(t),fam.length)},(_,i)=>{ const d=ds.find(x=>Number(x.platz||1)===i+1);
           return `<div style="margin:4px 0 2px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="min-width:4.5em;color:var(--text2)">Familie ${i+1}</span>${d?`<span>${_ghTrZeile(d)}</span>${ghChip(d.status)}`:(ghImFenster(t)?ghChip("offen"):`<span class="gh-spaeter" style="color:var(--text2);font-size:var(--s-klein)">wird ab ${esc(ghAbDatum(t.datum))} eingeteilt</span>`)}</div>
-          <label style="font-size:var(--s-klein);color:var(--text2)">Umbuchen auf<select onchange="grillUmbuchen(${Number(t.id)},this.value,${i+1})" style="${sel}">${famOpt}</select></label>`; }).join("")}
+          <label style="font-size:var(--s-klein);color:var(--text2)">Umbuchen auf<select onchange="grillUmbuchen(${Number(t.id)},this.value,${i+1})" style="${sel}">${famOpt}</select></label>${d&&d.geteilt_kind==null&&Pt(t)>1?"":_ghTeilenHtml(d,kids,kid,sel)}`; }).join("")}
         ${fam.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn btn-sm gh-push" onclick="grillPush(${Number(t.id)})"><i class="ti ti-bell"></i>Erinnern (Push)</button><button class="btn btn-sm gh-ruf" onclick="grillRufOpen(${Number(t.id)})"><i class="ti ti-message"></i>Nachricht an die Familien</button></div>`:""}
         <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">${sp.length?`Kann an dem Tag nicht: ${sp.map(x=>`${esc(_ghKindName(x.kind_id)||"Kind")}s Familie <button class="btn btn-sm" onclick="grillSperreWeg(${Number(x.id)})" aria-label="Sperre für ${esc(_ghKindName(x.kind_id)||"Kind")}s Familie aufheben">aufheben</button>`).join(" ")}`:""}</div>
         <label style="font-size:var(--s-klein);color:var(--text2)">Familie kann an dem Tag nicht<select onchange="grillSperren(${JSON.stringify(String(t.datum)).replace(/"/g,"&quot;")},this.value)" style="${sel}">${famOpt}</select></label>
       </div>`; }).join(""):'<div style="color:var(--text2)">Keine künftigen Heimtermine im Kalender.</div>'}
+    ${grillVorbeiHtml(kids,kid,sel)}
     ${grillBefreitHtml(kids,kid,sel)}`;
+}
+/* v956: zurückliegende Heimspiele (14 Tage) – nur „Geteilt mit“, damit ein am Platz geteilter Dienst richtig zählt */
+function grillVorbeiHtml(kids,kid,sel){
+  const vb=(_ghTr.vorbei||[]).map(t=>({t,ds:_ghTr.dienste.filter(x=>x.termin_id===t.id&&x.kind_id!=null)})).filter(x=>x.ds.length);
+  if(!vb.length)return "";
+  return `<div id="gh-vorbei" style="border-top:2px solid var(--surface2);margin-top:12px;padding-top:10px">
+    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;color:var(--text2);margin-bottom:6px">Zurückliegend – wer hat sich den Dienst geteilt?</div>
+    ${vb.map(({t,ds})=>`<div class="gh-vorbei-termin" style="padding:6px 0;border-top:1px solid var(--surface2)"><div><b>${esc(ghTag(t.datum,t.uhrzeit))}</b> <span style="color:var(--text2)">${esc(t.gegner||t.titel||"")}</span></div>
+      ${ds.map(d=>`<div style="margin:4px 0 2px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span>${_ghTrZeile(d)}</span></div>${_ghTeilenHtml(d,kids,kid,sel)}`).join("")}</div>`).join("")}
+  </div>`;
 }
 /* v671 PO 29.09.: „Bei den Grillhüttendiensten die Eltern rausnehmen, die selber Trainer sind.“
    Befreite Familien teilt „Grillhütte einteilen“ nie ein; eine schon stehende Einteilung bucht
@@ -913,7 +959,7 @@ async function grillUmbuchen(terminId,kindId,platz){
   platz=Number(platz)||1;
   const d=_ghTr.dienste.find(x=>x.termin_id===terminId&&Number(x.platz||1)===platz);
   if(_ghTr.dienste.some(x=>x.termin_id===terminId&&x!==d&&String(x.kind_id)===String(kindId))){ toast("Diese Familie steht an dem Tag schon","err"); grillTrainerRender(); return; }
-  const zeile={kind_id:Number(kindId),status:"eingeteilt",uebernommen_von:null};
+  const zeile={kind_id:Number(kindId),status:"eingeteilt",uebernommen_von:null,geteilt_kind:null};   // v956: neue Familie – Teilung neu eintragen
   try{
     const r=d
       ?await fetch(`${SB_URL}/rest/v1/dienst_einteilung?id=eq.${Number(d.id)}`,{method:"PATCH",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify(zeile)})
