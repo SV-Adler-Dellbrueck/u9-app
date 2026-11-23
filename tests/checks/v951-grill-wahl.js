@@ -5,7 +5,7 @@
    b) Trainer stellt bei zwei eingeteilten Familien auf 1 um: niemand wird ausgetragen (kein DELETE), grill_plaetze 1,
       Push art „grill_wahl“; im Fenster stehen weiter beide Familien und „Die beiden Familien wählen“.
    c) Eltern (Grillhütte & Helfen): bei der eigenen Familie „Nur eine Familie wird gebraucht“ mit „Wir übernehmen“ und
-      „Wir geben ab“ (≥ 44 px, 360 px ohne Überstand), kein „Ersatz suchen“; „Wir übernehmen“ ruft grill_wahl
+      „Wir geben ab“ (seit v956 dazu „Wir teilen uns die Zeit“; ≥ 44 px, 360 px ohne Überstand), kein „Ersatz suchen“; „Wir übernehmen“ ruft grill_wahl
       (p_uebernehmen true) und danach push-send „grill_wahl_fertig“.
    d) Migration: grill_wahl, grill_wahl_auto (nur service_role, Reihenfolge freigegeben → seltener dran → Platz), Frist
       1 Stunde, Job alle 10 Minuten ohne Schlüssel im Repo; push-send prüft das Cron-Geheimnis vor der Anmeldung. */
@@ -79,7 +79,7 @@ module.exports = async function (h) {
   if (re.fehler) probleme.push("Eltern: " + re.fehler);
   else {
     if (!/Nur eine Familie wird gebraucht/.test(re.text) || !/sonst wählt die App/.test(re.text)) probleme.push("c) Hinweis „" + re.text + "“");
-    if (re.knoepfe.length !== 2 || !/^Wir übernehmen/.test(re.knoepfe[0]) || !/^Wir geben ab/.test(re.knoepfe[1]) || re.knoepfe.some(k => Number(k.split(":")[1]) < 44)) probleme.push("c) Knöpfe " + JSON.stringify(re.knoepfe));
+    if (re.knoepfe.length !== 3 || !/^Wir übernehmen/.test(re.knoepfe[0]) || !/^Wir geben ab/.test(re.knoepfe[1]) || re.knoepfe.some(k => Number(k.split(":")[1]) < 44)) probleme.push("c) Knöpfe " + JSON.stringify(re.knoepfe));
     if (re.rand) probleme.push("c) Knöpfe ragen über den Rand");
     if (re.ersatz) probleme.push("c) „Ersatz suchen“ trotz offener Wahl");
     if (rpc.length !== 1 || rpc[0].body.p_id !== 1 || rpc[0].body.p_uebernehmen !== true) probleme.push("c) grill_wahl " + JSON.stringify(rpc.map(x => x.body)));

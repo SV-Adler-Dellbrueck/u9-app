@@ -5,6 +5,8 @@
    v951 (Version 12): art „grill_zeit“ – dieselben Familien erfahren Grillzeit und ob beide Elternteile vor Ort helfen.
                       art „grill_wahl“ (Trainer stellt auf 1 Familie um), „grill_wahl_fertig“ (Familie hat gewählt) und
                       „grill_wahl_auto“ (Job alle 10 Minuten mit Cron-Geheimnis: wählt nach der Frist und meldet es beiden).
+   v956 (Version 13): geteilter Grilldienst – die zweite Familie (dienst_einteilung.geteilt_kind) bekommt dieselben Mitteilungen;
+                      „Wir teilen uns die Zeit“ (grill_wahl.geteilt) meldet beiden, dass sie sich die Zeit teilen.
 
    v643: Die VAPID-Schlüssel standen bis dahin als Konstante im Code dieser Funktion. Jetzt
    liegen sie im Supabase Vault (adler_vapid_public / adler_vapid_private) und werden über
@@ -74,6 +76,14 @@ async function grillWahlMelden(admin: any, tid: number) {
   await admin.from("termine").update({ grill_wahl: { ...w, gemeldet: true } }).eq("id", tid);
   await vapid(admin);
   const dat = grillTag(t.datum); let sent = 0;
+  if (w.geteilt) {   // v956: beide Familien bleiben, jede hilft die halbe Zeit
+    const k = await familienKonten(admin, [w.bleibt, w.mit]);
+    if (k.ids.length) {
+      const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth,user_id").in("user_id", k.ids);
+      sent += (await verteilen(admin, subs || [], { title: "🔥 Grillhütte " + dat, body: "Ihr teilt euch die Grillhütte mit der anderen Familie – jede hilft die halbe Zeit. Danke!", url: "./eltern/?portal", tag: "adler-grillwahl-" + tid })).sent;
+    }
+    return { sent };
+  }
   const b = await familienKonten(admin, [w.bleibt]);
   if (b.ids.length) {
     const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth,user_id").in("user_id", b.ids);
@@ -215,8 +225,8 @@ Deno.serve(async (req) => {
       if (!Number.isFinite(tid) || tid <= 0) return json({ error: "Termin fehlt" }, 400);
       const { data: t } = await admin.from("termine").select("id,typ,titel,gegner,datum,uhrzeit").eq("id", tid).maybeSingle();
       if (!t) return json({ error: "Termin nicht gefunden" }, 404);
-      const { data: ds } = await admin.from("dienst_einteilung").select("kind_id,status,uebernommen_kind").eq("termin_id", tid).eq("dienst", "grillhuette");
-      let kinder = (ds || []).map((d: any) => d.status === "uebernommen" && d.uebernommen_kind != null ? d.uebernommen_kind : d.kind_id).filter((x: any) => x != null);
+      const { data: ds } = await admin.from("dienst_einteilung").select("kind_id,status,uebernommen_kind,geteilt_kind").eq("termin_id", tid).eq("dienst", "grillhuette");
+      let kinder = (ds || []).flatMap((d: any) => [d.status === "uebernommen" && d.uebernommen_kind != null ? d.uebernommen_kind : d.kind_id, d.geteilt_kind]).filter((x: any) => x != null);
       const nur = Array.isArray(body.kind_ids) ? body.kind_ids.map(Number).filter(Number.isFinite) : null;
       if (nur) kinder = kinder.filter((k: number) => nur.includes(Number(k)));
       kinder = [...new Set(kinder)];
@@ -245,8 +255,8 @@ Deno.serve(async (req) => {
       if (!Number.isFinite(tid) || tid <= 0) return json({ error: "Termin fehlt" }, 400);
       const { data: t } = await admin.from("termine").select("id,datum,grill_zeit,grill_beide").eq("id", tid).maybeSingle();
       if (!t) return json({ error: "Termin nicht gefunden" }, 404);
-      const { data: ds } = await admin.from("dienst_einteilung").select("kind_id,status,uebernommen_kind").eq("termin_id", tid).eq("dienst", "grillhuette");
-      const kinder = [...new Set((ds || []).map((d: any) => d.status === "uebernommen" && d.uebernommen_kind != null ? d.uebernommen_kind : d.kind_id).filter((x: any) => x != null))];
+      const { data: ds } = await admin.from("dienst_einteilung").select("kind_id,status,uebernommen_kind,geteilt_kind").eq("termin_id", tid).eq("dienst", "grillhuette");
+      const kinder = [...new Set((ds || []).flatMap((d: any) => [d.status === "uebernommen" && d.uebernommen_kind != null ? d.uebernommen_kind : d.kind_id, d.geteilt_kind]).filter((x: any) => x != null))];
       if (!kinder.length) return json({ ok: true, familien: 0, sent: 0 });
       const { data: ek } = await admin.from("eltern_kinder").select("email,spieler_id").in("spieler_id", kinder);
       const mails = [...new Set((ek || []).map((x: any) => String(x.email || "").toLowerCase()).filter(Boolean))];
@@ -271,8 +281,8 @@ Deno.serve(async (req) => {
       if (!Number.isFinite(tid) || tid <= 0) return json({ error: "Termin fehlt" }, 400);
       const { data: t } = await admin.from("termine").select("id,datum").eq("id", tid).maybeSingle();
       if (!t) return json({ error: "Termin nicht gefunden" }, 404);
-      const { data: ds } = await admin.from("dienst_einteilung").select("kind_id,status,uebernommen_kind").eq("termin_id", tid).eq("dienst", "grillhuette");
-      const k = await familienKonten(admin, (ds || []).map((d: any) => d.status === "uebernommen" && d.uebernommen_kind != null ? d.uebernommen_kind : d.kind_id));
+      const { data: ds } = await admin.from("dienst_einteilung").select("kind_id,status,uebernommen_kind,geteilt_kind").eq("termin_id", tid).eq("dienst", "grillhuette");
+      const k = await familienKonten(admin, (ds || []).flatMap((d: any) => [d.status === "uebernommen" && d.uebernommen_kind != null ? d.uebernommen_kind : d.kind_id, d.geteilt_kind]));
       if (!k.ids.length) return json({ ok: true, familien: k.familien, sent: 0 });
       const { data: frist } = await admin.rpc("grill_frist", { p_termin: tid });
       const bis = frist ? new Date(frist).toLocaleString("de-DE", { timeZone: "Europe/Berlin", weekday: "short", hour: "2-digit", minute: "2-digit" }) : "kurz vorher";
@@ -294,7 +304,7 @@ Deno.serve(async (req) => {
       const email = (userData?.user?.email || "").toLowerCase();
       const { data: ek } = email ? await admin.from("eltern_kinder").select("spieler_id").ilike("email", email) : { data: [] };
       const meine = new Set((ek || []).map((x: any) => Number(x.spieler_id)));
-      if (!meine.has(Number(w.bleibt)) && !meine.has(Number(w.weg))) return json({ error: "nicht beteiligt" }, 403);
+      if (!meine.has(Number(w.bleibt)) && !meine.has(Number(w.weg)) && !meine.has(Number(w.mit))) return json({ error: "nicht beteiligt" }, 403);
       return json({ ok: true, ...(await grillWahlMelden(admin, tid)) });
     }
 
