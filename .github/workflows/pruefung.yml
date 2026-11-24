@@ -37,5 +37,10 @@ jobs:
       - name: Chromium für Playwright
         run: npx playwright install --with-deps chromium
 
+      - name: Schriften wie in der Cloud-Sitzung
+        # Ohne Inter als Systemschrift springt eine breitere Ersatzschrift ein, und Layout-Prüfungen (z. B. v898, Monitor-Tafel
+        # 1280 × 800) messen anders als in der Sitzung, in der die Prüfungen geschrieben werden.
+        run: sudo apt-get install -y --no-install-recommends fonts-inter fonts-noto-color-emoji && fc-cache -f && fc-match sans-serif
+
       - name: Prüflauf
         run: node tests/run.js
