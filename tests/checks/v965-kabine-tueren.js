@@ -39,7 +39,9 @@ module.exports = async function (h) {
     out.c.start = !!document.getElementById("kab-tueren");
     kabineTuer("team"); await w(100); window._kabTuer = "team"; kabineHome(true); await w(100);
     out.c.frisch = !!document.getElementById("kab-tueren");
-    // d) Hinweise
+    // d) Hinweise – erst wenn die Nachlader der Startseite fertig sind (unter Last des vollen Laufs überschrieben sie sonst die
+    //    eingesetzten Hinweise mit ihrer leeren Antwort; lokaler Vollauf 24.11., v967): warten, bis 600 ms keine Anfrage mehr kam
+    for (let i = 0, n = -1, ruhig = 0; i < 60 && ruhig < 3; i++) { const m = performance.getEntriesByType("resource").length; ruhig = m === n ? ruhig + 1 : 0; n = m; await w(200); }
     ["kab-countdown", "kab-post", "kab-wahl"].forEach((id, i) => { document.getElementById(id).innerHTML = `<div style="height:60px">Hinweis ${i + 1}</div>`; });
     await w(300);
     const sichtbar = () => ["kab-lob", "kab-countdown", "kab-nest-hinweis", "kab-reveal", "kab-pack", "kab-post", "kab-wahl", "kab-milestone"].filter(id => { const e = document.getElementById(id); return e && e.innerHTML.trim() && !e.hidden; }).length;
