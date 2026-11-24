@@ -2136,5 +2136,5 @@ body.tp-sheet-offen{overflow:hidden}
 .nb-wahl{display:flex;flex-direction:column;align-items:flex-start;gap:3px;width:100%;min-height:76px;text-align:left;margin-bottom:10px;padding:14px}
 .nb-wahl-t{font-size:var(--s-karte);font-weight:800}
 .nb-wahl-s{font-size:var(--s-text);font-weight:500;line-height:1.4;white-space:normal}
-.nb-pr-stern{width:34px;min-width:34px;height:44px;min-height:44px;padding:0;border:0;background:none;font-size:22px;line-height:1;cursor:pointer;color:var(--text3)}
+.nb-pr-stern{width:34px;min-width:34px;height:44px;min-height:44px;padding:0;border:0;background:none;font-size:var(--s-teil);line-height:1;cursor:pointer;color:var(--text3)}
 .nb-pr-stern.an{color:#a16207}
