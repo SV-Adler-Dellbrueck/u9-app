@@ -725,7 +725,7 @@ async function elternNewsLoad(kids){
   if(cur.nest&&cur.nest>(seen.nest||"")) items.push({emo:"📰",txt:"Das Adler Nest ist frisch erschienen.",sub:kanalUnter("nest"),act:"elternCatClose();if(typeof nestOpen==='function')nestOpen()"});
   if(cur.boerse&&cur.boerse>(seen.boerse||"")) items.push({emo:"🛍️",txt:"Neues in der Adler-Börse.",act:"elternCatClose();boerseOpen()"});
   if(cur.fund&&cur.fund>(seen.fund||"")) items.push({emo:"🧦",txt:"Neues im Fundbüro.",act:"elternCatClose();fundbueroOpen()"});
-  if(cur.skill&&cur.skill.slice(0,4)!=="1970"&&cur.skill>(seen.skill||"")) items.push({emo:"🏅",txt:"Neuer Skill der Woche / neue Challenge.",act:"elternCatOpen('mehr')"});
+  if(cur.skill&&cur.skill.slice(0,4)!=="1970"&&cur.skill>(seen.skill||"")) items.push({emo:"⭐",txt:"Neuer Skill des Monats in der Adler-Akademie.",act:"elternCatOpen('mehr')"});
   (data.lob||[]).forEach(l=>{ if(l.at>(seen["lob_"+l.sid]||"")) items.push({emo:"🎧",txt:`Neues vom Trainerteam für ${esc(kidName(l.sid))} (Lob oder Nachricht).`,act:`elternCatClose();lobListeOpen(${l.sid},'${String(kidName(l.sid)).replace(/['\\<>&"]/g,"")}')`});   /* v803: auch Spieltag-Nachrichten, deshalb die Liste statt „jüngstes Lob abspielen“ */ });
   (kids||[]).forEach(k=>{ const lv=cur["level_"+k.spieler_id]; const sv=seen["level_"+k.spieler_id]; if(lv&&sv!=null&&lv!==sv) items.push({emo:"🎉",txt:`${esc(kidName(k.spieler_id))} hat ein neues Level erreicht: ${esc(lv)}!`,act:`elternCatClose();elternCardOpen(${k.spieler_id})`}); });
   if(cur.ms&&cur.ms>(seen.ms||"")) ms.filter(m=>m.erreicht_am>(seen.ms||"")).slice(0,3).forEach(m=>items.push({emo:"🏆",txt:`Team-Meilenstein: ${esc(m.label)}`,act:""})); // H7 · v824: reine Mitteilung – ein Tipp schließt nichts mehr
@@ -3624,6 +3624,10 @@ async function elternAkademieMeldungen(kids){
 async function elternMeldungJa(sid,id,quelle,btn){
   const karte=btn&&btn.closest(".ak-melde"); karte?.querySelectorAll("button").forEach(b=>b.disabled=true);
   if(typeof abzeichenAward==="function")await abzeichenAward(sid,id,null,quelle);   // vergibt die Federn und löscht die Meldung
+  /* v963: ist es das Abzeichen des Skills des Monats, gibt es die 50 Federn des Skills dazu (einmal je Skill, quelle_id = Skill) */
+  try{ const sk=(typeof skillMonatLaden==="function")?await skillMonatLaden():null;
+    if(sk&&sk.abzeichen===id)await fetch(`${SB_URL}/rest/v1/rpc/xp_award_event`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_spieler_id:sid,p_quelle:"skillwoche",p_quelle_id:String(sk.id)})});
+  }catch(e){}
   karte?.remove();
 }
 async function elternMeldungNein(sid,id,btn){

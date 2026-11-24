@@ -117,8 +117,8 @@ function abzeichenDetail(id,spielerId,kidsMode){
       :kidsMode?(gemeldet?`<div class="abz-fertig">⏳ Du hast es gemeldet. Mama oder Papa schauen es sich an.</div>`
         :`<button type="button" class="btn btn-p abz-melden" onclick="abzeichenMelden('${a.id}',${Number(spielerId)},this)" style="width:100%;min-height:56px;margin-top:10px;justify-content:center">🙋 Ich hab's geschafft!</button>
           <div class="abz-fertig" style="font-weight:400">Dann bekommen Mama oder Papa Bescheid.</div>`)
-      :(gemeldet?`<div class="abz-fertig">🙋 Dein Kind hat es als geschafft gemeldet.</div>`:"")}
-    ${(!an&&!kidsMode)?`<button type="button" class="btn btn-p" onclick="document.getElementById('abz-detail')?.remove();abzeichenAward(${Number(spielerId)},'${a.id}',null,'${silber?"abzeichen_silber":"abzeichen"}')" style="width:100%;min-height:56px;margin-top:10px;justify-content:center"><i class="ti ti-check"></i>Als geschafft eintragen</button>`:""}`;
+      :(!Number(spielerId)?"":gemeldet?`<div class="abz-fertig">🙋 Dein Kind hat es als geschafft gemeldet.</div>`:"")}
+    ${(!an&&!kidsMode&&Number(spielerId))?`<button type="button" class="btn btn-p" onclick="document.getElementById('abz-detail')?.remove();abzeichenAward(${Number(spielerId)},'${a.id}',null,'${silber?"abzeichen_silber":"abzeichen"}')" style="width:100%;min-height:56px;margin-top:10px;justify-content:center"><i class="ti ti-check"></i>Als geschafft eintragen</button>`:""}`;
 }
 /* v962: Lennart liest vor (audio/schule/<hash>.mp3 über kfVorlesen aus quiz.js); fehlt die Aufnahme oder quiz.js, die Gerätestimme. */
 function abzeichenVorlesen(k){
@@ -153,6 +153,57 @@ async function abzeichenMelden(id,spielerId,btn){
 async function abzeichenMeldungWeg(spielerId,id){
   try{ await fetch(`${SB_URL}/rest/v1/abzeichen_meldung?spieler_id=eq.${Number(spielerId)}&abzeichen=eq.${encodeURIComponent(id)}`,{method:"DELETE",headers:sbAuthHeaders({Prefer:"return=minimal"})}); }catch(e){}
   const st=_abzStand[spielerId]; if(st&&st.gemeldet)st.gemeldet.delete(id);
+}
+/* ═══ v963 · Skill des Monats (Charles 24.11., freigegeben): oben auf dem Trainingsplatz, mit Video (YouTube erst nach Tipp über
+   youtube-nocookie, oder eigener Clip unter video/), verknüpft mit einem Abzeichen. Daten: skill_woche (aktiv, titel, beschreibung,
+   video_url, abzeichen). Hier liegt alles, was Akademie, Kabine, Eltern und Trainingsplanung gemeinsam brauchen. ═══ */
+let _skillMonat;   // undefined = noch nicht geladen, null = keiner aktiv
+async function skillMonatLaden(neu){
+  if(_skillMonat!==undefined&&!neu)return _skillMonat;
+  try{ const r=await fetch(`${SB_URL}/rest/v1/skill_woche?aktiv=eq.true&select=*&order=created_at.desc&limit=1`,{headers:sbAuthHeaders()}); _skillMonat=r.ok?((await r.json())[0]||null):null; }
+  catch(e){ _skillMonat=null; }
+  return _skillMonat;
+}
+function skillVideoArt(url){
+  url=String(url||"");
+  const yt=url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  if(yt)return {art:"youtube",src:`https://www.youtube-nocookie.com/embed/${yt[1]}?rel=0&modestbranding=1&playsinline=1`};
+  if(/^video\/[A-Za-z0-9._-]+\.mp4$/.test(url))return {art:"clip",src:url};
+  return null;
+}
+/* v963 · Charles 24.11.: „Ist es auch möglich, das Video komplett embedded zu haben, so dass ich das direkt sehe und nur noch auf die
+   Play-Taste drücken muss?“ – freigegeben: eine Player-Fläche im 16:9-Format mit großem ▶; ein Tipp lädt YouTube und startet sofort
+   (autoplay). Vorher geht nichts an Google (wie v645 in der Kabine). Eigene Clips stehen direkt als Video mit Steuerung da. */
+function skillVideoHtml(sk,id){
+  const v=sk&&skillVideoArt(sk.video_url); if(!v)return "";
+  const basis=(typeof kfBasis==="function")?kfBasis():"";
+  if(v.art==="clip")return `<div class="skm-video" id="${esc(id)}"><video src="${esc(basis+v.src)}#t=0.1" controls playsinline preload="metadata" class="skm-frame" aria-label="${esc("Video: "+(sk.titel||"Skill des Monats"))}"></video>
+    <div class="skm-quelle">Ein Video von deinen Trainern.</div></div>`;
+  return `<div class="skm-video" id="${esc(id)}" data-src="${esc(v.src)}" data-titel="${esc("Video: "+(sk.titel||"Skill des Monats"))}">
+    <button type="button" class="skm-player" onclick="skillVideoLaden('${esc(id)}')" aria-label="${esc("Video abspielen: "+(sk.titel||""))}">
+      <span class="skm-player-play" aria-hidden="true">▶</span><span class="skm-player-titel">${esc(sk.titel||"")}</span></button>
+    <div class="skm-quelle">Das Video kommt von YouTube und startet beim Tippen.</div></div>`;
+}
+function skillVideoLaden(id){
+  const h=document.getElementById(id); if(!h||!h.dataset.src)return;
+  const f=document.createElement("iframe"); f.title=h.dataset.titel||""; f.src=h.dataset.src+"&autoplay=1"; f.className="skm-frame";
+  f.setAttribute("allow","autoplay; encrypted-media; picture-in-picture; fullscreen"); f.setAttribute("allowfullscreen",""); f.setAttribute("referrerpolicy","strict-origin-when-cross-origin");
+  h.replaceChildren(f);
+}
+/* Die Karte oben auf dem Trainingsplatz (Kinder) – mit Video und dem verknüpften Abzeichen. */
+function skillMonatKarteHtml(sk,spielerId,kidsMode){
+  if(!sk)return "";
+  const a=sk.abzeichen?abzeichenFinden(sk.abzeichen):null;
+  const st=_abzStand[spielerId]||{bronze:new Set(),silber:new Set(),gemeldet:new Set()};
+  const an=a?(TECHNIK_SILBER.includes(a)?st.silber:st.bronze).has(a.id):false, gem=a&&st.gemeldet&&st.gemeldet.has(a.id);
+  return `<section class="skm" id="skm-karte" aria-label="Skill des Monats">
+    <div class="skm-ueber">⭐ Skill des Monats</div>
+    <div class="skm-titel">${a?a.emo+" ":""}${esc(sk.titel||"")}</div>
+    ${sk.beschreibung?`<div class="skm-text">${esc(sk.beschreibung)}</div>`:""}
+    <div class="skm-text">Schau es dir an und üb es zu Hause. Im Training üben wir es zusammen!</div>
+    ${skillVideoHtml(sk,"skm-video")}
+    ${a?`<button type="button" class="btn skm-abz" onclick="abzeichenDetail('${a.id}',${Number(spielerId)},${kidsMode?1:0})">${an?"✓ Schon geschafft – stark!":gem?"⏳ Gemeldet – Mama oder Papa schauen es sich an":"So geht's – und dann melden"}</button>`:""}
+  </section>`;
 }
 async function abzeichenAward(spielerId,badgeId,btn,quelle){
   if(btn)btn.disabled=true;

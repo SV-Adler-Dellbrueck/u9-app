@@ -207,7 +207,9 @@ async function boerseDelete(id){
   boerseRender();
 }
 
-/* Skill der Woche (Phase 22.2): Trainer setzt eine Heim-Challenge mit Video-Link. */
+/* Skill der Woche (Phase 22.2): Trainer setzt eine Heim-Challenge mit Video-Link.
+   v963 (Charles 24.11.): heißt jetzt „Skill des Monats“, steht oben auf dem Trainingsplatz der Akademie, kann mit einem
+   Technik-Abzeichen verknüpft sein (Kind meldet, Eltern geben frei) und nimmt einen YouTube-Link oder einen eigenen Clip (video/…mp4). */
 async function skillWocheOpen(){
   if(!sbToken()){toast("Bitte als Trainer anmelden","err");return;}
   document.getElementById("skw-modal")?.remove();
@@ -219,10 +221,13 @@ async function skillWocheOpen(){
   const fld="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
   const c=document.createElement("div");
   c.style.cssText="background:var(--surface);color:var(--text);max-width:440px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
-  c.innerHTML=`${mdlHead("skw-modal","🎬","Skill der Woche","Heim-Challenge mit Video · Eltern geben 50 Federn frei","#ea580c")}
+  const abzOpt=(typeof ABZ_STUFEN!=="undefined")?ABZ_STUFEN.map(st=>`<optgroup label="${st.emo} ${st.name}">${st.liste().map(a=>`<option value="${a.id}"${cur&&cur.abzeichen===a.id?" selected":""}>${a.emo} ${esc(a.name)}</option>`).join("")}</optgroup>`).join(""):"";
+  c.innerHTML=`${mdlHead("skw-modal","⭐","Skill des Monats","Steht oben auf dem Trainingsplatz der Akademie · Eltern geben 50 Federn frei","#ea580c")}
     ${cur?`<div style="font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border-radius:8px;padding:8px 10px;margin-bottom:10px">Aktuell: <b>${esc(cur.titel)}</b></div>`:""}
     <label style="font-size:var(--s-klein);color:var(--text2)">Titel<input id="skw-titel" value="${esc(cur?.titel||"")}" placeholder="z. B. 10× Ball hochhalten" style="${fld}"></label>
-    <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Video-Link (YouTube o. ä.)<input id="skw-url" value="${esc(cur?.video_url||"")}" placeholder="https://…" style="${fld}"></label>
+    <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Video: YouTube-Link oder eigener Clip<input id="skw-url" value="${esc(cur?.video_url||"")}" placeholder="https://youtu.be/… oder video/skill-name.mp4" style="${fld}"></label>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">YouTube lädt erst, wenn das Kind auf „Video ansehen“ tippt. Vorher selbst ansehen – am besten ein Kanal ohne Werbung. Eigene Clips (ohne erkennbare Kinder) kommen verkleinert nach video/ im Repo.</div>
+    <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Passendes Abzeichen (optional)<select id="skw-abz" style="${fld}"><option value="">– keins –</option>${abzOpt}</select></label>
     <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Beschreibung (optional)<textarea id="skw-besch" rows="2" style="${fld};resize:vertical">${esc(cur?.beschreibung||"")}</textarea></label>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-p btn-sm" onclick="skillWocheSave(this)"><i class="ti ti-device-floppy"></i>Als aktuelle Challenge setzen</button>
@@ -234,18 +239,20 @@ async function skillWocheSave(btn){
   const titel=(document.getElementById("skw-titel")?.value||"").trim();
   if(!titel){toast("Bitte einen Titel","err");return;}
   const url=(document.getElementById("skw-url")?.value||"").trim();
-  if(url&&!/^https?:\/\//i.test(url)){toast("Bitte einen vollständigen Link (https://…)","err");return;}
+  if(url&&!/^https:\/\//i.test(url)&&!/^video\/[A-Za-z0-9._-]+\.mp4$/.test(url)){toast("Bitte einen vollständigen Link (https://…) oder einen Clip wie video/skill-name.mp4","err");return;}
+  const abz=(document.getElementById("skw-abz")?.value||"")||null;
   const besch=(document.getElementById("skw-besch")?.value||"").trim()||null;
   if(btn)btn.disabled=true;
   try{
     // alte deaktivieren, neue als aktiv einfügen (Historie bleibt, neue Challenge = neue Federn)
     await fetch(`${SB_URL}/rest/v1/skill_woche?aktiv=eq.true`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({aktiv:false})});
-    const r=await fetch(`${SB_URL}/rest/v1/skill_woche`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},body:JSON.stringify({titel,video_url:url||null,beschreibung:besch,aktiv:true})});
+    const r=await fetch(`${SB_URL}/rest/v1/skill_woche`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},body:JSON.stringify({titel,video_url:url||null,beschreibung:besch,abzeichen:abz,aktiv:true})});
     if(sbCheck401(r))return;
     if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht speichern"),"err");return;}
   }catch(e){toast("Netzwerkfehler","err");return;}
   finally{if(btn)btn.disabled=false;}
-  toast("Skill der Woche gesetzt ✓");
+  toast("Skill des Monats gesetzt ✓");
+  if(typeof skillMonatLaden==="function")skillMonatLaden(true);
   document.getElementById("skw-modal")?.remove();
 }
 
@@ -255,19 +262,21 @@ async function elternSkillLoad(kids){
   let sk=null;
   try{const r=await fetch(`${SB_URL}/rest/v1/skill_woche?aktiv=eq.true&select=*&order=created_at.desc&limit=1`,{headers:sbAuthHeaders()});if(r.ok)sk=(await r.json())[0]||null;}catch(e){}
   if(!sk){ slot.innerHTML=""; return; }
-  const kidBtns=(kids||[]).map(k=>`<button class="btn" onclick="skillGeschafft(${sk.id},${k.spieler_id},'${jsq((k.kader&&k.kader.name)||"")}')" style="flex:1;min-width:130px;min-height:44px;font-size:var(--s-text);justify-content:center">🎉 ${esc((k.kader&&k.kader.name)||"Kind")} hat's geschafft</button>`).join("");
+  const abz=(sk.abzeichen&&typeof abzeichenFinden==="function")?abzeichenFinden(sk.abzeichen):null;
+  const kidBtns=abz?"":(kids||[]).map(k=>`<button class="btn" onclick="skillGeschafft(${sk.id},${k.spieler_id},'${jsq((k.kader&&k.kader.name)||"")}')" style="flex:1;min-width:130px;min-height:44px;font-size:var(--s-text);justify-content:center">🎉 ${esc((k.kader&&k.kader.name)||"Kind")} hat's geschafft</button>`).join("");
   slot.innerHTML=`<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
-    <div style="font-weight:700;margin-bottom:2px">🎬 Skill der Woche</div>
+    <div style="font-weight:700;margin-bottom:2px">⭐ Skill des Monats</div>
     <div style="font-size:var(--s-karte);font-weight:700;color:#6d28d9;margin:2px 0">${esc(sk.titel)}</div>
     ${sk.beschreibung?`<div style="font-size:var(--s-text);color:#475569;margin-bottom:8px">${esc(sk.beschreibung)}</div>`:""}
-    ${sk.video_url?`<a href="${esc(sk.video_url)}" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;padding:11px;border:1.5px solid #7c3aed;border-radius:10px;background:#faf5ff;color:#6d28d9;font-weight:700;font-size:var(--s-text);text-decoration:none;margin-bottom:8px">▶️ Video ansehen</a>`:""}
-    <div style="font-size:var(--s-klein);color:#64748b;margin-bottom:8px">Zuhause geübt und geschafft? Dann Federn freigeben:</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">${kidBtns}</div>
+    ${(typeof skillVideoHtml==="function"&&skillVideoHtml(sk,"skm-video-eltern"))||(sk.video_url&&/^https:/.test(sk.video_url)?`<a href="${esc(sk.video_url)}" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;padding:11px;border:1.5px solid #7c3aed;border-radius:10px;background:#faf5ff;color:#6d28d9;font-weight:700;font-size:var(--s-text);text-decoration:none;margin-bottom:8px">▶️ Video ansehen</a>`:"")}
+    ${abz?`<div style="font-size:var(--s-text);color:#475569;margin-top:8px">Euer Kind übt es in der Adler-Akademie (${abz.emo} ${esc(abz.name)}) und meldet „Ich hab's geschafft!“. Ihr gebt es dann oben unter „Für euch“ frei – das bringt 50 Federn dazu.</div>`
+      :`<div style="font-size:var(--s-klein);color:#64748b;margin-bottom:8px">Zuhause geübt und geschafft? Dann Federn freigeben:</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">${kidBtns}</div>`}
   </div>`;
 }
 async function skillGeschafft(skillId,spielerId,name){
   if(!await frageJaNein({emoji:"🏅",titel:"Skill geschafft?",
-    text:`${name||"Dein Kind"} hat den Skill der Woche geschafft.\n\nEs gibt 50 Federn fürs Kind.`,
+    text:`${name||"Dein Kind"} hat den Skill des Monats geschafft.\n\nEs gibt 50 Federn fürs Kind.`,
     ja:"Ja, geschafft",nein:"Noch nicht"}))return;
   let neu=0;
   try{

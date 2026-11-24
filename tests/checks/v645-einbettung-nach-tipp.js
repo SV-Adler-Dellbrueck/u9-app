@@ -45,7 +45,12 @@ module.exports = async function (h) {
       const f = kab ? [...kab.querySelectorAll("iframe")] : [];
       return { vor, nach: f.length, src: f[0] ? f[0].src : "" };
     }
-    out.video = await lauf("kabineSkillWoche", "ks-video");
+    /* v963: der Skill steht als „Skill des Monats“ auf dem Trainingsplatz der Akademie (skillVideoHtml) – geprüft wird dieselbe
+       Zusage: die Player-Fläche lädt YouTube erst beim Tipp. Die Fläche wird hier in die Kabine gesetzt, damit lauf() sie findet. */
+    window.__skillFlaeche = async () => { const sk = await skillMonatLaden(true); const d = document.createElement("div");
+      d.innerHTML = skillVideoHtml(sk, "ks-video"); document.getElementById("kabine").appendChild(d); };
+    out.video = typeof skillVideoHtml === "function" ? await lauf("__skillFlaeche", "ks-video") : await lauf("kabineSkillWoche", "ks-video");
+    document.getElementById("ks-video")?.parentElement?.remove();   // v963: die eingesetzte Fläche wieder heraus
     out.musik = await lauf("kabineHype", "kh-seite");
     return out;
   });
