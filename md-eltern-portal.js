@@ -725,7 +725,7 @@ async function elternNewsLoad(kids){
   if(cur.nest&&cur.nest>(seen.nest||"")) items.push({emo:"📰",txt:"Das Adler Nest ist frisch erschienen.",sub:kanalUnter("nest"),act:"elternCatClose();if(typeof nestOpen==='function')nestOpen()"});
   if(cur.boerse&&cur.boerse>(seen.boerse||"")) items.push({emo:"🛍️",txt:"Neues in der Adler-Börse.",act:"elternCatClose();boerseOpen()"});
   if(cur.fund&&cur.fund>(seen.fund||"")) items.push({emo:"🧦",txt:"Neues im Fundbüro.",act:"elternCatClose();fundbueroOpen()"});
-  if(cur.skill&&cur.skill.slice(0,4)!=="1970"&&cur.skill>(seen.skill||"")) items.push({emo:"🏅",txt:"Neuer Skill der Woche / neue Challenge.",act:"elternCatOpen('mehr')"});
+  if(cur.skill&&cur.skill.slice(0,4)!=="1970"&&cur.skill>(seen.skill||"")) items.push({emo:"⭐",txt:"Neuer Skill des Monats in der Adler-Akademie.",act:"elternCatOpen('mehr')"});
   (data.lob||[]).forEach(l=>{ if(l.at>(seen["lob_"+l.sid]||"")) items.push({emo:"🎧",txt:`Neues vom Trainerteam für ${esc(kidName(l.sid))} (Lob oder Nachricht).`,act:`elternCatClose();lobListeOpen(${l.sid},'${String(kidName(l.sid)).replace(/['\\<>&"]/g,"")}')`});   /* v803: auch Spieltag-Nachrichten, deshalb die Liste statt „jüngstes Lob abspielen“ */ });
   (kids||[]).forEach(k=>{ const lv=cur["level_"+k.spieler_id]; const sv=seen["level_"+k.spieler_id]; if(lv&&sv!=null&&lv!==sv) items.push({emo:"🎉",txt:`${esc(kidName(k.spieler_id))} hat ein neues Level erreicht: ${esc(lv)}!`,act:`elternCatClose();elternCardOpen(${k.spieler_id})`}); });
   if(cur.ms&&cur.ms>(seen.ms||"")) ms.filter(m=>m.erreicht_am>(seen.ms||"")).slice(0,3).forEach(m=>items.push({emo:"🏆",txt:`Team-Meilenstein: ${esc(m.label)}`,act:""})); // H7 · v824: reine Mitteilung – ein Tipp schließt nichts mehr
@@ -1157,7 +1157,7 @@ async function elternDashLoad(){
   html+='<div id="saison-slot"></div>';   // v944: Saison-Gruß mit Adler (saisonGruss), direkt unter dem Kopf
   html+=`<section id="fuer-euch" class="fe" aria-label="Für euch" hidden>
     <div class="fe-kopf"><span class="fe-titel">📌 Für euch</span><span id="fe-zahl" class="fe-zahl" aria-live="polite"></span></div>
-    <div id="fe-bahn" class="fe-bahn" tabindex="-1"><div id="eltern-offen-slot"></div><div id="nest-bogen-slot"></div><div id="feier-slot"></div><div id="fe-todo-slot"><button id="eltern-todo-btn" class="btn btn-zeile" onclick="elternCatOpen('todo')" style="display:none;">
+    <div id="fe-bahn" class="fe-bahn" tabindex="-1"><div id="akademie-melde-slot"></div><div id="eltern-offen-slot"></div><div id="nest-bogen-slot"></div><div id="feier-slot"></div><div id="fe-todo-slot"><button id="eltern-todo-btn" class="btn btn-zeile" onclick="elternCatOpen('todo')" style="display:none;">
     <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:var(--amber-bg);display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1">📌</span>
     <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Zu erledigen</span><span style="display:block;font-size:var(--s-klein);color:var(--text2);font-weight:400;margin-top:1px">Rückmeldungen, Mitbringen, Grillhütte, „Wie war's"</span></span>
     <span id="eltern-todo-badge" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber);font-weight:800;font-size:var(--s-text);border-radius:12px;padding:2px 9px"></span>
@@ -1447,6 +1447,7 @@ async function elternDashLoad(){
   if(typeof nestBogenKarte==="function")nestBogenKarte(kids);
   if(typeof steckbriefKarte==="function")steckbriefKarte(kids);             // v922: Steckbrief-Karte (md-fanfakten.js, Welle 2)
   fundHinweisKarten();                         // v945: Neues im Fundbüro und in der Börse
+  elternAkademieMeldungen(kids);               // v962: „Ich hab's geschafft!“ der Kinder – ganz vorn in „Für euch“
   try{ lobMonatKarte(termineListe,kids,rsvpAll); }catch(e){}   // v947: Monats-Lob
   fuerEuchStart();                             // v924: Karussell „Für euch“ beobachtet seine Slots
   elternTkStart();                             // v926: Termin-Karussell
@@ -3601,6 +3602,38 @@ async function fundHinweisKarten(){
   const boerse=(bo||[]).filter(x=>x&&!x.reserviert_von&&x.created_by!==ich&&Number(x.id)>_fhWeg("boerse")).sort((a,b)=>b.id-a.id);
   if(sf)sf.innerHTML=fund.length?fhKarteHtml("fund",fund):"";
   if(sb)sb.innerHTML=boerse.length?fhKarteHtml("boerse",boerse):"";
+}
+/* ── v962 · Charles 24.11.: „Dann muss es eine Nachricht auf der Seite ganz oben in der Eltern-App geben: ‚Dein Kind hat eine Stunde
+   oder Übung in der Adler-Akademie absolviert. Bitte gib es frei.‘“ Stunden zählen von selbst (Federn je richtiger Antwort);
+   freigeben müssen Eltern nur die Übungen vom Trainingsplatz. Eine Karte je Meldung, ganz vorn in „📌 Für euch“. ── */
+async function elternAkademieMeldungen(kids){
+  const slot=document.getElementById("akademie-melde-slot"); if(!slot)return;
+  const ids=(kids||[]).map(k=>Number(k.spieler_id)).filter(Boolean); if(!ids.length||typeof abzeichenFinden!=="function"){ slot.innerHTML=""; return; }
+  let rows=[];
+  try{ const r=await fetch(`${SB_URL}/rest/v1/abzeichen_meldung?spieler_id=in.(${ids.join(",")})&select=id,spieler_id,abzeichen,quelle,created_at&order=created_at.asc&limit=12`,{headers:sbAuthHeaders()}); if(r.ok)rows=(await r.json())||[]; }catch(e){}
+  const name=sid=>{ const k=(kids||[]).find(x=>Number(x.spieler_id)===Number(sid)); return (k&&k.kader&&k.kader.name)||"Euer Kind"; };
+  slot.innerHTML=rows.map(m=>{ const a=abzeichenFinden(m.abzeichen); if(!a)return "";
+    const silber=m.quelle==="abzeichen_silber";
+    return `<div class="fh-karte ak-melde" role="region" aria-label="Adler-Akademie: Übung freigeben" data-melde="${Number(m.id)}">
+      <div class="fh-titel">🎓 Adler-Akademie</div>
+      <div class="fh-was">${esc(name(m.spieler_id))} hat geübt: ${a.emo} ${esc(a.name)}</div>
+      <div class="fh-text">${esc(a.desc)} Hat es geklappt? Dann gebt es frei – das bringt ${silber?20:10} Adler-Federn.</div>
+      <div class="ak-melde-knoepfe"><button type="button" class="btn btn-p" onclick="elternMeldungJa(${Number(m.spieler_id)},'${jsq(a.id)}','${silber?"abzeichen_silber":"abzeichen"}',this)"><i class="ti ti-check"></i>Ja, geschafft</button>
+      <button type="button" class="btn" onclick="elternMeldungNein(${Number(m.spieler_id)},'${jsq(a.id)}',this)">Noch nicht</button></div></div>`; }).join("");
+}
+async function elternMeldungJa(sid,id,quelle,btn){
+  const karte=btn&&btn.closest(".ak-melde"); karte?.querySelectorAll("button").forEach(b=>b.disabled=true);
+  if(typeof abzeichenAward==="function")await abzeichenAward(sid,id,null,quelle);   // vergibt die Federn und löscht die Meldung
+  /* v963: ist es das Abzeichen des Skills des Monats, gibt es die 50 Federn des Skills dazu (einmal je Skill, quelle_id = Skill) */
+  try{ const sk=(typeof skillMonatLaden==="function")?await skillMonatLaden():null;
+    if(sk&&sk.abzeichen===id)await fetch(`${SB_URL}/rest/v1/rpc/xp_award_event`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_spieler_id:sid,p_quelle:"skillwoche",p_quelle_id:String(sk.id)})});
+  }catch(e){}
+  karte?.remove();
+}
+async function elternMeldungNein(sid,id,btn){
+  const karte=btn&&btn.closest(".ak-melde"); karte?.querySelectorAll("button").forEach(b=>b.disabled=true);
+  if(typeof abzeichenMeldungWeg==="function")await abzeichenMeldungWeg(sid,id);
+  karte?.remove(); toast("Alles klar – dann wird weiter geübt 💪");
 }
 function fhWeg(art,id){
   try{ localStorage.setItem("adler_fh_weg_"+art,String(Math.max(_fhWeg(art),Number(id)||0))); }catch(e){}

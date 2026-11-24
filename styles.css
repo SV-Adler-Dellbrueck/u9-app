@@ -2140,12 +2140,46 @@ body.tp-sheet-offen{overflow:hidden}
 .nb-pr-stern.an{color:#a16207}
 
 /* v961: Adler-Akademie – Start mit zwei Bereichen und Trainingsplatz (Technik-Abzeichen in Stufen) */
-.ak-bereich{display:flex;flex-direction:column;align-items:flex-start;gap:3px;width:100%;text-align:left;border:0;border-radius:18px;padding:14px;margin-top:10px;color:#fff;font-family:inherit;cursor:pointer;min-height:92px}
-.ak-bereich.ak-theorie{background:linear-gradient(135deg,#047857,#065f46)}
-.ak-bereich.ak-praxis{background:linear-gradient(135deg,#6d28d9,#4c1d95)}
-.ak-t{font-size:var(--s-karte);font-weight:800}.ak-s{font-size:var(--s-text);line-height:1.35}
-.ak-stand{margin-top:6px;font-size:var(--s-klein);font-weight:800;background:rgba(255,255,255,.18);border-radius:999px;padding:3px 10px}
-.ak-zeugnis{display:flex;gap:10px;align-items:center;margin-top:12px;background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);border-radius:16px;padding:12px;font-size:var(--s-text)}
+/* v962: Akademie-Start – zwei große Kacheln nebeneinander, „Als Nächstes“, Zeugnis mit Balken; Schrift eine Stufe größer (Kinder) */
+.ak-zwei{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.ak-bereich{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;border:0;border-radius:20px;padding:14px 12px;color:#fff;font-family:inherit;cursor:pointer;min-height:176px}
+.ak-bereich.ak-theorie{background:linear-gradient(160deg,#047857,#065f46)}
+.ak-bereich.ak-praxis{background:linear-gradient(160deg,#6d28d9,#4c1d95)}
+.ak-emo{font-size:var(--s-seite);line-height:1.1;margin-bottom:4px}
+.ak-ueber{font-size:var(--s-klein);font-weight:800;letter-spacing:.04em;text-transform:uppercase;opacity:.9}
+.ak-t{font-size:var(--s-teil);font-weight:900;line-height:1.15}.ak-s{font-size:var(--s-karte);line-height:1.3}
+.ak-stand{margin-top:auto;font-size:var(--s-text);font-weight:800;background:rgba(255,255,255,.2);border-radius:999px;padding:4px 10px}
+.ak-h{font-size:var(--s-teil);font-weight:900;color:var(--text);margin:16px 2px 2px}
+.ak-naechst{display:flex;align-items:center;gap:12px;width:100%;min-height:68px;margin-top:8px;padding:10px 12px;border:1.5px solid var(--rand-bedien);border-radius:16px;background:var(--surface);color:var(--text);font-family:inherit;text-align:left;cursor:pointer}
+.ak-n-emo{font-size:var(--s-seite);line-height:1}.ak-n-txt{flex:1;min-width:0}
+.ak-n-txt b{display:block;font-size:var(--s-karte)}.ak-n-txt small{display:block;font-size:var(--s-text);color:var(--text2);line-height:1.35}
+.ak-n-pfeil{font-size:var(--s-seite);color:var(--text2)}
+.ak-zeugnis{display:flex;gap:10px;align-items:flex-start;margin-top:14px;background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);border-radius:16px;padding:12px;font-size:var(--s-text);line-height:1.4}
+.ak-z-emo{font-size:var(--s-seite);line-height:1}
+.ak-balken-z{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;margin-top:8px;font-size:var(--s-text);font-weight:700}
+.ak-balken{display:block;height:10px;border-radius:999px;background:var(--surface2);overflow:hidden;border:1px solid var(--rand-bedien)}
+.ak-balken i{display:block;height:100%;background:linear-gradient(90deg,#f59e0b,#16a34a);border-radius:999px}
+.ak-platz-intro{font-size:var(--s-karte);color:var(--text);line-height:1.45;margin:0 2px 10px}
+/* v963: Skill des Monats (Akademie, Eltern, Planung) */
+.skm{background:linear-gradient(160deg,#fff7ed,#ffedd5);color:#1f2937;border:2px solid #fb923c;border-radius:20px;padding:14px;margin:0 0 12px}
+.skm-ueber{font-size:var(--s-klein);font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#9a3412}
+.skm-titel{font-size:var(--s-teil);font-weight:900;margin:2px 0 4px}
+.skm-text{font-size:var(--s-karte);line-height:1.4;margin-top:4px}
+.skm-video{display:flex;flex-direction:column;align-items:stretch;gap:6px;margin-top:10px}
+.skm-player{position:relative;width:100%;aspect-ratio:16/9;border:0;border-radius:14px;cursor:pointer;color:#fff;font-family:inherit;overflow:hidden;
+  background:radial-gradient(circle at 50% 40%,#1e3a8a,#0f172a 75%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.skm-player-play{width:76px;height:76px;border-radius:50%;background:#dc2626;display:flex;align-items:center;justify-content:center;font-size:var(--s-seite);padding-left:6px;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.skm-player-titel{font-size:var(--s-karte);font-weight:800;padding:0 12px;text-align:center}
+.skm-quelle{font-size:var(--s-klein);color:#57534e;text-align:center}
+.skm-frame{width:100%;aspect-ratio:16/9;border:0;border-radius:14px;background:#000;display:block}
+.skm-abz{width:100%;min-height:48px;margin-top:10px;justify-content:center;background:#fff;color:#1f2937}
+.ak-skill-zeile{border-color:#fb923c}
+.tps-skill{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;margin:8px 0;padding:8px 12px;border:1.5px solid #fb923c;border-radius:12px;background:#fff7ed;color:#1f2937;font-family:inherit;text-align:left;cursor:pointer}
+.tps-skill>span:first-child{font-size:var(--s-teil)}.tps-skill small{display:block;font-size:var(--s-klein);color:#9a3412;font-weight:800}.tps-skill b{display:block;font-size:var(--s-karte)}
+.abz-wartet{font-size:var(--s-klein);font-weight:800;color:var(--amber);white-space:nowrap}
+.abz-gemeldet{font-size:var(--s-klein);font-weight:800;color:var(--amber);background:var(--amber-bg);border-radius:999px;padding:1px 8px}
+.ak-melde-knoepfe{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.ak-melde-knoepfe .btn{flex:1 1 auto;justify-content:center;min-height:48px}
+.abz-fertig{font-size:var(--s-karte);font-weight:700;color:var(--text);margin-top:10px}
 .abz-stufe{background:var(--surface2);border-radius:16px;padding:10px;margin-top:10px}
 .abz-stufe.abz-zu{opacity:.7}
 .abz-stufe-k{display:flex;justify-content:space-between;align-items:center;margin:0 0 6px;font-size:var(--s-karte)}
@@ -2155,8 +2189,8 @@ body.tp-sheet-offen{overflow:hidden}
 .abz-zeile.abz-an{border-color:var(--green)}
 .abz-info{display:flex;align-items:center;gap:10px;flex:1;min-width:0;min-height:52px;border:0;background:none;color:var(--text);text-align:left;font-family:inherit;cursor:pointer;padding:4px 0}
 .abz-emo{font-size:var(--s-teil);line-height:1}
-.abz-txt b{display:block;font-size:var(--s-text)}.abz-txt small{display:block;font-size:var(--s-klein);color:var(--text2);line-height:1.3}
+.abz-txt b{display:block;font-size:var(--s-karte)}.abz-txt small{display:block;font-size:var(--s-text);color:var(--text2);line-height:1.35}
 .abz-ok{font-size:var(--s-klein);font-weight:800;color:var(--green);white-space:nowrap}
 .abz-offen{font-size:var(--s-klein);font-weight:700;color:var(--text2);white-space:nowrap}
-.abz-schritte{padding-left:20px;margin:6px 0;line-height:1.55;font-size:var(--s-text)}
-.abz-tipp{background:var(--amber-bg);color:var(--text);border-radius:10px;padding:8px 10px;font-size:var(--s-text);margin-top:8px}
+.abz-schritte{padding-left:22px;margin:6px 0;line-height:1.55;font-size:var(--s-karte)}
+.abz-tipp{background:var(--amber-bg);color:var(--text);border-radius:10px;padding:8px 10px;font-size:var(--s-karte);margin-top:8px}
