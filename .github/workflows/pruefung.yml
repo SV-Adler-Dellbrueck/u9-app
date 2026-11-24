@@ -40,7 +40,11 @@ jobs:
       - name: Schriften wie in der Cloud-Sitzung
         # Ohne Inter als Systemschrift springt eine breitere Ersatzschrift ein, und Layout-Prüfungen (z. B. v898, Monitor-Tafel
         # 1280 × 800) messen anders als in der Sitzung, in der die Prüfungen geschrieben werden.
-        run: sudo apt-get install -y --no-install-recommends fonts-inter fonts-noto-color-emoji && fc-cache -f && fc-match sans-serif
+        # Dazu dieselbe Regel wie im Sitzungsabbild: Inter vor DejaVu für sans-serif und system-ui (tests/fonts/56-prefer-inter.conf).
+        run: |
+          sudo apt-get install -y --no-install-recommends fonts-inter fonts-noto-color-emoji
+          sudo cp tests/fonts/56-prefer-inter.conf /etc/fonts/conf.d/
+          fc-cache -f && fc-match sans-serif && fc-match system-ui
 
       - name: Prüflauf
         run: node tests/run.js
