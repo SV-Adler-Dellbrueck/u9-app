@@ -1357,7 +1357,7 @@ async function elternDashLoad(){
     ${kids.map(k=>{const kd=k.kader||{};const nn=(kd.name||"").replace(/'/g,"");
       return `<div id="cat-kind-${k.spieler_id}" class="el-cat-panel" data-cat-title="🃏 ${esc(kd.name||"Kind")}" style="display:none">
         ${elRow("🃏","Adler-Karte ansehen","Die Karte deines Kindes – Stärken, Spiele, Trainings, ohne Bewertungszahlen",`elternCardOpen(${k.spieler_id})`,"#5b21b6")}
-        ${elRow("🎖️","Technik-Abzeichen","Übungen zu Hause abhaken – Federn sammeln",`abzeichenOpen(${k.spieler_id},'${nn}')`,"#6d28d9")}
+        ${elRow("⚽","Trainingsplatz · Technik-Abzeichen","Bronze und Silber – Übungen zu Hause abhaken, Federn sammeln",`abzeichenOpen(${k.spieler_id},'${nn}')`,"#6d28d9")}
         ${elRow("🎧","Sprachlob anhören","Alle Lobe vom Trainerteam nach Datum – antippen zum Abhören",`lobListeOpen(${k.spieler_id},'${nn}')`,"#7c3aed")}
         ${elRow("📸","Steckbrief &amp; Fotos","Lieblingsposition, Freundebuch-Fragen, Fotos – nur fürs Team",`elternFanfactsOpen(${k.spieler_id},'${nn}')`,"#8b5cf6")}
         ${(typeof WRAPPED_SICHTBAR!=="undefined"&&WRAPPED_SICHTBAR)?elRow("📊","Saison-Statistik","Spiele, Einsätze &amp; Highlights – ansehen, auf Wunsch teilen",`childWrappedOpen(${k.spieler_id})`,"#a855f7"):""}

@@ -2138,3 +2138,25 @@ body.tp-sheet-offen{overflow:hidden}
 .nb-wahl-s{font-size:var(--s-text);font-weight:500;line-height:1.4;white-space:normal}
 .nb-pr-stern{width:34px;min-width:34px;height:44px;min-height:44px;padding:0;border:0;background:none;font-size:var(--s-teil);line-height:1;cursor:pointer;color:var(--text3)}
 .nb-pr-stern.an{color:#a16207}
+
+/* v961: Adler-Akademie – Start mit zwei Bereichen und Trainingsplatz (Technik-Abzeichen in Stufen) */
+.ak-bereich{display:flex;flex-direction:column;align-items:flex-start;gap:3px;width:100%;text-align:left;border:0;border-radius:18px;padding:14px;margin-top:10px;color:#fff;font-family:inherit;cursor:pointer;min-height:92px}
+.ak-bereich.ak-theorie{background:linear-gradient(135deg,#047857,#065f46)}
+.ak-bereich.ak-praxis{background:linear-gradient(135deg,#6d28d9,#4c1d95)}
+.ak-t{font-size:var(--s-karte);font-weight:800}.ak-s{font-size:var(--s-text);line-height:1.35}
+.ak-stand{margin-top:6px;font-size:var(--s-klein);font-weight:800;background:rgba(255,255,255,.18);border-radius:999px;padding:3px 10px}
+.ak-zeugnis{display:flex;gap:10px;align-items:center;margin-top:12px;background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);border-radius:16px;padding:12px;font-size:var(--s-text)}
+.abz-stufe{background:var(--surface2);border-radius:16px;padding:10px;margin-top:10px}
+.abz-stufe.abz-zu{opacity:.7}
+.abz-stufe-k{display:flex;justify-content:space-between;align-items:center;margin:0 0 6px;font-size:var(--s-karte)}
+.abz-zahl{font-size:var(--s-klein);font-weight:800;color:var(--text2)}
+.abz-hinweis{font-size:var(--s-text);color:var(--text2)}
+.abz-zeile{display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--rand-bedien);border-radius:12px;padding:4px 8px;margin-top:6px}
+.abz-zeile.abz-an{border-color:var(--green)}
+.abz-info{display:flex;align-items:center;gap:10px;flex:1;min-width:0;min-height:52px;border:0;background:none;color:var(--text);text-align:left;font-family:inherit;cursor:pointer;padding:4px 0}
+.abz-emo{font-size:var(--s-teil);line-height:1}
+.abz-txt b{display:block;font-size:var(--s-text)}.abz-txt small{display:block;font-size:var(--s-klein);color:var(--text2);line-height:1.3}
+.abz-ok{font-size:var(--s-klein);font-weight:800;color:var(--green);white-space:nowrap}
+.abz-offen{font-size:var(--s-klein);font-weight:700;color:var(--text2);white-space:nowrap}
+.abz-schritte{padding-left:20px;margin:6px 0;line-height:1.55;font-size:var(--s-text)}
+.abz-tipp{background:var(--amber-bg);color:var(--text);border-radius:10px;padding:8px 10px;font-size:var(--s-text);margin-top:8px}
