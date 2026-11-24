@@ -57,21 +57,23 @@ module.exports = async function (h) {
       let k = document.getElementById("kabine"); if (!k) { k = document.createElement("div"); k.id = "kabine"; k.innerHTML = '<div id="kabine-body"></div>'; document.body.appendChild(k); }
       kabineHome();
       const body = document.getElementById("kabine-body");
-      /* v658: „❓ Zeig mir alles“ startet die Tour und ist keine Kachel. */
-      const alle = [...body.querySelectorAll("button[onclick^='kabine']")].filter(b => !/kabineExit|kabineTourStart/.test(b.getAttribute("onclick")));
-      const mehr = body.querySelector("#kab-mehr");
-      const vorn = alle.filter(b => !mehr || !mehr.contains(b));
-      return { alle: alle.length, vorn: vorn.map(b => b.textContent.replace(/\s+/g, " ").trim()),
-        mehr: !!mehr, zu: mehr ? !mehr.open : null, fn: alle.map(b => b.getAttribute("onclick")) };
+      /* v658: „❓ Zeig mir alles“ startet die Tour und ist keine Kachel.
+         v965 (Charles 24.11., „aufräumen“): statt „Mehr entdecken“ drei Türen; dahinter je höchstens sechs Kacheln. */
+      const fnVon = () => [...body.querySelectorAll("button[onclick]")].map(b => b.getAttribute("onclick")).filter(x => !/kabineExit|kabineTourStart|kabineHome|kabineTuer/.test(x));
+      const vorn = [...body.querySelectorAll("button[onclick^='kabine']")].filter(b => !/kabineExit|kabineTourStart/.test(b.getAttribute("onclick")));
+      const tueren = typeof kabineTuer === "function" ? [...body.querySelectorAll("button[onclick^='kabineTuer']")].map(b => b.getAttribute("onclick")) : [];
+      const fn = fnVon(), jeTuer = [];
+      for (const t of tueren) { eval(t); const f = fnVon(); jeTuer.push(f.length); fn.push(...f); }
+      return { vorn: vorn.map(b => b.textContent.replace(/\s+/g, " ").trim()), tueren: tueren.length, jeTuer, fn, mehr: !!body.querySelector("#kab-mehr") };
     });
     const f = s.fehler().filter(x => !/youtube/i.test(x));
     await s.schliessen();
     if (r.vorn.length > 8) probleme.push(`f) vorn stehen ${r.vorn.length} Kacheln`);
-    if (!r.mehr || !r.zu) probleme.push("f) kein zugeklapptes „Mehr entdecken“");
-    for (const fn of ["kabineQuiz('schule')", "kabineMyCard()", "kabineCodex()", "kabineShowGallery()", "kabineReporter()", "kabineAlbum()", "kabineStaerken()"])
+    if (r.tueren !== 3 || r.jeTuer.some(n => n > 6)) probleme.push(`f) Türen ${r.tueren}, Kacheln je Tür ${r.jeTuer.join("/")} (erwartet 3 Türen, je ≤ 6)`);
+    for (const fn of ["kabineQuiz('schule')", "kabineMyCard()", "kabineCodex()", "kabineShowGallery()", "kabineReporter()", "kabineAlbum()", "kabineStaerken()", "kabineLobWahl()", "kabineShowQuests()", "kabineKudos()", "kabineBrett()", "kabineMission()", "kabineRollen()", "kabineHype()"])
       if (!r.fn.includes(fn)) probleme.push("f) Kachel verloren: " + fn);
     if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
-    zeilen.push(`f) Kabine: ${r.vorn.length} vorn (${r.vorn.join(", ")}), ${r.alle - r.vorn.length} unter „Mehr entdecken“`);
+    zeilen.push(`f) Kabine: ${r.vorn.length} vorn (${r.vorn.join(", ")}), dahinter ${r.jeTuer.join(" + ")} Kacheln`);
   }
-  return h.ergebnis("v610 Struktur: keine doppelten Kacheln, ein Name je Sache, Kabine mit acht Kacheln vorn", probleme.length === 0, probleme.length ? probleme.concat(zeilen) : zeilen);
+  return h.ergebnis("v610 Struktur: keine doppelten Kacheln, ein Name je Sache, Kabine mit drei Türen vorn", probleme.length === 0, probleme.length ? probleme.concat(zeilen) : zeilen);
 };

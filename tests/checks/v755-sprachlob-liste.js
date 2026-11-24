@@ -29,8 +29,12 @@ module.exports = async function (h) {
     const spielt = []; HTMLMediaElement.prototype.play = function () { spielt.push(this.src); return Promise.resolve(); }; HTMLMediaElement.prototype.pause = function () { spielt.push("pause"); };
     const out = {};
     kabineHome(); await w(600);
+    /* v965: auf der Startseite steht „neu“ an der Tür „Ich“, dahinter an der Kachel */
+    const tuer = document.getElementById("kab-tuer-ich");
+    const tuerBadge = tuer ? (tuer.querySelector(".kab-lob-neu") || {}).textContent : null;
+    if (tuer && typeof kabineTuer === "function") { kabineTuer("ich"); await w(600); }
     const tile = [...document.querySelectorAll("#kabine-body button")].find(b => /Lob vom Trainer/.test(b.textContent));
-    out.a = { tile: !!tile, imMehr: !!(tile && tile.closest("#kab-mehr")), badge: tile ? (tile.querySelector(".kab-lob-neu") || {}).textContent : null };
+    out.a = { tile: !!tile, imMehr: !!(tile && tile.closest("#kab-mehr")), badge: tile ? (tile.querySelector(".kab-lob-neu") || {}).textContent : null, tuer: !!tuer, tuerBadge };
     kabineLobWahl(); await w(500);
     const d = document.getElementById("lob-liste");
     out.b = { role: d && d.getAttribute("role"), text: d ? d.textContent.replace(/\\s+/g, " ") : "", zeilen: d ? d.querySelectorAll(".lob-zeile").length : 0,
@@ -46,7 +50,7 @@ module.exports = async function (h) {
   const fe = s.fehler(); await s.schliessen();
   if (r.fehlt) return h.ergebnis("v755 Sprachlob-Liste", false, ["lobListeOpen fehlt"]);
   const a = r.a, b = r.b, c = r.c;
-  if (!a.tile || a.imMehr || a.badge !== "1 neu") probleme.push("a) " + JSON.stringify(a));
+  if (!a.tile || a.imMehr || a.badge !== "1 neu" || (a.tuer && a.tuerBadge !== "1 neu")) probleme.push("a) " + JSON.stringify(a));
   zeilen.push(`a) Kachel „Lob vom Trainer“ oben, Punkt „${a.badge}“`);
   if (b.role !== "dialog" || b.zeilen !== 2 || !/1 neu · 2 insgesamt/.test(b.text) || !/Samstag, 3\. Oktober/.test(b.text) || !/Samstag, 26\. September/.test(b.text) || b.text.indexOf("3. Oktober") > b.text.indexOf("26. September") || b.klein) probleme.push("b) " + b.text.slice(0, 260) + " · klein " + b.klein);
   zeilen.push(`b) ${b.zeilen} Lobe, neueste oben, „1 neu · 2 insgesamt“`);
