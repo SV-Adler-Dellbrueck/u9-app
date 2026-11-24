@@ -580,6 +580,7 @@ openTab("home"); // Start auf dem Trainer-Dashboard + Sub-Tab-Leiste initial ren
 async function appRefresh(){
   try{ await loadDB(); if(typeof refreshSelects==="function")refreshSelects(); }catch(e){}
   try{ const sec=SECS[curSection]; if(sec&&sec.init)sec.init(); }catch(e){}
+  try{ if(typeof elternAkademieNachladen==="function")elternAkademieNachladen(); }catch(e){}   // v964: „Geschafft!“ der Kinder
 }
 (function(){
   let startY=0, pulling=false, dist=0, ind=null;

@@ -3612,7 +3612,7 @@ async function elternAkademieMeldungen(kids){
   let rows=[];
   try{ const r=await fetch(`${SB_URL}/rest/v1/abzeichen_meldung?spieler_id=in.(${ids.join(",")})&select=id,spieler_id,abzeichen,quelle,created_at&order=created_at.asc&limit=12`,{headers:sbAuthHeaders()}); if(r.ok)rows=(await r.json())||[]; }catch(e){}
   const name=sid=>{ const k=(kids||[]).find(x=>Number(x.spieler_id)===Number(sid)); return (k&&k.kader&&k.kader.name)||"Euer Kind"; };
-  slot.innerHTML=rows.map(m=>{ const a=abzeichenFinden(m.abzeichen); if(!a)return "";
+  const html=rows.map(m=>{ const a=abzeichenFinden(m.abzeichen); if(!a)return "";
     const silber=m.quelle==="abzeichen_silber";
     return `<div class="fh-karte ak-melde" role="region" aria-label="Adler-Akademie: Übung freigeben" data-melde="${Number(m.id)}">
       <div class="fh-titel">🎓 Adler-Akademie</div>
@@ -3620,6 +3620,19 @@ async function elternAkademieMeldungen(kids){
       <div class="fh-text">${esc(a.desc)} Hat es geklappt? Dann gebt es frei – das bringt ${silber?20:10} Adler-Federn.</div>
       <div class="ak-melde-knoepfe"><button type="button" class="btn btn-p" onclick="elternMeldungJa(${Number(m.spieler_id)},'${jsq(a.id)}','${silber?"abzeichen_silber":"abzeichen"}',this)"><i class="ti ti-check"></i>Ja, geschafft</button>
       <button type="button" class="btn" onclick="elternMeldungNein(${Number(m.spieler_id)},'${jsq(a.id)}',this)">Noch nicht</button></div></div>`; }).join("");
+  if(slot._akStand!==html){ slot.innerHTML=html; slot._akStand=html; }   // v964: nur bei Änderung neu zeichnen
+}
+/* v964 · Charles 24.11.: „Wenn das Kind eine Aufgabe erledigt hat, sollte sie bei den Eltern automatisch auf der Startseite
+   erscheinen.“ Die Meldungen werden nachgeladen: wenn die App wieder in den Vordergrund kommt, beim Herunterziehen
+   (appRefresh) und jede Minute, solange die Startseite offen und sichtbar ist. Gezeichnet wird nur bei einer Änderung. */
+function elternAkademieNachladen(){
+  if(document.hidden||!document.getElementById("akademie-melde-slot")||!window._elternKids)return;
+  elternAkademieMeldungen(window._elternKids).catch(()=>{});
+}
+if(!window._akMeldeWache){
+  window._akMeldeWache=true;
+  document.addEventListener("visibilitychange",()=>{ if(!document.hidden)elternAkademieNachladen(); });
+  setInterval(elternAkademieNachladen,60000);
 }
 async function elternMeldungJa(sid,id,quelle,btn){
   const karte=btn&&btn.closest(".ak-melde"); karte?.querySelectorAll("button").forEach(b=>b.disabled=true);

@@ -17,7 +17,13 @@
    mit Anhängen über rufe_senden (Ruf und Anhänge in einem Aufruf); Bilder zeigt die Blase als Miniatur,
    PDF öffnet im neuen Tab, Office wird heruntergeladen – nie in der App gerendert. Trainer können Anhänge
    endgültig löschen (rufe_anhaenge_loeschen). Migration 20261004_v736_rufe_anhaenge.sql. */
-const RUFE_EMOJI=["👍","❤️","😂","⚽","👏","🙏"];
+const RUFE_EMOJI=["👍","❤️","😂","😮","🙏","⚽"];   // v964: wie bei den großen Messengern, dazu der Ball
+/* v964 · Charles 24.11.2026 (Entwurf freigegeben): „Der Chat sieht irgendwie sehr altbacken aus … soll einfach moderner wirken, einfacher
+   in der Handhabung.“ Blasen mit Gruppierung und Initialen, schlanker Kopf, Reiter mit Zählern, eine Zeile für fixierte Rufe, runde
+   Eingabe mit 📎-Menü und Emoji-Leiste, langes Drücken öffnet Reaktionen und Aktionen, nach rechts wischen antwortet, @Erwähnen mit
+   Benachrichtigung, Reiter „Für mich“, Glocke mit drei Stufen, Abstimmung „Ergebnis erst am Schluss“. Kennungen und Funktionsnamen
+   bleiben wie vorher – die Prüfungen und andere Module greifen darauf zu. */
+const RUFE_EMOJI_LEISTE=["👍","❤️","😂","🙏","⚽","🏆","👏","🎉","😊","💪","🔥","🦅"];
 const RUFE_TAKT=8000;          // Nachladen, solange das Fenster offen ist
 const RUFE_ANZAHL=80;          // so viele Rufe je Raum auf einmal
 const RUFE_MAX_TEXT=5000;      // v736: CHECK rufe_nachricht_text_check und rufe_bearbeiten
@@ -45,7 +51,7 @@ function _rfTag(ts){
 }
 /* Text sicher darstellen: erst maskieren, dann @Namen hervorheben und Zeilen umbrechen. */
 function _rfText(t){
-  return esc(String(t||"")).replace(/(^|\s)(@[\wÄÖÜäöüß-]+)/g,'$1<b class="rf-at" style="color:#1d4ed8">$2</b>').replace(/\n/g,"<br>");
+  return esc(String(t||"")).replace(/(^|\s)(@[\wÄÖÜäöüß-]+)/g,'$1<b class="rf-at">$2</b>').replace(/\n/g,"<br>");
 }
 function _rfZ(n){ return (typeof zOben==="function")?zOben(n):n; }
 
@@ -60,35 +66,42 @@ async function _rufeOpen(raumId){
   m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Adler-Rufe");
   m.style.cssText="position:fixed;inset:0;background:var(--bg,#f1f5f9);display:flex;flex-direction:column";
   m.style.zIndex=_rfZ(10003);
-  m.innerHTML=`<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#1e3a8a;color:#fff;flex:none">
-      <span style="font-size:var(--s-seite);line-height:1" aria-hidden="true">📣</span>
-      <div style="flex:1;min-width:0"><div style="font-size:var(--s-karte);font-weight:800">Adler-Rufe</div>
-        <div id="rufe-unter" style="font-size:var(--s-klein);opacity:.9">Eltern und Trainerteam</div></div>
-      <button type="button" id="rufe-glocke" onclick="rufeGlockeUmschalten()" aria-label="Benachrichtigungen zu Adler-Rufen" aria-pressed="true" class="btn btn-kopf" style="font-size:var(--s-teil)">🔔</button>
-      ${/\/trainer\//.test(location.pathname)?`<button type="button" id="rufe-mod-knopf" onclick="rufeModOpen()" aria-label="Moderieren" title="Moderieren: wer moderiert, gemeldete Rufe" class="btn btn-kopf" style="font-size:var(--s-teil)">🛡️</button>`:""}
-      <button type="button" id="rufe-suche-knopf" onclick="rufeSucheUmschalten()" aria-label="Suchen" class="btn btn-kopf" style="font-size:var(--s-teil)">🔍</button>
-      <button type="button" onclick="rufeClose()" aria-label="Schließen" class="btn btn-kopf" style="font-size:var(--s-teil)">✕</button>
+  m.classList.add("rf-neu");
+  m.innerHTML=`<div class="rf-kopf">
+      <button type="button" onclick="rufeClose()" aria-label="Schließen" class="rf-kopf-knopf rf-zurueck">←</button>
+      <span class="rf-kopf-bild" id="rufe-kopf-bild" aria-hidden="true">📣</span>
+      <div style="flex:1;min-width:0"><div class="rf-kopf-titel">Adler-Rufe</div>
+        <div id="rufe-unter" class="rf-kopf-unter">Eltern und Trainerteam</div></div>
+      <button type="button" id="rufe-suche-knopf" onclick="rufeSucheUmschalten()" aria-label="Suchen" class="rf-kopf-knopf">🔍</button>
+      <button type="button" id="rufe-glocke" onclick="rufeGlockeMenue()" aria-label="Benachrichtigungen zu Adler-Rufen" aria-pressed="true" class="rf-kopf-knopf">🔔</button>
+      ${/\/trainer\//.test(location.pathname)?`<button type="button" id="rufe-mod-knopf" onclick="rufeModOpen()" aria-label="Moderieren" title="Moderieren: wer moderiert, gemeldete Rufe" class="rf-kopf-knopf">🛡️</button>`:""}
     </div>
-    <div id="rufe-ruhe" style="flex:none;padding:6px 12px;background:var(--surface);border-bottom:1px solid var(--surface2);color:var(--text2);font-size:var(--s-klein)">${rufeRuhezeitText(true,_rf.trainer)}</div>
-    <div id="rufe-suche" style="display:none;padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--surface2)">
+    <div id="rufe-raeume" class="rf-reiter"></div>
+    <div id="rufe-ruhe" class="rf-ruhe">${rufeRuhezeitText(true,_rf.trainer)}</div>
+    <div id="rufe-suche" style="display:none" class="rf-suche">
       <label for="rufe-suche-feld" style="position:absolute;left:-9999px">Rufe durchsuchen</label>
-      <input id="rufe-suche-feld" type="search" placeholder="Rufe durchsuchen …" oninput="rufeSucheSetzen(this.value)" style="width:100%;box-sizing:border-box;min-height:44px;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:10px;font:inherit;background:var(--surface2);color:var(--text)">
+      <input id="rufe-suche-feld" type="search" placeholder="Rufe durchsuchen …" oninput="rufeSucheSetzen(this.value)" class="rf-suche-feld">
     </div>
-    <div id="rufe-raeume" style="display:flex;gap:6px;overflow-x:auto;padding:8px 12px;flex:none"></div>
     <div id="rufe-name" style="flex:none"></div>
     <div id="rufe-fix" style="flex:none"></div>
-    <div id="rufe-liste" aria-live="polite" style="flex:1;overflow-y:auto;padding:8px 12px 12px"><div style="color:var(--text2);font-size:var(--s-text);padding:12px 0">Lade Rufe …</div></div>
-    <div style="flex:none;background:var(--surface);border-top:1px solid var(--surface2);padding:8px 12px calc(8px + env(safe-area-inset-bottom))">
+    <div id="rufe-liste" aria-live="polite" class="rf-liste"><div style="color:var(--text2);font-size:var(--s-text);padding:12px 0">Lade Rufe …</div></div>
+    <button type="button" id="rufe-runter" class="rf-runter" onclick="rufeRunter()" aria-label="Zu den neuesten Rufen" hidden>⌄<span id="rufe-runter-zahl" class="rf-runter-zahl" hidden></span></button>
+    <div class="rf-eingabe">
       <div id="rufe-antwort" style="display:none"></div>
+      <div id="rufe-erw-liste" class="rf-erw-liste" role="listbox" aria-label="Wen erwähnen?" hidden></div>
+      <div id="rufe-emoji-leiste" class="rf-emoji-leiste" hidden>${RUFE_EMOJI_LEISTE.map(e=>`<button type="button" onclick="rufeEmojiEinfuegen('${e}')" aria-label="${e} einfügen">${e}</button>`).join("")}</div>
       <div id="rufe-chips" style="display:none;flex-wrap:wrap;gap:6px;margin-bottom:6px"></div>
       <div id="rufe-offen-hinweis" style="display:none;font-size:var(--s-klein);color:var(--text2);margin:0 0 6px">Offener Raum – alle Eltern lesen mit. Bitte keine Fotos anderer Kinder.</div>
       <input id="rufe-datei" type="file" multiple accept=".jpg,.jpeg,.png,.webp,.heic,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,image/*" onchange="rufeDateiWahl(this)" style="display:none">
-      <div style="display:flex;gap:8px;align-items:flex-end">
-        <button type="button" id="rufe-anhang-knopf" onclick="document.getElementById('rufe-datei')?.click()" aria-label="Datei anhängen" title="Datei anhängen (Bild, PDF, Office)" class="btn" style="flex:none;min-width:48px;justify-content:center;font-size:var(--s-teil)">📎</button>
-        <button type="button" id="rufe-umfrage-knopf" onclick="rufeUmfrageNeu()" aria-label="Abstimmung starten" title="Abstimmung starten" class="btn" style="flex:none;min-width:48px;justify-content:center;font-size:var(--s-teil)">📊</button>
-        <label for="rufe-text" style="position:absolute;left:-9999px">Ruf schreiben</label>
-        <textarea id="rufe-text" rows="1" maxlength="5000" placeholder="Ruf schreiben …" oninput="rufeTextWachsen(this)" style="flex:1;min-height:48px;max-height:140px;resize:none;box-sizing:border-box;padding:12px;border:1px solid var(--rand-bedien);border-radius:14px;font:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)"></textarea>
-        <button type="button" id="rufe-senden" class="btn btn-p" onclick="rufeSenden()" style="min-width:56px;justify-content:center">Senden</button>
+      <button type="button" id="rufe-umfrage-knopf" onclick="rufeUmfrageNeu()" hidden>📊</button>
+      <div class="rf-zeile">
+        <div class="rf-feld">
+          <label for="rufe-text" style="position:absolute;left:-9999px">Ruf schreiben</label>
+          <textarea id="rufe-text" rows="1" maxlength="5000" placeholder="Ruf schreiben …" oninput="rufeTextWachsen(this)" onkeydown="rufeTasteImFeld(event)" class="rf-textfeld"></textarea>
+          <button type="button" id="rufe-emoji-knopf" onclick="rufeEmojiUmschalten()" aria-label="Emoji einfügen" aria-expanded="false" class="rf-feld-knopf">😊</button>
+          <button type="button" id="rufe-anhang-knopf" onclick="rufeAnhangMenue()" aria-label="Anhängen: Foto, Datei oder Abstimmung" title="Foto, Datei oder Abstimmung" class="rf-feld-knopf">📎</button>
+        </div>
+        <button type="button" id="rufe-senden" class="rf-senden" onclick="rufeSenden()" aria-label="Senden">➤</button>
       </div>
       <div id="rufe-zaehler" aria-live="polite" style="display:none;font-size:var(--s-klein);color:var(--text2);margin-top:4px;text-align:right"></div>
     </div>`;
@@ -105,6 +118,7 @@ async function _rufeOpen(raumId){
   rufeRaeumeRender();
   rufeGlockeLaden();
   _rfUngelesenLaden();
+  rufeFuerMichLaden();   // v964
   if(!_rf.trainer){   // v935: Familienraum mit zwei Konten → Raum „nur ich“ anbieten; einmal nach dem Namen fragen
     const fam=_rf.raeume.find(r=>r.familie_kind&&!r.eltern_email); if(fam)_rfMitleserLaden(fam.id);
     _rfNameFragen();
@@ -162,6 +176,7 @@ function _rfRaumName(r){
 }
 function _rfAktRaum(){ return _rf?_rf.raeume.find(r=>r.id===_rf.raum)||null:null; }
 function rufeTextWachsen(t){
+  if(t.id==="rufe-text")rufeErwPruefen(t);   // v964
   t.style.height="auto"; t.style.height=Math.min(140,t.scrollHeight)+"px";
   // v736: ab 4.500 Zeichen ein Zähler unter dem Feld
   const z=document.getElementById("rufe-zaehler"); if(!z||t.id!=="rufe-text")return;
@@ -171,16 +186,19 @@ function rufeTextWachsen(t){
 
 function rufeRaeumeRender(){
   const box=document.getElementById("rufe-raeume"); if(!box||!_rf)return;
-  const chip=(an,txt,on,label)=>`<button type="button" onclick="${on}" aria-pressed="${an}" ${label?`aria-label="${label}"`:""} style="flex:none;min-height:44px;padding:6px 14px;border-radius:999px;border:1.5px solid ${an?"#1e3a8a":"var(--rand-bedien)"};background:${an?"#1e3a8a":"var(--surface)"};color:${an?"#fff":"var(--text)"};font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer;white-space:nowrap">${txt}</button>`;
-  const zahl=id=>_rf.unge[id]?` · ${_rf.unge[id]}`:"";
+  /* v964: schlanke Reiter auf dem blauen Kopf; Ungelesenes als roter Zähler */
+  const chip=(an,txt,on,label)=>`<button type="button" class="rf-tab" onclick="${on}" aria-pressed="${an}" ${label?`aria-label="${label}"`:""}>${txt}</button>`;
+  const zahl=id=>_rf.unge[id]?` <span class="rf-tab-zahl" aria-label="${_rf.unge[id]} ungelesen">${_rf.unge[id]>99?"99+":_rf.unge[id]}</span>`:"";
   const offen=_rf.raeume.filter(r=>!r.familie_kind), privat=_rf.raeume.filter(r=>r.familie_kind);
   box.style.display="flex";
-  let html=offen.map(r=>chip(r.id===_rf.raum,esc(_rfRaumName(r))+zahl(r.id),`rufeRaumWechseln(${Number(r.id)})`)).join("");
+  const fm=_rf.fuerMich||[], fmNeu=fm.filter(x=>new Date(x.created_at)>new Date(_rf.fuerMichGesehen||0)).length;
+  let html=chip(_rf.ansicht==="fuermich","@ Für mich"+(fmNeu?` <span class="rf-tab-zahl" aria-label="${fmNeu} neu">${fmNeu}</span>`:""),"rufeFuerMich()","Für mich: Erwähnungen und Antworten an mich")
+    +offen.map(r=>chip(_rf.ansicht!=="fuermich"&&r.id===_rf.raum,esc(_rfRaumName(r))+zahl(r.id),`rufeRaumWechseln(${Number(r.id)})`)).join("");
   if(_rf.trainer){
     /* v674: Das Trainerteam hat viele Familienräume – ein Knopf öffnet die Liste; der gerade
        offene Familienraum steht zusätzlich als eigener Knopf daneben. */
     const ungeP=privat.reduce((a,r)=>a+(_rf.unge[r.id]||0),0);
-    html+=chip(false,"🔒 Familien"+(ungeP?` · ${ungeP}`:""),"rufeFamilienOpen()","Private Nachricht an eine Familie");
+    html+=chip(false,"🔒 Familien"+(ungeP?` <span class="rf-tab-zahl">${ungeP}</span>`:""),"rufeFamilienOpen()","Private Nachricht an eine Familie");
     const akt=privat.find(r=>r.id===_rf.raum); if(akt)html+=chip(true,esc(_rfRaumName(akt)),`rufeRaumWechseln(${Number(akt.id)})`);
   }else{
     const eigen=privat.find(r=>!r.eltern_email), ich=privat.find(r=>r.eltern_email);
@@ -198,6 +216,7 @@ function _rfKopfZeigen(){
   const r=_rfAktRaum(); const unter=document.getElementById("rufe-unter"), feld=document.getElementById("rufe-text");
   const privat=!!(r&&r.familie_kind), nurEltern=!!(r&&r.nur_eltern);
   if(unter)unter.textContent=nurEltern?"Nur Eltern – das Trainerteam sieht diesen Raum nicht":privat?_rfMitleserText(r):"Eltern und Trainerteam";
+  const bild=document.getElementById("rufe-kopf-bild"); if(bild)bild.textContent=privat?"🔒":nurEltern?"👪":"📣";
   if(feld)feld.placeholder=privat?(_rf.trainer?(r.eltern_email?"Nachricht an "+_rfKontoName(r)+" …":"Nachricht an die Familie …"):"Nachricht an das Trainerteam …"):"Ruf schreiben …";
   if(privat&&!(_rf.mitleser||{})[r.id])_rfMitleserLaden(r.id);
 }
@@ -281,6 +300,7 @@ function rufeFamilienOpen(){
 }
 
 async function rufeRaumWechseln(id){
+  if(_rf&&_rf.ansicht==="fuermich"){ _rf.ansicht=null; _rf.kennung=null; }
   if(!_rf||_rf.raum===id)return;
   _rf.raum=id; _rf.antwort=null; _rf.letzte=null; rufeAntwortRender();
   if(_rf.unge[id]){ _rf.unge[id]=0; }
@@ -299,7 +319,7 @@ async function rufeLaden(zumEnde){
   const [reakt,fix,umf]=await Promise.all([
     ids.length?_rfGet(`rufe_reaktion?nachricht_id=in.(${ids.join(",")})&select=nachricht_id,user_id,emoji`):Promise.resolve([]),
     _rfGet(`rufe_fixiert?raum_id=eq.${raum}&select=nachricht_id,bis`),
-    ids.length?_rfGet(`rufe_umfrage?nachricht_id=in.(${ids.join(",")})&select=id,nachricht_id,optionen,anonym,mehrfach,schluss,beendet_am,von`):Promise.resolve([])
+    ids.length?_rfGet(`rufe_umfrage?nachricht_id=in.(${ids.join(",")})&select=id,nachricht_id,optionen,anonym,mehrfach,schluss,beendet_am,von,verdeckt`):Promise.resolve([])
   ]);
   // v674: Stand der Abstimmungen – lesend per GET (die Funktion ist stable)
   const stand=umf.length?await _rfGet(`rpc/rufe_umfrage_stand?p_ids=${encodeURIComponent("{"+umf.map(u=>Number(u.id)).join(",")+"}")}`):[];
@@ -316,6 +336,8 @@ async function rufeLaden(zumEnde){
   _rf.stand={}; stand.forEach(x=>{ (_rf.stand[x.umfrage_id]=_rf.stand[x.umfrage_id]||{})[x.option]=x; });
   const box=document.getElementById("rufe-liste");
   const unten=box&&(box.scrollHeight-box.scrollTop-box.clientHeight<80);
+  if(_rf.ansicht==="fuermich"){ if(neu)_rf.letzte=liste[liste.length-1].id; return; }   // v964: „Für mich“ bleibt stehen
+  if(neu&&!unten&&!zumEnde&&_rf.letzte){ _rf.neuUnten=(_rf.neuUnten||0)+1; const z=document.getElementById("rufe-runter-zahl"); if(z){ z.textContent=String(_rf.neuUnten); z.removeAttribute("hidden"); } }
   rufeRender();
   if(box&&(zumEnde||(neu&&unten)))box.scrollTop=box.scrollHeight;
   rufeBilderBeobachten();
@@ -334,49 +356,83 @@ function rufeRender(){
       :"Noch keine Rufe in diesem Raum.<br>Schreib den ersten – alle Eltern und das Trainerteam lesen mit."}</div>`;
     return;
   }
-  let tag="", html="";
+  let tag="", html="", vor=null;
   _rf.liste.forEach(n=>{
     const t=_rfTag(n.created_at);
-    if(t!==tag){ tag=t; html+=`<div style="text-align:center;margin:10px 0 6px"><span style="font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border-radius:999px;padding:2px 10px">${esc(t)}</span></div>`; }
-    html+=rufeNachrichtHtml(n);
+    if(t!==tag){ tag=t; vor=null; html+=`<div class="rf-tag"><span>${esc(t)}</span></div>`; }
+    /* v964: Rufe derselben Person innerhalb von fünf Minuten rücken zusammen – Name und Initialen nur am ersten */
+    const erst=!vor||vor.autor!==n.autor||!!vor.archiviert_am!==!!n.archiviert_am||(new Date(n.created_at)-new Date(vor.created_at))>300000;
+    html+=rufeNachrichtHtml(n,erst); vor=n;
   });
   box.innerHTML=html;
+  rufeGestenAn(box);
 }
-function rufeNachrichtHtml(n){
+/* v964: Initialen und eine feste Farbe je Konto (8 Farben; dieselbe Person hat immer dieselbe) */
+function _rfInitialen(name){
+  const w=String(name||"?").replace(/\(.*\)/,"").trim().split(/\s+/).filter(Boolean);
+  return ((w[0]||"?")[0]+(w[1]?w[1][0]:"")).toUpperCase();
+}
+function _rfFarbe(uid){ let h=0; for(const c of String(uid||""))h=(h*31+c.charCodeAt(0))>>>0; return h%8; }
+function rufeNachrichtHtml(n,erst){
+  if(erst===undefined)erst=true;
   const eigen=n.autor===_rf.uid;
   const arch=!!n.archiviert_am;
   const zitat=n.antwort_auf?(_rf.liste.find(x=>x.id===n.antwort_auf)||null):null;
   const r={}; _rf.reakt.filter(x=>x.nachricht_id===n.id).forEach(x=>{ (r[x.emoji]=r[x.emoji]||{n:0,ich:false}); r[x.emoji].n++; if(x.user_id===_rf.uid)r[x.emoji].ich=true; });
-  const rolle=n.autor_rolle==="trainer"?"🦅 ":n.autor_rolle==="moderator"?"🛡️ ":"";
   const fixiert=_rf.fix.some(f=>f.nachricht_id===n.id);
   const lang=String(n.text||"").length>RUFE_LANG&&!_rf.offen.has(n.id);
-  return `<div class="rf-msg" data-id="${Number(n.id)}" style="display:flex;justify-content:${eigen?"flex-end":"flex-start"};margin:6px 0">
-    <div style="max-width:86%;min-width:0;background:${arch?"var(--surface2)":eigen?"#dbeafe":"var(--surface)"};color:var(--text);border:1px solid ${n.an_alle?"#b45309":"var(--surface2)"};border-radius:14px;padding:8px 10px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
-      <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">
-        <b style="font-size:var(--s-klein)">${rolle}${esc(eigen?"Du":n.autor_name||"")}</b>
-        ${n.autor_zusatz&&!eigen?`<span style="font-size:var(--s-klein);color:var(--text2)">${esc(n.autor_zusatz)}</span>`:""}
-        ${n.an_alle?`<span style="font-size:var(--s-klein);font-weight:700;color:#92400e">@alle</span>`:""}
-        ${fixiert?`<span style="font-size:var(--s-klein);color:var(--text2)">📌 fixiert</span>`:""}
-      </div>
-      ${n.antwort_auf?`<div class="rf-zitat" style="margin:4px 0;padding:4px 8px;border-left:3px solid #1e3a8a;background:var(--surface2);border-radius:6px;font-size:var(--s-klein);color:var(--text2)">${zitat?`<b>${esc(zitat.autor_name||"")}</b>: ${esc(String(zitat.text||"").slice(0,120))}`:"Antwort auf einen früheren Ruf"}</div>`:""}
-      <div class="rf-text" style="font-size:var(--s-text);line-height:1.45;margin-top:2px;word-wrap:break-word;${arch?"color:var(--text2);font-style:italic;":""}${lang?"display:-webkit-box;-webkit-line-clamp:8;line-clamp:8;-webkit-box-orient:vertical;overflow:hidden;":""}">${_rf.umf[n.id]?"<b>📊 </b>":""}${_rfText(n.text)}</div>
+  const mich=!eigen&&((n.erwaehnt||[]).includes(_rf.uid)||(zitat&&zitat.autor===_rf.uid));
+  const f=_rfFarbe(n.autor);
+  const rolle=n.autor_rolle==="trainer"?`<span class="rf-rolle">Trainer</span>`:n.autor_rolle==="moderator"?`<span class="rf-rolle">Moderation</span>`:"";
+  const ges=_rf.trainer&&!arch&&_rf.gesehen&&_rf.gesehen[n.id]?(()=>{ const x=_rf.gesehen[n.id]; return `<button type="button" class="rf-gesehen" onclick="rufeGesehenOpen(${Number(n.id)})" aria-label="Gesehen von ${x.g} von ${x.e} – Namen zeigen"><span aria-hidden="true">👁</span> ${x.g}/${x.e}</button>`; })():"";
+  return `<div class="rf-msg${eigen?" rf-ich":""}${erst?" rf-erst":""}${mich?" rf-mich":""}" data-id="${Number(n.id)}">
+    ${eigen?"":(erst?`<span class="rf-ava rf-f${f}" aria-hidden="true">${esc(_rfInitialen(n.autor_name))}</span>`:`<span class="rf-ava-platz" aria-hidden="true"></span>`)}
+    <div class="rf-blase${arch?" rf-arch":""}${n.an_alle?" rf-alle":""}">
+      ${eigen?`<span class="rf-sr">Du: </span>`:""}
+      ${erst&&!eigen?`<div class="rf-wer"><b class="rf-name rf-t${f}">${esc(n.autor_name||"")}</b>${rolle}${n.autor_zusatz&&n.autor_rolle!=="trainer"?`<span class="rf-zusatz">${esc(n.autor_zusatz)}</span>`:""}</div>`:""}
+      ${n.an_alle||fixiert?`<div class="rf-marken">${n.an_alle?`<span class="rf-marke-alle">@alle</span>`:""}${fixiert?`<span class="rf-marke">📌 fixiert</span>`:""}</div>`:""}
+      ${n.antwort_auf?`<button type="button" class="rf-zitat" onclick="rufeHinspringen(${Number(n.antwort_auf)})" aria-label="Zum beantworteten Ruf springen">${zitat?`<b>${esc(zitat.autor===_rf.uid?"Du":zitat.autor_name||"")}</b>${esc(String(zitat.text||"").replace(/\s+/g," ").slice(0,120))}`:"Antwort auf einen früheren Ruf"}</button>`:""}
+      <div class="rf-text${lang?" rf-lang":""}">${_rf.umf[n.id]?"<b>📊 </b>":""}${_rfText(n.text)}</div>
       ${lang?`<button type="button" class="rf-weiter btn btn-link" onclick="rufeWeiterlesen(${Number(n.id)})" >Weiterlesen</button>`:""}
       ${rufeAnhaengeHtml(n)}
       ${_rf.umf[n.id]?rufeUmfrageHtml(_rf.umf[n.id],arch):""}
-      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px">
-        ${Object.keys(r).map(e=>`<button type="button" class="rf-reakt" onclick="rufeReagieren(${Number(n.id)},'${e}')" aria-pressed="${r[e].ich}" aria-label="${e} ${r[e].n}, ${r[e].ich?"zurücknehmen":"dazu"}" style="min-height:44px;padding:2px 8px;border-radius:999px;border:1.5px solid ${r[e].ich?"#1e3a8a":"var(--rand-bedien)"};background:${r[e].ich?"#dbeafe":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);cursor:pointer">${e} ${r[e].n}</button>`).join("")}
-        <span style="flex:1"></span>
-        ${_rf.trainer&&!arch&&_rf.gesehen&&_rf.gesehen[n.id]?(()=>{ const x=_rf.gesehen[n.id]; return `<button type="button" class="rf-gesehen btn btn-link" onclick="rufeGesehenOpen(${Number(n.id)})" aria-label="Gesehen von ${x.g} von ${x.e} – Namen zeigen" style="font-size:var(--s-klein)"><span aria-hidden="true">👁</span> ${x.g}/${x.e}</button>`; })():""}
-        <span style="font-size:var(--s-klein);color:var(--text2)">${arch?"archiviert · ":""}${n.bearbeitet_am?"bearbeitet · ":""}${_rfZeit(n.created_at)}</span>
-        ${arch?"":`<button type="button" class="rf-menue-knopf btn btn-sm" onclick="rufeMenue(${Number(n.id)})" aria-label="Aktionen zu diesem Ruf" style="flex:none;min-width:44px;justify-content:center">⋯</button>`}
-      </div>
-    </div></div>`;
+      <div class="rf-meta">${ges}<span>${arch?"archiviert · ":""}${n.bearbeitet_am?"bearbeitet · ":""}${_rfZeit(n.created_at)}</span></div>
+      ${arch?"":`<button type="button" class="rf-menue-knopf" onclick="rufeMenue(${Number(n.id)})" aria-label="Aktionen zu diesem Ruf: reagieren, antworten …">⌄</button>`}
+    </div></div>
+    ${Object.keys(r).length?`<div class="rf-reakt-zeile${eigen?" rf-ich":""}">${Object.keys(r).map(e=>`<button type="button" class="rf-reakt" onclick="rufeReagieren(${Number(n.id)},'${e}')" aria-pressed="${r[e].ich}" aria-label="${e} ${r[e].n}, ${r[e].ich?"zurücknehmen":"dazu"}"><span>${e} ${r[e].n}</span></button>`).join("")}</div>`:""}`;
+}
+/* v964: langes Drücken (0,45 s) oder Rechtsklick öffnet Reaktionen und Aktionen; nach rechts wischen antwortet.
+   Ohne Geste geht beides über den kleinen ⌄-Knopf in der Blase (Tastatur, Vorlesehilfe). */
+function rufeGestenAn(box){
+  if(!box||box._rfGesten)return; box._rfGesten=true;
+  let t=null, x0=0, y0=0, el=null, id=null, dx=0;
+  const weg=()=>{ clearTimeout(t); t=null; };
+  box.addEventListener("pointerdown",e=>{
+    const m=e.target.closest(".rf-msg"); if(!m||e.target.closest("button,a,input,video,iframe"))return;
+    el=m.querySelector(".rf-blase"); id=Number(m.dataset.id); x0=e.clientX; y0=e.clientY; dx=0;
+    weg(); t=setTimeout(()=>{ t=null; try{navigator.vibrate&&navigator.vibrate(15);}catch(_){} rufeMenue(id); el=null; },450);
+  });
+  box.addEventListener("pointermove",e=>{
+    if(!el)return; const ddx=e.clientX-x0, ddy=e.clientY-y0;
+    if(Math.abs(ddy)>12&&Math.abs(ddy)>Math.abs(ddx)){ weg(); el.style.transform=""; el=null; return; }
+    if(Math.abs(ddx)>8)weg();
+    if(ddx>0){ dx=Math.min(ddx,90); el.style.transform=`translateX(${dx}px)`; el.classList.toggle("rf-wisch-bereit",dx>=60); }
+  });
+  const ende=()=>{ weg(); if(el){ const z=el; z.style.transform=""; z.classList.remove("rf-wisch-bereit"); if(dx>=60&&id)rufeAntworten(id); } el=null; dx=0; };
+  box.addEventListener("pointerup",ende); box.addEventListener("pointercancel",ende); box.addEventListener("pointerleave",ende);
+  box.addEventListener("contextmenu",e=>{ const m=e.target.closest(".rf-msg"); if(!m||e.target.closest("a,img"))return; e.preventDefault(); weg(); rufeMenue(Number(m.dataset.id)); });
+  box.addEventListener("scroll",()=>rufeRunterPruefen(),{passive:true});
 }
 function rufeFixRender(){
   const box=document.getElementById("rufe-fix"); if(!box||!_rf)return;
   const fix=_rf.fix.map(f=>_rf.liste.find(n=>n.id===f.nachricht_id)).filter(n=>n&&!n.archiviert_am);
-  box.innerHTML=fix.length?fix.map(n=>`<button type="button" class="btn btn-zeile" onclick="rufeHinspringen(${Number(n.id)})" style="min-height:44px;font-size:var(--s-klein)">📌 <b style="flex:none">${esc(n.autor_name||"")}:</b><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n.text)}</span></button>`).join(""):"";
+  if(!fix.length){ box.innerHTML=""; return; }
+  /* v964: eine Zeile wie bei Telegram – „📌 Fixiert · 1 von 2“; antippen springt hin und schaltet zum nächsten */
+  const i=(_rf.fixI||0)%fix.length, n=fix[i];
+  box.innerHTML=`<button type="button" class="rf-fix" onclick="rufeFixWeiter(${Number(n.id)},${fix.length})" aria-label="Fixierter Ruf ${i+1} von ${fix.length}: zum Ruf springen">
+    <span class="rf-fix-strich" aria-hidden="true"></span><span class="rf-fix-txt"><b>📌 Fixiert${fix.length>1?` · ${i+1} von ${fix.length}`:""}</b><span>${esc(n.autor_name||"")}: ${esc(String(n.text||"").replace(/\s+/g," ").slice(0,140))}</span></span></button>`;
 }
+function rufeFixWeiter(id,anzahl){ rufeHinspringen(id); if(_rf){ _rf.fixI=((_rf.fixI||0)+1)%Math.max(1,anzahl); setTimeout(rufeFixRender,600); } }
 function rufeHinspringen(id){
   const el=document.querySelector(`#rufe-liste .rf-msg[data-id="${Number(id)}"]`);
   if(el){ el.scrollIntoView({block:"center",behavior:"smooth"}); try{el.animate([{opacity:.35},{opacity:1}],{duration:500,iterations:2});}catch(e){} }
@@ -386,11 +442,10 @@ function rufeHinspringen(id){
 function rufeAntwortRender(){
   const box=document.getElementById("rufe-antwort"); if(!box)return;
   const n=_rf&&_rf.antwort?_rf.liste.find(x=>x.id===_rf.antwort):null;
-  box.style.display=n?"flex":"none";
-  box.style.cssText+=";align-items:center;gap:8px;margin-bottom:6px;padding:6px 8px;border-left:3px solid #1e3a8a;background:var(--surface2);border-radius:8px";
   if(!n){ box.style.display="none"; box.innerHTML=""; return; }
-  box.innerHTML=`<div style="flex:1;min-width:0;font-size:var(--s-klein);color:var(--text2)">Antwort an <b>${esc(n.autor_name||"")}</b>: ${esc(String(n.text).slice(0,80))}</div>
-    <button type="button" onclick="rufeAntwortWeg()" aria-label="Antwort verwerfen" class="btn btn-sm" style="flex:none;min-width:44px;justify-content:center">✕</button>`;
+  box.className="rf-antwort"; box.style.display="flex";
+  box.innerHTML=`<span class="rf-antwort-strich" aria-hidden="true"></span><div style="flex:1;min-width:0"><b>↩️ Antwort an ${esc(n.autor===_rf.uid?"dich":n.autor_name||"")}</b><span>${esc(String(n.text).replace(/\s+/g," ").slice(0,90))}</span></div>
+    <button type="button" onclick="rufeAntwortWeg()" aria-label="Antwort verwerfen" class="rf-kreis">✕</button>`;
 }
 function rufeAntwortWeg(){ if(_rf){ _rf.antwort=null; rufeAntwortRender(); } }
 /* v776 (PO 03.11.): Markus, als Trainer zugleich Vater, schrieb einen Wunsch seines Sohnes in den privaten Raum einer fremden Familie –
@@ -412,15 +467,83 @@ async function rufeSenden(){
   if(!text)return;
   const knopf=document.getElementById("rufe-senden"); if(knopf)knopf.disabled=true;
   const zeile={raum_id:_rf.raum,text,antwort_auf:_rf.antwort||null,an_alle:_rf.mod&&/(^|\s)@alle\b/i.test(text)};
+  const erw=rufeErwaehntAus(text); if(erw.length)zeile.erwaehnt=erw;   // v964
   try{
     const r=await fetch(`${SB_URL}/rest/v1/rufe_nachricht`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify(zeile)});
     if(typeof sbCheck401==="function"&&sbCheck401(r))return;
     if(!r.ok){ const t=await r.text().catch(()=>""); toast(/stumm/.test(t)?"Du bist gerade stummgeschaltet – später geht es wieder":"Ruf nicht gesendet – bitte gleich noch einmal","err"); return; }
   }catch(e){ toast("Kein Netz – Ruf nicht gesendet","err"); return; }
   finally{ if(knopf)knopf.disabled=false; }
-  feld.value=""; rufeTextWachsen(feld); _rf.antwort=null; rufeAntwortRender();
+  feld.value=""; rufeTextWachsen(feld); _rf.antwort=null; _rf.erw={}; rufeAntwortRender();
+  document.getElementById("rufe-emoji-leiste")?.setAttribute("hidden","");
   await rufeLaden(true);
 }
+/* ── v964: Eingabe – Emoji-Leiste, 📎-Menü, @Erwähnen ─────────────────────────────── */
+function rufeEmojiUmschalten(){
+  const l=document.getElementById("rufe-emoji-leiste"), k=document.getElementById("rufe-emoji-knopf"); if(!l)return;
+  const an=l.hasAttribute("hidden"); an?l.removeAttribute("hidden"):l.setAttribute("hidden",""); if(k)k.setAttribute("aria-expanded",String(an));
+}
+function rufeEmojiEinfuegen(e){
+  const f=document.getElementById("rufe-text"); if(!f)return;
+  const a=f.selectionStart??f.value.length, b=f.selectionEnd??f.value.length;
+  f.value=f.value.slice(0,a)+e+f.value.slice(b); f.focus(); const p=a+e.length; try{f.setSelectionRange(p,p);}catch(_){}
+  rufeTextWachsen(f);
+}
+function rufeAnhangMenue(){
+  const z=(emo,txt,on,id)=>`<button type="button" class="btn btn-zeile" ${id?`id="${id}"`:""} style="margin-top:6px" onclick="${on}"><span aria-hidden="true">${emo}</span>${txt}</button>`;
+  _rfBlatt("rufe-menue","Anhängen",
+    z("🖼️","Foto oder Datei","document.getElementById('rufe-menue')?.remove();document.getElementById('rufe-datei')?.click()","rufe-anhang-datei")
+    +z("📊","Abstimmung","document.getElementById('rufe-menue')?.remove();rufeUmfrageNeu()","rufe-anhang-umfrage")
+    +`<button type="button" onclick="document.getElementById('rufe-menue')?.remove()" class="btn" style="width:100%;justify-content:center;margin-top:6px">Abbrechen</button>`);
+}
+function rufeTasteImFeld(e){
+  const l=document.getElementById("rufe-erw-liste"); if(!l||l.hasAttribute("hidden"))return;
+  if(e.key==="Escape"){ l.setAttribute("hidden",""); e.preventDefault(); }
+  if(e.key==="Enter"||e.key==="Tab"){ const b=l.querySelector("button"); if(b){ e.preventDefault(); b.click(); } }
+}
+function _rfKurzname(name){ return String(name||"").replace(/\s*\(.*\)\s*$/,"").trim().split(/\s+/)[0]||"?"; }
+async function _rfMitgliederLaden(){
+  if(!_rf||!_rf.raum)return [];
+  _rf.mitgl=_rf.mitgl||{};
+  if(_rf.mitgl[_rf.raum])return _rf.mitgl[_rf.raum];
+  let l=[]; try{ const r=await _rfRpc("rufe_mitglieder",{p_raum:_rf.raum}); if(r.ok)l=await r.json(); }catch(e){}
+  if(_rf)_rf.mitgl[_rf.raum]=Array.isArray(l)?l:[];
+  return _rf?_rf.mitgl[_rf.raum]:[];
+}
+async function rufeErwPruefen(f){
+  const l=document.getElementById("rufe-erw-liste"); if(!l||!_rf)return;
+  const vor=f.value.slice(0,f.selectionStart??f.value.length), m=vor.match(/(^|\s)@([\wÄÖÜäöüß-]*)$/);
+  if(!m){ l.setAttribute("hidden",""); return; }
+  const q=m[2].toLowerCase(), alle=await _rfMitgliederLaden();
+  const treffer=alle.filter(x=>!q||x.name.toLowerCase().includes(q)).slice(0,8);
+  const r=_rfAktRaum(), alleOk=_rf.mod&&!(r&&r.familie_kind)&&(!q||"alle".startsWith(q));
+  if(!treffer.length&&!alleOk){ l.setAttribute("hidden",""); return; }
+  l.innerHTML=(alleOk?`<button type="button" role="option" onclick="rufeErwWahl('alle',null)"><span class="rf-ava rf-f0" aria-hidden="true">@</span><span><b>@alle</b><small>Alle im Raum, auch wer stumm geschaltet hat</small></span></button>`:"")
+    +treffer.map(x=>`<button type="button" role="option" onclick="rufeErwWahl('${jsq(_rfKurzname(x.name))}','${esc(x.user_id)}')"><span class="rf-ava rf-f${_rfFarbe(x.user_id)}" aria-hidden="true">${esc(_rfInitialen(x.name))}</span><span><b>${esc(x.name)}</b>${x.trainer?`<small>Trainerteam</small>`:""}</span></button>`).join("");
+  l.removeAttribute("hidden");
+}
+function rufeErwWahl(kurz,uid){
+  const f=document.getElementById("rufe-text"); if(!f||!_rf)return;
+  const pos=f.selectionStart??f.value.length, vor=f.value.slice(0,pos).replace(/@([\wÄÖÜäöüß-]*)$/,"@"+kurz+" ");
+  f.value=vor+f.value.slice(pos); f.focus(); try{f.setSelectionRange(vor.length,vor.length);}catch(_){}
+  if(uid){ _rf.erw=_rf.erw||{}; _rf.erw[uid]=kurz; }
+  document.getElementById("rufe-erw-liste")?.setAttribute("hidden","");
+  rufeTextWachsen(f);
+}
+/* Wer steht noch als „@Name“ im Text? Nur diese Konten gehen als erwähnt mit (die Datenbank prüft noch einmal den Raum). */
+function rufeErwaehntAus(text){
+  if(!_rf||!_rf.erw)return [];
+  return Object.keys(_rf.erw).filter(uid=>new RegExp("(^|\\s)@"+_rf.erw[uid].replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"(?![\\wÄÖÜäöüß-])").test(text));
+}
+/* ── v964: ⌄-Knopf, wenn man hochgescrollt hat ─────────────────────────────────── */
+function rufeRunterPruefen(){
+  const box=document.getElementById("rufe-liste"), k=document.getElementById("rufe-runter"); if(!box||!k)return;
+  const weit=box.scrollHeight-box.scrollTop-box.clientHeight>240;
+  weit?k.removeAttribute("hidden"):k.setAttribute("hidden","");
+  if(!weit&&_rf){ _rf.neuUnten=0; const z=document.getElementById("rufe-runter-zahl"); if(z)z.setAttribute("hidden",""); }
+}
+function rufeRunter(){ const box=document.getElementById("rufe-liste"); if(box)box.scrollTo({top:box.scrollHeight,behavior:"smooth"}); }
+
 async function rufeSendenMitAnhang(text){
   const raum=_rf.raum, feld=document.getElementById("rufe-text");
   const knopf=document.getElementById("rufe-senden"); if(knopf){ knopf.disabled=true; knopf.textContent="…"; }
@@ -435,7 +558,8 @@ async function rufeSendenMitAnhang(text){
       if(!r||!r.ok){ await _rfAufraeumen(hoch); toast(`„${d.name}“ wurde nicht hochgeladen – der Ruf ist nicht gesendet. Text und Anhänge bleiben stehen.`,"err"); fertig(); return; }
       hoch.push({pfad,name:d.name,mime:d.mime,groesse:d.blob.size});
     }
-    const r=await _rfRpc("rufe_senden",{p_raum:raum,p_text:text,p_antwort_auf:_rf.antwort||null,p_an_alle:_rf.mod&&/(^|\s)@alle\b/i.test(text),p_anhaenge:hoch});
+    const r=await _rfRpc("rufe_senden",{p_raum:raum,p_text:text,p_antwort_auf:_rf.antwort||null,p_an_alle:_rf.mod&&/(^|\s)@alle\b/i.test(text),p_anhaenge:hoch,
+      ...(rufeErwaehntAus(text).length?{p_erwaehnt:rufeErwaehntAus(text)}:{})});   // v964
     if(typeof sbCheck401==="function"&&sbCheck401(r)){ await _rfAufraeumen(hoch); fertig(); return; }
     if(!r.ok){ const t=await r.text().catch(()=>""); await _rfAufraeumen(hoch);
       toast(/stumm/.test(t)?"Du bist gerade stummgeschaltet – später geht es wieder":"Ruf nicht gesendet – Text und Anhänge bleiben stehen. Bitte gleich noch einmal.","err"); fertig(); return; }
@@ -514,8 +638,9 @@ function rufeMenue(id){
   const darfModerieren=_rf.mod&&(!privat||_rf.trainer);
   const zeile=(emo,txt,on)=>`<button type="button" class="btn btn-zeile" style="margin-top:6px" onclick="${on}"><span aria-hidden="true">${emo}</span>${txt}</button>`;
   _rfBlatt("rufe-menue","Ruf von "+esc(eigen?"dir":n.autor_name||""),
-    `<div style="display:flex;gap:6px;justify-content:space-between">${RUFE_EMOJI.map(e=>`<button type="button" class="rf-emo" onclick="rufeReagieren(${id},'${e}')" aria-label="Mit ${e} reagieren" style="flex:1;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);font-size:var(--s-teil);cursor:pointer">${e}</button>`).join("")}</div>`
-    +zeile("↩️","Antworten",`rufeAntworten(${id})`)
+    `<div class="rf-emo-leiste">${RUFE_EMOJI.map(e=>`<button type="button" class="rf-emo" onclick="rufeReagieren(${id},'${e}')" aria-label="Mit ${e} reagieren">${e}</button>`).join("")}</div>`
+    +zeile("↩️","Antworten <small class=\"rf-tipp\">oder nach rechts wischen</small>",`rufeAntworten(${id})`)
+    +zeile("📋","Text kopieren",`rufeKopieren(${id})`)
     +(_rf.trainer&&!n.archiviert_am?zeile("👁","Wer hat ihn gesehen?",`rufeGesehenOpen(${id})`):"")
     +(darfModerieren?(fixiert?zeile("📌","Nicht mehr fixieren",`rufeFixieren(${id},null,true)`):zeile("📌","Oben fixieren …",`rufeFixMenue(${id})`)):"")
     +(uOffen&&(u.von===_rf.uid||darfModerieren)?zeile("🏁","Abstimmung beenden",`rufeUmfrageBeenden(${Number(u.id)})`):"")
@@ -525,6 +650,11 @@ function rufeMenue(id){
     +(!eigen&&!privat?zeile("🚩","Melden",`rufeMelden(${id})`):"")
     +(darfModerieren&&!privat&&!eigen&&n.autor_rolle!=="trainer"?zeile("🔇","Stummschalten …",`rufeStummMenue('${esc(n.autor)}','${esc(n.autor_name||"")}')`):"")
     +`<button type="button" onclick="document.getElementById('rufe-menue')?.remove()" class="btn" style="width:100%;justify-content:center;margin-top:6px">Abbrechen</button>`);
+}
+function rufeKopieren(id){
+  document.getElementById("rufe-menue")?.remove();
+  const n=_rf&&_rf.liste.find(x=>x.id===id); if(!n)return;
+  try{ navigator.clipboard.writeText(String(n.text||"")).then(()=>toast("Text kopiert"),()=>toast("Kopieren ging nicht","err")); }catch(e){ toast("Kopieren ging nicht","err"); }
 }
 function rufeAntworten(id){
   document.getElementById("rufe-menue")?.remove();
@@ -601,21 +731,26 @@ async function rufeRaumAnlegen(){
 
 /* ── v674: Abstimmungen ───────────────────────────────────────────────────────── */
 function _rfUmfrageZu(u){ return !!u.beendet_am||(u.schluss&&new Date(u.schluss)<=new Date()); }
+/* v964: wie bei den großen Messengern – Ankreuzkreis (mehrere: Kästchen), Balken mit Prozent, Initialen der Abstimmenden.
+   „Ergebnis erst am Schluss“ (verdeckt): bis dahin nur die eigene Wahl und die Zahl der Abstimmenden – die Datenbank liefert nicht mehr. */
 function rufeUmfrageHtml(u,arch){
   const st=_rf.stand[u.id]||{}; const zu=_rfUmfrageZu(u)||arch;
   const tn=Object.values(st)[0]?Number(Object.values(st)[0].teilnehmer)||0:0;
-  const max=Math.max(1,...Object.values(st).map(x=>Number(x.anzahl)||0));
-  const art=[u.anonym?"anonym":"namentlich",u.mehrfach?"mehrere Antworten":"eine Antwort"];
+  const verdeckt=!!u.verdeckt&&!zu;
+  const summe=Object.values(st).reduce((a,x)=>a+(Number(x.anzahl)||0),0);
+  const art=[u.anonym?"anonym":"namentlich",u.mehrfach?"mehrere Antworten":"eine Antwort"].concat(u.verdeckt?["Ergebnis am Schluss"]:[]);
   const ende=u.beendet_am?"beendet":u.schluss?(zu?"beendet":"bis "+_rfTag(u.schluss)+" "+_rfZeit(u.schluss)):"";
-  return `<div class="rf-umfrage" role="group" aria-label="Abstimmung: ${esc(art.join(", "))}" style="margin-top:6px">
-    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px">${esc(art.join(" · "))}${ende?" · "+esc(ende):""}</div>
-    ${u.optionen.map((o,i)=>{ const x=st[i]||{anzahl:0,ich:false,namen:null}; const n=Number(x.anzahl)||0; const pct=Math.round(100*n/max);
+  const namen=[...new Set(Object.values(st).flatMap(x=>x.namen||[]))];
+  return `<div class="rf-umfrage${verdeckt?" rf-verdeckt":""}" role="group" aria-label="Abstimmung: ${esc(art.join(", "))}">
+    <div class="rf-u-art">${esc(art.join(" · "))}${ende?" · "+esc(ende):""}</div>
+    ${u.optionen.map((o,i)=>{ const x=st[i]||{anzahl:0,ich:false,namen:null}; const n=Number(x.anzahl)||0; const pct=summe?Math.round(100*n/summe):0;
       return `<button type="button" class="rf-option" ${zu?"disabled":""} onclick="rufeStimmen(${Number(u.id)},${i})" aria-pressed="${!!x.ich}"
-        aria-label="${esc(o)}: ${n} ${n===1?"Stimme":"Stimmen"}${x.ich?", deine Wahl":""}" style="display:flex;align-items:center;gap:8px;width:100%;min-height:44px;margin-top:4px;padding:6px 10px;border:1.5px solid ${x.ich?"#1e3a8a":"var(--rand-bedien)"};border-radius:10px;
-        background:linear-gradient(90deg,rgba(59,130,246,.28) ${pct}%,var(--surface) ${pct}%);color:var(--text);font-family:inherit;font-size:var(--s-text);text-align:left;cursor:${zu?"default":"pointer"}">
-        <span aria-hidden="true" style="flex:none;width:1.2em;font-weight:800">${x.ich?"✓":""}</span><span style="flex:1;min-width:0">${esc(o)}</span><b>${n}</b></button>
-        ${!u.anonym&&x.namen&&x.namen.length?`<div class="rf-namen" style="font-size:var(--s-klein);color:var(--text2);margin:2px 0 0 28px">${esc(x.namen.join(", "))}</div>`:""}`; }).join("")}
-    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">${tn===1?"1 hat abgestimmt":tn+" haben abgestimmt"}${zu?"":u.mehrfach?" · antippen wählt an und ab":" · nochmal antippen nimmt die Stimme zurück"}</div>
+        aria-label="${esc(o)}${verdeckt?"":`: ${n} ${n===1?"Stimme":"Stimmen"}`}${x.ich?", deine Wahl":""}">
+        <span class="rf-u-kreis${u.mehrfach?" rf-u-eckig":""}${x.ich?" rf-u-an":""}" aria-hidden="true">${x.ich?"✓":""}</span>
+        <span class="rf-u-text">${esc(o)}</span>${verdeckt?"":`<b class="rf-u-pct">${pct} %</b><span class="rf-u-balken" aria-hidden="true"><i style="width:${pct}%"></i></span>`}</button>
+        ${!u.anonym&&!verdeckt&&x.namen&&x.namen.length?`<div class="rf-namen">${esc(x.namen.join(", "))}</div>`:""}`; }).join("")}
+    <div class="rf-u-fuss">${!u.anonym&&namen.length?`<span class="rf-u-wer" aria-hidden="true">${namen.slice(0,4).map((nm,k)=>`<span class="rf-ava rf-mini rf-f${k%8}">${esc(_rfInitialen(nm))}</span>`).join("")}</span>`:""}
+      <span>${tn===1?"1 hat abgestimmt":tn+" haben abgestimmt"}${verdeckt?" · 🙈 Ergebnis kommt am Schluss":""}${zu?"":u.mehrfach?" · antippen wählt an und ab":" · nochmal antippen nimmt die Stimme zurück"}</span></div>
   </div>`;
 }
 async function rufeStimmen(umfId,i){
@@ -647,6 +782,7 @@ function rufeUmfrageNeu(){
     <div id="rf-arten" style="display:flex;gap:8px;margin-top:4px">${wahl(true,"Namentlich","rufeUmfrageArt(false)")}${wahl(false,"Anonym","rufeUmfrageArt(true)")}</div>
     <div id="rf-art-hinweis" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Namentlich: alle sehen, wer was gewählt hat.</div>
     <label style="${_RF_ZEILE}"><input id="rf-mehrfach" type="checkbox" style="width:22px;height:22px"> Mehrere Antworten erlaubt</label>
+    <label style="${_RF_ZEILE}"><input id="rf-verdeckt" type="checkbox" style="width:22px;height:22px"> Ergebnis erst am Schluss zeigen</label>
     <label for="rf-schluss" style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:10px">Schluss</label>
     <select id="rf-schluss" style="width:100%;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;font:inherit;background:var(--surface2);color:var(--text)">
       <option value="">Offen, bis jemand beendet</option><option value="24">In 24 Stunden</option><option value="72">In 3 Tagen</option><option value="168">In 7 Tagen</option></select>
@@ -678,7 +814,8 @@ async function rufeUmfrageAnlegen(){
   const knopf=document.getElementById("rf-umfrage-los"); if(knopf)knopf.disabled=true;
   try{
     const r=await _rfRpc("rufe_umfrage_erstellen",{p_raum:_rf.raum,p_frage:frage,p_optionen:opts,p_anonym:!!(_rf.uNeu&&_rf.uNeu.anonym),
-      p_mehrfach:!!document.getElementById("rf-mehrfach")?.checked,p_stunden:std?Number(std):null});
+      p_mehrfach:!!document.getElementById("rf-mehrfach")?.checked,p_stunden:std?Number(std):null,
+      ...(document.getElementById("rf-verdeckt")?.checked?{p_verdeckt:true}:{})});   // v964
     if(typeof sbCheck401==="function"&&sbCheck401(r))return;
     if(!r.ok){ toast("Abstimmung nicht gestartet – bitte gleich noch einmal","err"); return; }
   }catch(e){ toast("Kein Netz – Abstimmung nicht gestartet","err"); return; }
@@ -806,16 +943,6 @@ async function rufeModArchivieren(meldId,nachrichtId){
   await rufeModErledigt(meldId); toast("Archiviert");
 }
 /* ── v673: Benachrichtigungen je Konto ab- und anschalten (Glocke im Kopf) ─────── */
-function _rfGlockeZeigen(an){
-  const b=document.getElementById("rufe-glocke"); if(!b)return;
-  b.textContent=an?"🔔":"🔕"; b.setAttribute("aria-pressed",String(an));
-  b.setAttribute("aria-label",an?"Benachrichtigungen zu Adler-Rufen sind an – antippen zum Abschalten":"Benachrichtigungen zu Adler-Rufen sind aus – antippen zum Einschalten");
-  const z=document.getElementById("rufe-ruhe"); if(!z)return;
-  const tr=!!(_rf&&_rf.trainer);
-  z.textContent=rufeRuhezeitText(an,tr);
-  /* v705: die eigene Ruhezeit (Einstellungen) statt der Vorgabe */
-  if(an&&typeof ruhezeitLaden==="function")ruhezeitLaden(tr?"trainer":"parent").then(r=>{ if(document.getElementById("rufe-ruhe")===z&&_rf&&_rf.glockeAn!==false)z.textContent=rufeRuhezeitText(true,tr,r); }).catch(()=>{});
-}
 /* v704: Die Ruhezeit steht sichtbar im Chat (PO 01.10.: keine Meldung bekommen – der Ruf kam um 22:56 Uhr).
    v705: Jede und jeder stellt die eigene Ruhezeit bei den Benachrichtigungen in den Einstellungen ein
    (core.js, ruhezeitRender); ohne eigene Wahl Eltern 21:30–7 Uhr, Trainer keine. Hier steht nur, was gilt. */
@@ -830,22 +957,79 @@ function rufeRuhezeitText(an,trainer,r){
   const z=typeof ruhezeitText==="function"?ruhezeitText(r):RUFE_RUHE;
   return "🔔 Benachrichtigungen ruhen "+z+" – was bis dahin ungelesen ist, kommt danach gesammelt."+wo;
 }
+/* v964: Glocke mit drei Stufen – alle Rufe · nur Erwähnungen und Antworten an mich (rufe_push_erwaehnung) · aus (rufe_push_aus).
+   „Aus“ bleibt aus, auch für Erwähnungen. Der Hinweis zur Ruhezeit steht jetzt im Glocken-Blatt statt als feste Zeile im Chat. */
 async function rufeGlockeLaden(){
   if(!_rf||!_rf.uid)return;
-  const aus=await _rfGet(`rufe_push_aus?user_id=eq.${_rf.uid}&select=user_id`);
-  if(_rf){ _rf.glockeAn=!aus.length; _rfGlockeZeigen(_rf.glockeAn); }
+  const [aus,erw]=await Promise.all([_rfGet(`rufe_push_aus?user_id=eq.${_rf.uid}&select=user_id`),_rfGet(`rufe_push_erwaehnung?user_id=eq.${_rf.uid}&select=user_id`).catch(()=>[])]);
+  if(_rf){ _rf.glockeAn=!aus.length; _rf.glockeStufe=aus.length?"aus":(erw&&erw.length?"erwaehnung":"alle"); _rfGlockeZeigen(_rf.glockeAn); }
 }
-async function rufeGlockeUmschalten(){
+function _rfGlockeZeigen(an){
+  const b=document.getElementById("rufe-glocke"); if(!b)return;
+  const st=(_rf&&_rf.glockeStufe)||(an?"alle":"aus");
+  b.textContent=st==="aus"?"🔕":st==="erwaehnung"?"🔔@":"🔔"; b.setAttribute("aria-pressed",String(an));
+  b.setAttribute("aria-label",st==="aus"?"Benachrichtigungen zu Adler-Rufen sind aus":st==="erwaehnung"?"Benachrichtigungen nur bei Erwähnung und Antwort":"Benachrichtigungen zu Adler-Rufen sind an");
+  const z=document.getElementById("rufe-ruhe"); if(!z)return;
+  const tr=!!(_rf&&_rf.trainer);
+  z.textContent=rufeRuhezeitText(an,tr);
+  if(an&&typeof ruhezeitLaden==="function")ruhezeitLaden(tr?"trainer":"parent").then(r=>{ if(document.getElementById("rufe-ruhe")===z&&_rf&&_rf.glockeAn!==false)z.textContent=rufeRuhezeitText(true,tr,r); }).catch(()=>{});
+}
+function rufeGlockeMenue(){
+  if(!_rf)return;
+  const st=_rf.glockeStufe||(_rf.glockeAn===false?"aus":"alle");
+  const z=(wert,emo,titel,text)=>`<button type="button" class="btn btn-zeile rf-glocke-wahl" style="margin-top:6px" aria-pressed="${st===wert}" onclick="rufeGlockeSetzen('${wert}')"><span aria-hidden="true">${emo}</span><span style="flex:1;min-width:0"><b style="display:block">${titel}</b><small style="color:var(--text2)">${text}</small></span>${st===wert?`<span aria-hidden="true">✓</span>`:""}</button>`;
+  _rfBlatt("rufe-menue","Benachrichtigungen zu Adler-Rufen",
+    z("alle","🔔","Alle Rufe","Neue Rufe kommen gebündelt, Trainerteam und Erwähnungen sofort")
+    +z("erwaehnung","@","Nur für mich","Wenn mich jemand mit @ erwähnt, mir antwortet oder @alle schreibt")
+    +z("aus","🔕","Aus","Keine Benachrichtigungen – die Zahl am Knopf bleibt")
+    +`<div class="rf-ruhe-text">${esc(document.getElementById("rufe-ruhe")?.textContent||"")}</div>`);
+}
+async function rufeGlockeSetzen(wert){
   if(!_rf||!_rf.uid)return;
-  const an=_rf.glockeAn!==false;
+  document.getElementById("rufe-menue")?.remove();
+  const h=x=>sbAuthHeaders({'Prefer':'return=minimal'+(x?',resolution=ignore-duplicates':'')});
   try{
-    const r=an
-      ?await fetch(`${SB_URL}/rest/v1/rufe_push_aus`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=minimal,resolution=ignore-duplicates'}),body:JSON.stringify({user_id:_rf.uid})})
-      :await fetch(`${SB_URL}/rest/v1/rufe_push_aus?user_id=eq.${_rf.uid}`,{method:"DELETE",headers:sbAuthHeaders({'Prefer':'return=minimal'})});
-    if(!r.ok){ toast("Nicht gespeichert","err"); return; }
+    const auf=[];
+    auf.push(wert==="aus"?fetch(`${SB_URL}/rest/v1/rufe_push_aus`,{method:"POST",headers:h(1),body:JSON.stringify({user_id:_rf.uid})})
+                          :fetch(`${SB_URL}/rest/v1/rufe_push_aus?user_id=eq.${_rf.uid}`,{method:"DELETE",headers:h()}));
+    auf.push(wert==="erwaehnung"?fetch(`${SB_URL}/rest/v1/rufe_push_erwaehnung`,{method:"POST",headers:h(1),body:JSON.stringify({user_id:_rf.uid})})
+                                :fetch(`${SB_URL}/rest/v1/rufe_push_erwaehnung?user_id=eq.${_rf.uid}`,{method:"DELETE",headers:h()}));
+    const r=await Promise.all(auf); if(r.some(x=>!x.ok)){ toast("Nicht gespeichert","err"); return; }
   }catch(e){ toast("Kein Netz","err"); return; }
-  _rf.glockeAn=!an; _rfGlockeZeigen(_rf.glockeAn);
-  toast(_rf.glockeAn?"Benachrichtigungen zu Adler-Rufen an":"Keine Benachrichtigungen mehr zu Adler-Rufen – die Zahl am Knopf bleibt");
+  _rf.glockeStufe=wert; _rf.glockeAn=wert!=="aus"; _rfGlockeZeigen(_rf.glockeAn);
+  toast(wert==="aus"?"Keine Benachrichtigungen mehr zu Adler-Rufen":wert==="erwaehnung"?"Benachrichtigung nur noch, wenn es dich betrifft":"Benachrichtigungen zu allen Rufen an");
+}
+/* Bisheriger Schalter (an/aus) – bleibt für alte Aufrufe */
+async function rufeGlockeUmschalten(){ return rufeGlockeSetzen(_rf&&_rf.glockeAn!==false?"aus":"alle"); }
+/* ── v964: „Für mich“ – Erwähnungen, Antworten auf meine Rufe und @alle der letzten 30 Tage, über alle Räume ── */
+async function rufeFuerMichLaden(){
+  if(!_rf)return;
+  let l=[]; try{ const r=await _rfRpc("rufe_fuer_mich",{}); if(r.ok)l=await r.json(); }catch(e){}
+  if(!_rf)return;
+  _rf.fuerMich=Array.isArray(l)?l:[];
+  try{ _rf.fuerMichGesehen=localStorage.getItem("adler_rufe_fuermich_"+_rf.uid)||""; }catch(e){}
+  rufeRaeumeRender();
+}
+function rufeFuerMich(){
+  if(!_rf)return;
+  _rf.ansicht="fuermich"; rufeRaeumeRender();
+  const box=document.getElementById("rufe-liste"); if(!box)return;
+  document.getElementById("rufe-fix").innerHTML="";
+  const l=_rf.fuerMich||[], grund={erwaehnt:"hat dich erwähnt",antwort:"hat dir geantwortet",alle:"an alle"};
+  const raum=id=>{ const r=_rf.raeume.find(x=>x.id===id); return r?_rfRaumName(r):""; };
+  box.innerHTML=`<div class="rf-fm-kopf">@ Für mich – die letzten 30 Tage</div>`+(l.length?l.map(n=>`<button type="button" class="rf-fm" onclick="rufeFuerMichSprung(${Number(n.raum_id)},${Number(n.id)})">
+      <span class="rf-ava rf-f${_rfFarbe(n.autor||n.autor_name)}" aria-hidden="true">${esc(_rfInitialen(n.autor_name))}</span>
+      <span class="rf-fm-txt"><small>${esc(n.autor_name||"")} ${grund[n.grund]||""} · ${esc(raum(n.raum_id))} · ${esc(_rfTag(n.created_at))} ${_rfZeit(n.created_at)}</small><span>${esc(String(n.text||"").replace(/\s+/g," ").slice(0,160))}</span></span></button>`).join("")
+    :`<div class="rf-leer">Noch nichts für dich.<br>Hier landen Rufe, in denen dich jemand mit @ erwähnt oder dir antwortet.</div>`);
+  const neu=l[0]?l[0].created_at:""; if(neu){ _rf.fuerMichGesehen=neu; try{ localStorage.setItem("adler_rufe_fuermich_"+_rf.uid,neu); }catch(e){} rufeRaeumeRender(); }
+}
+async function rufeFuerMichSprung(raumId,id){
+  if(!_rf)return;
+  _rf.ansicht=null;
+  if(_rf.raum!==raumId){ _rf.raum=raumId; _rf.kennung=null; }
+  rufeRaeumeRender();
+  await rufeLaden(true);
+  rufeHinspringen(id);
 }
 /* v673: Kam man über eine Benachrichtigung (?rufe), öffnet sich der Chat, sobald angemeldet ist –
    im Trainerbereich erst, wenn die PIN-Sperre offen ist. Höchstens zwei Minuten lang. */
@@ -963,7 +1147,7 @@ async function _rfAufraeumen(liste){
    (Migration v736 nicht eingespielt), lädt die App wie bisher ohne – die Rufe bleiben sichtbar. */
 let _rfOhneAnhang=false;
 async function _rfNachrichtenHolen(raum){
-  const basis="id,autor,autor_name,autor_zusatz,autor_rolle,text,antwort_auf,an_alle,bearbeitet_am,archiviert_am,created_at";
+  const basis="id,autor,autor_name,autor_zusatz,autor_rolle,text,antwort_auf,an_alle,bearbeitet_am,archiviert_am,created_at,erwaehnt";
   const q=sel=>`rufe_nachricht?raum_id=eq.${raum}&select=${sel}&order=created_at.desc&limit=${RUFE_ANZAHL}`;
   if(!_rfOhneAnhang){
     try{
@@ -1008,7 +1192,7 @@ function rufeBilderBeobachten(){
 function rufeWeiterlesen(id){
   if(!_rf)return; _rf.offen.add(id);
   const m=document.querySelector(`#rufe-liste .rf-msg[data-id="${Number(id)}"]`); if(!m)return;
-  const t=m.querySelector(".rf-text"); if(t){ ["display","-webkit-line-clamp","line-clamp","-webkit-box-orient","overflow"].forEach(p=>t.style.removeProperty(p)); }
+  const t=m.querySelector(".rf-text"); if(t){ t.classList.remove("rf-lang"); ["display","-webkit-line-clamp","line-clamp","-webkit-box-orient","overflow"].forEach(p=>t.style.removeProperty(p)); }
   m.querySelector(".rf-weiter")?.remove();
 }
 async function rufeAnhangOeffnen(nid,aid){
