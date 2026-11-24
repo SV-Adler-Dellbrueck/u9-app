@@ -1609,6 +1609,18 @@ const SCHULE_LEHRER={master:"Maskottchen/master/adler_master/adler_master_klein.
 function schuleWeihnachtszeit(d){ d=d||new Date(); const m=d.getMonth()+1, t=d.getDate(); return (m===11&&t>=15)||m===12||(m===1&&t<=6); }
 function schuleLehrerBild(pose){ return schuleWeihnachtszeit()?(SCHULE_LEHRER[pose]||SCHULE_LEHRER.master):SCHULE_LEHRER.master; }
 const SCHULE_AUSFALL=[["🔢","Mathe","Bis 3 zählen kannst du schon: 3 gegen 1","fällt aus 🎉"],["📖","Deutsch","„Toooor!“ kannst du schon schreiben","fällt aus 🎉"],["🧪","Chemie","Kommt erst in Klasse 7","😴 gähn"]];
+/* v967 · Charles 24.11.: „Bei den Fächern, die ausfallen oder gähn, ein kleines Easter Egg verstecken, wenn man trotzdem draufklickt.“
+   Je Fach zwei Sprüche im Wechsel, die Zeile wackelt, beim zweiten Tipp fliegt Konfetti. Keine Federn – es ist nur Spaß. */
+const SCHULE_AUSFALL_EI=[
+  ["🧮 1 Tor + 1 Tor = Sieg! Mehr Mathe gibt's heute nicht.","🔢 3 gegen 1 … Moment … 3 sind mehr! Mathe erledigt."],
+  ["✍️ Diktat: T‑O‑O‑O‑O‑R! Alles richtig – eine Eins mit Sternchen!","📖 Lieblingswort des Adlers: „Abpfiff“? Nein – „Anpfiff“!"],
+  ["💥 Blubb! Der Adler hat das Labor in die Luft gejagt. Zum Glück ist heute frei.","🧪 Geheimrezept: Wasser + Training = Durst. Trink was!"]];
+function schuleAusfallTipp(i,el){
+  const n=(el._ei=(el._ei||0)+1), spruch=SCHULE_AUSFALL_EI[i][(n-1)%2];
+  const z=el.querySelector(".sp-aus-ei"); if(z){ z.textContent=spruch; z.hidden=false; }
+  el.classList.remove("sp-wackel"); void el.offsetWidth; el.classList.add("sp-wackel");
+  if(n===2&&typeof freudeKonfetti==="function")freudeKonfetti();
+}
 /* v939: Das Begrüßungsvideo – der Adler sagt den Gruß selbst. Es liegt fest im Repo (video/), deshalb eine Konstante
    statt eines Eintrags in kinderfragen.json (dort gibt es nur die Stunden 1–6). */
 const SCHULE_GRUSS_VIDEO="video/lehrer-begruessung.mp4";
@@ -1620,6 +1632,11 @@ function schuleLehrerVideo(knopf,v){
   box.hidden=false; knopf.setAttribute("aria-expanded","true");
 }
 function schuleLehrerHtml(text,fett,pose,video){
+  /* v967 · Charles 24.11.: „Wenn wir ein Video haben, dann brauchen wir die Option Vorlesen nicht mehr. Direkt das Video anzeigen mit
+     einem Player-Button.“ Mit Video: Sprechblase ohne Knöpfe, darunter gleich der Spieler mit Startbild (lädt erst beim Tippen). */
+  if(video)return `<div class="sl-lehrer sl-mit-video" style="margin-bottom:12px">
+    <div class="sl-blase k3" style="background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);border-radius:18px;padding:12px;font-size:16px;line-height:1.35;font-weight:600">${fett||esc(text)}</div></div>
+    <div class="sl-video" style="margin:-4px 0 12px"><video src="${kfBasis()+esc(video)}" poster="${kfBasis()+esc(video.replace(/\.(mp4|webm)$/,".webp"))}" controls playsinline preload="none" onplay="kfStopp()" aria-label="Video: Der Adler begrüßt dich" style="width:100%;aspect-ratio:16/9;border-radius:14px;background:#000;display:block"></video></div>`;
   const bild=`<img class="sl-bild" src="${kfBasis()+schuleLehrerBild(pose||"winkt")}" alt="" draggable="false" style="width:100%;height:100%;object-fit:contain;object-position:50% 100%" onerror="this.outerHTML='<span aria-hidden=&quot;true&quot; style=&quot;font-size:50px;line-height:1&quot;>🦅</span>'">`;
   const t=jsq(text);
   return `<div class="sl-lehrer" style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px">
@@ -1640,11 +1657,12 @@ function schuleStundenplanKopf(){
     <div style="font-size:17px;font-weight:800;color:var(--text);margin:4px 2px 0">📅 Mein Stundenplan</div>`;
 }
 function schuleStundenplanFuss(){
-  const zeile=(nr,f)=>`<div class="sp-aus k3" style="display:flex;align-items:center;gap:12px;background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);border-radius:16px;padding:10px 12px;margin-top:10px;min-height:64px">
+  const zeile=(nr,f)=>`<button type="button" class="sp-aus k3" onclick="schuleAusfallTipp(${nr-4},this)" aria-label="${f[1]}: ${f[3].replace(/[^A-Za-zÄÖÜäöüß ]/g,"").trim()}" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;width:100%;text-align:left;font-family:inherit;cursor:pointer;background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);border-radius:16px;padding:10px 12px;margin-top:10px;min-height:64px">
       <span style="flex:none;width:46px;text-align:center;font-size:13px;font-weight:800;color:var(--text2);line-height:1.15">${nr}.<br>Std.</span>
       <span aria-hidden="true" style="font-size:26px">${f[0]}</span>
       <span style="flex:1;min-width:0"><b style="display:block;font-size:16px;text-decoration:line-through;color:var(--text2)">${f[1]}</b><span style="display:block;font-size:14px;color:var(--text2)">${f[2]}</span></span>
-      <span style="flex:none;font-size:13px;font-weight:800;border-radius:999px;padding:3px 10px;background:#fef3c7;color:#78350f;white-space:nowrap">${f[3]}</span></div>`;
+      <span style="flex:none;font-size:13px;font-weight:800;border-radius:999px;padding:3px 10px;background:#fef3c7;color:#78350f;white-space:nowrap">${f[3]}</span>
+      <span class="sp-aus-ei" role="status" hidden style="flex-basis:100%;font-size:15px;font-weight:700;color:var(--text);background:#ecfdf5;border-radius:12px;padding:8px 10px"></span></button>`;
   return `<div id="schule-ausfall">${SCHULE_AUSFALL.map((f,i)=>zeile(i+4,f)).join("")}</div>
     <div id="schule-zeugnis-hinweis" class="k3" style="display:flex;gap:10px;align-items:center;margin-top:10px;background:#fffdf5;color:#1f2937;border:1px solid #e5e7eb;border-radius:16px;padding:12px;font-size:15px">
       <span aria-hidden="true" style="font-size:28px">📜</span><span><b style="display:block">Dein Akademie-Zeugnis</b>Theorie und Praxis zusammen – am Ende der Hinrunde und am Ende der Rückrunde.</span></div>`;

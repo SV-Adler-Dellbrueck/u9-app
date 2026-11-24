@@ -1,4 +1,4 @@
-/* v938 · Adler-Schule: Stundenplan statt Zeugnis, Lehrer mit Sprechblase, Stundenbeginn (Charles 22.11.2026, Entwurf freigegeben).
+/* v938 (seit v967: mit Begrüßungsvideo steht der Spieler direkt da, ohne Vorlesen) · Adler-Schule: Stundenplan statt Zeugnis, Lehrer mit Sprechblase, Stundenbeginn (Charles 22.11.2026, Entwurf freigegeben).
    Löst die Prüfung v936 („Stunden und Zeugnis“) ab: „Kein Zeugnis, sondern Stundenplan … Zeugnis gibt es immer am Ende der
    Hin- und Rückrunde. Und das Beste: Du musst nur zum Unterricht gehen, wenn du willst.“
 
@@ -37,13 +37,13 @@ module.exports = async function (h) {
       const mass = () => { const el = [...panel.querySelectorAll("*")].filter(e => !e.closest("svg") && [...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim()) && e.getClientRects().length);
         return { minSchrift: Math.min(...el.map(e => parseFloat(getComputedStyle(e).fontSize))), kontrast: Math.min(...[...panel.querySelectorAll(".sl-blase div, .sp-aus b, .sp-aus span, #schule-zeugnis-hinweis span, #schule-beste, #kf-stand")].map(e => window.__kontrastVon(e)).filter(x => typeof x === "number")),
           ueber: document.documentElement.scrollWidth - innerWidth }; };
-      const out = { b: { lehrer: !!panel.querySelector(".sl-lehrer .sl-figur"), blase: txt(panel.querySelector(".sl-blase")), beste: txt(document.getElementById("schule-beste")),
+      const out = { b: { lehrer: !!panel.querySelector(".sl-lehrer .sl-figur, .sl-mit-video"), video: (panel.querySelector(".sl-video video") || {}).getAttribute?.("src") || "", blase: txt(panel.querySelector(".sl-blase")), beste: txt(document.getElementById("schule-beste")),
           reihe: [pos("1. Stunde"), pos("2. Stunde"), pos("3. Stunde"), pos("Mathe"), pos("Deutsch"), pos("Chemie"), pos("Akademie-Zeugnis")], ausfall: [...panel.querySelectorAll(".sp-aus")].map(txt) },
         c: { altesZeugnis: !!document.getElementById("schule-zeugnis") || /Mein Adler-Zeugnis|Lieblingsfach/.test(t), hinweis: txt(document.getElementById("schule-zeugnis-hinweis")), prozent: /%/.test(txt(document.getElementById("schule-ausfall")) + txt(document.getElementById("schule-zeugnis-hinweis"))) },
         g1: mass() };
       // f) Vorlesen
       const rufe = []; const alt = window.kfVorlesen; window.kfVorlesen = (st) => { rufe.push(st); };
-      panel.querySelector(".sl-vorlesen").click(); window.kfVorlesen = alt;
+      panel.querySelector(".sl-lehrer:not(.sl-mit-video) .sl-vorlesen")?.click(); window.kfVorlesen = alt;   // v967: mit Video kein Vorlesen
       out.f = { text: (rufe[0] || [])[0] || "", datei: typeof kfAudioUrl === "function" ? kfAudioUrl((rufe[0] || [])[0] || "") : "" };
       await kfStart(); await w(120); const echteVideos = KF_DATEN.videos; KF_DATEN.videos = {}; kfBlock(1); await w(120);  // d) prüft den Zustand ohne Clip; die echten Lehrer-Videos prüft v938-lehrer-videos
       const wege = [...panel.querySelectorAll(".sl-weg")];
@@ -60,7 +60,7 @@ module.exports = async function (h) {
     const f = s.fehler().filter(x => !/ball-behalten\.mp4|Failed to load resource/.test(x)); await s.schliessen();
     if (r.fehler) { probleme.push(`${scheme}: ${r.fehler}`); continue; }
     const P = x => probleme.push(`${scheme}: ${x}`);
-    if (!r.b.lehrer || !/Hallo Kind A! Heute stehen drei Stunden Sport/.test(r.b.blase) || !/Vorlesen/.test(r.b.blase)) P(`b) Lehrer: „${r.b.blase}“`);
+    if (!r.b.lehrer || !/Hallo Kind A! Heute stehen drei Stunden Sport/.test(r.b.blase) || !(/Vorlesen/.test(r.b.blase) || /video\/lehrer-begruessung\.mp4$/.test(r.b.video))) P(`b) Lehrer: „${r.b.blase}“ (Video ${r.b.video})`);
     if (!/Das Beste: Du musst nur zum Unterricht, wenn du willst\./.test(r.b.beste)) P(`b) „${r.b.beste}“`);
     if (r.b.reihe.some(x => x < 0) || r.b.reihe.some((x, i) => i && x < r.b.reihe[i - 1])) P(`b) Reihenfolge: ${r.b.reihe.join(",")}`);
     if (r.b.ausfall.length !== 3 || !/4\.\s*Std\..*Mathe.*fällt aus/.test(r.b.ausfall[0]) || !/6\.\s*Std\..*Chemie.*gähn/.test(r.b.ausfall[2])) P(`b) Ausfall: ${JSON.stringify(r.b.ausfall)}`);
@@ -69,7 +69,8 @@ module.exports = async function (h) {
     if (r.d.wege.length !== 2 || !/^1 .*Erst anschauen\s*4 Bilder/.test(r.d.wege[0]) || !/^2 .*Dann spielen\s*10 Fragen/.test(r.d.wege[1]) || r.d.h.some(x => x < 100) || Math.abs(r.d.b[0] - r.d.b[1]) > 1 || r.d.haupt !== 1) P(`d) Kacheln: ${JSON.stringify([r.d.wege, r.d.h, r.d.b, r.d.haupt])}`);
     if (!/So weit bist du: 8 von 10 richtig/.test(r.d.stand) || !r.d.zurueck || r.d.video) P(`d) Stand „${r.d.stand}“, Rückweg ${r.d.zurueck}, Video ohne Clip ${r.d.video}`);
     if (JSON.stringify(r.e.pruef) !== '{"1":"video/ball-behalten.mp4"}' || !r.e.kachel || !/video\/ball-behalten\.mp4(#t=[\d.]+)?$/.test(r.e.spieler)) P(`e) Video: ${JSON.stringify(r.e)}`);
-    if (/Kind A/.test(r.f.text) || !/^Hallo! Heute stehen drei Stunden Sport/.test(r.f.text) || !liste.some(e => r.f.datei.endsWith("/audio/schule/" + e.datei))) P(`f) Vorlesen: „${r.f.text}“ → ${r.f.datei}`);
+    if (r.b.video) { /* v967: Begrüßung als Video statt Vorlesen – die Aufnahme bleibt für Geräte ohne Video ungenutzt */ }
+    else if (/Kind A/.test(r.f.text) || !/^Hallo! Heute stehen drei Stunden Sport/.test(r.f.text) || !liste.some(e => r.f.datei.endsWith("/audio/schule/" + e.datei))) P(`f) Vorlesen: „${r.f.text}“ → ${r.f.datei}`);
     for (const [n, g] of [["Stundenplan", r.g1], ["Stundenbeginn", r.g2]]) { if (g.ueber > 0) P(`g) ${n} läuft ${g.ueber} px über`); if (g.minSchrift < 13) P(`g) ${n}: Schrift ${g.minSchrift} px`); if (!(g.kontrast >= 4.5)) P(`g) ${n}: Kontrast ${g.kontrast}`); }
     if (f.length) P("Konsole: " + f.slice(0, 2).join(" | "));
     if (scheme === "light") zeilen.push(`b) „${r.b.blase.slice(0, 60)}…“ · ${r.b.ausfall.length} Stunden fallen aus · d) ${r.d.wege.join(" | ")} (${r.d.h.join("/")} px)`, `e) Video nur aus video/: ${JSON.stringify(r.e.pruef)} · f) ${liste.length} Lehrer-Texte, Vorlesen ohne Namen`);
