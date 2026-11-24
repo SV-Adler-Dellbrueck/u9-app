@@ -20,7 +20,8 @@ concurrency:
 
 jobs:
   pruefen:
-    runs-on: ubuntu-latest
+    # Fest auf 24.04: Playwright 1.56 (feste Fassung, siehe tests/README.md) kennt ubuntu-latest = 26.04 noch nicht.
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
