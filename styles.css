@@ -2320,3 +2320,24 @@ body.tp-sheet-offen{overflow:hidden}
 :root[data-theme="dark"] .rf-zitat{background:rgba(255,255,255,.07)}:root[data-theme="dark"] .rf-reakt[aria-pressed="true"] span{background:rgba(59,130,246,.25)}
 @media (prefers-reduced-motion:reduce){.rf-blase,.rf-emo{transition:none}}
 .rf-neu .rf-textfeld{background:transparent!important;border:0!important;box-shadow:none!important}
+/* v966: Termin-Karte, Optionen beim Senden, geplante Rufe, Fehlende einer Abstimmung */
+.rf-termin{margin-top:6px;border:1px solid var(--rand-bedien);border-radius:14px;overflow:hidden;background:var(--surface);color:var(--text);min-width:min(260px,64vw)}
+.rf-t-kopf{background:#15803d;color:#fff;padding:9px 12px;display:flex;flex-direction:column;gap:2px}
+.rf-t-kopf b{font-size:var(--s-karte)}.rf-t-kopf span{font-size:var(--s-klein)}
+.rf-t-kopf.rf-t-training{background:#1e3a8a}
+.rf-t-zeile{padding:8px 12px;border-top:1px solid var(--surface2);font-size:var(--s-text)}
+.rf-t-zahl{color:var(--text2);font-size:var(--s-klein)}
+.rf-t-knoepfe{display:flex;gap:8px;margin-top:6px}.rf-t-knoepfe .btn{flex:1;min-height:44px;justify-content:center;white-space:nowrap;padding-left:8px;padding-right:8px}
+.rf-optionen{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.rf-option-chip{display:inline-flex;align-items:center;gap:4px;min-height:36px;padding:0 0 0 10px;border:1px solid #b45309;border-radius:999px;background:#fef3c7;color:#78350f;font-size:var(--s-klein);font-weight:700}
+.rf-option-chip button{min-width:44px;min-height:36px;border:0;background:transparent;color:inherit;font-size:var(--s-text);cursor:pointer;border-radius:999px}
+.rf-blase.rf-geplant{background:#fef9c3!important;color:#422006!important;outline:2px dashed #a16207;outline-offset:-2px}
+.rf-blase.rf-geplant .rf-meta{color:#713f12!important}
+.rf-u-fehlt{margin-top:8px;font-size:var(--s-klein);color:var(--text2)}
+.rf-ich .rf-u-fehlt{color:var(--rf-ich-leise)}
+.rf-u-erinnern{display:flex;width:100%;min-height:44px;justify-content:center;margin-top:6px;background:#fff7ed!important;color:#9a3412!important;border:1px solid #c2410c!important;font-weight:800}
+.rf-u-hinweis,.rf-u-erinnert{margin-top:4px;font-size:var(--s-klein)}
+:root[data-theme="dark"] .rf-option-chip{background:#422006;color:#fde68a;border-color:#d97706}
+:root[data-theme="dark"] .rf-u-erinnern{background:#431407!important;color:#fed7aa!important;border-color:#ea580c!important}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .rf-option-chip{background:#422006;color:#fde68a;border-color:#d97706}
+  :root:not([data-theme="light"]) .rf-u-erinnern{background:#431407!important;color:#fed7aa!important;border-color:#ea580c!important}}

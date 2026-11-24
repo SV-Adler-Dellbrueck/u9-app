@@ -90,6 +90,7 @@ async function _rufeOpen(raumId){
       <div id="rufe-antwort" style="display:none"></div>
       <div id="rufe-erw-liste" class="rf-erw-liste" role="listbox" aria-label="Wen erwähnen?" hidden></div>
       <div id="rufe-emoji-leiste" class="rf-emoji-leiste" hidden>${RUFE_EMOJI_LEISTE.map(e=>`<button type="button" onclick="rufeEmojiEinfuegen('${e}')" aria-label="${e} einfügen">${e}</button>`).join("")}</div>
+      <div id="rufe-optionen" class="rf-optionen" hidden></div>
       <div id="rufe-chips" style="display:none;flex-wrap:wrap;gap:6px;margin-bottom:6px"></div>
       <div id="rufe-offen-hinweis" style="display:none;font-size:var(--s-klein);color:var(--text2);margin:0 0 6px">Offener Raum – alle Eltern lesen mit. Bitte keine Fotos anderer Kinder.</div>
       <input id="rufe-datei" type="file" multiple accept=".jpg,.jpeg,.png,.webp,.heic,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,image/*" onchange="rufeDateiWahl(this)" style="display:none">
@@ -323,11 +324,12 @@ async function rufeLaden(zumEnde){
   ]);
   // v674: Stand der Abstimmungen – lesend per GET (die Funktion ist stable)
   const stand=umf.length?await _rfGet(`rpc/rufe_umfrage_stand?p_ids=${encodeURIComponent("{"+umf.map(u=>Number(u.id)).join(",")+"}")}`):[];
+  await rufeKartenLaden(liste,umf);   // v966: Termin-Karten und „wer fehlt“ bei Abstimmungen
   // v740: „Gesehen von …“ nur für das Trainerteam – die Funktion antwortet Eltern ohnehin leer
   const ges=_rf.trainer&&ids.length?await _rfGet(`rpc/rufe_gesehen_zahlen?p_ids=${encodeURIComponent("{"+ids.map(Number).join(",")+"}")}`).catch(()=>[]):[];
   if(!_rf||_rf.raum!==raum)return;
   const neu=liste.length&&liste[liste.length-1].id!==_rf.letzte;
-  const kennung=JSON.stringify([liste.map(n=>[n.id,n.text,n.archiviert_am,n.anhang_entfernt_am,(n.rufe_anhang||[]).map(a=>a.id)]),reakt.length,fix,umf.map(u=>[u.id,u.beendet_am]),stand,ges]);
+  const kennung=JSON.stringify([liste.map(n=>[n.id,n.text,n.archiviert_am,n.anhang_entfernt_am,(n.rufe_anhang||[]).map(a=>a.id)]),reakt.length,fix,umf.map(u=>[u.id,u.beendet_am]),stand,ges,_rf.kartenKennung||""]);
   if(!zumEnde&&kennung===_rf.kennung)return;
   _rf.kennung=kennung;
   _rf.liste=liste; _rf.reakt=reakt; _rf.fix=fix.filter(f=>!f.bis||new Date(f.bis)>new Date());
@@ -387,7 +389,7 @@ function rufeNachrichtHtml(n,erst){
   const ges=_rf.trainer&&!arch&&_rf.gesehen&&_rf.gesehen[n.id]?(()=>{ const x=_rf.gesehen[n.id]; return `<button type="button" class="rf-gesehen" onclick="rufeGesehenOpen(${Number(n.id)})" aria-label="Gesehen von ${x.g} von ${x.e} – Namen zeigen"><span aria-hidden="true">👁</span> ${x.g}/${x.e}</button>`; })():"";
   return `<div class="rf-msg${eigen?" rf-ich":""}${erst?" rf-erst":""}${mich?" rf-mich":""}" data-id="${Number(n.id)}">
     ${eigen?"":(erst?`<span class="rf-ava rf-f${f}" aria-hidden="true">${esc(_rfInitialen(n.autor_name))}</span>`:`<span class="rf-ava-platz" aria-hidden="true"></span>`)}
-    <div class="rf-blase${arch?" rf-arch":""}${n.an_alle?" rf-alle":""}">
+    <div class="rf-blase${arch?" rf-arch":""}${n.an_alle?" rf-alle":""}${_rfGeplant(n)?" rf-geplant":""}">
       ${eigen?`<span class="rf-sr">Du: </span>`:""}
       ${erst&&!eigen?`<div class="rf-wer"><b class="rf-name rf-t${f}">${esc(n.autor_name||"")}</b>${rolle}${n.autor_zusatz&&n.autor_rolle!=="trainer"?`<span class="rf-zusatz">${esc(n.autor_zusatz)}</span>`:""}</div>`:""}
       ${n.an_alle||fixiert?`<div class="rf-marken">${n.an_alle?`<span class="rf-marke-alle">@alle</span>`:""}${fixiert?`<span class="rf-marke">📌 fixiert</span>`:""}</div>`:""}
@@ -395,8 +397,9 @@ function rufeNachrichtHtml(n,erst){
       <div class="rf-text${lang?" rf-lang":""}">${_rf.umf[n.id]?"<b>📊 </b>":""}${_rfText(n.text)}</div>
       ${lang?`<button type="button" class="rf-weiter btn btn-link" onclick="rufeWeiterlesen(${Number(n.id)})" >Weiterlesen</button>`:""}
       ${rufeAnhaengeHtml(n)}
+      ${n.termin_id?rufeTerminKarteHtml(n.termin_id):""}
       ${_rf.umf[n.id]?rufeUmfrageHtml(_rf.umf[n.id],arch):""}
-      <div class="rf-meta">${ges}<span>${arch?"archiviert · ":""}${n.bearbeitet_am?"bearbeitet · ":""}${_rfZeit(n.created_at)}</span></div>
+      <div class="rf-meta">${ges}<span>${_rfGeplant(n)?`🕗 geplant: ${_rfTag(n.created_at)} ${_rfZeit(n.created_at)} · nur du siehst ihn`:`${n.still?`<span aria-label="still gesendet">🔕</span> `:""}${arch?"archiviert · ":""}${n.bearbeitet_am?"bearbeitet · ":""}${_rfZeit(n.created_at)}`}</span></div>
       ${arch?"":`<button type="button" class="rf-menue-knopf" onclick="rufeMenue(${Number(n.id)})" aria-label="Aktionen zu diesem Ruf: reagieren, antworten …">⌄</button>`}
     </div></div>
     ${Object.keys(r).length?`<div class="rf-reakt-zeile${eigen?" rf-ich":""}">${Object.keys(r).map(e=>`<button type="button" class="rf-reakt" onclick="rufeReagieren(${Number(n.id)},'${e}')" aria-pressed="${r[e].ich}" aria-label="${e} ${r[e].n}, ${r[e].ich?"zurücknehmen":"dazu"}"><span>${e} ${r[e].n}</span></button>`).join("")}</div>`:""}`;
@@ -468,13 +471,14 @@ async function rufeSenden(){
   const knopf=document.getElementById("rufe-senden"); if(knopf)knopf.disabled=true;
   const zeile={raum_id:_rf.raum,text,antwort_auf:_rf.antwort||null,an_alle:_rf.mod&&/(^|\s)@alle\b/i.test(text)};
   const erw=rufeErwaehntAus(text); if(erw.length)zeile.erwaehnt=erw;   // v964
+  if(_rf.termin)zeile.termin_id=_rf.termin.id; if(_rf.geplant)zeile.geplant_fuer=_rf.geplant.toISOString(); if(_rf.still)zeile.still=true;   // v966
   try{
     const r=await fetch(`${SB_URL}/rest/v1/rufe_nachricht`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify(zeile)});
     if(typeof sbCheck401==="function"&&sbCheck401(r))return;
     if(!r.ok){ const t=await r.text().catch(()=>""); toast(/stumm/.test(t)?"Du bist gerade stummgeschaltet – später geht es wieder":"Ruf nicht gesendet – bitte gleich noch einmal","err"); return; }
   }catch(e){ toast("Kein Netz – Ruf nicht gesendet","err"); return; }
   finally{ if(knopf)knopf.disabled=false; }
-  feld.value=""; rufeTextWachsen(feld); _rf.antwort=null; _rf.erw={}; rufeAntwortRender();
+  feld.value=""; rufeTextWachsen(feld); _rf.antwort=null; _rf.erw={}; rufeAntwortRender(); rufeOptionenFertig();
   document.getElementById("rufe-emoji-leiste")?.setAttribute("hidden","");
   await rufeLaden(true);
 }
@@ -494,6 +498,9 @@ function rufeAnhangMenue(){
   _rfBlatt("rufe-menue","Anhängen",
     z("🖼️","Foto oder Datei","document.getElementById('rufe-menue')?.remove();document.getElementById('rufe-datei')?.click()","rufe-anhang-datei")
     +z("📊","Abstimmung","document.getElementById('rufe-menue')?.remove();rufeUmfrageNeu()","rufe-anhang-umfrage")
+    +(_rf.trainer?z("📅","Termin mit Zusage und Mitfahrt","document.getElementById('rufe-menue')?.remove();rufeTerminWahl()","rufe-anhang-termin"):"")
+    +z("🕗",_rf.geplant?"Anderer Zeitpunkt …":"Später senden …","document.getElementById('rufe-menue')?.remove();rufePlanenMenue()","rufe-anhang-planen")
+    +z("🔕",_rf.still?"Still senden: an – ausschalten":"Still senden (ohne Benachrichtigung)","document.getElementById('rufe-menue')?.remove();rufeStillUmschalten()","rufe-anhang-still")
     +`<button type="button" onclick="document.getElementById('rufe-menue')?.remove()" class="btn" style="width:100%;justify-content:center;margin-top:6px">Abbrechen</button>`);
 }
 function rufeTasteImFeld(e){
@@ -559,7 +566,8 @@ async function rufeSendenMitAnhang(text){
       hoch.push({pfad,name:d.name,mime:d.mime,groesse:d.blob.size});
     }
     const r=await _rfRpc("rufe_senden",{p_raum:raum,p_text:text,p_antwort_auf:_rf.antwort||null,p_an_alle:_rf.mod&&/(^|\s)@alle\b/i.test(text),p_anhaenge:hoch,
-      ...(rufeErwaehntAus(text).length?{p_erwaehnt:rufeErwaehntAus(text)}:{})});   // v964
+      ...(rufeErwaehntAus(text).length?{p_erwaehnt:rufeErwaehntAus(text)}:{}),   // v964
+      ...(_rf.termin?{p_termin:_rf.termin.id}:{}),...(_rf.geplant?{p_geplant:_rf.geplant.toISOString()}:{}),...(_rf.still?{p_still:true}:{})});   // v966
     if(typeof sbCheck401==="function"&&sbCheck401(r)){ await _rfAufraeumen(hoch); fertig(); return; }
     if(!r.ok){ const t=await r.text().catch(()=>""); await _rfAufraeumen(hoch);
       toast(/stumm/.test(t)?"Du bist gerade stummgeschaltet – später geht es wieder":"Ruf nicht gesendet – Text und Anhänge bleiben stehen. Bitte gleich noch einmal.","err"); fertig(); return; }
@@ -567,7 +575,7 @@ async function rufeSendenMitAnhang(text){
   fertig();
   if(!_rf)return;
   _rf.dateien.forEach(d=>d.vorschau&&URL.revokeObjectURL(d.vorschau)); _rf.dateien=[]; rufeChipsRender();
-  if(feld){ feld.value=""; rufeTextWachsen(feld); } _rf.antwort=null; rufeAntwortRender();
+  if(feld){ feld.value=""; rufeTextWachsen(feld); } _rf.antwort=null; rufeAntwortRender(); rufeOptionenFertig();
   await rufeLaden(true);
 }
 async function rufeReagieren(id,emoji){
@@ -641,6 +649,8 @@ function rufeMenue(id){
     `<div class="rf-emo-leiste">${RUFE_EMOJI.map(e=>`<button type="button" class="rf-emo" onclick="rufeReagieren(${id},'${e}')" aria-label="Mit ${e} reagieren">${e}</button>`).join("")}</div>`
     +zeile("↩️","Antworten <small class=\"rf-tipp\">oder nach rechts wischen</small>",`rufeAntworten(${id})`)
     +zeile("📋","Text kopieren",`rufeKopieren(${id})`)
+    +(_rfGeplant(n)?zeile("▶️","Jetzt senden",`rufeGeplant(${id},'jetzt')`)+zeile("🗑️","Geplanten Ruf löschen",`rufeGeplant(${id},'loeschen')`)
+                   :(n.archiviert_am?"":zeile("⏰","Erinnere mich …",`rufeErinnernMenue(${id})`)))
     +(_rf.trainer&&!n.archiviert_am?zeile("👁","Wer hat ihn gesehen?",`rufeGesehenOpen(${id})`):"")
     +(darfModerieren?(fixiert?zeile("📌","Nicht mehr fixieren",`rufeFixieren(${id},null,true)`):zeile("📌","Oben fixieren …",`rufeFixMenue(${id})`)):"")
     +(uOffen&&(u.von===_rf.uid||darfModerieren)?zeile("🏁","Abstimmung beenden",`rufeUmfrageBeenden(${Number(u.id)})`):"")
@@ -751,6 +761,7 @@ function rufeUmfrageHtml(u,arch){
         ${!u.anonym&&!verdeckt&&x.namen&&x.namen.length?`<div class="rf-namen">${esc(x.namen.join(", "))}</div>`:""}`; }).join("")}
     <div class="rf-u-fuss">${!u.anonym&&namen.length?`<span class="rf-u-wer" aria-hidden="true">${namen.slice(0,4).map((nm,k)=>`<span class="rf-ava rf-mini rf-f${k%8}">${esc(_rfInitialen(nm))}</span>`).join("")}</span>`:""}
       <span>${tn===1?"1 hat abgestimmt":tn+" haben abgestimmt"}${verdeckt?" · 🙈 Ergebnis kommt am Schluss":""}${zu?"":u.mehrfach?" · antippen wählt an und ab":" · nochmal antippen nimmt die Stimme zurück"}</span></div>
+    ${zu?"":rufeFehlendHtml(u)}
   </div>`;
 }
 async function rufeStimmen(umfId,i){
@@ -1145,14 +1156,15 @@ async function _rfAufraeumen(liste){
 }
 /* Nachrichten mit eingebetteten Anhängen in EINER Abfrage. Kennt die Datenbank rufe_anhang noch nicht
    (Migration v736 nicht eingespielt), lädt die App wie bisher ohne – die Rufe bleiben sichtbar. */
-let _rfOhneAnhang=false;
+let _rfOhneAnhang=false, _rfOhneV966=false;
 async function _rfNachrichtenHolen(raum){
-  const basis="id,autor,autor_name,autor_zusatz,autor_rolle,text,antwort_auf,an_alle,bearbeitet_am,archiviert_am,created_at,erwaehnt";
+  const basis="id,autor,autor_name,autor_zusatz,autor_rolle,text,antwort_auf,an_alle,bearbeitet_am,archiviert_am,created_at,erwaehnt"+(_rfOhneV966?"":",termin_id,geplant_fuer,still");
   const q=sel=>`rufe_nachricht?raum_id=eq.${raum}&select=${sel}&order=created_at.desc&limit=${RUFE_ANZAHL}`;
   if(!_rfOhneAnhang){
     try{
       const r=await fetch(`${SB_URL}/rest/v1/${q(basis+",anhang_entfernt_am,rufe_anhang(id,pfad,name,mime,groesse)")}`,{headers:sbAuthHeaders()});
       if(r.ok)return await r.json();
+      if(r.status===400&&!_rfOhneV966){ _rfOhneV966=true; return _rfNachrichtenHolen(raum); }   // v966: Migration fehlt noch – ohne die neuen Spalten
       if(r.status===400)_rfOhneAnhang=true; else return [];
     }catch(e){ return []; }
   }
@@ -1240,5 +1252,170 @@ async function rufeAnhaengeLoeschen(id){
   l.forEach(a=>{ const u=_rf&&_rf.blobs[a.pfad]; if(u){ URL.revokeObjectURL(u); delete _rf.blobs[a.pfad]; } });
   toast("Anhänge gelöscht");
   await rufeLaden(false);
+}
+/* ── v966 · Charles 24.11. (Schritt 2, Bild freigegeben): Termin-Karte mit Zusage und Mitfahrt, später/still senden,
+   „Erinnere mich“, Fehlende einer Abstimmung einmal erinnern. Ziel: „dass die Eltern lieber mit unserem Messenger arbeiten
+   als mit WhatsApp“. Eine Karte für Zusage und Mitfahrt (Trainer hängt sie an), planen/still für alle, erinnern darf, wer die
+   Abstimmung erstellt hat, und das Trainerteam. ── */
+function _rfGeplant(n){ return !!n&&n.autor===_rf.uid&&new Date(n.created_at)>new Date(); }
+async function rufeKartenLaden(liste,umf){
+  if(!_rf)return;
+  const tids=[...new Set(liste.map(n=>n.termin_id).filter(Boolean).map(Number))];
+  const offen=(umf||[]).filter(u=>!_rfUmfrageZu(u)&&(u.von===_rf.uid||_rf.trainer));
+  const kids=(window._elternKids||[]).map(k=>Number(k.spieler_id)).filter(Boolean);
+  const [ter,st,mein,fe]=await Promise.all([
+    tids.length?_rfGet(`termine?id=in.(${tids.join(",")})&select=id,typ,titel,gegner,datum,uhrzeit,treffzeit,ort,heim`):Promise.resolve([]),
+    tids.length?_rfGet(`rpc/rufe_termin_stand?p_ids=${encodeURIComponent("{"+tids.join(",")+"}")}`):Promise.resolve([]),
+    tids.length&&kids.length?_rfGet(`rueckmeldungen?termin_id=in.(${tids.join(",")})&spieler_id=in.(${kids.join(",")})&select=termin_id,spieler_id,status,carpool_status`):Promise.resolve([]),
+    Promise.all(offen.map(u=>_rfGet(`rpc/rufe_umfrage_fehlende?p_umfrage=${Number(u.id)}`).then(r=>[u.id,(Array.isArray(r)?r[0]:r)||null]).catch(()=>[u.id,null])))
+  ]);
+  if(!_rf)return;
+  _rf.termine={}; (Array.isArray(ter)?ter:[]).forEach(t=>_rf.termine[t.id]=t);
+  _rf.tstand={}; (Array.isArray(st)?st:[]).forEach(x=>_rf.tstand[x.termin_id]=x);
+  _rf.tmein=Array.isArray(mein)?mein:[];
+  _rf.fehlend={}; fe.forEach(([id,x])=>{ if(x)_rf.fehlend[id]=x; });
+  _rf.kartenKennung=JSON.stringify([ter,st,mein,fe]);
+}
+function _rfTerminTitel(t){
+  const emo=t.typ==="training"?"🏃":t.typ==="turnier"?"🏆":t.typ==="event"?"🎉":"⚽";
+  const was=t.typ==="training"?"Training":t.gegner?`${t.typ==="turnier"?"Turnier":"Spiel gegen"} ${t.gegner}`:(t.titel||"Termin");
+  return emo+" "+was;
+}
+function _rfTerminWann(t){
+  const d=new Date(String(t.datum)+"T12:00:00");
+  const tag=isNaN(d)?String(t.datum||""):d.toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"});
+  return [tag,t.uhrzeit?String(t.uhrzeit).slice(0,5)+" Uhr":"",t.treffzeit?"Treffpunkt "+String(t.treffzeit).slice(0,5):"",t.heim===false?"Auswärts":t.heim?"Heim":""].filter(Boolean).join(" · ");
+}
+function rufeTerminKarteHtml(tid){
+  const t=_rf.termine&&_rf.termine[tid];
+  if(!t)return `<div class="rf-termin"><div class="rf-t-kopf">📅 Termin</div><div class="rf-t-zeile">Dieser Termin ist nicht mehr da.</div></div>`;
+  const st=(_rf.tstand||{})[tid]||{dabei:0,abgesagt:0,offen:0,autos:0,frei:0};
+  const training=t.typ==="training", vorbei=String(t.datum)<_rfIsoHeute();
+  const kids=window._elternKids||[];
+  const name=k=>(k.kader&&k.kader.name)||"Euer Kind";
+  const status=sid=>((_rf.tmein||[]).find(r=>Number(r.termin_id)===Number(tid)&&Number(r.spieler_id)===Number(sid))||{}).status||null;
+  const wort=s=>s==="zugesagt"?"✓ dabei":s==="abgesagt"?"✗ abgesagt":s==="krank"?"🤒 krank":s==="unsicher"?"? unsicher":"noch offen";
+  const zusage=!_rf.trainer&&kids.length&&!training&&!vorbei&&typeof elternRsvp==="function"
+    ?kids.map(k=>{ const s=status(k.spieler_id), sid=Number(k.spieler_id);
+      return `<div class="rf-t-zeile"><b>${esc(name(k))}</b> · ${wort(s)}<div class="rf-t-knoepfe">
+        <button type="button" class="btn${s==="zugesagt"?" btn-p":""}" aria-pressed="${s==="zugesagt"}" onclick="rufeTerminZusage(${Number(tid)},${sid},'zugesagt')">✓ Dabei</button>
+        <button type="button" class="btn" aria-pressed="${s==="abgesagt"||s==="krank"}" onclick="rufeTerminZusage(${Number(tid)},${sid},'abgesagt')">✗ Absagen</button></div></div>`; }).join("")
+    :(training?`<div class="rf-t-zeile">Training – gilt als zugesagt.</div>`:"");
+  const k0=kids[0], mitfahrt=!vorbei&&(!training||st.autos>0)
+    ?`<div class="rf-t-zeile">🚗 <b>${st.autos} ${st.autos===1?"Auto":"Autos"} · ${st.frei} ${st.frei===1?"Platz":"Plätze"} frei</b>${!_rf.trainer&&k0&&typeof elternCarpoolOpen==="function"?`<div class="rf-t-knoepfe">
+        <button type="button" class="btn" onclick="rufeTerminMitfahrt(${Number(tid)},${Number(k0.spieler_id)},'fahren')">🚙 Ich fahre</button>
+        <button type="button" class="btn" onclick="rufeTerminMitfahrt(${Number(tid)},${Number(k0.spieler_id)},'mit')">🙋 Mitfahren</button></div>`:""}</div>`:"";
+  return `<div class="rf-termin" role="group" aria-label="Termin: ${esc(_rfTerminTitel(t))}">
+    <div class="rf-t-kopf${training?" rf-t-training":""}"><b>${esc(_rfTerminTitel(t))}</b><span>${esc(_rfTerminWann(t))}${t.ort?" · "+esc(t.ort):""}</span></div>
+    ${zusage}
+    ${training?"":`<div class="rf-t-zeile rf-t-zahl">✓ ${st.dabei} dabei · ✗ ${st.abgesagt} abgesagt · ${st.offen} offen</div>`}
+    ${mitfahrt}</div>`;
+}
+function _rfIsoHeute(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+async function rufeTerminZusage(tid,sid,status){
+  if(typeof elternRsvp!=="function")return;
+  await elternRsvp(tid,sid,status);
+  if(_rf){ _rf.kennung=null; await rufeLaden(); }
+}
+function rufeTerminMitfahrt(tid,sid,art){
+  if(typeof elternCarpoolOpen!=="function")return;
+  elternCarpoolOpen(sid,tid);
+  const m=document.getElementById("carpool-modal"); if(m)m.style.zIndex=_rfZ(10070);   // über dem Chat-Fenster
+  if(art==="fahren"&&typeof elternCarpoolDriverForm==="function")setTimeout(()=>elternCarpoolDriverForm(sid,tid),400);
+}
+async function rufeTerminWahl(){
+  const heute=_rfIsoHeute();
+  const ter=await _rfGet(`termine?datum=gte.${heute}&typ=neq.trainermeeting&select=id,typ,titel,gegner,datum,uhrzeit,treffzeit,ort,heim&order=datum.asc,uhrzeit.asc&limit=10`);
+  const liste=Array.isArray(ter)?ter:[];
+  _rfBlatt("rufe-menue","Termin anhängen",
+    (liste.length?liste.map(t=>`<button type="button" class="btn btn-zeile" style="margin-top:6px" onclick="rufeTerminSetzen(${Number(t.id)})"><span aria-hidden="true">📅</span><span style="display:flex;flex-direction:column;text-align:left"><b>${esc(_rfTerminTitel(t))}</b><small>${esc(_rfTerminWann(t))}</small></span></button>`).join("")
+      :`<div style="color:var(--text2);font-size:var(--s-text)">Kein kommender Termin.</div>`)
+    +`<button type="button" onclick="document.getElementById('rufe-menue')?.remove()" class="btn" style="width:100%;justify-content:center;margin-top:6px">Abbrechen</button>`);
+  window._rfTerminListe=liste;
+}
+function rufeTerminSetzen(id){
+  const t=(window._rfTerminListe||[]).find(x=>Number(x.id)===Number(id)); if(!t||!_rf)return;
+  _rf.termin=t; document.getElementById("rufe-menue")?.remove(); rufeOptionenRender();
+  const f=document.getElementById("rufe-text"); if(f&&!f.value.trim()){ f.value=t.typ==="training"?"Training – Infos und Mitfahrt:":"Bitte sagt zu und schaut, wer fährt:"; rufeTextWachsen(f); }
+  f&&f.focus();
+}
+function _rfZeitpunkte(){
+  const jetzt=new Date(), d=(tage,h,m)=>{ const x=new Date(jetzt); x.setDate(x.getDate()+tage); x.setHours(h,m||0,0,0); return x; };
+  const liste=[["⏱️","In 1 Stunde",new Date(jetzt.getTime()+3600e3)]];
+  if(jetzt.getHours()<18)liste.push(["🌙","Heute Abend, 19 Uhr",d(0,19)]);
+  liste.push(["☀️","Morgen früh, 7 Uhr",d(1,7)],["☀️","Morgen, 8 Uhr",d(1,8)]);
+  return liste;
+}
+function rufePlanenMenue(){
+  if(!_rf)return;
+  const z=_rfZeitpunkte(); window._rfPlanZeiten=z.map(x=>x[2]);
+  _rfBlatt("rufe-menue","🕗 Später senden",
+    `<div style="font-size:var(--s-text);color:var(--text2)">Bis dahin siehst nur du den Ruf. Er erscheint zur gewählten Zeit bei allen – mit Benachrichtigung, außer du sendest still.</div>`
+    +z.map((x,i)=>`<button type="button" class="btn btn-zeile" style="margin-top:6px" onclick="rufePlanenSetzen(${i})"><span aria-hidden="true">${x[0]}</span>${x[1]}</button>`).join("")
+    +(_rf.geplant?`<button type="button" class="btn btn-zeile" style="margin-top:6px" onclick="rufePlanenSetzen(-1)"><span aria-hidden="true">⚡</span>Doch sofort senden</button>`:"")
+    +`<button type="button" onclick="document.getElementById('rufe-menue')?.remove()" class="btn" style="width:100%;justify-content:center;margin-top:6px">Abbrechen</button>`);
+}
+function rufePlanenSetzen(i){
+  if(!_rf)return; document.getElementById("rufe-menue")?.remove();
+  _rf.geplant=i<0?null:(window._rfPlanZeiten||[])[i]||null; rufeOptionenRender();
+}
+function rufeStillUmschalten(){ if(!_rf)return; _rf.still=!_rf.still; rufeOptionenRender(); if(_rf.still)toast("Still: Der Ruf kommt ohne Benachrichtigung an 🔕"); }
+function rufeOptionenRender(){
+  const box=document.getElementById("rufe-optionen"); if(!box||!_rf)return;
+  const chip=(txt,weg,lbl)=>`<span class="rf-option-chip">${txt}<button type="button" onclick="${weg}" aria-label="${lbl}">✕</button></span>`;
+  const teile=[];
+  if(_rf.termin)teile.push(chip("📅 "+esc(_rfTerminTitel(_rf.termin)),"_rf.termin=null;rufeOptionenRender()","Termin entfernen"));
+  if(_rf.geplant)teile.push(chip(`🕗 ${_rfTag(_rf.geplant)} ${_rfZeit(_rf.geplant)}`,"_rf.geplant=null;rufeOptionenRender()","Planung entfernen – sofort senden"));
+  if(_rf.still)teile.push(chip("🔕 still","_rf.still=false;rufeOptionenRender()","Still senden ausschalten"));
+  box.innerHTML=teile.join(""); teile.length?box.removeAttribute("hidden"):box.setAttribute("hidden","");
+}
+function rufeOptionenFertig(){
+  if(!_rf)return;
+  if(_rf.geplant)toast(`🕗 Geplant für ${_rfTag(_rf.geplant)} ${_rfZeit(_rf.geplant)} – bis dahin siehst nur du ihn`);
+  _rf.termin=null; _rf.geplant=null; _rf.still=false; rufeOptionenRender();
+}
+async function rufeGeplant(id,aktion){
+  document.getElementById("rufe-menue")?.remove();
+  if(aktion==="loeschen"&&typeof frageJaNein==="function"&&!await frageJaNein({emoji:"🗑️",ton:"rot",titel:"Geplanten Ruf löschen?",text:"Er wird nicht gesendet.",ja:"Löschen",nein:"Behalten"}))return;
+  try{ const r=await _rfRpc("rufe_geplant",{p_id:id,p_aktion:aktion}); if(!r.ok){ toast("Hat nicht geklappt – bitte gleich noch einmal","err"); return; } }
+  catch(e){ toast("Kein Netz","err"); return; }
+  toast(aktion==="jetzt"?"Gesendet ✓":"Geplanter Ruf gelöscht");
+  if(_rf){ _rf.kennung=null; await rufeLaden(true); }
+}
+function rufeErinnernMenue(id){
+  if(!_rf)return;
+  const n=_rf.liste.find(x=>x.id===id); const z=_rfZeitpunkte().filter(x=>x[1]!=="Morgen, 8 Uhr");
+  const t=n&&n.termin_id&&_rf.termine?_rf.termine[n.termin_id]:null;
+  if(t){ const v=new Date(String(t.datum)+"T18:00:00"); v.setDate(v.getDate()-1); if(v>new Date())z.push(["📅","Am Abend vor dem Termin, 18 Uhr",v]); }
+  window._rfErinZeiten=z.map(x=>x[2]);
+  _rfBlatt("rufe-menue","⏰ Erinnere mich an diesen Ruf",
+    z.map((x,i)=>`<button type="button" class="btn btn-zeile" style="margin-top:6px" onclick="rufeErinnern(${Number(id)},${i})"><span aria-hidden="true">${x[0]}</span>${x[1]}</button>`).join("")
+    +`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">Die Erinnerung kommt als Benachrichtigung – nur zu dir, sonst merkt es niemand.</div>`
+    +`<button type="button" onclick="document.getElementById('rufe-menue')?.remove()" class="btn" style="width:100%;justify-content:center;margin-top:6px">Abbrechen</button>`);
+}
+async function rufeErinnern(id,i){
+  const wann=(window._rfErinZeiten||[])[i]; document.getElementById("rufe-menue")?.remove(); if(!wann)return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/rufe_erinnerung?on_conflict=user_id,nachricht_id`,{method:"POST",headers:sbAuthHeaders({'Prefer':'resolution=merge-duplicates,return=minimal'}),
+      body:JSON.stringify({nachricht_id:id,faellig:wann.toISOString(),gesendet_am:null})});
+    if(!r.ok){ toast("Erinnerung nicht gespeichert – bitte gleich noch einmal","err"); return; }
+  }catch(e){ toast("Kein Netz – Erinnerung nicht gespeichert","err"); return; }
+  toast(`⏰ Ich erinnere dich ${_rfTag(wann)} um ${_rfZeit(wann)}`);
+}
+function rufeFehlendHtml(u){
+  const f=(_rf.fehlend||{})[u.id]; if(!f||!f.kinder)return "";
+  const n=Number(f.fehlen)||0, k=Number(f.kinder)||0;
+  if(!n)return `<div class="rf-u-fehlt">Alle ${k} Kinder sind dabei ✓</div>`;
+  return `<div class="rf-u-fehlt">${k-n} von ${k} Kindern · ${n} ${n===1?"fehlt":"fehlen"} noch
+    ${f.erinnert_am?`<div class="rf-u-erinnert">🔔 Erinnert ${_rfTag(f.erinnert_am)} ${_rfZeit(f.erinnert_am)}</div>`
+      :`<button type="button" class="btn rf-u-erinnern" onclick="rufeFehlendeErinnern(${Number(u.id)},${n})">🔔 ${n===1?"Die Familie":"Die "+n+" Familien"} erinnern</button><div class="rf-u-hinweis">Einmal je Abstimmung · nur für dich sichtbar</div>`}</div>`;
+}
+async function rufeFehlendeErinnern(umfId,n){
+  if(typeof frageJaNein==="function"&&!await frageJaNein({emoji:"🔔",titel:"Fehlende erinnern?",text:`Wer für sein Kind noch nicht abgestimmt hat, bekommt einmal eine Benachrichtigung (${n===1?"1 Kind":n+" Kinder"}). Das geht je Abstimmung nur einmal.`,ja:"Erinnern",nein:"Lieber nicht"}))return;
+  try{ const r=await _rfRpc("rufe_umfrage_erinnern",{p_umfrage:umfId});
+    if(!r.ok){ const t=await r.text().catch(()=>""); toast(/schon_erinnert/.test(t)?"Schon erinnert – das geht einmal je Abstimmung":"Erinnern hat nicht geklappt","err"); return; } }
+  catch(e){ toast("Kein Netz","err"); return; }
+  toast("🔔 Erinnerung ist unterwegs");
+  if(_rf){ _rf.kennung=null; await rufeLaden(); }
 }
 function rufeModulDa(){ return true; }
