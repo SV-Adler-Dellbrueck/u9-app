@@ -1461,6 +1461,38 @@ function tpFilteredOpts(typ,kat){
    angehängt und zählte voll auf die Gesamtzeit („85 von 75 Min. – zu lang!"), obwohl
    parallel trainiert wird. Beide Typen laufen jetzt durch dieselben Weichen. */
 const TP_PARALLEL_TYPEN=["individual","tw"];
+/* v959 · Charles 23.11.: „Wir haben montags jetzt immer einen Part Torwart-Skill-Training, 30 Minuten ca. … [ein Vater]
+   macht das … Also montags diesen Block bei der Trainingsplanung mit einsetzen. Kann aber wie alle anderen gelöscht werden.
+   Da brauchen wir aber keine inhaltliche Planung. Wenn … die Torhüter da sind, dann trainieren die mit [ihm] und nicht in
+   der Zeit in den anderen Übungen.“ Freigegeben (Bild): ab einem Torhüter, fester Name am Block, neben dem ganzen
+   Hauptteil. Der Block ist ein Torwart-Block mit zwei Merkmalen: extern (Name des Torwarttrainers; er belegt kein Feld,
+   eine Übung ist nicht nötig) und alle (läuft neben allen Hauptteilen; Dauer = ihre Summe). Der Name steht nur in den
+   gespeicherten Plänen (Datenbank), nie im Code – der nächste Montag übernimmt ihn aus dem letzten Plan. */
+const TP_TW_MONTAG={label:"Torwart-Training",farbe:"#854d0e",typ:"tw",extern:"",alle:true};
+function tpTwExtern(slot){ return !!slot&&(slot.typ||"")==="tw"&&slot.extern!=null; }
+/* Torhüter, die heute da sind (Pool ohne Absagen, nach der Anwesenheit die Anwesenden) */
+function tpTwDa(){ const pool=new Set((typeof _tgPool==="function")?_tgPool().namen:[]); return KADER.filter(k=>k.tw&&k.aktiv!==false&&pool.has(k.name)); }
+let _tpTwExternName=null;
+async function _tpTwExternLaden(){
+  if(_tpTwExternName!=null)return _tpTwExternName;
+  _tpTwExternName="";
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?select=slots&slots=cs.${encodeURIComponent('[{"typ":"tw","alle":true}]')}&order=datum.desc&limit=5`,{headers:sbAuthHeaders()});
+    if(r.ok)for(const row of ((await r.json())||[])){ const sl=(row.slots||[]).find(x=>x&&x.typ==="tw"&&x.extern); if(sl){ _tpTwExternName=String(sl.extern); break; } }
+  }catch(e){}
+  return _tpTwExternName;
+}
+/* Montags beim Bauen eines Plans (Training füllen, Vorlage): Block dazu, wenn noch keiner da ist und mindestens ein Torhüter
+   kommt. Gibt true zurück, wenn er eingesetzt wurde. Ein gelöschter Block kommt nur beim nächsten Neubau wieder. */
+async function tpTorwartMontag(datum){
+  if(!datum||new Date(String(datum).slice(0,10)+"T12:00:00").getDay()!==1)return false;
+  if(tpSlots.some(x=>x&&(x.typ||"")==="tw"))return false;
+  if(!tpTwDa().length)return false;
+  const mi=tpSlots.findIndex(x=>x&&tpIstHauptteil(x.typ)); if(mi<0)return false;
+  const name=await _tpTwExternLaden();
+  tpSlots.push({...TP_TW_MONTAG,extern:name||"",parallelZu:mi});
+  return true;
+}
 /* ═══ Blocktypen: Spielform und Übungsform (Paket 3) ══════════════════════════
    Die Trainingsphilosophie Deutschland rechnet in NETTOSPIELZEIT – Minuten, in denen
    wirklich gespielt wird. Bis hierher liefen Spielform und Übungsform beide als
@@ -2607,6 +2639,7 @@ function _tpBlockZeileHtml(el){
     const tr=(typeof tpCoaches!=="undefined"&&tpCoaches[id])||"";
     const grp=el.querySelector(`[data-station="${id}"]`)?.closest(".tp-station")?.querySelector(".tp-station-nr")?.textContent||"";
     return `<span class="tp-z-zeile">${grp&&!/^\d+$/.test(grp.trim())?esc(grp.trim())+" ":""}${n?esc(n):'<b class="tp-z-fehlt">Übung fehlt</b>'}${tr?` · ${esc(tr)}`:(ids.length>1?' · <span class="tp-z-leer">Trainer?</span>':"")}</span>`; });
+  if(tpTwExtern(sl)){ const tw=tpTwAn(si); return `<span class="tp-z-zeile">mit ${esc(sl.extern||"Torwarttrainer")} · ${tw.length?esc(tw.join(", ")):"kein Torhüter da"}</span>`; }   // v959
   const regel=sl.regel?`<span class="tp-z-zeile">Regel: ${esc(sl.regel)}</span>`:"";
   const frei=!ids.length?`<span class="tp-z-zeile">${typ==="abschluss"||typ==="turnier"?"Abschlussspiel / Trainingsturnier":"freies Spiel – keine Übung"}</span>`:"";
   return [...new Set(zeilen)].join("")+frei+regel;
@@ -3121,6 +3154,7 @@ function tpFelderZahl(si){
   const slot=tpSlots[si]; if(!slot||!_tpFelderStand)return 0;
   const art=_tpFeldArt(slot);
   if(art==="frei"||art==="ohne")return 0;
+  if(art==="tw"&&tpTwExtern(slot))return 0;   // v959: der Torwarttrainer plant selbst
   if(art==="tw"||art==="einzel")return 1;
   return _tpFelderRechnung(si).parallelSlots;
 }
@@ -3141,6 +3175,7 @@ function _tpRenderReihe(){
    v865: wer am längsten nicht im Tor war, zuerst. Andere Blöcke bieten keine an. */
 function tpTwAngebot(si){
   const slot=tpSlots[si]; if(!slot||_tpFeldArt(slot)!=="tw")return [];
+  if(tpTwExtern(slot)){ const da=tpTwDa(); if(da.length)return tpTwSortieren(da); }   // v959: heute da
   return tpTwSortieren(KADER.filter(k=>k.tw&&k.aktiv!==false));
 }
 /* Individual läuft PARALLEL zu einem Hauptteil (PO) – Alt-Slots ohne Zuordnung bekommen
@@ -3159,6 +3194,8 @@ function _tpParallelOrdnen(){
   tpSlots.forEach(s=>{if(tpKannParallel(s.typ)&&s.parallelZu==null){const mi=tpSlots.findIndex(x=>tpIstHauptteil(x.typ));if(mi>=0)s.parallelZu=mi;}});
   // Parallele Bloecke dauern so lange wie ihr Hauptteil – auch im gespeicherten Plan
   tpSlots.forEach(s=>{if(tpIstParallel(s))s.dauer=tpSlots[s.parallelZu].dauer;});
+  /* v959: der Montags-Torwartblock läuft neben ALLEN Hauptteilen – ab dem ersten, so lange wie sie zusammen */
+  tpSlots.forEach(s=>{ if(s&&s.alle&&tpIstParallel(s)){ const h=tpSlots.map((x,i)=>({x,i})).filter(y=>!tpIstParallel(y.x)&&tpIstHauptteil(y.x.typ)); if(h.length){ s.parallelZu=h[0].i; s.dauer=h.reduce((a,y)=>a+(Number(y.x.dauer)||0),0); } } });
 }
 function _tpRenderTimelineIntern(){
   /* v621: Pläne mit Durchgängen alter Art (v605–v620: ein Block, Zeit geteilt) werden zur Kette.
@@ -3192,7 +3229,7 @@ function _tpRenderTimelineIntern(){
     const typ=slot.typ||"main";
     const parallel=tpIstParallel(slot);
     const startMin=parallel?startsArr[slot.parallelZu]:time;
-    const endMin=startMin+(parallel?tpSlots[slot.parallelZu].dauer:slot.dauer);
+    const endMin=startMin+(parallel?(slot.alle?slot.dauer:tpSlots[slot.parallelZu].dauer):slot.dauer);   // v959
     const noGroups=typ==="warmup"||typ==="abschluss"||typ==="turnier"||typ==="tw";
     /* v595: Zwei Blockarten brauchen gar keine Uebung.
 
@@ -3221,10 +3258,10 @@ function _tpRenderTimelineIntern(){
       <div class="tp-slot-head">
         ${griff}<span class="tp-slot-label">${parallel?tpParallelIcon(typ):""}${esc(tpSlotName(slot.label))}${tpTypMarke(typ)}</span>
         <button class="tp-mehr" onclick="tpBlockMenu(${si},this)" aria-haspopup="menu" aria-expanded="false" aria-label="Mehr zu ${esc(tpSlotName(slot.label))}: verschieben, löschen" title="Verschieben, löschen">⋯</button>
-        <span class="tp-slot-time">${startMin}' – ${endMin}'${parallel?` · parallel zu ${tpSlots[slot.parallelZu].label}`:""}</span>
+        <span class="tp-slot-time">${startMin}' – ${endMin}'${parallel?(slot.alle?" · neben dem ganzen Hauptteil":` · parallel zu ${tpSlots[slot.parallelZu].label}`):""}</span>
         ${parallel?"":`<span class="tp-dauer"><button class="tp-dauer-k" onclick="tpDauerSchritt(${si},-1)" aria-label="${esc(tpSlotName(slot.label))} 5 Minuten kürzer">−</button>${tpDauerSelect(si,slot)}<button class="tp-dauer-k" onclick="tpDauerSchritt(${si},1)" aria-label="${esc(tpSlotName(slot.label))} 5 Minuten länger">+</button></span>`}
       </div>`;
-    if(parallel){
+    if(parallel&&!slot.alle){   // v959: neben dem ganzen Hauptteil steht schon in der Zeitzeile
       const mains=tpSlots.map((s2,i2)=>({s2,i2})).filter(x=>tpIstHauptteil(x.s2.typ));
       html+=`<div class="tp-feld"><label>Läuft parallel zu</label>
         <select onchange="tpSlots[${si}].parallelZu=Number(this.value);tpGeaendert({speichern:'verzoegert'})" style="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
@@ -3302,6 +3339,18 @@ function _tpRenderTimelineIntern(){
       html+=`<div style="font-size:var(--s-klein);color:var(--text2);padding:4px 0">Freies Spiel – Standard: 3 gegen 3 auf 4 Minitore (FUNiño), ohne Torwart</div>
         ${typ==="abschluss"?`<div class="tp-abschluss-teams"></div>`:""}
         <button class="btn btn-sm" style="margin-top:4px" onclick="blitzOpen(${Number(slot.dauer)||15})" title="Trainingsturnier mit dieser Slot-Dauer als Zeitbudget – vorab planbar, wird zum Termin gespeichert">🏆 Als Trainingsturnier spielen (${slot.dauer} Min.)</button>`;
+    } else if(art==="tw"&&tpTwExtern(slot)){   // v959
+      const twPlayers=tpTwAngebot(si);
+      html+=`<div class="tp-tw-extern" style="margin-top:6px">
+        <div style="font-size:var(--s-klein);color:var(--text2);font-weight:600;margin-bottom:4px">Torhüter heute</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+          ${twPlayers.map(k=>`<label class="tp-check"><input type="checkbox" value="${esc(k.name)}" class="tp-tw-player" data-slot="${si}" onchange="tpTwSetzen(Number(this.dataset.slot),this.value,this.checked);tpGeaendert({zeichnen:false,speichern:'verzoegert'})"> ${esc(k.name)}</label>`).join("")||'<span style="color:var(--text2)">Keiner der Torhüter kommt heute.</span>'}
+        </div>
+        <div class="tp-feld"><label for="tp-tw-extern-${si}">Torwarttrainer</label>
+          <input type="text" id="tp-tw-extern-${si}" class="tp-tw-extern-name" value="${esc(slot.extern||"")}" maxlength="40" placeholder="Vorname" autocomplete="off" onchange="tpSlots[${si}].extern=this.value.trim();_tpTwExternName=tpSlots[${si}].extern;tpGeaendert({zeichnen:false,speichern:'verzoegert'})" style="width:100%;min-height:44px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font:inherit;background:var(--surface);color:var(--text)">
+        </div>
+        <div class="tp-tw-extern-hin" style="font-size:var(--s-klein);color:var(--text2);line-height:1.45">Keine Übung nötig – der Torwarttrainer plant selbst. Läuft neben dem ganzen Hauptteil; die Torhüter sind dort in keiner Gruppe und spielen das Abschlussspiel wieder mit.</div>
+      </div>`;
     } else if(art==="tw"){
       const twPlayers=tpTwAngebot(si);   // ausgetragene Torhueter nicht mehr anbieten; v865: wer am längsten nicht im Tor war, zuerst
       html+=`<div style="margin-top:6px">
@@ -5089,7 +5138,8 @@ function stTimerStations(){
   /* v609: Torwart- und Einzeltraining laufen PARALLEL zu ihrem Hauptteil. Als eigene Station
      hängte der Timer sie hinten an – die Uhr lief länger als der Plan. Jetzt stehen sie als
      Zusatzzeile bei ihrem Hauptteil, wie im Trainingsstart (_tlSnapshot). */
-  const zusatz=si=>tpSlots.map((p,pi)=>({p,pi})).filter(x=>tpIstParallel(x.p)&&x.p.parallelZu===si).map(({p,pi})=>{
+  const zusatz=si=>tpSlots.map((p,pi)=>({p,pi})).filter(x=>tpIstParallel(x.p)&&(x.p.alle?tpIstHauptteil((tpSlots[si]||{}).typ):x.p.parallelZu===si)).map(({p,pi})=>{
+    if(tpTwExtern(p)){ const w=tpTwAn(pi); return `🧤 Torwart-Training${w.length?" ("+w.join(", ")+")":""}: mit ${p.extern||"Torwarttrainer"}`; }   // v959
     const uebung=tpWahlFelder(pi).length?(_tpWahlText(`tp-form-${pi}-0`)||"Übung wählen"):"Übung wählen";   // v883: aus dem Zustand
     const tw=(p.typ||"")==="tw";
     const wer=tw?tpTwAn(pi).join(", "):tpKindVon(pi);   // v886: aus dem Zustand
@@ -5314,6 +5364,7 @@ async function tpGenerate(){
       hauptteile=Array.from({length:bloecke},(_,n)=>({label:`Hauptteil ${n+1}`,dauer:Math.floor(34/bloecke)+(n<34%bloecke?1:0),farbe:farben[n%farben.length],typ:"main"}));
     }
     tpSlots=TP_RAHMEN_KOPF.map(x=>({...x})).concat(hauptteile).concat([{...TP_RAHMEN_ENDE}]);
+    try{ await tpTorwartMontag(datum); }catch(e){}   // v959: montags der Torwart-Block
   }
   /* v887: kein Warten mehr (vorher 60 ms) – Felder und Wahl kommen aus Modell und Zustand. Das Zeichnen
      selbst speichert nicht (wie bisher); gespeichert wird über die Wahl unten (verzögert). */
@@ -6262,7 +6313,7 @@ function _tlSnapshot(){
      angehakten Torhüter (mehrere), beim Individual-Block das eine gewählte Kind. */
   tpSlots.forEach((slot,si)=>{
     if(!tpIstParallel(slot))return;
-    const ziele=stationen.filter(st=>st.si===slot.parallelZu); if(!ziele.length)return;   // v605: bei Durchgängen an jeden
+    const ziele=stationen.filter(st=>slot.alle?(!tpIstParallel(tpSlots[st.si]||{})&&tpIstHauptteil((tpSlots[st.si]||{}).typ)):st.si===slot.parallelZu); if(!ziele.length)return;   // v605: bei Durchgängen an jeden; v959: alle Hauptteile
     const selId=tpWahlFelder(si).length?`tp-form-${si}-0`:null, i0=selId?tpWahlIdx(selId):null;   // v883: aus dem Zustand
     const f=i0!=null?forms[i0]:null;
     const twBlock=(slot.typ||"main")==="tw";
@@ -6270,6 +6321,11 @@ function _tlSnapshot(){
       ? tpTwAn(si)   // v886: aus dem Zustand
       : [tpKindVon(si)].filter(Boolean);
     ziele.forEach(ziel=>ziel.gruppen.forEach(g=>{if(g.kinder&&kinder.length)g.kinder=g.kinder.filter(k=>!kinder.includes(k));}));
+    if(twBlock&&tpTwExtern(slot)){   // v959: ohne Übung, mit dem Torwarttrainer
+      if(!kinder.length)return;
+      ziele.forEach(ziel=>ziel.gruppen.push({trainer:slot.extern||"Torwarttrainer",uebung:`🧤 Torwart-Training mit ${kinder.join(", ")}`,gruppe:null,kinder,einzel:true}));
+      return;
+    }
     const titel=twBlock
       ? `🧤 Torwart-Training${kinder.length?" mit "+kinder.join(", "):""}: ${f?f.name:"(Übung wählen)"}`
       : `🎯 Einzeltraining${kinder.length?" mit "+kinder[0]:""}: ${f?f.name:"(Übung wählen)"}`;

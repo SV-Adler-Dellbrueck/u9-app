@@ -1018,6 +1018,8 @@ async function vorlageUebernehmenSetzen(){
      Trainern alle Gruppen dasselbe. „Training füllen“ gibt jedem weiteren Feld eine eigene
      Übung passend zu Gruppengröße und Thema – Feld 1 und eigene Stationen der Vorlage bleiben. */
   if(typeof tpGenerate==="function"&&typeof tpGetTrainerCount==="function"&&tpGetTrainerCount()>=2)await tpGenerate();
+  /* v959: montags der Torwart-Block (Welle 1, geprüft) – die Vorlage kennt ihn nicht */
+  try{ if(typeof tpTorwartMontag==="function"&&await tpTorwartMontag(datum)&&typeof tpGeaendert==="function")tpGeaendert({speichern:"verzoegert"}); }catch(e){}
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
