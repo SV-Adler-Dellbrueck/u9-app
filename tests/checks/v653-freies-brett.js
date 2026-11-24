@@ -110,8 +110,9 @@ module.exports = async function (h) {
       document.querySelectorAll(".modal-overlay,[role=dialog]").forEach(d => d.remove());
       const k = document.createElement("div"); k.id = "kabine"; k.innerHTML = '<div id="kabine-body" style="display:flex;flex-direction:column;height:900px;background:#1e3a8a"></div>';
       document.body.appendChild(k);
-      kabineHome(); for (let i = 0; i < 100 && !document.getElementById("kab-mehr"); i++) await w(50);
-      const mehr = document.getElementById("kab-mehr");
+      kabineHome(); for (let i = 0; i < 100 && !document.getElementById("kab-mehr") && !document.getElementById("kab-tuer-machen"); i++) await w(50);
+      if (typeof kabineTuer === "function" && document.getElementById("kab-tuer-machen")) kabineTuer("machen");   // v965: hinter der Tür „Selber machen“
+      const mehr = document.getElementById("kab-mehr") || document.getElementById("kab-tuer-seite");
       const kachel = mehr && [...mehr.querySelectorAll("button")].find(b => /Mein Taktikbrett/.test(b.textContent));
       try { localStorage.removeItem("adler-brett-kind"); } catch (e) {}
       window.__netz = 0; const f0 = window.fetch; window.fetch = function () { window.__netz++; return f0.apply(this, arguments); };

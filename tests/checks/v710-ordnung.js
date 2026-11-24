@@ -35,7 +35,17 @@ module.exports = async function (h) {
   const lies = p => fs.readFileSync(path.join(h.REPO, p), "utf8");
   const views = lies("views.js"), kab = lies("md-kabine.js"), ep = lies("md-eltern-portal.js"), core = lies("core.js");
   if (/label:"Match"/.test(views)) probleme.push("c) Unterreiter heißt noch „Match“");
-  if (!/"Kompliment schenken","rgba\(16,185,129,\.52\)","rgba\(5,150,105,\.32\)",true\)/.test(kab)) probleme.push("a) Kabine: „Kompliment schenken“ steht allein");
+  /* v965: die Kacheln stehen in KAB_TUEREN – keine Tür darf eine halbe Kachel allein neben einer Lücke haben */
+  const tm = kab.match(/const KAB_TUEREN=(\{[\s\S]*?\n\});/);
+  if (tm) {
+    const T = Function("return " + tm[1])();
+    for (const [id, t] of Object.entries(T)) {
+      let halb = 0; const luecke = [];
+      for (const k of t.kacheln) { if (k[3]) { if (halb % 2) luecke.push(k[2]); halb = 0; } else halb++; }
+      if (halb % 2 || luecke.length) probleme.push(`a) Kabine, Tür „${t.t}“: eine Kachel steht allein neben einer Lücke`);
+    }
+    if (!Object.values(T).some(t => t.kacheln.some(k => k[2] === "Kompliment schenken"))) probleme.push("a) Kabine: „Kompliment schenken“ fehlt");
+  } else if (!/"Kompliment schenken","rgba\(16,185,129,\.52\)","rgba\(5,150,105,\.32\)",true\)/.test(kab)) probleme.push("a) Kabine: „Kompliment schenken“ steht allein");
   if (/Einladung für die \$\{fuer\}/.test(ep)) probleme.push("d) „Einladung für die eure Familie“");
   if (/\$\{wtag\} \$\{d\.toLocaleDateString\("de-DE",\{weekday:"long"/.test(ep)) probleme.push("d) Termin-Fenster: Wochentag doppelt");
   if (!/pushSupported\(\)\)\{ const ios=/.test(core)) probleme.push("d) Push-Karte ohne Erklärung, wenn das Gerät keine Benachrichtigungen kann");

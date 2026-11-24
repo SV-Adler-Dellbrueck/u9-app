@@ -116,11 +116,53 @@ async function sbFotosRender(sid){
   const box=document.getElementById("sb-fotos-"+Number(sid)); if(!box)return;
   const liste=(await kindAlbumLaden(sid))||[];
   if(!document.getElementById("sb-fotos-"+Number(sid)))return;
+  (window._sbFotos=window._sbFotos||{})[Number(sid)]=liste;
   box.innerHTML=SB_FOTOS.map(([z,emo,l])=>{ const f=liste.find(x=>x.zweck===z);
-    return f?`<div class="sb-foto voll"><div class="sb-bild" data-pfad="${esc(f.pfad)}"></div><span>${emo} ${l} ✓</span></div>`
+    return f?`<button type="button" class="sb-foto voll" onclick="sbFotoZeigen(${Number(sid)},${Number(f.id)})" aria-label="${l}: Foto ansehen oder ändern"><div class="sb-bild" data-pfad="${esc(f.pfad)}"></div><span>${emo} ${l} ✓</span></button>`
       :`<label class="sb-foto"><input type="file" accept="image/*" onchange="sbFotoHochladen(${Number(sid)},'${z}',this)" style="position:absolute;opacity:0;width:1px;height:1px"><span style="font-size:var(--s-teil)">${emo}</span><span>${l}</span><span class="sb-plus">+ Foto</span></label>`; }).join("");
   box.querySelectorAll(".sb-bild").forEach(el=>{ if(typeof fotoLoadImage!=="function")return;
-    fotoLoadImage(el.dataset.pfad).then(img=>{ if(!img)return; img.alt=""; img.style.cssText="width:100%;height:100%;object-fit:cover"; el.appendChild(img); }).catch(()=>{}); });
+    fotoLoadImage(el.dataset.pfad).then(img=>{ if(!img)return; img.alt=""; img.style.cssText="width:100%;height:100%;object-fit:contain"; el.appendChild(img); }).catch(()=>{}); });   // v965: ganzes Bild statt Ausschnitt
+}
+/* v965 · Charles 24.11.: „Wenn ich ein Bild hochlade, wird nur ein Teil angezeigt. Ich kann auch nicht drauf klicken, um es
+   nochmal anzusehen oder zu ändern.“ Die Kachel zeigt jetzt das ganze Bild; ein Tipp öffnet es groß mit „Anderes Foto wählen“
+   und „Löschen“ (eigenes Fenster, keine Systemmeldung). */
+function sbFotoZeigen(sid,id){
+  const f=((window._sbFotos||{})[Number(sid)]||[]).find(x=>Number(x.id)===Number(id)); if(!f)return;
+  const z=SB_FOTOS.find(x=>x[0]===f.zweck)||["","📷","Foto"];
+  document.getElementById("sb-foto-gross")?.remove();
+  const m=document.createElement("div"); m.id="sb-foto-gross"; m.className="mdl-bg";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label",z[2]+": Foto");
+  m.style.cssText="position:fixed;inset:0;z-index:1200;background:rgba(15,23,42,.92);display:flex;flex-direction:column;padding:16px;gap:12px";
+  m.innerHTML=`<div style="display:flex;align-items:center;gap:10px;color:#fff"><div style="flex:1;font-size:var(--s-teil);font-weight:800">${z[1]} ${z[2]}</div>
+      <button type="button" class="btn" onclick="document.getElementById('sb-foto-gross')?.remove()" aria-label="Schließen" style="min-width:44px;min-height:44px">✕</button></div>
+    <div id="sb-foto-gross-bild" style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;color:#fff">Lädt …</div>
+    <div style="display:flex;gap:10px">
+      <label class="btn btn-p" style="flex:1;min-height:48px;justify-content:center;cursor:pointer"><input type="file" accept="image/*" onchange="sbFotoErsetzen(${Number(sid)},${Number(f.id)},this)" style="position:absolute;opacity:0;width:1px;height:1px">🔄 Anderes Foto wählen</label>
+      <button type="button" class="btn btn-d" onclick="sbFotoLoeschen(${Number(sid)},${Number(f.id)})" style="min-height:48px">🗑️ Löschen</button></div>`;
+  document.body.appendChild(m);
+  if(typeof fotoLoadImage==="function")fotoLoadImage(f.pfad).then(img=>{ const el=document.getElementById("sb-foto-gross-bild"); if(!el)return; if(!img){ el.textContent="Kein Bild"; return; }
+    img.alt=z[2]; img.style.cssText="max-width:100%;max-height:100%;object-fit:contain;border-radius:12px"; el.textContent=""; el.appendChild(img); }).catch(()=>{});
+}
+async function sbFotoErsetzen(sid,altId,input){
+  const alt=((window._sbFotos||{})[Number(sid)]||[]).find(x=>Number(x.id)===Number(altId)); if(!alt)return;
+  await kindAlbumHochladen(sid,input,alt.zweck);
+  const neu=(await kindAlbumLaden(sid))||[];
+  if(neu.some(x=>x.zweck===alt.zweck&&Number(x.id)!==Number(altId))){   // erst wenn das neue da ist, verschwindet das alte
+    try{ await fetch(`${SB_URL}/rest/v1/kind_foto?id=eq.${Number(altId)}`,{method:"DELETE",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'}});
+      await fetch(`${SB_URL}/storage/v1/object/spielerfotos/${alt.pfad}`,{method:"DELETE",headers:{'Authorization':'Bearer '+sbToken()}}).catch(()=>{}); }catch(e){}
+  }
+  document.getElementById("sb-foto-gross")?.remove();
+  sbFotosRender(sid);
+}
+async function sbFotoLoeschen(sid,id){
+  const f=((window._sbFotos||{})[Number(sid)]||[]).find(x=>Number(x.id)===Number(id)); if(!f)return;
+  if(typeof frageJaNein==="function"&&!await frageJaNein({emoji:"🗑️",ton:"rot",titel:"Foto löschen?",text:f.karte?"Das ist das Kartenfoto. Danach zeigt die Karte wieder das Profilfoto.":"Das Foto verschwindet aus dem Steckbrief und dem Album.",ja:"Löschen",nein:"Behalten"}))return;
+  try{ const r=await fetch(`${SB_URL}/rest/v1/kind_foto?id=eq.${Number(id)}`,{method:"DELETE",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'}});
+    if(!r.ok){ toast("Foto nicht gelöscht","err"); return; }
+    await fetch(`${SB_URL}/storage/v1/object/spielerfotos/${f.pfad}`,{method:"DELETE",headers:{'Authorization':'Bearer '+sbToken()}}).catch(()=>{});
+    toast("Foto gelöscht"); }catch(e){ toast("Kein Netz","err"); return; }
+  document.getElementById("sb-foto-gross")?.remove();
+  sbFotosRender(sid);
 }
 async function sbFotoHochladen(sid,zweck,input){
   await kindAlbumHochladen(sid,input,zweck);

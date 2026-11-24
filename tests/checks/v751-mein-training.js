@@ -32,7 +32,8 @@ module.exports = async function (h) {
     localStorage.setItem("adler-brett-kind", JSON.stringify({ form: "4+1", toks: [{ t: "ball", x: 1, y: 1 }], striche: [] }));
     const out = {};
     kabineHome(); await w(50);
-    out.a = [...document.querySelectorAll("#kab-mehr button")].some(b => /Mein Training/.test(b.textContent));
+    if (typeof kabineTuer === "function") kabineTuer("machen");   // v965: hinter der Tür „Selber machen“
+    out.a = [...document.querySelectorAll("#kab-mehr button, #kab-tuer-seite button")].some(b => /Mein Training/.test(b.textContent));
     kabineMeinTraining(); await w(600);
     const body = document.getElementById("kabine-body");
     const aus = sel => { const b = body.querySelector(sel); return !!(b && b.disabled); };
@@ -61,7 +62,7 @@ module.exports = async function (h) {
   });
   const fe = s.fehler(); await s.schliessen();
   if (r.fehlt) return h.ergebnis("v751 Mein Training", false, ["kabineMeinTraining fehlt"]);
-  if (!r.a) probleme.push("a) Kachel „Mein Training“ fehlt unter „Mehr entdecken“");
+  if (!r.a) probleme.push("a) Kachel „Mein Training“ fehlt (unter „Mehr entdecken“, seit v965 hinter „Selber machen“)");
   zeilen.push("a) Kachel „📋 Mein Training“ unter „Mehr entdecken“");
   if (r.b.teile.join("|") !== "🔥 1. Aufwärmen|⚽ 2. Übung|🏆 3. Abschlussspiel" || !r.b.schickenAus || r.b.klein.length) probleme.push(`b) ${JSON.stringify(r.b)}`);
   zeilen.push(`b) ${r.b.teile.join(" · ")} – Schicken aus, solange nichts geplant ist`);

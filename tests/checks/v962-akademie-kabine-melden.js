@@ -46,14 +46,14 @@ module.exports = async function (h) {
     await s.page.reload({ waitUntil: "networkidle" }); await s.page.waitForTimeout(1800);
     const r = await s.page.evaluate(() => {
       const ak = document.getElementById("kab-akademie"), lv = document.getElementById("kab-level");
-      return { da: !!ak, vorLevel: !!(ak && lv && (ak.compareDocumentPosition(lv) & Node.DOCUMENT_POSITION_FOLLOWING)),
+      return { da: !!ak, vorLevel: !!(ak && lv && (ak.compareDocumentPosition(lv) & Node.DOCUMENT_POSITION_FOLLOWING)) || !!(ak && lv && document.getElementById("kab-tueren") && lv.getBoundingClientRect().height < 60 && (ak.compareDocumentPosition(document.getElementById("kab-tueren")) & Node.DOCUMENT_POSITION_FOLLOWING)),   // v965: Level als schmale Zeile darüber, Akademie vor den Türen
         wege: ak ? [...ak.querySelectorAll("button")].map(b => b.getAttribute("onclick")) : [], stand: (document.getElementById("kab-ak-stand") || {}).textContent || "",
         hoehe: ak ? Math.round(ak.getBoundingClientRect().top) : -1 };
     }).catch(x => ({ fehler: String(x) }));
     await s.schliessen();
     if (r.fehler || !r.da || !r.vorLevel || !r.wege.includes("kabineQuiz('theorie')") || !r.wege.includes("kabineQuiz('praxis')") || !/7\/9/.test(r.stand))
       probleme.push("b) Kabine " + JSON.stringify(r).slice(0, 300));
-    zeilen.push(`b) Akademie-Karte ${r.hoehe}px von oben, vor dem Team-Level: ${r.vorLevel} · Stand „${r.stand}“`);
+    zeilen.push(`b) Akademie-Karte ${r.hoehe}px von oben, vor dem Team-Level (seit v965: vor den Türen, Level schmal): ${r.vorLevel} · Stand „${r.stand}“`);
   }
 
   // ── c) d) e) g) Akademie als Kind ──────────────────────────────────────────────────

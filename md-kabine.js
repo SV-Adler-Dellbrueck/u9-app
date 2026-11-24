@@ -166,7 +166,7 @@ async function kabineOpen(){
       kabinePostLoad(); // Briefkasten zeigt die Geburtstags-Post sofort
     }
   }catch(e){}})();
-  kabineHome();
+  window._kabTuer=null; kabineHome(true);   // v965: frisch geöffnet immer auf der Startseite
   /* v593: team_gallery_kind statt team_gallery. Beide liefern dieselben Karten; die
      Kinder-Fassung schickt aber statt der Bewertungsrohwerte jedes Kindes nur die drei
      staerksten Merkmale als Schluessel. Gezeichnet wurde daraus ohnehin nur das
@@ -185,7 +185,7 @@ function teamLevelInfo(total){
     title:TEAM_LEVEL_TITLES[Math.min(level-1,TEAM_LEVEL_TITLES.length-1)]};
 }
 let _teamFedern={val:0,at:0};
-async function teamLevelLoad(elId){
+async function teamLevelLoad(elId,schmal){
   const el=document.getElementById(elId); if(!el)return;
   let total=_teamFedern.val;
   if(Date.now()-_teamFedern.at>60000){ // R4: 60s-Cache – wird von mehreren Slots gleichzeitig gerendert
@@ -194,6 +194,9 @@ async function teamLevelLoad(elId){
       if(r.ok){total=await r.json();_teamFedern={val:total||0,at:Date.now()};}}catch(e){}
   }
   const L=teamLevelInfo(total||0);
+  if(schmal){ el.innerHTML=`<div role="group" aria-label="Team-Level" style="color:#fff">
+    <div style="display:flex;align-items:baseline;gap:8px;font-size:14px;font-weight:800"><span>Team-Level ${L.level} · ${esc(L.title)}</span><span style="margin-left:auto;font-size:13px;font-weight:700;opacity:.92;white-space:nowrap">noch ${L.need} ${XP_ICON}</span></div>
+    <div style="height:8px;background:rgba(255,255,255,.22);border-radius:6px;overflow:hidden;margin-top:5px"><div style="height:100%;width:${L.pct}%;background:#fbbf24;border-radius:6px;transition:width .6s"></div></div></div>`; return; }   // v965: eine Zeile statt Karte
   el.innerHTML=`<div style="background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;border-radius:16px;padding:14px 16px">
     <div style="display:flex;align-items:center;gap:10px"><span style="font-size:26px">🦅</span>
       <div style="flex:1;min-width:0"><div style="font-size:13px;opacity:.9;font-weight:700">Team-Level ${L.level}</div>
@@ -1041,7 +1044,10 @@ async function lobNeuLaden(){
   try{ const r=await fetch(`${SB_URL}/rest/v1/kabine_lob?spieler_id=in.(${kids.map(k=>Number(k.spieler_id)).join(",")})&gehoert_am=is.null&select=id`,{headers:sbAuthHeaders()}); if(r.ok)n=(await r.json()).length; }catch(e){}
   document.querySelectorAll("#kabine-body .kab-lob-neu").forEach(x=>x.remove());
   if(!n)return;
-  const t=document.querySelector('#kabine-body button[onclick*="kabineLobWahl"]'); if(!t)return;
+  const t=document.querySelector('#kabine-body button[onclick*="kabineLobWahl"]')||document.getElementById("kab-tuer-ich"); if(!t)return;   // v965: auf der Startseite steht „neu“ an der Tür
+  if(t.id==="kab-tuer-ich"){ const b=document.createElement("span"); b.className="kab-lob-neu"; b.setAttribute("role","status");
+    b.style.cssText="position:absolute;top:8px;right:10px;font-size:13px;font-weight:800;color:#fff;background:#db2777;border-radius:999px;padding:3px 10px";
+    b.textContent=n===1?"1 neu":n+" neu"; t.appendChild(b); return; }
   const b=document.createElement("span"); b.className="kab-lob-neu"; b.setAttribute("role","status");
   b.style.cssText="margin-left:auto;font-size:13px;font-weight:800;color:#fff;background:#db2777;border-radius:999px;padding:3px 12px;white-space:nowrap";
   b.textContent=n===1?"1 neu":n+" neu"; t.appendChild(b);
@@ -1140,84 +1146,96 @@ async function kabineAkademieStand(){
     el.textContent=`🥉 ${br}/9 Bronze`+(si||br>=ABZ_SILBER_AB?` · 🥈 ${si}/10 Silber`:"");
   }catch(e){}
 }
-function kabineHome(){
+/* v965 · Charles 24.11.: „Können wir die Kabine neu sortieren und aufräumen? Es sind mittlerweile viele gute Funktionen drin.
+   Aber am Ende zu viel.“ Freigegeben (Bild): oben Team-Level, höchstens zwei Hinweise für heute und die Akademie, darunter drei
+   große Türen – „Ich“, „Unser Team“, „Selber machen“ –, dahinter alle Funktionen (je Tür höchstens sechs). „Mehr entdecken“
+   fällt weg. Ungenutztes bleibt (Charles: „Behalten, hinten einsortiert“). Zurück aus einer Funktion führt in ihre Tür,
+   Zurück aus der Tür auf die Startseite. */
+const KAB_TUEREN={
+  ich:{emo:"🃏",t:"Ich",kurz:"Karte, Lob, Stärken",c1:"rgba(168,85,247,.55)",c2:"rgba(124,58,237,.35)",kacheln:[
+    ["kabineMyCard()","🃏","Meine Karte",true],
+    ["kabineLobWahl()","🎧","Lob vom Trainer"],["kabineStaerken()","💪","Meine Stärken"],
+    ["kabineRollen()","🎽","Wo spiele ich?"],["kabineMission()","⭐","Meine Mission"],
+    ["kabineAlbum()","📖","Sammelalbum",true]]},
+  team:{emo:"🤝",t:"Unser Team",kurz:"Regeln, Missionen, Komplimente",c1:"rgba(16,185,129,.55)",c2:"rgba(4,120,87,.35)",kacheln:[
+    ["kabineCodex()","🤝","Unsere Regeln",true],
+    ["kabineShowQuests()","🏆","Team-Missionen"],["kabineKudos()","👏","Kompliment schenken"],
+    ["kabineShowGallery()","🖼️","Team-Galerie"],["kabineHype()","🎵","Kabinen-Hype"]]},
+  machen:{emo:"✏️",t:"Selber machen",kurz:"Taktikbrett, Reporter, Nest",c1:"rgba(14,165,233,.42)",c2:"rgba(3,105,161,.42)",kacheln:[
+    ["kabineBrett()","✏️","Mein Taktikbrett",true],
+    ["kabineReporter()","🎙️","Kabinen-Reporter"],["if(typeof nestOpen==='function')nestOpen(null,{kind:true})","🪺","Adler Nest"],
+    ["if(typeof kabineMeinTraining==='function')kabineMeinTraining()","📋","Mein Training",true]]}
+};
+function _kabKachel(fn,emo,label,c1,c2,full){
+  return `<button type="button" onclick="${fn}" style="${full?"grid-column:1/-1;":""}border:1px solid rgba(255,255,255,.16);border-radius:22px;background:linear-gradient(135deg,${c1},${c2});color:#fff;font-family:inherit;cursor:pointer;display:flex;${full?"align-items:center;justify-content:center;gap:12px;min-height:96px":"flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:116px;padding:8px"};font-size:17px;font-weight:800;text-align:center"><span aria-hidden="true" style="font-size:${full?36:40}px">${emo}</span>${label}</button>`;
+}
+function _kabTuerKnopf(id,voll){
+  const T=KAB_TUEREN[id];
+  return `<button type="button" id="kab-tuer-${id}" onclick="kabineTuer('${id}')" style="${voll?"grid-column:1/-1;flex-direction:row;gap:14px;min-height:96px;":"flex-direction:column;gap:6px;min-height:124px;"}position:relative;border:1px solid rgba(255,255,255,.18);border-radius:22px;background:linear-gradient(135deg,${T.c1},${T.c2});color:#fff;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:10px;text-align:center">
+    <span aria-hidden="true" style="font-size:${voll?38:44}px;line-height:1">${T.emo}</span>
+    <span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:19px;font-weight:900">${T.t}</span><span style="font-size:13px;font-weight:600;opacity:.92">${T.kurz}</span></span></button>`;
+}
+function kabineTuer(id){
+  const T=KAB_TUEREN[id], b=document.getElementById("kabine-body"); if(!T||!b)return;
+  window._kabTuer=id; kabSubMark();
+  b.innerHTML=`<div id="kab-tuer-seite" style="flex:1;overflow-y:auto">
+    <div style="display:flex;align-items:center;gap:10px;padding:14px 16px 8px">
+      <button type="button" onclick="kabineHome(true)" aria-label="Zurück zur Kabine" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
+      <h2 style="margin:0;font-size:var(--s-seite);font-weight:900"><span aria-hidden="true">${T.emo}</span> ${T.t}</h2>
+    </div>
+    ${id==="team"?`<div id="kab-arena" style="padding:0 16px 6px"></div>`:""}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:6px 16px 20px">
+      ${T.kacheln.map(k=>_kabKachel(k[0],k[1],k[2],T.c1,T.c2,!!k[3])).join("")}
+    </div></div>`;
+  if(id==="team"&&typeof arenaKabineLoad==="function")arenaKabineLoad("kab-arena");   // C3: Schlachtruf und Einlauf-Song gehören zum Team
+  if(id==="ich")lobNeuLaden();
+}
+/* Hinweise für heute (Countdown, Post, Wahl, Packliste …): höchstens zwei stehen offen, der Rest hinter „+ n weitere“. */
+function kabHeuteBegrenzen(){
+  const box=document.getElementById("kab-heute"); if(!box)return;
+  const slots=[...box.children].filter(x=>x.id!=="kab-heute-mehr");
+  const voll=slots.filter(x=>x.innerHTML.trim()!=="");
+  const offen=window._kabHeuteAlle===true, rest=voll.length-2;
+  slots.forEach(x=>{ const i=voll.indexOf(x), aus=!offen&&i>=2; if(x.hidden!==aus)x.hidden=aus; });
+  let m=document.getElementById("kab-heute-mehr");
+  if(rest>0&&!offen){
+    const t=`+ ${rest} ${rest===1?"weiterer Hinweis":"weitere Hinweise"}`;
+    if(!m){ m=document.createElement("button"); m.type="button"; m.id="kab-heute-mehr"; m.onclick=()=>{ window._kabHeuteAlle=true; kabHeuteBegrenzen(); };
+      m.style.cssText="display:block;margin:0 16px 8px auto;min-height:44px;padding:6px 14px;border:1px dashed rgba(255,255,255,.5);border-radius:22px;background:transparent;color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer";
+      box.appendChild(m); }
+    if(m.textContent!==t)m.textContent=t;
+  } else if(m) m.remove();
+}
+function kabineHome(ganz){
   kabSubConsume(); // Rückkehr per ←-Button: den Unterseiten-History-Eintrag still verbrauchen
+  if(ganz!==true&&window._kabTuer&&KAB_TUEREN[window._kabTuer]&&!document.getElementById("kab-tuer-seite")){ kabineTuer(window._kabTuer); return; }  // v965: aus der Funktion zurück in ihre Tür
+  window._kabTuer=null;
   const b=document.getElementById("kabine-body"); if(!b)return;
   b.innerHTML=`
     <div style="flex:1;overflow-y:auto">
-    ${/* v962 · Charles 24.11.: „Der Aufbau der Kabine muss besser werden. Die Akademie sollte präsenter sein. Und höhere Usability.“
-          Kopf in einer Zeile, gleich darunter die Akademie als große Karte mit zwei Wegen; das Team-Level folgt danach. */""}
-    <div style="display:flex;align-items:center;gap:10px;padding:14px 16px 8px">
+    <div style="display:flex;align-items:center;gap:10px;padding:14px 16px 6px">
       <div style="flex:1;min-width:0"><div style="font-size:var(--s-seite);font-weight:900">🦅 Die Kabine</div>
       <div style="font-size:var(--s-klein);opacity:.85">Adler U9</div></div>
       <button id="kab-hilfe" onclick="kabineTourStart()" aria-label="Zeig mir die Kabine" style="flex:none;min-height:44px;padding:6px 14px;border:1px solid rgba(255,255,255,.45);border-radius:22px;background:rgba(255,255,255,.12);color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">❓ Zeig mir alles</button>
     </div>
-    ${kabineAkademieHtml()}
-    <div id="kab-level" style="padding:2px 16px 6px"></div>
-    <div id="kab-lob"></div>
-    <div id="kab-countdown"></div>
-    <div id="kab-nest-hinweis"></div>
-    <div id="kab-reveal"></div>
-    <div id="kab-pack"></div>
-    <div id="kab-post"></div>
-    <div id="kab-wahl"></div>
+    <div id="kab-level" style="padding:0 16px 8px"></div>
+    <div id="kab-heute">
+      <div id="kab-lob"></div><div id="kab-countdown"></div><div id="kab-nest-hinweis"></div><div id="kab-reveal"></div>
+      <div id="kab-pack"></div><div id="kab-post"></div><div id="kab-wahl"></div><div id="kab-milestone"></div>
+    </div>
     <div id="kab-zeit"></div>
     <!-- Stimmungs-Check („Wie war das Training?") vorerst ausgeblendet (PO) -->
-    <div id="kab-milestone"></div>
-    <div id="kab-arena" style="padding:0 16px 4px"></div>
-    ${(function(){
-      // Kacheln in 4 Farbfamilien (wie im Eltern-Bereich: Farbtöne je Kategorie). Getönte,
-      // halbtransparente Gradients bleiben „frosted", leuchten aber je Familie anders.
-      const tile=(fn,emo,label,c1,c2,full)=>`<button onclick="${fn}" style="${full?"grid-column:1/-1;":""}border:1px solid rgba(255,255,255,.16);border-radius:22px;background:linear-gradient(135deg,${c1},${c2});color:#fff;font-family:inherit;cursor:pointer;display:flex;${full?"align-items:center;justify-content:center;gap:10px;min-height:76px":"flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:120px"};font-size:17px;font-weight:800"><span style="font-size:${full?34:44}px">${emo}</span>${label}</button>`;
-      const lbl=t=>`<div style="grid-column:1/-1;font-size:14px;font-weight:800;opacity:.9;margin:6px 4px -4px">${t}</div>`;   // v710: 11 px Versalien bei 65 % waren für Kinder zu klein
-      return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:10px 16px 16px;align-content:center">
-      ${/* v610: 16 Kacheln auf einen Blick waren für ein Kind zu viel – gesucht wurde, nicht
-            gespielt. Vorn stehen acht, der Rest wartet hinter „Mehr entdecken". Ob das Kind
-            aufgeklappt hat, merkt sich die Kabine, solange sie offen ist. */""}
-      ${/* v936 (Charles 21.11.): Taktik-Quiz und Fußball-Wissen stecken jetzt in der Adler-Schule. */""}
-      ${/* v928: Adler-Schule – Fragen zu den sechs Leitfragen aus dem Training. Damit vorn acht Kacheln bleiben,
-            wartet „Meine Mission“ hinter „Mehr entdecken“ (Charles 21.11.2026). */""}
-      ${/* v961 (Charles 24.11.): aus der Adler-Schule wird die Adler-Akademie – Theorie und Praxis (Technik-Abzeichen) an einem Ort */""}
-      ${/* v962: die Akademie steht als große Karte oben (kabineAkademieHtml) */""}
-      ${lbl("Meine Sachen")}
-      ${tile("kabineMyCard()","🃏","Meine Karte","rgba(168,85,247,.50)","rgba(124,58,237,.32)")}
-      ${/* v755: alle Sprachlobe vom Trainerteam nach Datum, „Neu“-Punkt bis zum ersten Anhören – bewusst nicht unter „Mehr entdecken“.
-            v761 (PO 05.10.: acht Kacheln vorn): steht jetzt bei „Meine Sachen“ – es ist das Lob für mich –, „Skill der Woche“ wartet hinter „Mehr entdecken“. */""}
-      ${tile("kabineLobWahl()","🎧","Lob vom Trainer","rgba(219,39,119,.50)","rgba(157,23,77,.34)")}
-      ${lbl("Challenges")}
-      ${tile("kabineShowQuests()","🏆","Team-Missionen","rgba(245,158,11,.52)","rgba(217,119,6,.32)",true)}
-      ${lbl("Team & Spaß")}
-      ${/* Paket 2: „Unsere Regeln" steht ganz oben in der Gruppe und über die volle Breite –
-            es ist die Identität der Mannschaft, nicht ein Spiel unter vielen. */""}
-      ${tile("kabineCodex()","🤝","Unsere Regeln","rgba(16,185,129,.56)","rgba(4,120,87,.34)",true)}
-      ${tile("kabineKudos()","👏","Kompliment schenken","rgba(16,185,129,.52)","rgba(5,150,105,.32)",true)}${/* v710: stand allein links neben einer Lücke – wie „Unsere Regeln“ volle Breite */""}
-      <details id="kab-mehr" style="grid-column:1/-1" ontoggle="window._kabMehrOffen=this.open"${window._kabMehrOffen?" open":""}>
-        <summary style="list-style:none;cursor:pointer;min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px dashed rgba(255,255,255,.45);border-radius:18px;font-weight:800;font-size:15px;color:#fff">✨ Mehr entdecken <span class="kab-mehr-pfeil" aria-hidden="true">▾</span></summary>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
-        ${/* v733 (PO 03.10.: Kinder-Konten lesen und hören das Adler Nest „vollständig“) */""}
-        ${tile("if(typeof nestOpen==='function')nestOpen(null,{kind:true})","🪺","Adler Nest – lesen und hören","rgba(0,68,170,.62)","rgba(10,26,58,.40)",true)}
-        ${tile("kabineBrett()","✏️","Mein Taktikbrett","rgba(56,189,248,.46)","rgba(2,132,199,.30)",true)}
-        ${/* v751: ein Training planen wie ein Trainer – und es dem Trainer schicken (md-kindtraining.js) */""}
-        ${tile("if(typeof kabineMeinTraining==='function')kabineMeinTraining()","📋","Mein Training","rgba(34,197,94,.48)","rgba(21,128,61,.32)",true)}
-        ${tile("kabineMission()","⭐","Meine Mission","rgba(139,92,246,.46)","rgba(91,33,182,.32)")}
-        ${/* v963: der Skill des Monats steht jetzt oben auf dem Trainingsplatz der Akademie */""}
-        ${tile("kabineShowGallery()","🖼️","Team-Galerie","rgba(16,185,129,.48)","rgba(5,150,105,.30)")}
-        ${/* v961: die Abzeichen stehen jetzt in der Adler-Akademie (Praxis · Trainingsplatz) */""}
-        ${tile("kabineRollen()","🎽","Wo spiele ich?","rgba(124,58,237,.46)","rgba(76,29,149,.32)")}
-        ${tile("kabineStaerken()","💪","Meine Stärken","rgba(147,51,234,.5)","rgba(88,28,135,.32)")}
-        ${tile("kabineAlbum()","📖","Sammelalbum","rgba(52,211,153,.46)","rgba(4,120,87,.30)")}
-        ${tile("kabineHype()","🎵","Kabinen-Hype","rgba(45,212,191,.44)","rgba(13,148,136,.30)")}
-        ${tile("kabineReporter()","🎙️","Kabinen-Reporter","rgba(20,184,166,.5)","rgba(15,118,110,.32)",true)}
-        </div>
-      </details>
-    </div>`;})()}
+    ${kabineAkademieHtml()}
+    <div id="kab-tueren" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:4px 16px 16px">
+      ${_kabTuerKnopf("ich")}${_kabTuerKnopf("team")}${_kabTuerKnopf("machen",true)}
+    </div>
     </div>
     ${window._kindGeraetModus?"":`<button onclick="kabineExit()" style="margin:0 16px 18px;padding:12px;border:none;border-radius:14px;background:rgba(0,0,0,.25);color:#fff;font-family:inherit;font-size:14px;cursor:pointer">🔒 Für Erwachsene: Kabine verlassen</button>`}`;
+  try{ const box=document.getElementById("kab-heute"); if(box&&typeof MutationObserver==="function"){ let t=null; new MutationObserver(()=>{ clearTimeout(t); t=setTimeout(kabHeuteBegrenzen,60); }).observe(box,{childList:true,subtree:true}); } }catch(e){}
   kabineAkademieStand();                                        // v962: Abzeichen-Stand auf der Akademie-Karte
-  teamLevelLoad("kab-level");                                  // C1: Team-Level
+  teamLevelLoad("kab-level",true);                             // C1: Team-Level (v965: schmal)
   kabineLobLoad();                                              // v675: Federn vom Trainerteam mit Grund
-  lobNeuLaden();                                                // v755: „Neu“-Punkt auf der Kachel „Lob vom Trainer“
-  if(typeof arenaKabineLoad==="function")arenaKabineLoad("kab-arena"); // C3: Einlauf-Song/Schlachtruf
+  lobNeuLaden();                                                // v755: „neu“ – v965 auf der Tür „Ich“
   kabineCountdownLoad();                                        // G6: Countdown bis zum nächsten Spiel
   kabineRevealLoad();                                           // H4: Rollen-Reveal am Spieltag
   if(typeof kabineNestHinweisLoad==="function")kabineNestHinweisLoad();   // v734: „Du bist im nächsten Adler Nest!“
@@ -1238,20 +1256,16 @@ const KABINE_TOUR=[
    d:"Das hier ist deine Kabine. Ich zeige dir kurz, was du hier alles machen kannst."},
   {emo:"⏰", t:"Wann ist das nächste Spiel?", sel:["#kab-countdown"],
    d:"Hier siehst du, wie oft du noch schlafen musst bis zum nächsten Spiel."},
+  {emo:"🪶", t:"Euer Team-Level", sel:["#kab-level"],
+   d:"Hier siehst du, wie viele Federn euer ganzes Team schon gesammelt hat. Jede Feder bringt euch zum nächsten Level."},
   {emo:"🎓", t:"Adler-Akademie", sel:["#kab-akademie"],
    d:"Hier lernst du. Im Unterricht mit Bildern und Fragen. Auf dem Trainingsplatz übst du mit dem Ball zu Hause. Dafür gibt es Federn 🪶."},
-  {emo:"🃏", t:"Deine Karte", sel:['#kabine-body button[onclick="kabineMyCard()"]'],
-   d:"Deine eigene Spielerkarte mit Foto und deiner Rolle im Team."},
-  {emo:"⭐", t:"Deine Mission", sel:['#kabine-body button[onclick="kabineMission()"]'], vor:()=>{ const d=document.getElementById("kab-mehr"); if(d){ d.open=true; window._kabMehrOffen=true; } },
-   d:"Eine kleine Aufgabe nur für dich. Schaffst du sie?"},
-  {emo:"🏆", t:"Team-Missionen", sel:['#kabine-body button[onclick="kabineShowQuests()"]'],
-   d:"Aufgaben für das ganze Team. Zusammen schafft ihr mehr!"},
-  {emo:"🤝", t:"Unsere Regeln", sel:['#kabine-body button[onclick="kabineCodex()"]'],
-   d:"So spielen wir Adler: fair, mutig und zusammen."},
-  {emo:"👏", t:"Kompliment schenken", sel:['#kabine-body button[onclick="kabineKudos()"]'],
-   d:"Sag einem Mitspieler, was er toll gemacht hat. Das freut jeden!"},
-  {emo:"✨", t:"Mehr entdecken", sel:["#kab-mehr"], vor:()=>{ const d=document.getElementById("kab-mehr"); if(d){ d.open=true; window._kabMehrOffen=true; } },
-   d:"Hier gibt es noch mehr: dein Taktikbrett zum Malen und Aufstellen, das Sammelalbum und die Team-Galerie."},
+  {emo:"🃏", t:"Ich", sel:["#kab-tuer-ich"],
+   d:"Hinter dieser Tür ist alles über dich: deine Spielerkarte, das Lob vom Trainer, deine Stärken und dein Sammelalbum."},
+  {emo:"🤝", t:"Unser Team", sel:["#kab-tuer-team"],
+   d:"Hier sind eure Regeln, die Team-Missionen und die Komplimente. Sag einem Mitspieler, was er toll gemacht hat!"},
+  {emo:"✏️", t:"Selber machen", sel:["#kab-tuer-machen"],
+   d:"Hier machst du selbst etwas: Aufstellungen auf dem Taktikbrett, ein Interview als Reporter oder du liest das Adler Nest."},
   {emo:"⚽", t:"Viel Spaß!", sel:["#kab-hilfe"],
    d:"Wenn du etwas vergessen hast: Tipp auf „❓ Zeig mir alles“. Und jetzt: Los geht's!"},
 ];

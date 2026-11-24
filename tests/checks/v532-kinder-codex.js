@@ -4,7 +4,7 @@
    Achtjähriger aufsagen kann.
 
    Geprüft werden die Zusagen des Pakets, nicht die Optik:
-   a) Kachel „Unsere Regeln" in der Kabine, in der Gruppe Team & Spaß.
+   a) Kachel „Unsere Regeln" in der Kabine, in der Gruppe Team & Spaß (seit v965 hinter der Tür „Unser Team“).
    b) Ohne Netz stehen die sechs Sätze trotzdem – und wortgleich mit dem Startinhalt
       der Migration (sonst sehen Kinder offline etwas anderes als online).
    c) Aus der Datenbank gewinnen die Sätze des Trainers; inaktive bleiben draußen,
@@ -37,10 +37,12 @@ module.exports = async function (h) {
       const wrap = document.getElementById("kabine-body");
       out.kabineDa = !!wrap;
       if (wrap) {
+        if (typeof kabineTuer === "function") kabineTuer("team");   // v965: „Unsere Regeln“ steht hinter der Tür „Unser Team“
         const k = [...wrap.querySelectorAll("button")].find(b => /kabineCodex/.test(b.getAttribute("onclick") || ""));
         out.kachel = k ? k.textContent.replace(/\s+/g, " ").trim() : "";
         // Steht sie in der Gruppe „Team & Spaß"? Die Überschrift davor zählt.
-        if (k) {
+        if (k && document.getElementById("kab-tuer-seite")) out.gruppe = (document.querySelector("#kab-tuer-seite h2") || {}).textContent || "";
+        else if (k) {
           let e = k.previousElementSibling, gruppe = "";
           while (e && !gruppe) { const t = (e.textContent || "").trim(); if (/^[A-ZÄÖÜ][^<]{2,24}$/.test(t) && e.tagName === "DIV") gruppe = t; e = e.previousElementSibling; }
           out.gruppe = gruppe;
@@ -74,7 +76,7 @@ module.exports = async function (h) {
   if (!offline.kabineDa) probleme.push("die Kabine ließ sich nicht öffnen – Kachel nicht prüfbar");
   if (!/Unsere Regeln/.test(offline.kachel || "")) probleme.push(`Kachel fehlt oder heißt anders: „${offline.kachel}“`);
   if (!/🤝/.test(offline.kachel || "")) probleme.push("Kachel ohne das vereinbarte Zeichen 🤝");
-  if (!/Team & Spaß/.test(offline.gruppe || "")) probleme.push(`Kachel steht in der Gruppe „${offline.gruppe}“ (erwartet „Team & Spaß“)`);
+  if (!/Team & Spaß|Unser Team/.test(offline.gruppe || "")) probleme.push(`Kachel steht in der Gruppe „${offline.gruppe}“ (erwartet „Unser Team“, vor v965 „Team & Spaß“)`);
   if (offline.saetze.length !== 6) probleme.push(`ohne Netz stehen ${offline.saetze.length} Sätze da (erwartet 6 aus dem Fallback)`);
   if (!offline.zurueck) probleme.push("kein Zurück-Knopf in der Ansicht");
   if (offline.max !== 6) probleme.push(`KINDER_CODEX_MAX ist ${offline.max} (erwartet 6)`);
