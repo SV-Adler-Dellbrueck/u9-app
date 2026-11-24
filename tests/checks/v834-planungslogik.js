@@ -53,7 +53,8 @@ module.exports = async function (h) {
     };
     const alle = tpAllForms();
     const bild = () => tpSlots.map((sl, si) => ({ typ: sl.typ, label: sl.label, dauer: Number(sl.dauer), regel: sl.regel || null,
-      felder: [...document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`)].map(x => x.value === "" ? null : alle[+x.value].name) }));
+      felder: [...document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`)].map(x => x.value === "" ? null : alle[+x.value].name), parallel: tpIstParallel(sl) }))
+      .filter(x => !x.parallel);   // v959: montags kommt der Torwart-Block parallel dazu – er verlängert die Einheit nicht
     const out = {};
     // a)
     await datumSetzen(d2); await vorlagenLaden();
