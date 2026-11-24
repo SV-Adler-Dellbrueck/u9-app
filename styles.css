@@ -2341,3 +2341,10 @@ body.tp-sheet-offen{overflow:hidden}
 :root[data-theme="dark"] .rf-u-erinnern{background:#431407!important;color:#fed7aa!important;border-color:#ea580c!important}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .rf-option-chip{background:#422006;color:#fde68a;border-color:#d97706}
   :root:not([data-theme="light"]) .rf-u-erinnern{background:#431407!important;color:#fed7aa!important;border-color:#ea580c!important}}
+
+/* v967: Easter Egg bei ausfallenden Fächern – die Zeile wackelt kurz */
+@keyframes spWackel{0%,100%{transform:rotate(0)}20%{transform:rotate(-2deg)}40%{transform:rotate(2deg)}60%{transform:rotate(-1.5deg)}80%{transform:rotate(1deg)}}
+.sp-aus.sp-wackel{animation:spWackel .5s ease}
+@media (prefers-reduced-motion:reduce){.sp-aus.sp-wackel{animation:none}}
+:root[data-theme="dark"] .sp-aus-ei{background:#064e3b!important}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .sp-aus-ei{background:#064e3b!important}}

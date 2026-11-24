@@ -132,7 +132,8 @@ function sbFotoZeigen(sid,id){
   document.getElementById("sb-foto-gross")?.remove();
   const m=document.createElement("div"); m.id="sb-foto-gross"; m.className="mdl-bg";
   m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label",z[2]+": Foto");
-  m.style.cssText="position:fixed;inset:0;z-index:1200;background:rgba(15,23,42,.92);display:flex;flex-direction:column;padding:16px;gap:12px";
+  m.style.cssText="position:fixed;inset:0;background:rgba(15,23,42,.92);display:flex;flex-direction:column;padding:16px;gap:12px";
+  m.style.zIndex=String((typeof zOben==="function")?zOben(10050):10050);   // v967: über dem Steckbrief-Fenster (fensterAuf liegt höher als 1200)
   m.innerHTML=`<div style="display:flex;align-items:center;gap:10px;color:#fff"><div style="flex:1;font-size:var(--s-teil);font-weight:800">${z[1]} ${z[2]}</div>
       <button type="button" class="btn" onclick="document.getElementById('sb-foto-gross')?.remove()" aria-label="Schließen" style="min-width:44px;min-height:44px">✕</button></div>
     <div id="sb-foto-gross-bild" style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;color:#fff">Lädt …</div>

@@ -27,7 +27,9 @@ module.exports = async function (h) {
     out.a = { tag: k ? k.tagName : "", fit: img ? getComputedStyle(img).objectFit : "", hoch: k ? Math.round(k.getBoundingClientRect().height) : 0 };
     k && k.click(); await w(300);
     const d = document.getElementById("sb-foto-gross");
-    out.b = { dialog: d ? d.getAttribute("role") + "/" + d.getAttribute("aria-modal") : "", bild: !!(d && d.querySelector("#sb-foto-gross-bild img")),
+    /* v967 (Charles 24.11.: „wird nicht groß“): sichtbar heißt oben – an der Bildmitte liegt das Fenster, nicht der Steckbrief */
+    const mitte = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+    out.b = { oben: !!(d && mitte && d.contains(mitte)), dialog: d ? d.getAttribute("role") + "/" + d.getAttribute("aria-modal") : "", bild: !!(d && d.querySelector("#sb-foto-gross-bild img")),
       knoepfe: d ? [...d.querySelectorAll("button,label")].map(b => b.textContent.trim() + ":" + Math.round(b.getBoundingClientRect().height)) : [] };
     // c) Ersetzen – einmal klappt das Hochladen nicht, einmal schon
     const lade0 = window.kindAlbumHochladen, laden0 = window.kindAlbumLaden;
@@ -46,6 +48,7 @@ module.exports = async function (h) {
   if (r.fehler) return h.ergebnis(titel, false, ["Ablauf: " + r.fehler]);
   if (r.a.tag !== "BUTTON" || r.a.fit !== "contain" || r.a.hoch < 44) probleme.push("a) " + JSON.stringify(r.a));
   const kn = r.b.knoepfe.join(" | ");
+  if (!r.b.oben) probleme.push("b) Großansicht liegt unter dem Steckbrief-Fenster (nicht sichtbar)");
   if (r.b.dialog !== "dialog/true" || !r.b.bild || !/Anderes Foto wählen:(4[4-9]|[5-9]\d)/.test(kn) || !/Löschen:(4[4-9]|[5-9]\d)/.test(kn) || r.b.knoepfe.some(x => Number(x.split(":").pop()) < 44)) probleme.push("b) " + JSON.stringify(r.b));
   if (del !== 1 || !r.c.dialogZu) probleme.push(`c) altes Foto ${del}× gelöscht (erwartet 1, nur nach erfolgreichem Hochladen) · Fenster zu ${r.c.dialogZu}`);
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
