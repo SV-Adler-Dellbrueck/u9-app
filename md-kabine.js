@@ -1116,16 +1116,43 @@ function kabineBrett(){
   if(typeof brettKabine!=="function"){ if(typeof toast==="function")toast("Das Brett lädt noch – gleich nochmal","info"); return; }
   kabSubMark(); brettKabine(b);
 }
+/* v962: die Akademie-Karte der Kabine – Adler, zwei große Wege (Unterricht, Trainingsplatz), darunter der Abzeichen-Stand. */
+function kabineAkademieHtml(){
+  const bild=(typeof schuleLehrerBild==="function")?((typeof kfBasis==="function"?kfBasis():"")+schuleLehrerBild("winkt")):"";
+  const weg=(mode,emo,t,s)=>`<button type="button" class="kab-ak-weg" onclick="kabineQuiz('${mode}')" style="border:1px solid rgba(255,255,255,.35);border-radius:18px;background:rgba(0,0,0,.2);color:#fff;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:104px;padding:10px 6px"><span aria-hidden="true" style="font-size:var(--s-seite);line-height:1">${emo}</span><span style="font-size:var(--s-karte);font-weight:900">${t}</span><span style="font-size:var(--s-text);opacity:.92">${s}</span></button>`;
+  return `<section id="kab-akademie" aria-label="Adler-Akademie" style="margin:2px 16px 10px;border-radius:24px;background:linear-gradient(150deg,#047857,#065f46);border:1px solid rgba(255,255,255,.22);padding:14px">
+    <button type="button" onclick="kabineQuiz('schule')" style="display:flex;gap:12px;align-items:center;width:100%;border:none;background:none;color:#fff;font-family:inherit;text-align:left;cursor:pointer;padding:0;min-height:64px">
+      <span aria-hidden="true" style="flex:none;width:68px;height:76px;border-radius:18px;background:radial-gradient(circle at 50% 35%,#fff,#d1fae5 70%);display:flex;align-items:flex-end;justify-content:center;overflow:hidden">${bild?`<img src="${bild}" alt="" style="width:100%;height:100%;object-fit:contain;object-position:50% 100%" onerror="this.outerHTML='<span style=&quot;font-size:40px&quot;>🦅</span>'">`:`<span style="font-size:40px">🦅</span>`}</span>
+      <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-seite);font-weight:900">🎓 Adler-Akademie</span>
+      <span style="display:block;font-size:var(--s-karte);opacity:.95">Lernen mit dem Kopf und mit dem Ball.</span>
+      <span id="kab-ak-stand" style="display:inline-block;margin-top:4px;font-size:var(--s-text);font-weight:800;background:rgba(0,0,0,.22);border-radius:999px;padding:2px 10px">Federn sammeln 🪶</span></span>
+      <span aria-hidden="true" style="font-size:var(--s-seite);opacity:.85">›</span>
+    </button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+      ${weg("theorie","📚","Unterricht","Bilder und Fragen")}${weg("praxis","⚽","Trainingsplatz","Üben mit dem Ball")}
+    </div></section>`;
+}
+async function kabineAkademieStand(){
+  const kids=window._elternKids||[]; if(kids.length!==1||typeof abzeichenStandLaden!=="function")return;
+  try{
+    const st=await abzeichenStandLaden(kids[0].spieler_id), el=document.getElementById("kab-ak-stand"); if(!el||!st)return;
+    const br=abzeichenBronzeZahl(st), si=st.silber.size;
+    el.textContent=`🥉 ${br}/9 Bronze`+(si||br>=ABZ_SILBER_AB?` · 🥈 ${si}/10 Silber`:"");
+  }catch(e){}
+}
 function kabineHome(){
   kabSubConsume(); // Rückkehr per ←-Button: den Unterseiten-History-Eintrag still verbrauchen
   const b=document.getElementById("kabine-body"); if(!b)return;
   b.innerHTML=`
     <div style="flex:1;overflow-y:auto">
-    <div style="text-align:center;padding:18px 16px 6px">
-      <div style="font-size:22px;font-weight:900">🦅 Die Kabine</div>
-      <div style="font-size:12px;opacity:.8">Adler U9 · Die Kabine</div>
-      <button id="kab-hilfe" onclick="kabineTourStart()" aria-label="Zeig mir die Kabine" style="margin-top:8px;min-height:44px;padding:6px 16px;border:1px solid rgba(255,255,255,.45);border-radius:22px;background:rgba(255,255,255,.12);color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">❓ Zeig mir alles</button>
+    ${/* v962 · Charles 24.11.: „Der Aufbau der Kabine muss besser werden. Die Akademie sollte präsenter sein. Und höhere Usability.“
+          Kopf in einer Zeile, gleich darunter die Akademie als große Karte mit zwei Wegen; das Team-Level folgt danach. */""}
+    <div style="display:flex;align-items:center;gap:10px;padding:14px 16px 8px">
+      <div style="flex:1;min-width:0"><div style="font-size:var(--s-seite);font-weight:900">🦅 Die Kabine</div>
+      <div style="font-size:var(--s-klein);opacity:.85">Adler U9</div></div>
+      <button id="kab-hilfe" onclick="kabineTourStart()" aria-label="Zeig mir die Kabine" style="flex:none;min-height:44px;padding:6px 14px;border:1px solid rgba(255,255,255,.45);border-radius:22px;background:rgba(255,255,255,.12);color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">❓ Zeig mir alles</button>
     </div>
+    ${kabineAkademieHtml()}
     <div id="kab-level" style="padding:2px 16px 6px"></div>
     <div id="kab-lob"></div>
     <div id="kab-countdown"></div>
@@ -1147,12 +1174,11 @@ function kabineHome(){
       ${/* v610: 16 Kacheln auf einen Blick waren für ein Kind zu viel – gesucht wurde, nicht
             gespielt. Vorn stehen acht, der Rest wartet hinter „Mehr entdecken". Ob das Kind
             aufgeklappt hat, merkt sich die Kabine, solange sie offen ist. */""}
-      ${lbl("Spielen & Lernen")}
       ${/* v936 (Charles 21.11.): Taktik-Quiz und Fußball-Wissen stecken jetzt in der Adler-Schule. */""}
       ${/* v928: Adler-Schule – Fragen zu den sechs Leitfragen aus dem Training. Damit vorn acht Kacheln bleiben,
             wartet „Meine Mission“ hinter „Mehr entdecken“ (Charles 21.11.2026). */""}
       ${/* v961 (Charles 24.11.): aus der Adler-Schule wird die Adler-Akademie – Theorie und Praxis (Technik-Abzeichen) an einem Ort */""}
-      ${tile("kabineQuiz('schule')","🎓","Adler-Akademie","rgba(16,185,129,.46)","rgba(4,120,87,.32)",true)}
+      ${/* v962: die Akademie steht als große Karte oben (kabineAkademieHtml) */""}
       ${lbl("Meine Sachen")}
       ${tile("kabineMyCard()","🃏","Meine Karte","rgba(168,85,247,.50)","rgba(124,58,237,.32)")}
       ${/* v755: alle Sprachlobe vom Trainerteam nach Datum, „Neu“-Punkt bis zum ersten Anhören – bewusst nicht unter „Mehr entdecken“.
@@ -1187,6 +1213,7 @@ function kabineHome(){
     </div>`;})()}
     </div>
     ${window._kindGeraetModus?"":`<button onclick="kabineExit()" style="margin:0 16px 18px;padding:12px;border:none;border-radius:14px;background:rgba(0,0,0,.25);color:#fff;font-family:inherit;font-size:14px;cursor:pointer">🔒 Für Erwachsene: Kabine verlassen</button>`}`;
+  kabineAkademieStand();                                        // v962: Abzeichen-Stand auf der Akademie-Karte
   teamLevelLoad("kab-level");                                  // C1: Team-Level
   kabineLobLoad();                                              // v675: Federn vom Trainerteam mit Grund
   lobNeuLaden();                                                // v755: „Neu“-Punkt auf der Kachel „Lob vom Trainer“
@@ -1211,8 +1238,8 @@ const KABINE_TOUR=[
    d:"Das hier ist deine Kabine. Ich zeige dir kurz, was du hier alles machen kannst."},
   {emo:"⏰", t:"Wann ist das nächste Spiel?", sel:["#kab-countdown"],
    d:"Hier siehst du, wie oft du noch schlafen musst bis zum nächsten Spiel."},
-  {emo:"🎓", t:"Adler-Akademie", sel:['#kabine-body button[onclick="kabineQuiz(\'schule\')"]'],
-   d:"Theorie und Praxis an einem Ort: Stunden mit Bildern und Fragen, dazu Technik-Abzeichen für zu Hause. Richtige Antworten und Abzeichen bringen Federn 🪶."},
+  {emo:"🎓", t:"Adler-Akademie", sel:["#kab-akademie"],
+   d:"Hier lernst du. Im Unterricht mit Bildern und Fragen. Auf dem Trainingsplatz übst du mit dem Ball zu Hause. Dafür gibt es Federn 🪶."},
   {emo:"🃏", t:"Deine Karte", sel:['#kabine-body button[onclick="kabineMyCard()"]'],
    d:"Deine eigene Spielerkarte mit Foto und deiner Rolle im Team."},
   {emo:"⭐", t:"Deine Mission", sel:['#kabine-body button[onclick="kabineMission()"]'], vor:()=>{ const d=document.getElementById("kab-mehr"); if(d){ d.open=true; window._kabMehrOffen=true; } },

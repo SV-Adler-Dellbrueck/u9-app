@@ -478,7 +478,7 @@ function tqStart(){
     html+=`</div>${extern?"":'<button class="btn btn-sm" onclick="tqStop()" style="margin-top:8px"><i class="ti ti-x"></i>Abbrechen</button>'}`;
   } else {
     html+=`🧑 ${tqPlayer}${tqPlayerRole?" – "+tqPlayerRole:""}</div>
-      <div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:8px">🎓 Adler-Akademie${_akBereich==="theorie"?" · Theorie":_akBereich==="praxis"?" · Praxis":""}</div>`;
+      <div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:8px">🎓 Adler-Akademie${_akBereich==="theorie"?" · Unterricht":_akBereich==="praxis"?" · Trainingsplatz":""}</div>`;
     // Nur bei Geschwistern: ein dezenter Weg zurück zur Namenswahl.
     if(TQ_EIGENE_KINDER&&TQ_EIGENE_KINDER.length>1)
       html+=`<button onclick="tqVergissKind()" style="border:none;background:none;color:var(--text3);font-size:11px;text-decoration:underline;cursor:pointer;padding:0 0 8px;min-height:44px">Nicht ${esc(tqPlayer)}? Name ändern</button>`;
@@ -487,7 +487,7 @@ function tqStart(){
        darunter das Adler-Zeugnis mit dem echten Stand in Sport und Augenzwinkern bei den anderen Fächern. */
     /* v961 · Charles 24.11.: „Wir machen aus der Adler-Schule eine Adler-Akademie und integrieren die Technik-Abzeichen dort mit
        rein. Dann haben wir Theorie und Praxis.“ Start mit zwei Bereichen; Theorie ist der bisherige Stundenplan, Praxis der Trainingsplatz. */
-    if(!_akBereich) html+=akademieStartHtml();
+    if(!_akBereich) html+=akademieStartHtml(pp);
     else if(_akBereich==="praxis") html+=akademiePraxisHtml();
     else{
     html+=schuleStundenplanKopf();    // v938: Lehrer mit Sprechblase, „das Beste“, Überschrift
@@ -642,6 +642,7 @@ function tqSelectPlayer(name){
   if(mode==="taktik"){tqBlocksShow();return;}
   if(mode==="wissen"){wqStart();return;}
   if(mode==="schule"){_akBereich=null;tqStart();return;}   // v936/v961: Kachel „Adler-Akademie“ öffnet den Akademie-Start
+  if(mode==="theorie"||mode==="praxis"){_akBereich=mode;tqStart();return;}   // v962: aus der Kabine direkt in Unterricht oder Trainingsplatz
   tqStart();
 }
 
@@ -1596,7 +1597,7 @@ function kfSvg(feld,bild,o){
    sonst steht der Master da. Fehlt eine Datei, bleibt das Adler-Zeichen (onerror).
    Die Sprechtexte zwischen den beiden Marken liest auch tools/quiz-audio-namen.js (Aufnahmen unter audio/schule/). */
 /*LEHRER-TEXTE-ANFANG*/
-const AKADEMIE_GRUSS="Willkommen in der Adler-Akademie! Hier lernst du im Kopf – und mit dem Ball.";
+const AKADEMIE_GRUSS="Hallo! Willkommen in der Adler-Akademie. Hier lernst du mit dem Kopf und mit dem Ball. Was machst du heute?";
 const SCHULE_GRUSS="Hallo! Heute stehen drei Stunden Sport auf dem Plan. Such dir eine aus! Und das Beste: Du musst nur zum Unterricht, wenn du willst.";
 const SCHULE_STUNDE_VOR="Heute lernen wir: ", SCHULE_STUNDE_NACH=" Erst schauen wir uns Bilder an. Dann bist du dran!";
 const ELTERN_MOIN="Moin! Schön, dass ihr da seid. Der Adler freut sich aufs nächste Training!";   // v947: Moin-Gruß der Eltern-Startseite
@@ -1652,19 +1653,34 @@ function schuleStundenplanFuss(){
 let _akBereich=null;
 function akademieBereich(b){ _akBereich=b||null; tqStart(); try{ document.getElementById("tq-panel")?.scrollIntoView({block:"start"}); }catch(e){} }
 function _akKindId(){ const k=(typeof KADER!=="undefined"?KADER:[]).find(x=>x.name===tqPlayer); if(!k)return null; return (typeof kaderId==="function")?kaderId(k):k.id; }
-function akademieStartHtml(){
-  const pr=(_akKindId()!=null&&typeof _abzStand!=="undefined")?_abzStand[_akKindId()]:null;
-  const praxis=pr&&typeof abzeichenBronzeZahl==="function"?`🥉 ${abzeichenBronzeZahl(pr)}/9 Bronze${pr.silber.size?` · 🥈 ${pr.silber.size}/10 Silber`:""}`:"Technik-Abzeichen für zu Hause";
-  const kachel=(cls,id,emo,titel,text,stand,onclick)=>`<button type="button" class="ak-bereich ${cls}" id="${id}" onclick="${onclick}">
-      <span class="ak-t">${emo} ${titel}</span><span class="ak-s">${text}</span><span class="ak-stand">${stand}</span></button>`;
-  return schuleLehrerHtml(AKADEMIE_GRUSS,"Willkommen in der Akademie, "+esc(tqPlayer)+"! Hier lernst du im Kopf – und mit dem Ball.","winkt",null)
-    +kachel("ak-theorie","ak-theorie","📚","Theorie · Unterricht","Drei Stunden zu den Leitfragen: Bilder, Fragen, Szenen.","📅 Zum Stundenplan","akademieBereich('theorie')")
-    +kachel("ak-praxis","ak-praxis","⚽","Praxis · Trainingsplatz","Technik-Abzeichen für zu Hause – Mama oder Papa hakt ab.",praxis,"akademieBereich('praxis')")
-    +`<div class="ak-zeugnis k3"><span aria-hidden="true" style="font-size:24px">📜</span><span><b style="display:block">Akademie-Zeugnis</b>Theorie und Praxis zusammen – am Ende der Hin- und Rückrunde.</span></div>`;
+/* v962 · Charles 24.11.: „In der Akademie sollte der Platz besser genutzt werden. Die untere Hälfte ist komplett leer … Die ganze Akademie
+   auch in Kindersprache.“ Zwei große Kacheln nebeneinander, darunter „Als Nächstes für dich“ (nächste Stunde, nächstes Abzeichen)
+   und das Zeugnis mit zwei Balken. „Theorie“ und „Praxis“ stehen nur noch klein über den Wörtern, die ein Kind kennt. */
+function akademieStartHtml(pp){
+  const sp=(typeof schuleSportStand==="function")?schuleSportStand(pp):{kf:0,tk:0};
+  const tkN=(typeof TQ_BLOCKS!=="undefined")?TQ_BLOCKS.length:10;
+  const theorieFertig=sp.kf+sp.tk, theorieAlle=6+tkN;
+  const kachel=(cls,id,emo,ueber,titel,text,stand,onclick)=>`<button type="button" class="ak-bereich ${cls}" id="${id}" onclick="${onclick}">
+      <span class="ak-emo" aria-hidden="true">${emo}</span><span class="ak-ueber">${ueber}</span><span class="ak-t">${titel}</span><span class="ak-s">${text}</span><span class="ak-stand">${stand}</span></button>`;
+  const stunde=sp.kf<6?{emo:"⚽",t:"1. Stunde: Training verstehen",s:`Du hast ${sp.kf} von 6 Blöcken geschafft.`,on:"kfStart()"}
+    :sp.tk<tkN?{emo:"🧩",t:"2. Stunde: Taktik",s:`Du hast ${sp.tk} von ${tkN} Blöcken geschafft.`,on:"akademieBereich('theorie')"}
+    :{emo:"🧠",t:"3. Stunde: Fußball-Wissen",s:"Sammle noch mehr Federn mit Fragen.",on:"wqStart()"};
+  const zeile=(id,emo,titel,text,on)=>`<button type="button" class="ak-naechst" id="${id}" onclick="${on}"><span class="ak-n-emo" aria-hidden="true">${emo}</span><span class="ak-n-txt"><b>${titel}</b><small>${text}</small></span><span class="ak-n-pfeil" aria-hidden="true">›</span></button>`;
+  const balken=(name,n,alle)=>`<div class="ak-balken-z"><span>${name}</span><span class="ak-balken" role="img" aria-label="${n} von ${alle}"><i style="width:${Math.round(Math.min(1,n/Math.max(1,alle))*100)}%"></i></span><b>${n}/${alle}</b></div>`;
+  return schuleLehrerHtml(AKADEMIE_GRUSS,"Hallo "+esc(tqPlayer)+"! Hier lernst du mit dem Kopf und mit dem Ball. Was machst du heute?","winkt",null)
+    +`<div class="ak-zwei">`
+    +kachel("ak-theorie","ak-theorie","📚","Theorie","Unterricht","Lernen mit Bildern und Fragen.",`${theorieFertig}/${theorieAlle} geschafft`,"akademieBereich('theorie')")
+    +kachel("ak-praxis","ak-praxis","⚽","Praxis","Trainingsplatz","Üben mit dem Ball – zu Hause.","Abzeichen sammeln","akademieBereich('praxis')")
+    +`</div>
+    <h3 class="ak-h">⭐ Als Nächstes für dich</h3>
+    ${zeile("ak-naechst-theorie",stunde.emo,stunde.t,stunde.s,stunde.on)}
+    <div id="ak-naechst-praxis"></div>
+    <div class="ak-zeugnis k3"><span aria-hidden="true" class="ak-z-emo">📜</span><span style="flex:1;min-width:0"><b style="display:block">Dein Akademie-Zeugnis</b>Kommt am Ende der Hinrunde und am Ende der Rückrunde.
+      ${balken("📚 Unterricht",theorieFertig,theorieAlle)}<span id="ak-balken-praxis">${balken("⚽ Trainingsplatz",0,19)}</span></span></div>`;
 }
 function akademiePraxisHtml(){
   const id=_akKindId();
-  return `<div style="font-size:15px;color:var(--text2);margin:0 2px 10px;line-height:1.4">Übe zu Hause! Tippe ein Abzeichen an – dann siehst du, wie es geht. Geschafft? Mama oder Papa hakt es im Eltern-Bereich ab.</div>
+  return `<div class="ak-platz-intro">Üb mit dem Ball – zu Hause oder im Garten. Tipp ein Abzeichen an. Dann zeigt dir der Adler, wie es geht.<br><b>Geschafft?</b> Zeig es Mama oder Papa. Sie haken es ab.</div>
     <div id="abzeichen-list" class="ak-platz" data-spieler="${id==null?"":Number(id)}" data-kids="1"><div style="color:var(--text3);font-size:14px">Lädt …</div></div>
     <button class="btn btn-sm ak-zurueck" style="margin-top:12px" onclick="akademieBereich(null)"><i class="ti ti-arrow-left"></i>Zurück zur Akademie</button>`;
 }
@@ -1673,8 +1689,13 @@ async function akademiePraxisLaden(){
   const id=_akKindId(); if(id==null||typeof abzeichenStandLaden!=="function")return;
   if(_akBereich==="praxis"){ if(typeof abzeichenRender==="function")await abzeichenRender(id,true); return; }
   await abzeichenStandLaden(id);
-  const k=document.querySelector("#ak-praxis .ak-stand"), st=_abzStand[id];
-  if(k&&st&&typeof abzeichenBronzeZahl==="function")k.textContent=`🥉 ${abzeichenBronzeZahl(st)}/9 Bronze${st.silber.size?` · 🥈 ${st.silber.size}/10 Silber`:""}`;
+  const st=_abzStand[id]; if(!st||typeof abzeichenBronzeZahl!=="function")return;
+  const br=abzeichenBronzeZahl(st), si=st.silber.size;
+  const k=document.querySelector("#ak-praxis .ak-stand"); if(k)k.textContent=`🥉 ${br}/9${si||br>=ABZ_SILBER_AB?` · 🥈 ${si}/10`:""}`;
+  const pb=document.getElementById("ak-balken-praxis");
+  if(pb)pb.innerHTML=`<div class="ak-balken-z"><span>⚽ Trainingsplatz</span><span class="ak-balken" role="img" aria-label="${br+si} von 19"><i style="width:${Math.round((br+si)/19*100)}%"></i></span><b>${br+si}/19</b></div>`;
+  const n=(typeof abzeichenNaechstes==="function")?abzeichenNaechstes(st):null, box=document.getElementById("ak-naechst-praxis");
+  if(box&&n)box.innerHTML=`<button type="button" class="ak-naechst" onclick="abzeichenDetail('${n.id}',${Number(id)},1)"><span class="ak-n-emo" aria-hidden="true">${n.emo}</span><span class="ak-n-txt"><b>Üben: ${esc(n.name)}</b><small>${esc(n.desc)}</small></span><span class="ak-n-pfeil" aria-hidden="true">›</span></button>`;
 }
 function kfRenderLauncher(){
   if(!tqPlayer)return "";
