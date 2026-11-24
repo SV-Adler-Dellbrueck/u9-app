@@ -20,7 +20,13 @@ module.exports = async function (h) {
     if (typeof sbToken !== "function" || !sbToken()) window.sbToken = () => "t";
     try { Object.keys(localStorage).filter(k => /bib|stand/i.test(k)).forEach(k => localStorage.removeItem(k)); } catch (e) {}
     if (typeof loadCustomForms === "function") await loadCustomForms();
-    return await bibliothekAbgleich();
+    /* Der Start stößt den Abgleich selbst an. Läuft er noch, kehrt ein zweiter Aufruf sofort zurück (_bibLaeuft) und das PATCH
+       käme erst nach dem Messen – auf dem langsameren GitHub-Rechner (Prüflauf zu #554) genau so geschehen. Also: warten. */
+    const laeuft = () => { try { return _bibLaeuft; } catch (e) { return false; } };
+    for (let i = 0; i < 100 && laeuft(); i++) await new Promise(x => setTimeout(x, 100));
+    const erg = await bibliothekAbgleich();
+    for (let i = 0; i < 100 && laeuft(); i++) await new Promise(x => setTimeout(x, 100));
+    return erg;
   }).catch(x => ({ fehler: String(x) }));
   const patch = s.gesendet.filter(g => g.methode === "PATCH" && /trainingsformen/.test(g.pfad) && /id=in\.\(92\)/.test(g.suche));
   const fe = s.fehler(); await s.schliessen();

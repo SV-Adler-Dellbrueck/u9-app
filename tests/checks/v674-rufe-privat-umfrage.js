@@ -169,7 +169,8 @@ module.exports = async function (h) {
   const f2 = t.fehler(); const tr = t.gesendet.filter(x => x.pfad.endsWith("/rpc/rufe_privat_raum")).map(x => JSON.stringify(x.body)); await t.schliessen();
   if (rt.fehler) probleme.push("e) " + rt.fehler);
   else {
-    if (rt.vorher.some(c => /Kind/.test(c)) || !rt.vorher.includes("🔒 Familien · 2")) probleme.push(`e) Knöpfe: ${JSON.stringify(rt.vorher)}`);
+    // v964: Zähler als roter Punkt („🔒 Familien 2“) statt „· 2“; davor steht der Reiter „@ Für mich“
+    if (rt.vorher.some(c => /Kind/.test(c)) || !rt.vorher.some(c => /^🔒 Familien\D*2$/.test(c))) probleme.push(`e) Knöpfe: ${JSON.stringify(rt.vorher)}`);
     if (!/^Familie Kind C\b.*\D2›$/.test(rt.liste[0] || "") || !rt.liste.some(x => x.includes("Kind A & Kind B")) || rt.liste.length !== 3) probleme.push(`e) Familienliste: ${JSON.stringify(rt.liste)}`);
     if (!/der Elternbeirat nicht/.test(rt.hinweis)) probleme.push("e) Hinweis, wer mitliest, fehlt");
     if (tr[0] !== '{"p_kind":4}' || rt.raum !== 13 || !rt.nachher.includes("🔒 Kind D*") || !/Familie von Kind D/.test(rt.unter)) probleme.push(`e) Öffnen: ${JSON.stringify({ tr, rt })}`);

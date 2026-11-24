@@ -93,7 +93,8 @@ module.exports = async function (h) {
   if (!/Training fällt aus/.test(r.b.fix)) probleme.push("b) Fixierter Ruf steht nicht oben");
   /* v674: Die Leiste steht für Eltern jetzt immer da – dort sitzt „🔒 Trainerteam“. Bei einem offenen
      Raum trägt sie genau diesen und den privaten Knopf, kein „＋ Raum“. */
-  if (r.b.raumChips !== "📣 Allgemein | 🔒 Trainerteam") probleme.push(`b) Raum-Leiste für Eltern: ${r.b.raumChips}`);
+  // v964: vorn steht der Reiter „@ Für mich“ (Erwähnungen und Antworten über alle Räume)
+  if (r.b.raumChips.replace(/^@ Für mich( \d+)? \| /, "") !== "📣 Allgemein | 🔒 Trainerteam") probleme.push(`b) Raum-Leiste für Eltern: ${r.b.raumChips}`);
   if (r.b.senden < 48) probleme.push(`b) Senden-Knopf ${r.b.senden} px`);
   const senden = post.find(x => /^POST rufe_nachricht /.test(x)) || "";
   if (!/"raum_id":5/.test(senden) || !/"antwort_auf":3/.test(senden) || !/"an_alle":false/.test(senden)) probleme.push(`c) Senden: ${senden}`);

@@ -42,9 +42,11 @@ module.exports = async function (h) {
   const migDir = path.join(h.REPO, "supabase/migrations");
   const neueste = name => fs.readdirSync(migDir).sort().filter(d => fs.readFileSync(path.join(migDir, d), "utf8").includes("function public." + name)).pop();
   const ruf = fs.readFileSync(path.join(migDir, neueste("rufe_push_faellig") || ""), "utf8");
-  const ruf1 = ruf.slice(ruf.indexOf("function public.rufe_push_faellig"), ruf.indexOf("end $function$"));
+  const rufAb = ruf.indexOf("function public.rufe_push_faellig"), ruf1 = ruf.slice(rufAb, ruf.indexOf("end $function$", rufAb)); // ab v964 stehen weitere Funktionen davor
   // v705: die Ruhezeit kommt seither je Konto aus push_ruht (Vorgabe Eltern 21:30–7, Trainer keine) – beides erfüllt die Regel
-  const v705 = /push_ruht\(s\.user_id, p_jetzt\)/.test(ruf1) && /time '21:30'/.test(ruf) && /role = 'trainer'\) then return false/.test(ruf);
+  // seit v964 steht rufe_push_faellig in einer eigenen Migration; die Regel selbst lebt in push_ruht (neueste Fassung)
+  const ruhtDatei = neueste("push_ruht"), ruht = ruhtDatei ? fs.readFileSync(path.join(migDir, ruhtDatei), "utf8") : "";
+  const v705 = /push_ruht\(s\.user_id, p_jetzt\)/.test(ruf1) && /time '21:30'/.test(ruf + ruht) && /role = 'trainer'\) then return false/.test(ruf + ruht);
   if (!v705 && (!/time '21:30'/.test(ruf1) || !/not v_ruhe or p\.role='trainer'/.test(ruf1)) || /then return; end if/.test(ruf1)) probleme.push("c) rufe_push_faellig: Ruhezeit nicht 21:30 oder nicht nur für Eltern (" + neueste("rufe_push_faellig") + ")");
   if (!/interval '30 minutes'/.test(ruf1)) probleme.push("c) Bündelung fehlt");
   const ww = fs.readFileSync(path.join(migDir, neueste("wiewars_push_faellig") || ""), "utf8");
