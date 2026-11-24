@@ -1,0 +1,50 @@
+# Prüflauf – startet `node tests/run.js` auf jedem Pull Request nach main (und von Hand).
+# Derselbe Lauf, den CLAUDE.md vor jedem Versionssprung verlangt: Parsen aller Dateien, Ladearchitektur,
+# Prüfungen am gerenderten DOM mit Supabase-Attrappe. Keine Zugangsdaten, keine Datenbank, kein Netz zur App.
+# Grün heißt: alle Prüfungen bestanden. Rot: der Befund steht im Log unter „Prüflauf“ (Abschnitt „Befund(e)“).
+# Bekannter Sonderfall: Ein neuer Text der Adler-Akademie ist rot (v567), bis die Action „Vertonung Lennart“
+# nach dem Merge die Aufnahme erzeugt hat – das ist dann ein Hinweis, kein Fehler im Code.
+name: Prüflauf
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pruefung-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pruefen:
+    # Fest auf 24.04: Playwright 1.56 (feste Fassung, siehe tests/README.md) kennt ubuntu-latest = 26.04 noch nicht.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Prüfwerkzeug installieren
+        # package-lock.json steht bewusst in .gitignore; die Playwright-Fassung ist in package.json fest (ohne ^).
+        run: npm install --no-audit --no-fund
+
+      - name: Chromium für Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Schriften wie in der Cloud-Sitzung
+        # Ohne Inter als Systemschrift springt eine breitere Ersatzschrift ein, und Layout-Prüfungen (z. B. v898, Monitor-Tafel
+        # 1280 × 800) messen anders als in der Sitzung, in der die Prüfungen geschrieben werden.
+        # Dazu dieselbe Regel wie im Sitzungsabbild: Inter vor DejaVu für sans-serif und system-ui (tests/fonts/56-prefer-inter.conf).
+        run: |
+          sudo apt-get install -y --no-install-recommends fonts-inter fonts-noto-color-emoji
+          sudo cp tests/fonts/56-prefer-inter.conf /etc/fonts/conf.d/
+          fc-cache -f && fc-match sans-serif && fc-match system-ui
+
+      - name: Prüflauf
+        run: node tests/run.js
