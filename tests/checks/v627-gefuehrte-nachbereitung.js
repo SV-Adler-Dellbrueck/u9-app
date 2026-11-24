@@ -3,7 +3,7 @@
    Bogen bleibt; Training, Spiel und Festival; Worte mit Sternen.
 
    a) Training: Das Fenster öffnet mit dem Ablauf, der Bogen ist verborgen; Schritt 1 enthält
-      den Sprachnotiz-Kasten (genau einmal im Dokument).
+      den Sprachnotiz-Kasten (genau einmal im Dokument; seit v960 nicht mehr im Einstieg, der nur noch zwei Wege zeigt).
    b) Eine Kachel setzt das Feld des Bogens (Sterne) und geht weiter; Beschriftung mit Wort und Sternen.
    c) „fand nicht statt“ setzt „übersprungen“ und überspringt die übrigen Fragen dieser Übung.
    d) Kinder: Kachel setzt die Kinder-Sterne.
@@ -93,7 +93,7 @@ module.exports = async function (h) {
   await s.schliessen();
   if (r.fehlt) return h.ergebnis("v627 Geführte Nachbereitung", false, ["nbWegStart fehlt"]);
   if (!r.a.weg || r.a.bogen) probleme.push(`a) Ablauf ${r.a.weg ? "da" : "fehlt"}, Bogen ${r.a.bogen ? "sichtbar" : "verborgen"}`);
-  if (r.a.box !== 1 || !r.a.boxImWeg) probleme.push(`a) Sprachnotiz-Kasten: ${r.a.box}× im Dokument, im Ablauf ${r.a.boxImWeg}`);
+  if (r.a.box !== 1 || r.a.boxImWeg) probleme.push(`a) Sprachnotiz-Kasten: ${r.a.box}× im Dokument, im Ablauf ${r.a.boxImWeg}`);
   if (!r.b.frage || !/★★★★ viel/.test(r.b.label || "")) probleme.push(`b) Frage/Beschriftung: ${JSON.stringify(r.b)}`);
   if (r.b.spass !== 4 || !r.b.jetzt) probleme.push(`b) Kachel setzt ${r.b.spass} statt 4, weiter: ${r.b.jetzt}`);
   if (!r.c.skip || !r.c.titel) probleme.push(`c) „fand nicht statt“: ${JSON.stringify(r.c)}`);

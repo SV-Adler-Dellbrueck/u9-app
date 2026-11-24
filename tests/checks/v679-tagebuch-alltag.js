@@ -200,6 +200,10 @@ module.exports = async function (h) {
     nbGrossSync(document.getElementById("nb-gross-text").value);
     const los = document.getElementById("nb-gross-los");
     if (los) { los.click(); tipps++; }
+    /* v960 (Charles 24.11., Bild freigegeben): erst „So hat die KI es verstanden“ mit „Passt so“ – ein Tipp mehr */
+    await bis(() => document.querySelector("#nb-weg .nb-passt"), 100);
+    const passt1 = document.querySelector("#nb-weg .nb-passt");
+    if (passt1) { passt1.click(); tipps++; }
     await bis(() => document.getElementById("tbp-passt"), 100);
     const passtKnopf = document.getElementById("tbp-passt");
     if (passtKnopf) { passtKnopf.click(); tipps++; }
@@ -268,7 +272,7 @@ module.exports = async function (h) {
   if (!todos.some(p => /Platzübergabe/.test(p.text) && p.zustaendig === "organisation")) probleme.push("g) To-do mit Zuständigkeitsvorschlag fehlt");
   // i)
   if (!/Wie war's\?/.test(r.i.karte) || r.i.erzaehlen !== 56) probleme.push("i) Karte: " + JSON.stringify(r.i));
-  if (r.i.tipps !== 4 || !r.i.fertig) probleme.push(`i) Tipps ${r.i.tipps}, fertig ${r.i.fertig}`);
+  if (r.i.tipps !== 5 || !r.i.fertig) probleme.push(`i) Tipps ${r.i.tipps}, fertig ${r.i.fertig}`);
   const anfrage = kiAnfragen[kiAnfragen.length - 1] || {};
   if (anfrage.fuer !== "d" + gestern || K.some(n => (anfrage.text || "").includes(n))) probleme.push("i) KI-Anfrage: " + JSON.stringify({ fuer: anfrage.fuer, text: (anfrage.text || "").slice(0, 80) }));
   if (kiAnfragen.some(a => a.art === "tagebuch")) probleme.push("i) zweiter KI-Weg art „tagebuch“");

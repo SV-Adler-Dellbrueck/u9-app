@@ -95,6 +95,7 @@ module.exports = async function (h) {
     mic().click(); await warte(30);
     letzte().onresult(erg(["Kind C war müde"])); await ende();
     out.e.weiter = feld(); out.e.knopf2 = knopf(); out.e.nbText = _nbText === feld() && document.getElementById("nb-text").value === feld();
+    if (typeof nbWegAus === "function" && document.getElementById("nb-weg")) nbWegAus();   // v960: das kleine Feld steht im Bogen
     const klein = document.getElementById("nb-text"); out.j.kleinHoch = klein.offsetHeight; out.j.kleinZeilen = klein.scrollHeight <= klein.offsetHeight + 4;
     // f) Bildschirm aus
     const vorAus = sr.length;
@@ -110,6 +111,9 @@ module.exports = async function (h) {
     out.k = { knopf: (document.getElementById("nb-gross-los") || {}).textContent.trim() };
     document.getElementById("nb-gross-los").click();
     for (let i = 0; i < 40 && document.getElementById("nb-gross-ov"); i++) await warte(50);
+    /* v960: erst der Prüfschritt, „Passt so“ speichert */
+    for (let i = 0; i < 40 && !document.querySelector("#nb-weg .nb-passt"); i++) await warte(50);
+    document.querySelector("#nb-weg .nb-passt")?.click();
     /* v813: Die Auswertung speichert sofort (wie von der Startseite) und schließt den Bogen – geprüft wird am Gespeicherten. */
     for (let i = 0; i < 40 && document.getElementById("eb-modal"); i++) await warte(50);
     out.k.zu = !document.getElementById("nb-gross-ov"); out.k.bogenZu = !document.getElementById("eb-modal");
@@ -157,7 +161,7 @@ module.exports = async function (h) {
   if (m.vorStart !== 0 || m.knopfVor !== "Jetzt aufnehmen" || m.druck !== "false" || m.druckAn !== "true" || m.gruen !== "rgb(21, 128, 61)" || m.rot !== "rgb(185, 28, 28)" || m.hGruen < 44 || m.hRot < 44 || !/Stopp/.test(m.textRot) || !m.beschriftet)
     probleme.push(`m) Tasten (v764): ${JSON.stringify(m)}`);
   const k = r.k;
-  if (k.knopf !== "Fertig – auswerten") probleme.push(`k) Knopf heißt „${k.knopf}“ statt „Fertig – auswerten“ (v921)`);
+  if (!/Auswerten$/.test(k.knopf)) probleme.push(`k) Knopf heißt „${k.knopf}“ statt „Auswerten“ (v960, vorher „Fertig – auswerten“)`);
   const gesp = gespeichert.join(" ");
   if (!k.zu || !k.bogenZu || !/"spass":4/.test(gesp)) probleme.push(`k) sofort gespeichert (v813): ${JSON.stringify(k)} · ${gesp.slice(0, 200)}`);
   if (!r.l.ov || r.l.neu !== 0 || !r.l.text) probleme.push(`l) ⤢: ${JSON.stringify(r.l)}`);

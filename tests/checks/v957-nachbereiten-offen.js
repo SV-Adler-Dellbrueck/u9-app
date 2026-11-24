@@ -50,7 +50,7 @@ module.exports = async function (h) {
     const dd = d2.split("-").reverse().join(".");
     if (r.b.length !== 1 || !r.b[0].includes(dd) || !/von dir noch offen/.test(r.b[0])) probleme.push("b) Liste: " + JSON.stringify(r.b));
     if (!/Nichts offen/.test(r.c)) probleme.push("c) leere Liste: „" + r.c + "“");
-    if (JSON.stringify(r.mit) !== JSON.stringify(["📝 Nachbereiten – 1 offen"])) probleme.push("d) mit Offenem: " + JSON.stringify(r.mit));
+    if (r.mit.length !== 1 || !/^📝 Nachbereiten – 1 offen/.test(r.mit[0])) probleme.push("d) mit Offenem: " + JSON.stringify(r.mit));   // v960: darunter der Hinweis „Geht in 2 Minuten …“
     if (r.ohne.length) probleme.push("d) ohne Offenes steht die Kachel noch: " + JSON.stringify(r.ohne));
   }
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));

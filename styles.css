@@ -2127,3 +2127,14 @@ body.tp-sheet-offen{overflow:hidden}
 .tp-klapp-alle{display:block;margin:4px 0 8px;min-height:44px;font-size:var(--s-text)}
 .tp-sheet-zu{justify-self:end;width:44px}
 #tp-timeline.tp-liste .tp-slot.tp-zeile .tp-slot-time[data-min]::after{content:" · " attr(data-min);font-weight:700;color:var(--text)}
+
+/* v960: rollender Ball, solange die KI auswertet – bei „Bewegung reduzieren“ steht er still */
+.nb-lade-ball{display:inline-block;animation:nbRoll 1.1s linear infinite}
+@keyframes nbRoll{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.nb-lade-ball{animation:none}}
+/* v960: Wege-Kacheln und Sterne im Prüfschritt (Fläche aus .btn/.btn-p, hier nur Anordnung) */
+.nb-wahl{display:flex;flex-direction:column;align-items:flex-start;gap:3px;width:100%;min-height:76px;text-align:left;margin-bottom:10px;padding:14px}
+.nb-wahl-t{font-size:var(--s-karte);font-weight:800}
+.nb-wahl-s{font-size:var(--s-text);font-weight:500;line-height:1.4;white-space:normal}
+.nb-pr-stern{width:34px;min-width:34px;height:44px;min-height:44px;padding:0;border:0;background:none;font-size:22px;line-height:1;cursor:pointer;color:var(--text3)}
+.nb-pr-stern.an{color:#a16207}

@@ -580,7 +580,7 @@ function nbGross(art, mikro){
   ov.dataset.art = art;
   ov.style.cssText = "position:fixed;inset:0;z-index:10068;background:var(--surface);color:var(--text);display:flex;flex-direction:column;gap:8px;padding:12px 14px calc(12px + env(safe-area-inset-bottom))";
   ov.innerHTML = `<div style="display:flex;align-items:center;gap:8px">
-      <div style="flex:1;font-size:var(--s-teil);font-weight:800">🎙️ Sprachnotiz</div>
+      <div style="flex:1;font-size:var(--s-teil);font-weight:800">🎙️ Erzähl, wie es lief</div>
       <button class="btn" style="min-height:44px" onclick="nbGrossZu()" aria-label="Fertig – zurück zum Bogen, der Text bleibt stehen">Fertig</button>
     </div>
     ${nbLeitfadenHtml(art, !_nbText)}
@@ -615,7 +615,7 @@ function nbGrossFuss(){
   f.innerHTML = `${kann?`<div style="display:flex;gap:8px">
       <button id="nb-gross-mic" type="button" class="btn" style="flex:1 1 0;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800;background:var(--fam-training);border-color:var(--fam-training);color:#fff" onclick="nbGrossStart()" aria-pressed="false"><i class="ti ti-player-play-filled"></i><span>Jetzt aufnehmen</span></button>
       <button id="nb-gross-stopp" type="button" class="btn" style="flex:1 1 0;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800;background:#b91c1c;border-color:#b91c1c;color:#fff" onclick="nbGrossStopp()" aria-label="Aufnahme pausieren oder stoppen – der Text bleibt stehen"><i class="ti ti-player-pause-filled"></i><span>Stopp / Pause</span></button></div>`:""}
-    <button id="nb-gross-los" class="btn btn-p" style="min-height:56px;justify-content:center" onclick="nbGrossAuswerten('${art}')"><i class="ti ti-sparkles"></i>Fertig – auswerten</button>`;
+    <button id="nb-gross-los" class="btn btn-p" style="min-height:56px;justify-content:center" onclick="nbGrossAuswerten('${art}')"><i class="ti ti-sparkles"></i>Auswerten</button>`;
   nbGrossTasten();
 }
 /* Grün zeigt, ob gerade aufgenommen wird (Text und aria-pressed, nicht nur Farbe). */
@@ -672,12 +672,15 @@ async function nbGrossAuswerten(art){
   const los = document.getElementById("nb-gross-los");
   if(los){ los.disabled = true; los.innerHTML = '<i class="ti ti-loader-2"></i>KI wertet aus … gleich fertig'; }
   if(st) st.textContent = "";
+  nbLadeAn();   // v960: rollender Ball über der Erzählung
   let x = null;
   try{ x = await nbKiHolen(art, text); }
   catch(e){
+    nbLadeAus();
     if(st) st.textContent = "Nicht ausgewertet: "+(e&&e.message||"keine Verbindung")+". Der Text bleibt stehen.";
     nbGrossFuss(); return;
   }
+  nbLadeAus();
   if(!x || !document.getElementById("nb-gross-ov")){ nbGrossFuss(); return; }
   /* v638 · PO: „Es wäre schöner, wenn mir die Zusammenfassung angezeigt wird und ich dann direkt
      in diesem Text Anpassungen vornehmen kann.“ Kein Zwischenschritt „In den Bogen übernehmen“
@@ -688,7 +691,7 @@ async function nbGrossAuswerten(art){
   /* v813 · Charles 08.11.2026: „Alles gleich machen“ – jeder Einstieg (Startseite, Spieltag, Termin, To-do) speichert nach der
      KI-Auswertung sofort und öffnet die Prüfkarte; bisher tat das nur die Startseite, die anderen warteten auf „Speichern“. */
   if(!_nbSchnell || _nbSchnell.fuer!==_nbFuer) _nbSchnell = { fuer:_nbFuer, art };
-  nbSchnellAbschluss(art);
+  nbPruefen(art);   // v960: erst zeigen, was die KI verstanden hat – „Passt so“ speichert (nbSchnellAbschluss)
 }
 /* ═══ v679 · „Wie war's?“ – einmal sprechen, alles andere im Hintergrund ═══════════════
    doku/auftrag-tagebuch-ki-sortieren/prozess-nacherfassung.md. Tippbudget drei: „Erzählen“ auf der
@@ -703,11 +706,17 @@ async function nbSchnellAbschluss(art){
   /* v921: Ergebniskarte – „✅ Ausgewertet und gespeichert“, die Zusammenfassung und (Training) die Kinder, die
      herausstachen. Mit Tagebuch-Vorschlag in der Prüfkarte oben, sonst als eigene kleine Karte. */
   const erg = { art, zeilen, datum:(art==="training" && typeof EB_DATUM!=="undefined") ? EB_DATUM : null };
+  erg.ohneKinder = true;   // v960: die Kinder standen schon im Prüfschritt
   const weiter = async () => {
     const id = await _nbTbSichern;
-    if(id && typeof tbPruefenOpen==="function") tbPruefenOpen(id, { bewertung:zeilen, fuer:s.fuer, ergebnis:erg });
+    /* v960: Wer das Tagebuch führt, prüft seinen Entwurf; die anderen Trainer sind fertig – ihr Entwurf geht ohne Rückfragen
+       als Trainerbewertung ins Tagebuch (md-tagebuch.js, Welle 2, geprüft). */
+    const fuehre = (typeof tbIchFuehre==="function") ? await tbIchFuehre() : true;
+    if(!fuehre){ if(id && typeof tbKollegeUebernehmen==="function") await tbKollegeUebernehmen(id); nbDankeOpen(); }
+    else if(id && typeof tbPruefenOpen==="function") tbPruefenOpen(id, { bewertung:zeilen, fuer:s.fuer, ergebnis:erg });
     else nbErgebnisOpen(erg);
     if(typeof wieWarsKarte==="function") wieWarsKarte();
+    if(typeof trainerTodoLoad==="function") trainerTodoLoad();
   };
   if(art==="training"){
     if(typeof einheitSave==="function") await einheitSave({ danach:()=>{ document.getElementById("eb-modal")?.remove(); return weiter(); } });
@@ -879,7 +888,7 @@ async function nbAuswerten(art){
   const bericht = nbKiAnwenden(art, x.d, x.m);
   if(!bericht || !bericht.length) return;
   if(!_nbSchnell || _nbSchnell.fuer!==_nbFuer) _nbSchnell = { fuer:_nbFuer, art };
-  nbSchnellAbschluss(art);
+  nbPruefen(art);   // v960: erst zeigen, was die KI verstanden hat – „Passt so“ speichert (nbSchnellAbschluss)
 }
 /* Sterne setzen wie ein Tipp – über einheitSetStar, damit Anzeige und Wert übereinstimmen. */
 function _nbStern(key, wert, max, groesse){
@@ -1061,12 +1070,15 @@ function nbWegAus(){
   if(card) card.classList.remove("nb-weg-an");
   box && box.remove();
   _nbWeg = null;
+  /* v960: Das kleine Feld war im Ablauf verborgen – seine Höhe stimmt erst, wenn es wieder zu sehen ist. */
+  const t = document.getElementById("nb-text"); if(t && typeof nbFeldHoehe==="function") nbFeldHoehe(t);
   if(card) card.scrollIntoView({block:"start"});
 }
 function nbWegGehe(d){
   if(!_nbWeg) return;
   let i = _nbWeg.i + d;
-  while(i>0 && i<_nbWeg.schritte.length-1 && _nbWeg.schritte[i].weg && _nbWeg.schritte[i].weg()) i += d>0?1:-1;
+  const ueber = x => (x.weg && x.weg()) || (_nbWeg.nurOffen && d>0 && x.typ==="kacheln" && x.lesen && x.lesen());   // v960: beim Ergänzen nur, was fehlt
+  while(i>0 && i<_nbWeg.schritte.length-1 && ueber(_nbWeg.schritte[i])) i += d>0?1:-1;
   _nbWeg.i = Math.max(0, Math.min(_nbWeg.schritte.length-1, i));
   nbWegZeichnen();
 }
@@ -1100,8 +1112,10 @@ async function nbWegSpeichern(){
      Gibt es schon einen Vorschlag aus der Sprachnotiz, gilt der. */
   const mit = String(_nbMit||"").trim();
   if(mit && art && _nbFuer && !nbTagebuchVorschlag(_nbFuer) && typeof tbVorschlagSichern==="function"){
-    try{ await tbVorschlagSichern({ fuer:_nbFuer, art, diktat:mit, termin:(art!=="training" && typeof _FZ!=="undefined" && _FZ) ? _FZ.termin : null,
-      v:{ baustein:null, beobachtung:mit, aha:null, konsequenzen:[], schlagworte:[], rueckfragen:[], todos:[] } }); }catch(e){}
+    try{ const id = await tbVorschlagSichern({ fuer:_nbFuer, art, diktat:mit, termin:(art!=="training" && typeof _FZ!=="undefined" && _FZ) ? _FZ.termin : null,
+      v:{ baustein:null, beobachtung:mit, aha:null, konsequenzen:[], schlagworte:[], rueckfragen:[], todos:[] } });
+      if(id && typeof tbIchFuehre==="function" && !(await tbIchFuehre()) && typeof tbKollegeUebernehmen==="function") await tbKollegeUebernehmen(id);   // v960
+    }catch(e){}
   }
   nbWegAus();
   if(art==="training"){ if(typeof einheitSave==="function") einheitSave(); }
@@ -1128,15 +1142,18 @@ function nbWegZeichnen(){
   const kopf = `${fortschritt}<div style="font-size:var(--s-text);font-weight:800;color:var(--text)">${esc(st.titel)}</div>${st.frage?`<div style="font-size:var(--s-teil);font-weight:800;margin:4px 0 12px;line-height:1.3">${esc(st.frage)}</div>`:""}`;
   const fld = "width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text);resize:vertical";
   let html = "";
-  if(st.typ==="start"){
-    html = `${fortschritt}<div style="font-size:var(--s-teil);font-weight:800;margin:4px 0 6px">Wie möchtest du anfangen?</div>
-      <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:10px;line-height:1.45">Am schnellsten: einmal erzählen, die KI sortiert alles. Oder Frage für Frage mit Kacheln – ohne ein Wort zu sprechen.</div>
-      <button type="button" class="btn btn-p" onclick="nbGross('${_nbWeg.art}',true)" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);margin-bottom:8px"><i class="ti ti-microphone"></i>Erzählen</button>
-      ${nbLeitfadenHtml(_nbWeg.art, false, "nb-leitfaden-start")}
-      <div data-nb-start></div>
-      ${kachel(false,"➡️ Los geht’s – Frage für Frage","nbWegGehe(1)")}
-      <button class="btn btn-link" type="button" onclick="nbWegAus()" style="display:block;margin:6px auto 0;min-height:44px;font-size:var(--s-text)">Alles auf einen Blick</button>
-      <button type="button" class="nb-nichts btn btn-link" onclick="nbVerzichtImWeg()" style="display:block;margin:6px auto 0;min-height:44px;font-size:var(--s-text)">Nichts eintragen</button>`;
+  if(_nbWeg.pruefen){
+    html = nbPruefenHtml();
+  }else if(st.typ==="start"){
+    /* v960 · Charles 24.11. (Bild freigegeben): zwei gleichwertige Wege statt fünf Knöpfen – Erzählen (die KI macht den Rest)
+       oder selbst eingeben, Frage für Frage; „Heute nichts eintragen“ mit vorgefertigten Gründen. */
+    const wkachel = (haupt, emo, titel, text, onclick, cls) => `<button type="button" class="btn${haupt?" btn-p":""} nb-wahl ${cls}" onclick="${onclick}">
+        <span class="nb-wahl-t">${emo} ${titel}</span><span class="nb-wahl-s">${text}</span></button>`;
+    html = `<div style="font-size:var(--s-teil);font-weight:800;margin:4px 0 4px">Wie willst du es loswerden?</div>
+      <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:12px;line-height:1.45">Wähle einen Weg – beides zählt gleich.</div>
+      ${wkachel(true,"🎙️","Erzählen","Sprich ein, zwei Minuten frei. Die KI trägt Sterne, Übungen und Notizen ein – du prüfst nur noch.",`nbGross('${_nbWeg.art}',true)`,"nb-wahl-erzaehlen")}
+      ${wkachel(false,"✍️","Selbst eingeben","Frage für Frage, nur antippen – ohne ein Wort zu sprechen.","nbWegGehe(1)","nb-wahl-selbst")}
+      <button type="button" class="nb-nichts btn btn-link" onclick="nbVerzichtImWeg()" style="display:block;margin:6px auto 0;min-height:44px;font-size:var(--s-text)">Heute nichts eintragen</button>`;
   }else if(st.typ==="kacheln"){
     const akt = st.lesen();
     html = kopf + st.kacheln.map(k=>kachel(String(akt)===String(k.wert), esc(k.label), `nbWegWahl(${typeof k.wert==="number"?k.wert:"'"+k.wert+"'"})`)).join("")
@@ -1173,7 +1190,8 @@ function nbWegZeichnen(){
     }
     html = `${fortschritt}<div style="font-size:var(--s-teil);font-weight:800;margin:4px 0 8px">Fertig – so steht es</div>
       <div style="font-size:var(--s-text);color:var(--text2);line-height:1.6;margin-bottom:12px">${zusammen.map(esc).join("<br>")}<br>Offene Fragen bleiben leer – auch halb ausgefüllt ist besser als gar nicht.</div>
-      <button type="button" class="btn btn-p" onclick="nbWegSpeichern()" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte)"><i class="ti ti-check"></i>Speichern</button>
+      ${_nbWeg.nachKi?`<button type="button" class="btn btn-p nb-passt" onclick="nbPasstSo()" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte)"><i class="ti ti-check"></i>Passt so</button>`
+        :`<button type="button" class="btn btn-p" onclick="nbWegSpeichern()" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte)"><i class="ti ti-check"></i>Speichern</button>`}
       <div style="display:flex;gap:8px;margin-top:8px">
         <button type="button" class="btn" style="min-height:48px" onclick="nbWegGehe(-1)"><i class="ti ti-arrow-left"></i>Zurück</button>
         <button type="button" class="btn" style="flex:1;min-height:48px;justify-content:center" onclick="nbWegAus()">Alles auf einen Blick</button>
@@ -1187,7 +1205,8 @@ function nbWegZeichnen(){
   if(nb && !card.querySelector("[data-nb-platz]") && card.contains(nb)){ const platz=document.createElement("div"); platz.setAttribute("data-nb-platz",""); platz.hidden=true; nb.replaceWith(platz); }
   box.innerHTML = html;
   if(nb){
-    if(st.typ==="start"){ const ziel = box.querySelector("[data-nb-start]"); if(ziel) ziel.replaceWith(nb); }
+    const ziel = box.querySelector("[data-nb-start]");   // v960: Start ohne zweites Diktatfeld – der Kasten bleibt an seinem Platz im Bogen
+    if(ziel) ziel.replaceWith(nb);
     else{ const platz = card.querySelector("[data-nb-platz]"); if(platz){ platz.after(nb); } }
   }
   try{ box.scrollIntoView({block:"nearest"}); }catch(e){}
@@ -1211,7 +1230,7 @@ function nbErgebnisBlock(erg){
   if(erg) _nbErg = erg;
   if(!_nbErg) return "";
   const z = (_nbErg.zeilen||[]).filter(Boolean);
-  const kinder = _nbErg.art==="training" ? _nbErgKinder() : [];
+  const kinder = (_nbErg.art==="training" && !_nbErg.ohneKinder) ? _nbErgKinder() : [];
   _nbErg.kinder = kinder;
   const chips = (v, cls) => kinder.map((k,i)=>`<button type="button" class="nb-erg-chip${cls}" aria-pressed="${k.v===v}" onclick="nbErgKind(${i},${v})">${esc(k.name)}${k.v===v?" ✓":""}</button>`).join("");
   return `<div class="nb-erg-ok" role="status"><div class="nb-erg-titel">✅ Ausgewertet und gespeichert</div>
@@ -1243,6 +1262,74 @@ function nbErgebnisZeichnen(){
 function nbErgebnisZu(){
   document.getElementById("nb-ergebnis")?.remove(); _nbErg = null;
   if(typeof wieWarsKarte==="function") wieWarsKarte();
+}
+
+/* ═══ v960 · Nachbereitung einfach (Charles 24.11.2026, Bild freigegeben) ═══════════════════════════════════════
+   „Wenn ich einspreche und auf ‚auswerten‘ klicke, sehe ich auch optisch, dass sich da was tut … vielleicht dreht sich ein Ball,
+   du siehst gleich das Ergebnis und kannst es dann nochmal überprüfen … Am Ende klicke ich auf ‚Passt so‘.“ */
+function nbLadeAn(){
+  const ov = document.getElementById("nb-gross-ov"); if(!ov || document.getElementById("nb-lade")) return;
+  const d = document.createElement("div"); d.id = "nb-lade"; d.setAttribute("role","status"); d.setAttribute("aria-live","polite");
+  d.style.cssText = "position:absolute;inset:0;z-index:2;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px;text-align:center";
+  d.innerHTML = `<span class="nb-lade-ball" aria-hidden="true" style="font-size:72px;line-height:1">⚽</span>
+    <div style="font-size:var(--s-teil);font-weight:800;color:var(--text)">Die KI wertet aus …</div>
+    <div style="font-size:var(--s-text);color:var(--text2);max-width:320px;line-height:1.45">Gleich siehst du das Ergebnis und kannst alles prüfen und ändern.</div>`;
+  ov.appendChild(d);
+}
+function nbLadeAus(){ document.getElementById("nb-lade")?.remove(); }
+/* Prüfschritt: was die KI eingetragen hat, als Zeilen mit Sternen (Tippen ändert), die Kinder, die herausstachen, und „Passt so“. */
+function nbPruefen(art){
+  const card = document.getElementById(art==="training" ? "eb-card" : "fz-card");
+  if(!card){ nbSchnellAbschluss(art); return; }
+  if(!_nbWeg || _nbWeg.art!==art) nbWegStart(art);
+  if(!_nbWeg){ nbSchnellAbschluss(art); return; }
+  _nbWeg.nachKi = true; _nbWeg.pruefen = true; _nbWeg.nurOffen = false;
+  nbWegZeichnen();
+}
+function nbPruefenHtml(){
+  const art = _nbWeg.art;
+  const stern = (key, label, groesse) => { const v = (typeof einheitGetStar==="function") ? einheitGetStar(key) : 0;
+    return `<div class="nb-pr-zeile" style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:var(--border)"><span style="flex:1;min-width:0;font-size:var(--s-text)">${esc(label)}</span>
+      <span role="group" aria-label="${esc(label)}" style="display:flex">${[1,2,3,4,5].map(n=>`<button type="button" class="nb-pr-stern${n<=v?" an":""}" aria-label="${esc(label)}: ${n} von 5" aria-pressed="${v===n}" onclick="nbPruefStern('${key}',${n},${groesse})">${n<=v?"★":"☆"}</button>`).join("")}</span></div>`; };
+  let inhalt = "";
+  if(art==="training"){
+    inhalt += stern("spass","Spaß der Kinder",24) + stern("umsetzung","Plan umgesetzt",24) + stern("erfolg","Ziel erreicht",24);
+    const plan = (typeof EB_PLAN!=="undefined"?EB_PLAN:[]);
+    plan.forEach((p,i)=>{ if(document.getElementById("eb-skip-"+i)?.checked) return; if(document.getElementById(`eb-stars-ue-${i}-Durchführung`)) inhalt += stern(`ue-${i}-Durchführung`, p.formName||("Übung "+(i+1)), 19); });
+    /* Kinder wie in der Ergebniskarte (v921): nur wer heraussticht – vorausgewählt, was die KI eingetragen hat; Tippen setzt
+       oder nimmt zurück (Sterne des Bogens, gespeichert mit „Passt so“). */
+    const kids = (typeof EB_SPIELER!=="undefined"?EB_SPIELER:[]).map((n,k)=>({ n, k, v:(typeof einheitGetStar==="function")?einheitGetStar("sp-"+k):0 })).filter(x=>document.getElementById("eb-stars-sp-"+x.k));
+    const chips = (v, cls) => kids.map(x=>`<button type="button" class="nb-erg-chip${cls}" aria-pressed="${x.v===v}" onclick="nbPrKind(${x.k},${v})">${esc(x.n)}${x.v===v?" ✓":""}</button>`).join("");
+    if(kids.length) inhalt += `<div class="nb-erg-sek">Die Kinder – nur wer heute heraussticht</div>
+      <div class="nb-erg-hinweis">Alle anderen bleiben ohne Wertung. Antippen setzt, nochmal tippen nimmt zurück.</div>
+      <div class="nb-erg-gruppe">★★★ Heute besonders stark</div><div class="nb-erg-chips">${chips(3,"")}</div>
+      <div class="nb-erg-gruppe">★ Potenzial heute nicht entfaltet</div><div class="nb-erg-chips">${chips(1," schwach")}</div>`;
+  }else{
+    const z = (_nbBewertungZeilen||[]).filter(Boolean);
+    inhalt += z.length ? z.map(x=>`<div class="nb-pr-zeile" style="padding:6px 0;border-bottom:var(--border);font-size:var(--s-text)">${esc(x)}</div>`).join("") : `<div style="color:var(--text2)">Die KI hat nichts gefunden – ergänze es Frage für Frage.</div>`;
+  }
+  return `<div style="font-size:var(--s-teil);font-weight:800;margin:4px 0 4px">So hat die KI es verstanden</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:8px;line-height:1.45">${art==="training"?"Tippe auf einen Stern, um etwas zu ändern.":"Stimmt etwas nicht, ergänze es Frage für Frage."}</div>
+    <div class="nb-pruefen">${inhalt}</div>
+    <button type="button" class="btn btn-link nb-ergaenzen" onclick="nbErgaenzen()" style="display:block;margin:8px auto 0;min-height:44px;font-size:var(--s-text)">Fehlt was? Frage für Frage ergänzen</button>
+    <button type="button" class="btn btn-p nb-passt" onclick="nbPasstSo()" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);margin-top:6px"><i class="ti ti-check"></i>Passt so</button>`;
+}
+function nbPruefStern(key, n, groesse){ _nbStern(key, n, 5, groesse); nbWegZeichnen(); }
+function nbPrKind(k, v){ if(typeof einheitSetStar==="function") einheitSetStar("sp-"+k, v, 3, 21); nbWegZeichnen(); }
+function nbErgaenzen(){ if(!_nbWeg) return; _nbWeg.pruefen = false; _nbWeg.nurOffen = true; _nbWeg.i = 0; nbWegGehe(1); }
+function nbPasstSo(){
+  const art = _nbWeg && _nbWeg.art; if(!art) return;
+  if(typeof nbWegFelderMerken==="function") nbWegFelderMerken();
+  if(!_nbSchnell) _nbSchnell = { fuer:_nbFuer, art };
+  nbSchnellAbschluss(art);
+}
+/* Für Trainer, die das Tagebuch nicht führen: fertig, ohne weitere Fragen. */
+function nbDankeOpen(){
+  const { karte } = fensterAuf("nb-danke", { mitte:true, breite:420 });
+  karte.innerHTML = `${mdlHead("nb-danke","✅","Gespeichert","Nachbereitung","#15803d")}
+    <div style="font-size:var(--s-karte);font-weight:800;margin:4px 0 6px">Danke dir!</div>
+    <div style="font-size:var(--s-text);color:var(--text2);line-height:1.5">Das war’s schon. Deine Bewertung ist gespeichert, deine Erzählung steht als Trainerbewertung im Tagebuch.</div>
+    <button type="button" class="btn btn-p" onclick="document.getElementById('nb-danke')?.remove()" style="width:100%;min-height:56px;margin-top:14px;justify-content:center;font-size:var(--s-karte)"><i class="ti ti-check"></i>Fertig</button>`;
 }
 
 function fazitModulDa(){ return true; }

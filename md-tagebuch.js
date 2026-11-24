@@ -616,8 +616,10 @@ async function tagebuchListe(){
   if(typeof sbToken==="function" && !sbToken()){ box.innerHTML = tbLeer("Nicht angemeldet.","Melde dich als Trainer an, dann steht das Tagebuch hier."); return; }
   box.innerHTML = '<div style="font-size:var(--s-text);color:var(--text3);padding:8px">Lade …</div>';
   _TB_ICH = await tbAutor();
+  _TB_FUEHRE = await tbIchFuehre();   // v960
   try{
-    const wer = _TB_ICH ? `&autor=eq.${encodeURIComponent(_TB_ICH)}` : "";
+    /* v960: Wer das Tagebuch führt, sieht auch die Einträge der anderen Trainer (als „Trainerbewertung“ gekennzeichnet). */
+    const wer = (_TB_ICH && !(_TB_FUEHRE && _TB_FUEHRT)) ? `&autor=eq.${encodeURIComponent(_TB_ICH)}` : "";
     const r = await fetch(`${SB_URL}/rest/v1/tagebuch_eintrag?select=*${wer}&order=datum.desc,id.desc&limit=300`,{headers:sbAuthHeaders()});
     if(sbCheck401(r)) return;
     if(!r.ok){ box.innerHTML = tbLeer("Keine Verbindung.","Sobald du wieder online bist, stehen die Einträge hier."); return; }
@@ -664,7 +666,7 @@ function tbListeRender(){
     return;
   }
   if(_TB_SICHT==="eintraege"){
-    box.innerHTML = tbNeuHinweisHtml() + reiter + tbFilterKopfHtml() + `<div id="tb-treffer">${tbTrefferHtml()}</div>` + tbVerzichtHtml();
+    box.innerHTML = tbNeuHinweisHtml() + reiter + tbFilterKopfHtml() + `<div id="tb-treffer">${tbTrefferHtml()}</div>` + tbVerzichtHtml() + tbFuehrtHtml();
   }else box.innerHTML = reiter + (_TB_SICHT==="wiedervorlage" ? tbWiedervorlageHtml() : tbKindSichtHtml());
   tbAusgabeZeichnen();
 }
@@ -795,7 +797,8 @@ function tbZeile(e){
   const titel = tbKlarnamen(e.ausloeser || tbErsterSatz(e.beobachtung||e.diktat||e.aha||e.konsequenz||"", 120) || "Ohne Titel");
   const zeile = "font-size:var(--s-text);color:var(--text2);margin-top:3px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden";
   const tag = t => `<span style="font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border:var(--border-s);border-radius:8px;padding:2px 7px">${t}</span>`;
-  const tags = [].concat(bs?[tag(esc(bs.label))]:[], kinder.length?[tag("👤 "+kinder.map(esc).join(", "))]:[], worte.slice(0,3).map(w=>tag("#"+esc(w))));
+  const kollege = !!(e.autor && _TB_ICH && e.autor!==_TB_ICH);   // v960
+  const tags = [].concat(kollege?[`<span class="tb-kollege" style="font-size:var(--s-klein);font-weight:700;color:var(--blue);background:var(--surface2);border:1px solid var(--blue);border-radius:8px;padding:2px 7px">👥 Trainerbewertung · ${esc(e.autor)}</span>`]:[], bs?[tag(esc(bs.label))]:[], kinder.length?[tag("👤 "+kinder.map(esc).join(", "))]:[], worte.slice(0,3).map(w=>tag("#"+esc(w))));
   const oeffnen = offen ? `tbPruefenOpen(${Number(e.id)})` : `tagebuchBearbeiten(${Number(e.id)})`;
   return `<div class="tb-zeile" data-id="${Number(e.id)}" role="button" tabindex="0" aria-label="${esc((offen?"Vorschlag prüfen: ":keim?"Gedanke ausarbeiten: ":"Eintrag öffnen: ")+titel)}" onclick="${oeffnen}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${oeffnen}}" style="display:flex;gap:6px;background:var(--surface);border:var(--border-s);${offen?"border-left:4px solid var(--purple);":""}border-radius:var(--rl);padding:11px 6px 11px 12px;margin-bottom:8px;cursor:pointer">
     <div style="flex:1;min-width:0">
@@ -1649,6 +1652,51 @@ async function tbWirkungSetzen(id, wirkung, datum, elId){
   const tp = _TB_PUNKTE.find(x=>Number(x.id)===Number(id)); if(tp) Object.assign(tp, body);
   toast("Wirkung vermerkt ✓");
   tbFokusInto(elId, datum, "wirkung");
+}
+
+/* ═══ v960 · Charles 24.11.2026: „Wichtig ist, dass die Trainer es einfach haben, ihre Bewertungen loszuwerden.“ – „Die
+   Rückmeldungen der Trainerkollegen sollen auch bei mir mit ins Tagebuch, aber klar gekennzeichnet als Trainerbewertung. Der
+   Aufwand, diese alle noch mal zu überprüfen, ist auch für mich zu groß … die Kollegen sollen keine großen Rückfragen bekommen.“
+   team_config.tagebuch_fuehrt nennt, wer das Tagebuch führt (leer: jeder sein eigenes, wie bisher). Wer führt, prüft seine
+   Entwürfe wie gewohnt und sieht alle Einträge; die Entwürfe der anderen werden ohne Rückfragen übernommen (tbKollegeUebernehmen). */
+let _TB_FUEHRT, _TB_FUEHRE = true;
+async function tbFuehrtLaden(neu){
+  if(_TB_FUEHRT!==undefined && !neu) return _TB_FUEHRT;
+  try{ const r = await fetch(`${SB_URL}/rest/v1/team_config?select=tagebuch_fuehrt&limit=1`,{headers:sbAuthHeaders()});
+       _TB_FUEHRT = r.ok ? ((((await r.json())||[])[0]||{}).tagebuch_fuehrt || "") : ""; }catch(e){ _TB_FUEHRT = ""; }
+  return _TB_FUEHRT;
+}
+async function tbIchFuehre(){ const f = await tbFuehrtLaden(); if(!f) return true; return f===await tbAutor(); }
+/* Ein KI-Entwurf eines Kollegen: ohne Rückfragen fertig und bestätigt – er steht damit im Tagebuch. */
+async function tbKollegeUebernehmen(id){
+  if(!id) return false;
+  try{
+    const r = await fetch(`${SB_URL}/rest/v1/tagebuch_eintrag?id=eq.${Number(id)}`,{method:"PATCH",headers:{...sbAuthHeaders(),'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({ status:"fertig", bestaetigt_am:new Date().toISOString(), rueckfragen:[], updated_at:new Date().toISOString() })});
+    return r.ok;
+  }catch(e){ return false; }
+}
+function tbFuehrtHtml(){
+  const liste = (typeof TRAINER!=="undefined" && Array.isArray(TRAINER)) ? TRAINER : [];
+  if(!liste.length) return "";
+  return `<div class="tb-fuehrt" style="margin-top:16px;padding-top:10px;border-top:var(--border)">
+    <label style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2)">Das Tagebuch führt
+      <select id="tb-fuehrt-wahl" onchange="tbFuehrtSetzen(this.value)" style="display:block;width:100%;min-height:44px;margin-top:4px;border:1px solid var(--rand-bedien);border-radius:10px;font:inherit;background:var(--surface);color:var(--text)">
+        <option value=""${_TB_FUEHRT?"":" selected"}>Jeder sein eigenes</option>
+        ${liste.map(n=>`<option value="${esc(n)}"${_TB_FUEHRT===n?" selected":""}>${esc(n)}</option>`).join("")}
+      </select></label>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px;line-height:1.45">Wer führt, prüft die eigenen Entwürfe; die Erzählungen der anderen Trainer kommen ohne Rückfragen als „Trainerbewertung“ dazu.</div>
+  </div>`;
+}
+async function tbFuehrtSetzen(wert){
+  try{
+    const r = await fetch(`${SB_URL}/rest/v1/team_config?id=not.is.null`,{method:"PATCH",headers:{...sbAuthHeaders(),'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({ tagebuch_fuehrt:wert||null })});
+    if(typeof sbCheck401==="function" && sbCheck401(r)) return;
+    if(!r.ok){ toast("Nicht gespeichert – Server antwortet "+r.status,"err"); return; }
+  }catch(e){ toast("Kein Netz – nicht gespeichert","err"); return; }
+  _TB_FUEHRT = wert||"";
+  toast(wert ? `Das Tagebuch führt jetzt ${wert}` : "Jeder führt sein eigenes Tagebuch");
+  tagebuchListe();
 }
 
 /* MODUL_WACHE: letzte Funktion der Datei. Stirbt sie vorher, fehlt genau dieser Name. */
