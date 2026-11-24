@@ -478,18 +478,25 @@ function tqStart(){
     html+=`</div>${extern?"":'<button class="btn btn-sm" onclick="tqStop()" style="margin-top:8px"><i class="ti ti-x"></i>Abbrechen</button>'}`;
   } else {
     html+=`🧑 ${tqPlayer}${tqPlayerRole?" – "+tqPlayerRole:""}</div>
-      <div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:8px">🎓 Adler-Schule</div>`;
+      <div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:8px">🎓 Adler-Akademie${_akBereich==="theorie"?" · Theorie":_akBereich==="praxis"?" · Praxis":""}</div>`;
     // Nur bei Geschwistern: ein dezenter Weg zurück zur Namenswahl.
     if(TQ_EIGENE_KINDER&&TQ_EIGENE_KINDER.length>1)
       html+=`<button onclick="tqVergissKind()" style="border:none;background:none;color:var(--text3);font-size:11px;text-decoration:underline;cursor:pointer;padding:0 0 8px;min-height:44px">Nicht ${esc(tqPlayer)}? Name ändern</button>`;
     else html+=`<div style="margin-bottom:8px"></div>`;
     /* v936 (Charles 21.11.): Alles Lernen unter „Adler-Schule“ – oben die drei Sport-Stunden,
        darunter das Adler-Zeugnis mit dem echten Stand in Sport und Augenzwinkern bei den anderen Fächern. */
+    /* v961 · Charles 24.11.: „Wir machen aus der Adler-Schule eine Adler-Akademie und integrieren die Technik-Abzeichen dort mit
+       rein. Dann haben wir Theorie und Praxis.“ Start mit zwei Bereichen; Theorie ist der bisherige Stundenplan, Praxis der Trainingsplatz. */
+    if(!_akBereich) html+=akademieStartHtml();
+    else if(_akBereich==="praxis") html+=akademiePraxisHtml();
+    else{
     html+=schuleStundenplanKopf();    // v938: Lehrer mit Sprechblase, „das Beste“, Überschrift
     html+=kfRenderLauncher();         // 1. Stunde · Training verstehen (Leitfragen 1–6)
     html+=tqRenderTaktikLauncher(pp); // 2. Stunde · Taktik
     html+=wqRenderLauncher();         // 3. Stunde · Fußball-Wissen
     html+=schuleStundenplanFuss();    // 4.–6. Stunde fallen aus, Zeugnis am Ende der Hin- und Rückrunde
+    html+=`<button class="btn btn-sm ak-zurueck" style="margin-top:12px" onclick="akademieBereich(null)"><i class="ti ti-arrow-left"></i>Zurück zur Akademie</button>`;
+    }
     html+=`<div id="tq-challenge"></div>`;
     if(!extern)html+=`<div style="display:flex;margin-top:10px">
         <button class="btn btn-sm" onclick="tqStop()" style="margin-left:auto"><i class="ti ti-x"></i>Schließen</button>
@@ -498,6 +505,7 @@ function tqStart(){
   html+=`</div>`;
   panel.innerHTML=html;
   if(tqPlayer){ tqChallengeLoad(); quizRefreshFromServer("start"); } // Challenge + Server-Fortschritt nachladen
+  if(tqPlayer&&_akBereich!=="theorie") akademiePraxisLaden();   // v961
 }
 // Taktik-Quiz-Einstieg als Karte (wie wqRenderLauncher) – klappt die 10 Blöcke auf.
 function tqRenderTaktikLauncher(pp){
@@ -559,7 +567,7 @@ function tqBlocksShow(){
   html+=`</div>`;
   html+=tqRenderBarometer();
   html+=tqRenderStickers(pp);
-  html+=`<button class="btn btn-sm" style="margin-top:12px" onclick="tqStart()"><i class="ti ti-arrow-left"></i>Zurück zur Adler-Schule</button>`;
+  html+=`<button class="btn btn-sm" style="margin-top:12px" onclick="tqStart()"><i class="ti ti-arrow-left"></i>Zurück zum Unterricht</button>`;
   html+=`</div>`;
   panel.innerHTML=html;
   quizRefreshFromServer("blocks"); // Server-Fortschritt nachziehen + neu zeichnen
@@ -633,7 +641,7 @@ function tqSelectPlayer(name){
   const mode=window._quizMode; window._quizMode=null; // aus der Kabine direkt ins gewählte Quiz
   if(mode==="taktik"){tqBlocksShow();return;}
   if(mode==="wissen"){wqStart();return;}
-  if(mode==="schule"){tqStart();return;}   // v936: Kachel „Adler-Schule“ öffnet die Schule selbst (Stunden + Zeugnis)
+  if(mode==="schule"){_akBereich=null;tqStart();return;}   // v936/v961: Kachel „Adler-Akademie“ öffnet den Akademie-Start
   tqStart();
 }
 
@@ -1343,7 +1351,7 @@ function wqRenderCats(){
     });
   });
   html+=`</div>
-    <button class="btn btn-sm" style="margin-top:12px" onclick="wqExit()"><i class="ti ti-arrow-left"></i>Zurück zur Adler-Schule</button>
+    <button class="btn btn-sm" style="margin-top:12px" onclick="wqExit()"><i class="ti ti-arrow-left"></i>Zurück zum Unterricht</button>
   </div>`;
   panel.innerHTML=html;
 }
@@ -1588,6 +1596,7 @@ function kfSvg(feld,bild,o){
    sonst steht der Master da. Fehlt eine Datei, bleibt das Adler-Zeichen (onerror).
    Die Sprechtexte zwischen den beiden Marken liest auch tools/quiz-audio-namen.js (Aufnahmen unter audio/schule/). */
 /*LEHRER-TEXTE-ANFANG*/
+const AKADEMIE_GRUSS="Willkommen in der Adler-Akademie! Hier lernst du im Kopf – und mit dem Ball.";
 const SCHULE_GRUSS="Hallo! Heute stehen drei Stunden Sport auf dem Plan. Such dir eine aus! Und das Beste: Du musst nur zum Unterricht, wenn du willst.";
 const SCHULE_STUNDE_VOR="Heute lernen wir: ", SCHULE_STUNDE_NACH=" Erst schauen wir uns Bilder an. Dann bist du dran!";
 const ELTERN_MOIN="Moin! Schön, dass ihr da seid. Der Adler freut sich aufs nächste Training!";   // v947: Moin-Gruß der Eltern-Startseite
@@ -1637,7 +1646,35 @@ function schuleStundenplanFuss(){
       <span style="flex:none;font-size:13px;font-weight:800;border-radius:999px;padding:3px 10px;background:#fef3c7;color:#78350f;white-space:nowrap">${f[3]}</span></div>`;
   return `<div id="schule-ausfall">${SCHULE_AUSFALL.map((f,i)=>zeile(i+4,f)).join("")}</div>
     <div id="schule-zeugnis-hinweis" class="k3" style="display:flex;gap:10px;align-items:center;margin-top:10px;background:#fffdf5;color:#1f2937;border:1px solid #e5e7eb;border-radius:16px;padding:12px;font-size:15px">
-      <span aria-hidden="true" style="font-size:28px">📜</span><span><b style="display:block">Dein Zeugnis</b>gibt es am Ende der Hinrunde und am Ende der Rückrunde.</span></div>`;
+      <span aria-hidden="true" style="font-size:28px">📜</span><span><b style="display:block">Dein Akademie-Zeugnis</b>Theorie und Praxis zusammen – am Ende der Hinrunde und am Ende der Rückrunde.</span></div>`;
+}
+/* ═══ v961 · Adler-Akademie (Bild freigegeben): Start mit zwei Bereichen, Praxis = Trainingsplatz aus md-abzeichen.js (Welle 2, geprüft) ═══ */
+let _akBereich=null;
+function akademieBereich(b){ _akBereich=b||null; tqStart(); try{ document.getElementById("tq-panel")?.scrollIntoView({block:"start"}); }catch(e){} }
+function _akKindId(){ const k=(typeof KADER!=="undefined"?KADER:[]).find(x=>x.name===tqPlayer); if(!k)return null; return (typeof kaderId==="function")?kaderId(k):k.id; }
+function akademieStartHtml(){
+  const pr=(_akKindId()!=null&&typeof _abzStand!=="undefined")?_abzStand[_akKindId()]:null;
+  const praxis=pr&&typeof abzeichenBronzeZahl==="function"?`🥉 ${abzeichenBronzeZahl(pr)}/9 Bronze${pr.silber.size?` · 🥈 ${pr.silber.size}/10 Silber`:""}`:"Technik-Abzeichen für zu Hause";
+  const kachel=(cls,id,emo,titel,text,stand,onclick)=>`<button type="button" class="ak-bereich ${cls}" id="${id}" onclick="${onclick}">
+      <span class="ak-t">${emo} ${titel}</span><span class="ak-s">${text}</span><span class="ak-stand">${stand}</span></button>`;
+  return schuleLehrerHtml(AKADEMIE_GRUSS,"Willkommen in der Akademie, "+esc(tqPlayer)+"! Hier lernst du im Kopf – und mit dem Ball.","winkt",null)
+    +kachel("ak-theorie","ak-theorie","📚","Theorie · Unterricht","Drei Stunden zu den Leitfragen: Bilder, Fragen, Szenen.","📅 Zum Stundenplan","akademieBereich('theorie')")
+    +kachel("ak-praxis","ak-praxis","⚽","Praxis · Trainingsplatz","Technik-Abzeichen für zu Hause – Mama oder Papa hakt ab.",praxis,"akademieBereich('praxis')")
+    +`<div class="ak-zeugnis k3"><span aria-hidden="true" style="font-size:24px">📜</span><span><b style="display:block">Akademie-Zeugnis</b>Theorie und Praxis zusammen – am Ende der Hin- und Rückrunde.</span></div>`;
+}
+function akademiePraxisHtml(){
+  const id=_akKindId();
+  return `<div style="font-size:15px;color:var(--text2);margin:0 2px 10px;line-height:1.4">Übe zu Hause! Tippe ein Abzeichen an – dann siehst du, wie es geht. Geschafft? Mama oder Papa hakt es im Eltern-Bereich ab.</div>
+    <div id="abzeichen-list" class="ak-platz" data-spieler="${id==null?"":Number(id)}" data-kids="1"><div style="color:var(--text3);font-size:14px">Lädt …</div></div>
+    <button class="btn btn-sm ak-zurueck" style="margin-top:12px" onclick="akademieBereich(null)"><i class="ti ti-arrow-left"></i>Zurück zur Akademie</button>`;
+}
+/* Stand der Abzeichen holen: auf dem Start für die Zahl, auf dem Trainingsplatz für die Liste (md-abzeichen.js, Welle 2). */
+async function akademiePraxisLaden(){
+  const id=_akKindId(); if(id==null||typeof abzeichenStandLaden!=="function")return;
+  if(_akBereich==="praxis"){ if(typeof abzeichenRender==="function")await abzeichenRender(id,true); return; }
+  await abzeichenStandLaden(id);
+  const k=document.querySelector("#ak-praxis .ak-stand"), st=_abzStand[id];
+  if(k&&st&&typeof abzeichenBronzeZahl==="function")k.textContent=`🥉 ${abzeichenBronzeZahl(st)}/9 Bronze${st.silber.size?` · 🥈 ${st.silber.size}/10 Silber`:""}`;
 }
 function kfRenderLauncher(){
   if(!tqPlayer)return "";
@@ -1656,10 +1693,10 @@ async function kfStart(){
   if(!tqPlayer){tqStart();return;}
   kfStopp();
   document.body.classList.add("kf-active");
-  kfPanel(`<div style="font-size:13px;color:var(--text2)">Die Adler-Schule lädt …</div>`);
+  kfPanel(`<div style="font-size:13px;color:var(--text2)">Die Adler-Akademie lädt …</div>`);
   const d=await kfLaden();
-  if(!d){ kfPanel(`<div style="font-size:14px;font-weight:800;margin-bottom:6px">🎓 Adler-Schule</div><div style="font-size:13px;color:var(--text2);margin-bottom:10px">Die Fragen brauchen einmal Internet. Danach gehen sie auch ohne.</div><button class="btn btn-sm" onclick="kfExit()"><i class="ti ti-arrow-left"></i>Zurück</button>`); return; }
-  let html=`<div style="font-size:12px;font-weight:700;color:var(--green-text,#15803d);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">🎓 Adler-Schule · ${esc(tqPlayer)}</div>
+  if(!d){ kfPanel(`<div style="font-size:14px;font-weight:800;margin-bottom:6px">🎓 Adler-Akademie</div><div style="font-size:13px;color:var(--text2);margin-bottom:10px">Die Fragen brauchen einmal Internet. Danach gehen sie auch ohne.</div><button class="btn btn-sm" onclick="kfExit()"><i class="ti ti-arrow-left"></i>Zurück</button>`); return; }
+  let html=`<div style="font-size:12px;font-weight:700;color:var(--green-text,#15803d);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">🎓 Adler-Akademie · ${esc(tqPlayer)}</div>
     <div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:2px">Was wollen wir heute lernen?</div>
     <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Jede richtige Antwort bringt beim ersten Mal ${XP_ICON} Federn.</div>
     <div id="kf-bloecke" style="display:flex;flex-direction:column;gap:8px">`;
@@ -1670,7 +1707,7 @@ async function kfStart(){
       fertig:tqGemeistert(bp), pct:bp?Math.round(bp.score/bp.total*100):0, col:"#047857",
       sub:bp?`${bp.score}/${bp.total} richtig`:`${n} Fragen`, onclick:`kfBlock(${lf})`});
   });
-  html+=`</div><button class="btn btn-sm" style="margin-top:12px" onclick="kfExit()"><i class="ti ti-arrow-left"></i>Zurück zur Adler-Schule</button>`;
+  html+=`</div><button class="btn btn-sm" style="margin-top:12px" onclick="kfExit()"><i class="ti ti-arrow-left"></i>Zurück zum Unterricht</button>`;
   kfPanel(html);
 }
 function kfExit(){ document.body.classList.remove("kf-active"); kfStopp(); document.getElementById("kf-karten")?.remove(); tqStart(); }
@@ -1687,7 +1724,7 @@ function kfBlock(lf){
       <span aria-hidden="true" style="flex:none;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;${haupt?"background:#fff;color:#1d4ed8":"background:#1e3a8a;color:#fff"}">${nr}</span>
       <span aria-hidden="true" style="flex:none;font-size:40px;line-height:1">${bild}</span>
       <span style="min-width:0"><span style="display:block;font-size:19px;font-weight:800;line-height:1.2">${titel}</span><span style="display:block;font-size:15px;font-weight:500;line-height:1.3">${unter}</span></span></button>`;
-  kfPanel(`<div style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🎓 Adler-Schule · ${KF_ICON[lf]}</div>
+  kfPanel(`<div style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🎓 Adler-Akademie · ${KF_ICON[lf]}</div>
     ${schuleLehrerHtml(schuleStundeText(lf),`${esc(SCHULE_STUNDE_VOR)}<b>${esc(KF_LEITFRAGEN[lf])}</b>${esc(SCHULE_STUNDE_NACH)}`,"praesentiert")}
     ${video?weg("🎬","kf-video","📺","Video ansehen","Der Lehrer erklärt dir die Stunde",`kfVideo(${lf})`,false):""}
     ${karten.length?weg(1,"kf-anschauen","👀","Erst anschauen",`${karten.length} Bilder mit Merksatz`,`kfKarten(${lf})`,false):""}

@@ -1692,8 +1692,8 @@ const KANN_JETZT_MAX=3;
 /* Dasselbe Fenster wie beim Rückblick darüber. Die App kennt bewusst EINEN Zeitraum
    („Bist du dabei?", offene Rückmeldungen, Rückblick) statt drei verschiedener. */
 function kannJetztAbzeichenText(kennung){
-  const liste=(typeof TECHNIK_ABZEICHEN!=="undefined")?TECHNIK_ABZEICHEN:null;
-  const a=liste?liste.find(x=>x.id===kennung):null;
+  /* v961: auch Silber-Abzeichen (abzeichenFinden, md-abzeichen.js, Welle 2) */
+  const a=(typeof abzeichenFinden==="function")?abzeichenFinden(kennung):((typeof TECHNIK_ABZEICHEN!=="undefined")?TECHNIK_ABZEICHEN.find(x=>x.id===kennung):null);
   /* Unbekannte Kennung (Abzeichen umbenannt oder Modul noch nicht da): lieber ein
      allgemeiner Satz als eine rohe Kennung wie „ab_jonglier" im Eltern-Bereich. */
   if(!a)return {emo:"🎖️", text:"Ein neues Technik-Abzeichen geschafft"};

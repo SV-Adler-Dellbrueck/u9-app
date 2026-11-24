@@ -54,7 +54,7 @@ module.exports = async function (h) {
     if (typeof kfStart !== "function") return { fehlt: "kfStart" };
     document.querySelectorAll("[role=dialog]").forEach(d => d.remove());
     localStorage.setItem("adler_quiz_tutorial_done", "1");
-    tqPlayer = "Kind A"; tqStart(); await w(50);
+    tqPlayer = "Kind A"; if (typeof _akBereich !== "undefined") _akBereich = "theorie"; tqStart(); await w(50);   // v961: Theorie der Akademie
     out.kachel = !!document.getElementById("kf-launcher");
     await kfStart(); await w(50);
     const panel = () => document.getElementById("tq-panel");

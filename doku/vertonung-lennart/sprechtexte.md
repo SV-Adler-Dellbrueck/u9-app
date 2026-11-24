@@ -296,13 +296,14 @@ Bei A-oder-B-Fragen gehört „Bild A oder Bild B?“ zum Sprechtext. Bei Szenen
 | mk6-3 | d0f89ee7.mp3 | Stell dich innen hin – dann muss er nach außen. |
 | mk6-4 | 153a1949.mp3 | Springt der Ball zu weit weg: zupacken! |
 
-## 4 Der Lehrer – 7 Texte (Ziel: `audio/schule/`)
+## 4 Der Lehrer – 8 Texte (Ziel: `audio/schule/`)
 
 Begrüßung im Stundenplan und der Satz zu Beginn jeder Stunde. Ohne Namen des Kindes – Namen gehen nicht an einen Sprachdienst.
 
 | Wo | Datei | Sprechtext |
 |---|---|---|
 | Begrüßung | 83db98e3.mp3 | Hallo! Heute stehen drei Stunden Sport auf dem Plan. Such dir eine aus! Und das Beste: Du musst nur zum Unterricht, wenn du willst. |
+| Akademie | 7d894999.mp3 | Willkommen in der Adler-Akademie! Hier lernst du im Kopf – und mit dem Ball. |
 | Stunde 1 | 58641aec.mp3 | Heute lernen wir: Wie behalte ich den Ball, wenn einer kommt? Erst schauen wir uns Bilder an. Dann bist du dran! |
 | Stunde 2 | 66640c97.mp3 | Heute lernen wir: Wie komme ich an einem vorbei? Erst schauen wir uns Bilder an. Dann bist du dran! |
 | Stunde 3 | 7a425017.mp3 | Heute lernen wir: Wie mache ich ein Tor? Erst schauen wir uns Bilder an. Dann bist du dran! |

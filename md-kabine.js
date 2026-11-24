@@ -1151,7 +1151,8 @@ function kabineHome(){
       ${/* v936 (Charles 21.11.): Taktik-Quiz und Fußball-Wissen stecken jetzt in der Adler-Schule. */""}
       ${/* v928: Adler-Schule – Fragen zu den sechs Leitfragen aus dem Training. Damit vorn acht Kacheln bleiben,
             wartet „Meine Mission“ hinter „Mehr entdecken“ (Charles 21.11.2026). */""}
-      ${tile("kabineQuiz('schule')","🎓","Adler-Schule","rgba(16,185,129,.46)","rgba(4,120,87,.32)",true)}
+      ${/* v961 (Charles 24.11.): aus der Adler-Schule wird die Adler-Akademie – Theorie und Praxis (Technik-Abzeichen) an einem Ort */""}
+      ${tile("kabineQuiz('schule')","🎓","Adler-Akademie","rgba(16,185,129,.46)","rgba(4,120,87,.32)",true)}
       ${lbl("Meine Sachen")}
       ${tile("kabineMyCard()","🃏","Meine Karte","rgba(168,85,247,.50)","rgba(124,58,237,.32)")}
       ${/* v755: alle Sprachlobe vom Trainerteam nach Datum, „Neu“-Punkt bis zum ersten Anhören – bewusst nicht unter „Mehr entdecken“.
@@ -1175,7 +1176,7 @@ function kabineHome(){
         ${tile("kabineMission()","⭐","Meine Mission","rgba(139,92,246,.46)","rgba(91,33,182,.32)")}
         ${tile("kabineSkillWoche()","🎬","Skill der Woche","rgba(251,146,60,.48)","rgba(234,88,12,.30)")}
         ${tile("kabineShowGallery()","🖼️","Team-Galerie","rgba(16,185,129,.48)","rgba(5,150,105,.30)")}
-        ${tile("kabineAbzeichen()","🎖️","Abzeichen","rgba(147,51,234,.46)","rgba(109,40,217,.30)")}
+        ${/* v961: die Abzeichen stehen jetzt in der Adler-Akademie (Praxis · Trainingsplatz) */""}
         ${tile("kabineRollen()","🎽","Wo spiele ich?","rgba(124,58,237,.46)","rgba(76,29,149,.32)")}
         ${tile("kabineStaerken()","💪","Meine Stärken","rgba(147,51,234,.5)","rgba(88,28,135,.32)")}
         ${tile("kabineAlbum()","📖","Sammelalbum","rgba(52,211,153,.46)","rgba(4,120,87,.30)")}
@@ -1210,8 +1211,8 @@ const KABINE_TOUR=[
    d:"Das hier ist deine Kabine. Ich zeige dir kurz, was du hier alles machen kannst."},
   {emo:"⏰", t:"Wann ist das nächste Spiel?", sel:["#kab-countdown"],
    d:"Hier siehst du, wie oft du noch schlafen musst bis zum nächsten Spiel."},
-  {emo:"🎓", t:"Adler-Schule", sel:['#kabine-body button[onclick="kabineQuiz(\'schule\')"]'],
-   d:"Training, Taktik und Fußball-Wissen an einem Ort. Dein Zeugnis zeigt, was du schon kannst. Richtige Antworten bringen Federn 🪶."},
+  {emo:"🎓", t:"Adler-Akademie", sel:['#kabine-body button[onclick="kabineQuiz(\'schule\')"]'],
+   d:"Theorie und Praxis an einem Ort: Stunden mit Bildern und Fragen, dazu Technik-Abzeichen für zu Hause. Richtige Antworten und Abzeichen bringen Federn 🪶."},
   {emo:"🃏", t:"Deine Karte", sel:['#kabine-body button[onclick="kabineMyCard()"]'],
    d:"Deine eigene Spielerkarte mit Foto und deiner Rolle im Team."},
   {emo:"⭐", t:"Deine Mission", sel:['#kabine-body button[onclick="kabineMission()"]'], vor:()=>{ const d=document.getElementById("kab-mehr"); if(d){ d.open=true; window._kabMehrOffen=true; } },
@@ -1223,7 +1224,7 @@ const KABINE_TOUR=[
   {emo:"👏", t:"Kompliment schenken", sel:['#kabine-body button[onclick="kabineKudos()"]'],
    d:"Sag einem Mitspieler, was er toll gemacht hat. Das freut jeden!"},
   {emo:"✨", t:"Mehr entdecken", sel:["#kab-mehr"], vor:()=>{ const d=document.getElementById("kab-mehr"); if(d){ d.open=true; window._kabMehrOffen=true; } },
-   d:"Hier gibt es noch mehr: dein Taktikbrett zum Malen und Aufstellen, das Sammelalbum, Abzeichen und die Team-Galerie."},
+   d:"Hier gibt es noch mehr: dein Taktikbrett zum Malen und Aufstellen, das Sammelalbum und die Team-Galerie."},
   {emo:"⚽", t:"Viel Spaß!", sel:["#kab-hilfe"],
    d:"Wenn du etwas vergessen hast: Tipp auf „❓ Zeig mir alles“. Und jetzt: Los geht's!"},
 ];

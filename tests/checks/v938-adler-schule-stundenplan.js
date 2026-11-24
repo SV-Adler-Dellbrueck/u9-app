@@ -15,10 +15,10 @@ module.exports = async function (h) {
   const fs = require("fs"), path = require("path"), cp = require("child_process");
   const probleme = [], zeilen = [];
   const kab = fs.readFileSync(path.join(h.REPO, "md-kabine.js"), "utf8");
-  if (/kabineQuiz\('taktik'\)|kabineQuiz\('wissen'\)/.test(kab) || !/tile\("kabineQuiz\('schule'\)","🎓","Adler-Schule"/.test(kab)) probleme.push("a) Kabine: Kacheln stimmen nicht");
+  if (/kabineQuiz\('taktik'\)|kabineQuiz\('wissen'\)/.test(kab) || !/tile\("kabineQuiz\('schule'\)","🎓","Adler-(Schule|Akademie)"/.test(kab)) probleme.push("a) Kabine: Kacheln stimmen nicht");
   let liste = [];
   try { liste = JSON.parse(cp.execFileSync("node", [path.join(h.REPO, "tools", "quiz-audio-namen.js"), "--json"], { encoding: "utf8", maxBuffer: 1 << 24 })).filter(e => /^Lehrer: /.test(e.quelle)); } catch (e) { probleme.push("f) Werkzeug: " + e.message.slice(0, 80)); }
-  if (liste.length !== 7 || liste.some(e => /Kind [A-O]\b/.test(e.text))) probleme.push(`f) Lehrer-Texte in der Liste: ${liste.length}`);
+  if (liste.length !== 8 || liste.some(e => /Kind [A-O]\b/.test(e.text))) probleme.push(`f) Lehrer-Texte in der Liste: ${liste.length}`);
   for (const scheme of ["light", "dark"]) {
     const s = await h.starten({ start: "/kinder/index.html?quiz", breite: 360, hoehe: 740, scheme, warten: 2500, bibliothek: true, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen() }) });
     const r = await s.page.evaluate(async (kontrast) => {
@@ -30,6 +30,7 @@ module.exports = async function (h) {
       tqPlayer = "Kind A";
       const p = {}; p["Kind A"] = { 0: { score: 9, total: 10 }, [KF_BLOCK_BASIS + 1]: { score: 8, total: 10 } };
       localStorage.setItem(TQ_PROGRESS_KEY, JSON.stringify(p));
+      if (typeof _akBereich !== "undefined") _akBereich = "theorie";   // v961: der Stundenplan ist die Theorie der Adler-Akademie
       tqStart(); await w(120);
       const panel = document.getElementById("tq-panel"), t = txt(panel);
       const pos = x => t.indexOf(x);
@@ -37,7 +38,7 @@ module.exports = async function (h) {
         return { minSchrift: Math.min(...el.map(e => parseFloat(getComputedStyle(e).fontSize))), kontrast: Math.min(...[...panel.querySelectorAll(".sl-blase div, .sp-aus b, .sp-aus span, #schule-zeugnis-hinweis span, #schule-beste, #kf-stand")].map(e => window.__kontrastVon(e)).filter(x => typeof x === "number")),
           ueber: document.documentElement.scrollWidth - innerWidth }; };
       const out = { b: { lehrer: !!panel.querySelector(".sl-lehrer .sl-figur"), blase: txt(panel.querySelector(".sl-blase")), beste: txt(document.getElementById("schule-beste")),
-          reihe: [pos("1. Stunde"), pos("2. Stunde"), pos("3. Stunde"), pos("Mathe"), pos("Deutsch"), pos("Chemie"), pos("Dein Zeugnis")], ausfall: [...panel.querySelectorAll(".sp-aus")].map(txt) },
+          reihe: [pos("1. Stunde"), pos("2. Stunde"), pos("3. Stunde"), pos("Mathe"), pos("Deutsch"), pos("Chemie"), pos("Akademie-Zeugnis")], ausfall: [...panel.querySelectorAll(".sp-aus")].map(txt) },
         c: { altesZeugnis: !!document.getElementById("schule-zeugnis") || /Mein Adler-Zeugnis|Lieblingsfach/.test(t), hinweis: txt(document.getElementById("schule-zeugnis-hinweis")), prozent: /%/.test(txt(document.getElementById("schule-ausfall")) + txt(document.getElementById("schule-zeugnis-hinweis"))) },
         g1: mass() };
       // f) Vorlesen

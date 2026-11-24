@@ -16,7 +16,7 @@ module.exports = async function (h) {
   const r = await s.page.evaluate(async () => {
     const w = ms => new Promise(x => setTimeout(x, ms));
     document.querySelectorAll("[role=dialog]").forEach(d => d.remove());
-    tqPlayer = "Kind A"; tqStart(); await w(150);
+    tqPlayer = "Kind A"; if (typeof _akBereich !== "undefined") _akBereich = "theorie"; tqStart(); await w(150);   // v961: der Stundenplan ist die Theorie der Akademie
     const k = document.querySelector("#tq-panel .sl-ansehen"), out = { knopf: !!k };
     if (!k) return out;
     out.h = Math.round(k.getBoundingClientRect().height); out.vorlesen = !!k.parentElement.querySelector(".sl-vorlesen");
