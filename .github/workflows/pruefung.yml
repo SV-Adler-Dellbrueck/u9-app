@@ -28,10 +28,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Prüfwerkzeug installieren
-        run: npm ci
+        # package-lock.json steht bewusst in .gitignore; die Playwright-Fassung ist in package.json fest (ohne ^).
+        run: npm install --no-audit --no-fund
 
       - name: Chromium für Playwright
         run: npx playwright install --with-deps chromium
