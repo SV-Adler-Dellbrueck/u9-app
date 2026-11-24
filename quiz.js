@@ -1673,6 +1673,7 @@ function akademieStartHtml(pp){
     +kachel("ak-praxis","ak-praxis","⚽","Praxis","Trainingsplatz","Üben mit dem Ball – zu Hause.","Abzeichen sammeln","akademieBereich('praxis')")
     +`</div>
     <h3 class="ak-h">⭐ Als Nächstes für dich</h3>
+    <div id="ak-naechst-skill"></div>
     ${zeile("ak-naechst-theorie",stunde.emo,stunde.t,stunde.s,stunde.on)}
     <div id="ak-naechst-praxis"></div>
     <div class="ak-zeugnis k3"><span aria-hidden="true" class="ak-z-emo">📜</span><span style="flex:1;min-width:0"><b style="display:block">Dein Akademie-Zeugnis</b>Kommt am Ende der Hinrunde und am Ende der Rückrunde.
@@ -1681,14 +1682,23 @@ function akademieStartHtml(pp){
 function akademiePraxisHtml(){
   const id=_akKindId();
   return `<div class="ak-platz-intro">Üb mit dem Ball – zu Hause oder im Garten. Tipp ein Abzeichen an. Dann zeigt dir der Adler, wie es geht.<br><b>Geschafft?</b> Zeig es Mama oder Papa. Sie haken es ab.</div>
+    <div id="ak-skill"></div>
     <div id="abzeichen-list" class="ak-platz" data-spieler="${id==null?"":Number(id)}" data-kids="1"><div style="color:var(--text3);font-size:14px">Lädt …</div></div>
     <button class="btn btn-sm ak-zurueck" style="margin-top:12px" onclick="akademieBereich(null)"><i class="ti ti-arrow-left"></i>Zurück zur Akademie</button>`;
 }
 /* Stand der Abzeichen holen: auf dem Start für die Zahl, auf dem Trainingsplatz für die Liste (md-abzeichen.js, Welle 2). */
 async function akademiePraxisLaden(){
   const id=_akKindId(); if(id==null||typeof abzeichenStandLaden!=="function")return;
-  if(_akBereich==="praxis"){ if(typeof abzeichenRender==="function")await abzeichenRender(id,true); return; }
+  /* v963: Skill des Monats – oben auf dem Trainingsplatz, auf dem Start als erste Zeile in „Als Nächstes“ */
+  const sk=(typeof skillMonatLaden==="function")?await skillMonatLaden():null;
+  if(_akBereich==="praxis"){
+    if(typeof abzeichenRender==="function")await abzeichenRender(id,true);
+    const b=document.getElementById("ak-skill"); if(b&&sk)b.innerHTML=skillMonatKarteHtml(sk,id,true);
+    return;
+  }
   await abzeichenStandLaden(id);
+  const ns=document.getElementById("ak-naechst-skill");
+  if(ns&&sk)ns.innerHTML=`<button type="button" class="ak-naechst ak-skill-zeile" onclick="akademieBereich('praxis')"><span class="ak-n-emo" aria-hidden="true">⭐</span><span class="ak-n-txt"><b>Skill des Monats: ${esc(sk.titel||"")}</b><small>${skillVideoArt(sk.video_url)?"Mit Video – schau es dir an und üb es zu Hause.":"Üb es zu Hause – im Training machen wir es zusammen."}</small></span><span class="ak-n-pfeil" aria-hidden="true">›</span></button>`;
   const st=_abzStand[id]; if(!st||typeof abzeichenBronzeZahl!=="function")return;
   const br=abzeichenBronzeZahl(st), si=st.silber.size;
   const k=document.querySelector("#ak-praxis .ak-stand"); if(k)k.textContent=`🥉 ${br}/9${si||br>=ABZ_SILBER_AB?` · 🥈 ${si}/10`:""}`;

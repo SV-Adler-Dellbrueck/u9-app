@@ -1200,7 +1200,7 @@ function kabineHome(){
         ${/* v751: ein Training planen wie ein Trainer – und es dem Trainer schicken (md-kindtraining.js) */""}
         ${tile("if(typeof kabineMeinTraining==='function')kabineMeinTraining()","📋","Mein Training","rgba(34,197,94,.48)","rgba(21,128,61,.32)",true)}
         ${tile("kabineMission()","⭐","Meine Mission","rgba(139,92,246,.46)","rgba(91,33,182,.32)")}
-        ${tile("kabineSkillWoche()","🎬","Skill der Woche","rgba(251,146,60,.48)","rgba(234,88,12,.30)")}
+        ${/* v963: der Skill des Monats steht jetzt oben auf dem Trainingsplatz der Akademie */""}
         ${tile("kabineShowGallery()","🖼️","Team-Galerie","rgba(16,185,129,.48)","rgba(5,150,105,.30)")}
         ${/* v961: die Abzeichen stehen jetzt in der Adler-Akademie (Praxis · Trainingsplatz) */""}
         ${tile("kabineRollen()","🎽","Wo spiele ich?","rgba(124,58,237,.46)","rgba(76,29,149,.32)")}
@@ -1951,23 +1951,8 @@ function _khLage(){
   }
 }
 // Skill der Woche im Kinder-Modus: aktive Challenge holen und das Video zeigen.
-async function kabineSkillWoche(){
-  const b=document.getElementById("kabine-body"); if(!b)return;
-  b.innerHTML=`<div style="text-align:center;padding:60px 16px;opacity:.85;color:#fff">Lade …</div>`;
-  let sk=null;
-  try{const r=await fetch(`${SB_URL}/rest/v1/skill_woche?aktiv=eq.true&select=*&order=created_at.desc&limit=1`,{headers:sbAuthHeaders()});if(r.ok)sk=(await r.json())[0]||null;}catch(e){}
-  const head=`<div style="display:flex;align-items:center;gap:10px;padding:12px 16px">
-      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
-      <div style="flex:1;font-size:16px;font-weight:800;color:#fff">🎬 Skill der Woche</div></div>`;
-  if(!sk){ b.innerHTML=head+'<div style="flex:1;display:flex;align-items:center;justify-content:center;color:#fff;opacity:.85;padding:20px;text-align:center">Diese Woche gibt es keine neue Challenge.<br>Schau bald wieder rein! 💪</div>'; return; }
-  b.innerHTML=head+`<div style="flex:1;padding:16px;color:#fff;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px">
-    <div style="font-size:22px;font-weight:900;margin-top:10px">${esc(sk.titel)}</div>
-    ${sk.beschreibung?`<div style="font-size:14px;opacity:.95;line-height:1.5;max-width:420px">${esc(sk.beschreibung)}</div>`:""}
-    ${(sk.video_url&&kabineYoutubeEmbed(sk.video_url))?kabineEinbettung("ks-video",kabineYoutubeEmbed(sk.video_url),"Video: "+sk.titel,"▶️ Video laden","Kommt von YouTube.","width:100%;max-width:420px;aspect-ratio:16/9;border:0;border-radius:14px","encrypted-media; picture-in-picture"):""}
-    ${(sk.video_url&&!kabineYoutubeEmbed(sk.video_url)&&!isKidsMode)?`<a href="${esc(sk.video_url)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:16px 28px;border-radius:16px;background:#fff;color:#0b2f4d;font-weight:800;font-size:16px;text-decoration:none">▶️ Video ansehen</a>`:""}
-    <div style="font-size:13px;opacity:.85;max-width:420px;margin-top:6px">Übe zuhause – wenn du es schaffst, geben deine Eltern die Federn frei! 🪶</div>
-  </div>`;
-}
+/* v963: der Skill steht als „Skill des Monats“ auf dem Trainingsplatz der Akademie – alte Aufrufe führen dorthin. */
+function kabineSkillWoche(){ kabineQuiz("praxis"); }
 // mode: "taktik" | "wissen" – springt nach der Namenswahl direkt ins gewählte Quiz.
 // from=kabine blendet im Quiz einen „Zurück zur Kabine"-Button ein.
 function kabineQuiz(mode){ window.location.href=location.pathname+"?quiz&from=kabine"+(mode?"&mode="+encodeURIComponent(mode):""); }

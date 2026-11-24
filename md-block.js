@@ -621,7 +621,7 @@ async function tpStartRender(datum){
   const gz=_tpsZuLesen(datum), gespeichert=!!(gz&&gz.zeit)||!!(typeof TP_STAND!=="undefined"&&TP_STAND[datum]&&TP_STAND[datum].updated_at);
   const fertig=zustand==="steht"&&gespeichert&&!(gz&&gz.offen);
   document.getElementById("train-sub-planung")?.classList.toggle("tp-fertig",fertig);
-  if(fertig){ el.innerHTML=tpUebersichtHtml(datum,{lf,n,ablauf,hinweis:h?`<div class="tps-hinweis tpu-hinweis" id="tps-hinweis" role="status"><span aria-hidden="true">🔄</span><span>${esc(h.text)}</span>${_tpsRueck&&_tpsRueck.datum===datum?`<button type="button" onclick="tpStartRueckgaengig()">Rückgängig</button>`:""}</div>`:"",lfKlein:auto?`Leitfrage des Monats · Einheit ${String(auto.v.name).split(" ")[0]}`:(b&&z?`Leitfrage des Blocks · Einheit ${z.buchstabe}`:"")}); return; }
+  if(fertig){ el.innerHTML=tpUebersichtHtml(datum,{lf,n,ablauf,hinweis:h?`<div class="tps-hinweis tpu-hinweis" id="tps-hinweis" role="status"><span aria-hidden="true">🔄</span><span>${esc(h.text)}</span>${_tpsRueck&&_tpsRueck.datum===datum?`<button type="button" onclick="tpStartRueckgaengig()">Rückgängig</button>`:""}</div>`:"",lfKlein:auto?`Leitfrage des Monats · Einheit ${String(auto.v.name).split(" ")[0]}`:(b&&z?`Leitfrage des Blocks · Einheit ${z.buchstabe}`:"")}); tpsSkillHinweis(); return; }
   el.innerHTML=`<section class="tps" aria-label="Plan für diesen Termin">
     <div class="tps-haupt" id="tps-haupt">
       <div class="tps-ueber">⚡ ${zustand==="leer"?"Schnell planen":"Fertiger Plan"}</div>
@@ -645,6 +645,18 @@ async function tpStartRender(datum){
     </div>
     ${b?"":`<button type="button" class="btn btn-link tps-block-link" id="tps-block" onclick="blockEditorOpen()">🧱 Über mehrere Wochen planen: Trainingsblock anlegen</button>`}
   </section>`;
+  tpsSkillHinweis();
+}
+/* v963 · Charles 24.11.: „… und wir würden es dann auch im Training live trainieren.“ Der Skill des Monats steht als Hinweis über dem
+   Plan – mit dem verknüpften Abzeichen; tippen öffnet „So geht's“. Kein eigener Block: wo er hinpasst, entscheidet der Trainer. */
+async function tpsSkillHinweis(){
+  const ziel=document.querySelector("#tps-haupt .tps-titel")||document.querySelector("#tps-fertig .tpu-ok"); if(!ziel||document.getElementById("tps-skill"))return;
+  const sk=(typeof skillMonatLaden==="function")?await skillMonatLaden():null; if(!sk||document.getElementById("tps-skill"))return;
+  const a=sk.abzeichen&&typeof abzeichenFinden==="function"?abzeichenFinden(sk.abzeichen):null;
+  const d=document.createElement("button"); d.type="button"; d.id="tps-skill"; d.className="tps-skill";
+  d.innerHTML=`<span aria-hidden="true">⭐</span><span><small>Skill des Monats – im Training aufgreifen</small><b>${esc(sk.titel||"")}</b></span>`;
+  d.onclick=()=>{ if(a&&typeof abzeichenDetail==="function")abzeichenDetail(a.id,0,0); else if(typeof skillWocheOpen==="function")skillWocheOpen(); };
+  ziel.insertAdjacentElement("afterend",d);
 }
 /* ── v949 · „Training automatisch“: Leitfrage des Monats und nächste Einheit der Folge ── */
 let _tpaVersatz={}, _tpaLf={};
