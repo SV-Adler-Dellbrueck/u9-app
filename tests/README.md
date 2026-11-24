@@ -14,6 +14,10 @@ eigene Chromium-Nummer mit, und in einer Cloud-Sitzung liegt der Browser schon f
 Ein `^` holt beim nächsten `npm install` eine neuere Fassung, die einen Browser sucht, den es
 dort nicht gibt — der Lauf bricht dann ab, bevor die erste Prüfung läuft.
 
+Seit dem 24.11.2026 läuft derselbe Lauf auch in GitHub auf jedem Pull Request nach `main`
+(`.github/workflows/pruefung.yml`, Check „Prüflauf“). Er ersetzt den Lauf vor dem Versionsschritt nicht,
+sondern fängt ihn ab, falls er vergessen wurde.
+
 Der Lauf hat drei Teile: **Parsen** aller JS-Dateien (ein SyntaxError löst `script.onerror`
 nicht aus — der Loader meldet „fertig", die Datei lief nie), die **Ladearchitektur**
 (MODUL_WACHE in beiden Einstiegen identisch und vollständig, Wachname ist die letzte Funktion

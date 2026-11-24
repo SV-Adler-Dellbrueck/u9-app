@@ -1,0 +1,40 @@
+# Prüflauf – startet `node tests/run.js` auf jedem Pull Request nach main (und von Hand).
+# Derselbe Lauf, den CLAUDE.md vor jedem Versionssprung verlangt: Parsen aller Dateien, Ladearchitektur,
+# Prüfungen am gerenderten DOM mit Supabase-Attrappe. Keine Zugangsdaten, keine Datenbank, kein Netz zur App.
+# Grün heißt: alle Prüfungen bestanden. Rot: der Befund steht im Log unter „Prüflauf“ (Abschnitt „Befund(e)“).
+# Bekannter Sonderfall: Ein neuer Text der Adler-Akademie ist rot (v567), bis die Action „Vertonung Lennart“
+# nach dem Merge die Aufnahme erzeugt hat – das ist dann ein Hinweis, kein Fehler im Code.
+name: Prüflauf
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pruefung-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pruefen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Prüfwerkzeug installieren
+        run: npm ci
+
+      - name: Chromium für Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Prüflauf
+        run: node tests/run.js
