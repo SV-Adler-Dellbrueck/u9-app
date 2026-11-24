@@ -35,6 +35,7 @@ module.exports = async function (h) {
     await loadKader();
     await einheitBewertenOpen(); await einheitDetailOpen(gestern);
     for (let i = 0; i < 40 && !document.getElementById("nb-los"); i++) await warte(50);
+    if (typeof nbWegAus === "function") nbWegAus();   // v960: der Einstieg zeigt nur zwei Wege – das kleine Feld steht im Bogen („Alles auf einen Blick“)
     // b) Knopfreihe
     const box = document.getElementById("nb-box").getBoundingClientRect(), los = document.getElementById("nb-los");
     const lr = los.getBoundingClientRect();

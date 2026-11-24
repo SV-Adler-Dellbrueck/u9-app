@@ -33,7 +33,7 @@ module.exports = async function (h) {
     const weg = document.getElementById("nb-weg");
     out.start = weg ? weg.textContent.replace(/\s+/g, " ") : "";
     out.erzaehlen = !!weg && [...weg.querySelectorAll("button")].some(b => /Erzählen/.test(b.textContent) && /nbGross/.test(b.getAttribute("onclick") || "") && b.getBoundingClientRect().height >= 56);
-    out.leitfaden = weg ? weg.querySelectorAll("#nb-leitfaden-start li").length : 0;
+    out.leitfaden = weg ? weg.querySelectorAll(".nb-wahl").length : 0;   // v960: zwei Wege statt Leitfaden im Einstieg (der Leitfaden steht beim Erzählen)
     // c) durch alle Kachel-Schritte bis zur Schlussfrage
     let n = 0;
     while (n++ < 40 && !/Was nehmen wir mit\?/.test(document.getElementById("nb-weg")?.textContent || "")) { nbWegGehe(1); await w(20); }
@@ -49,9 +49,9 @@ module.exports = async function (h) {
   if (r.fehlt) probleme.push("fazitOpen oder wieWarsStart fehlt");
   else {
     if (r.startseiteGross) probleme.push("b) Startseite öffnet noch direkt die Vollansicht der Sprachnotiz");
-    if (!/Wie möchtest du anfangen\?/.test(r.start) || !/Frage für Frage/.test(r.start)) probleme.push("a) Einstieg fehlt: " + r.start.slice(0, 120));
+    if (!/Wie willst du es loswerden\?/.test(r.start) || !/Frage für Frage/.test(r.start) || !/Heute nichts eintragen/.test(r.start)) probleme.push("a) Einstieg fehlt: " + r.start.slice(0, 120));
     if (!r.erzaehlen) probleme.push("a) großer Knopf „Erzählen“ (≥ 56 px, öffnet nbGross) fehlt");
-    if (r.leitfaden !== 4) probleme.push("a) Leitfaden hat " + r.leitfaden + " statt 4 Punkte");
+    if (r.leitfaden !== 2) probleme.push("a) " + r.leitfaden + " Wege statt 2 (Erzählen, Selbst eingeben)");
     if (!r.schlussfrage) probleme.push("c) Schlussfrage „Was nehmen wir mit?“ fehlt im Kachel-Weg");
     const e = eintraege[0];
     if (!e || e.status !== "keim" || e.ki_vorschlag !== true || !/Gute Passfolgen/.test(e.beobachtung || "") || e.anlass !== "spieltag" || e.termin_id !== 77) probleme.push("c) Tagebuch-Entwurf: " + JSON.stringify(e || null).slice(0, 220));
