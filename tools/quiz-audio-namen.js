@@ -72,6 +72,14 @@ function eintraege() {
     if (c.ELTERN_MOIN) dazu("audio/schule", c.ELTERN_MOIN, "Eltern: Moin-Gruß (v947)");
     Object.keys(c.KF_LEITFRAGEN || {}).forEach(k => dazu("audio/schule", c.SCHULE_STUNDE_VOR + c.KF_LEITFRAGEN[k] + c.SCHULE_STUNDE_NACH, "Lehrer: Stunde " + k));
   } catch (e) {}
+  /* v962: Trainingsplatz der Akademie – je Abzeichen ein Text (Name, Schritte, Tipp), wie abzeichenSprechtext in md-abzeichen.js. */
+  try {
+    const m = fs.readFileSync(path.join(WURZEL, "md-abzeichen.js"), "utf8");
+    const at = m.slice(m.indexOf("/*ABZEICHEN-TEXTE-ANFANG*/"), m.indexOf("/*ABZEICHEN-TEXTE-ENDE*/"));
+    const c = {}; vm.createContext(c);
+    vm.runInContext(at.replace(/const /g, "var "), c);
+    (c.TECHNIK_ABZEICHEN || []).filter(x => !x.alt).concat(c.TECHNIK_SILBER || []).forEach(x => dazu("audio/schule", c.abzeichenSprechtext(x), "Trainingsplatz: " + x.name));
+  } catch (e) {}
   return aus;
 }
 function liste() {
@@ -96,6 +104,8 @@ function liste() {
   const L = eintraege().filter(e => /^Lehrer: /.test(e.quelle));   // v938
   z.push("", `## 4 Der Lehrer – ${L.length} Texte (Ziel: \`audio/schule/\`)`, "", "Begrüßung im Stundenplan und der Satz zu Beginn jeder Stunde. Ohne Namen des Kindes – Namen gehen nicht an einen Sprachdienst.", "", "| Wo | Datei | Sprechtext |", "|---|---|---|");
   L.forEach(e => z.push(`| ${zelle(e.quelle.replace(/^Lehrer: /, ""))} | ${e.datei} | ${zelle(e.text)} |`));
+  const P = eintraege().filter(e => /^Trainingsplatz: /.test(e.quelle));   // v962
+  if (P.length) { z.push("", `## 4b Trainingsplatz – ${P.length} Abzeichen (Ziel: \`audio/schule/\`)`, "", "Was der Adler zu jedem Technik-Abzeichen sagt: Name, Schritte, Tipp.", "", "| Abzeichen | Datei | Sprechtext |", "|---|---|---|"); P.forEach(e => z.push(`| ${zelle(e.quelle.replace(/^Trainingsplatz: /, ""))} | ${e.datei} | ${zelle(e.text)} |`)); }
   const E = eintraege().filter(e => /^Eltern: /.test(e.quelle));   // v947
   if (E.length) { z.push("", `## 5 Eltern-App – ${E.length} Text(e) (Ziel: \`audio/schule/\`)`, "", "Der Moin-Gruß der Eltern-Startseite (🔊 in der Sprechblase).", "", "| Wo | Datei | Sprechtext |", "|---|---|---|"); E.forEach(e => z.push(`| ${zelle(e.quelle.replace(/^Eltern: /, ""))} | ${e.datei} | ${zelle(e.text)} |`)); }
   z.push("", "---", "", "**Vertonung offen – Texte von Charles freigeben lassen, dann im Projekt-Chat mit ElevenLabs/Lennart erzeugen.**", "");

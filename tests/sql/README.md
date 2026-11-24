@@ -220,3 +220,18 @@ psql -d t -f tests/sql/supabase-attrappe.sql && psql -d t -f tests/sql/v779-ruec
 (Der Lauf legt `rueckmeldungen` mit Spalte `kommentar`, `rueckmeldung_log` und `saison_beginn` als Attrappe an und spielt die Migrationen v767, v769 und `20261104_v779_rueckmelde_grund.sql` nacheinander ein.)
 Erwartet: Beide Funktionen liefern die Spalte `grund` – Kind A „Schule“, Kind B leer (ein Kommentar aus Leerzeichen zählt als kein Grund), Kind C „Fieber“ ohne umgebende Leerzeichen. Eltern sehen 0 Zeilen; `anon` bekommt keinen Zugriff (eine Fehlermeldung ist gewollt).
 
+
+## v962 · „Ich hab's geschafft!“ (abzeichen_meldung)
+
+```bash
+createdb k && psql -d k -f tests/sql/supabase-attrappe.sql \
+  && psql -d k -c "create or replace function public.kind_zeit_uebrig() returns boolean language sql stable security definer set search_path to 'public' as \$\$ select coalesce((select aktiv from public.kind_konto where uid=auth.uid() limit 1),false) and coalesce(current_setting('test.zeit',true),'ja')='ja' \$\$;" \
+  && psql -d k -f supabase/migrations/20261124_v962_abzeichen_meldung.sql \
+  && psql -d k -f supabase/migrations/20261124_v962_abzeichen_meldung.sql \
+  && psql -d k -f tests/sql/v962-abzeichen-meldung.sql
+```
+
+Erwartet: Das Kindergerät meldet Bronze und Silber für sich; doppelt, für ein fremdes Kind, mit falscher Quelle und mit
+fremder Kennung scheitert es (vier Fehler), löschen kann es nicht (0 Zeilen), ohne Appzeit kein Melden (ein Fehler).
+Andere Eltern sehen nichts, löschen nichts und melden nicht für fremde Kinder. Die eigenen Eltern sehen zwei Meldungen
+und erledigen eine. `anon`: permission denied.

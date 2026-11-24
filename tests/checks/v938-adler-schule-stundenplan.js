@@ -15,7 +15,7 @@ module.exports = async function (h) {
   const fs = require("fs"), path = require("path"), cp = require("child_process");
   const probleme = [], zeilen = [];
   const kab = fs.readFileSync(path.join(h.REPO, "md-kabine.js"), "utf8");
-  if (/kabineQuiz\('taktik'\)|kabineQuiz\('wissen'\)/.test(kab) || !/tile\("kabineQuiz\('schule'\)","🎓","Adler-(Schule|Akademie)"/.test(kab)) probleme.push("a) Kabine: Kacheln stimmen nicht");
+  if (/kabineQuiz\('taktik'\)|kabineQuiz\('wissen'\)/.test(kab) || !/(tile\("kabineQuiz\('schule'\)","🎓","Adler-(Schule|Akademie)"|id="kab-akademie"[\s\S]{0,400}kabineQuiz\('schule'\))/.test(kab)) probleme.push("a) Kabine: Kacheln stimmen nicht");
   let liste = [];
   try { liste = JSON.parse(cp.execFileSync("node", [path.join(h.REPO, "tools", "quiz-audio-namen.js"), "--json"], { encoding: "utf8", maxBuffer: 1 << 24 })).filter(e => /^Lehrer: /.test(e.quelle)); } catch (e) { probleme.push("f) Werkzeug: " + e.message.slice(0, 80)); }
   if (liste.length !== 8 || liste.some(e => /Kind [A-O]\b/.test(e.text))) probleme.push(`f) Lehrer-Texte in der Liste: ${liste.length}`);

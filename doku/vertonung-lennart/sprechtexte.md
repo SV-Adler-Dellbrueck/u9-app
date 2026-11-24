@@ -303,13 +303,39 @@ Begrüßung im Stundenplan und der Satz zu Beginn jeder Stunde. Ohne Namen des K
 | Wo | Datei | Sprechtext |
 |---|---|---|
 | Begrüßung | 83db98e3.mp3 | Hallo! Heute stehen drei Stunden Sport auf dem Plan. Such dir eine aus! Und das Beste: Du musst nur zum Unterricht, wenn du willst. |
-| Akademie | 7d894999.mp3 | Willkommen in der Adler-Akademie! Hier lernst du im Kopf – und mit dem Ball. |
+| Akademie | 78f41530.mp3 | Hallo! Willkommen in der Adler-Akademie. Hier lernst du mit dem Kopf und mit dem Ball. Was machst du heute? |
 | Stunde 1 | 58641aec.mp3 | Heute lernen wir: Wie behalte ich den Ball, wenn einer kommt? Erst schauen wir uns Bilder an. Dann bist du dran! |
 | Stunde 2 | 66640c97.mp3 | Heute lernen wir: Wie komme ich an einem vorbei? Erst schauen wir uns Bilder an. Dann bist du dran! |
 | Stunde 3 | 7a425017.mp3 | Heute lernen wir: Wie mache ich ein Tor? Erst schauen wir uns Bilder an. Dann bist du dran! |
 | Stunde 4 | 4e9d01fb.mp3 | Heute lernen wir: Wie kriege ich den Ball zu einem, der frei ist? Erst schauen wir uns Bilder an. Dann bist du dran! |
 | Stunde 5 | c165c6f0.mp3 | Heute lernen wir: Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht? Erst schauen wir uns Bilder an. Dann bist du dran! |
 | Stunde 6 | 9ff25f23.mp3 | Heute lernen wir: Wie hole ich mir den Ball zurück? Erst schauen wir uns Bilder an. Dann bist du dran! |
+
+## 4b Trainingsplatz – 19 Abzeichen (Ziel: `audio/schule/`)
+
+Was der Adler zu jedem Technik-Abzeichen sagt: Name, Schritte, Tipp.
+
+| Abzeichen | Datei | Sprechtext |
+|---|---|---|
+| Ball-Jongleur | 32809acb.mp3 | Ball-Jongleur. Lass den Ball auf deinen Fuß fallen. Tipp ihn wieder nach oben. Schaffst du das 5-mal hintereinander? Mein Tipp: Fang mit einem Mal an. Dann zwei. Dann drei. |
+| Beidfüßer | 030c284e.mp3 | Beidfüßer. Stell dich vor eine Wand. Schieß 10-mal mit dem rechten Fuß. Dann 10-mal mit dem linken Fuß. Mein Tipp: Der schwache Fuß wird stark, wenn du ihn oft benutzt. |
+| Slalom-König | 2f39b6ed.mp3 | Slalom-König. Stell 5 Hütchen oder Schuhe in eine Reihe. Dribble im Zickzack hindurch. Kein Hütchen ist umgefallen? Geschafft! Mein Tipp: Langsam ist erlaubt. Der Ball bleibt nah am Fuß. |
+| Pass-Meister | 611acb99.mp3 | Pass-Meister. Geh 3 große Schritte von der Wand weg. Pass mit der Innenseite gegen die Wand. Zähl laut mit bis 10. Mein Tipp: Dein Fuß zeigt zur Seite – wie ein Golfschläger. |
+| Sohlen-Roller | a3c2418a.mp3 | Sohlen-Roller. Stell deine Sohle oben auf den Ball. Roll ihn nach vorn und wieder zurück. 10-mal – dann ist es geschafft. Mein Tipp: Mach nur ganz kleine Bewegungen. |
+| Torjäger | 3b6eea7a.mp3 | Torjäger. Bau ein kleines Tor, zum Beispiel aus zwei Schuhen. Geh 5 große Schritte weg. Schieß! 5 Treffer brauchst du. Mein Tipp: Schau erst aufs Tor, dann auf den Ball. |
+| Ausdauer-Adler | 806861e8.mp3 | Ausdauer-Adler. Mama oder Papa stellt einen Wecker auf 10 Minuten. Spiel oder lauf, bis er klingelt. Bleib nicht stehen! Mein Tipp: Lieber langsam laufen als stehen bleiben. |
+| Trick-Meister | 1d7da6d0.mp3 | Trick-Meister. Lauf langsam mit dem Ball. Schwing dein Bein über den Ball. Berühr ihn dabei nicht. Lauf mit dem anderen Fuß weiter. Schaffst du das 3-mal hintereinander? Mein Tipp: Übe es erst im Stehen. Dann im Laufen. |
+| Ball-Stopper | f86ec431.mp3 | Ball-Stopper. Mama oder Papa wirft dir den Ball zu. Stopp ihn mit dem Fuß. Er soll liegen bleiben. 5-mal geschafft? Super! Mein Tipp: Zieh den Fuß ein kleines Stück zurück, wenn der Ball kommt. |
+| Jongleur-Profi | 2005662f.mp3 | Jongleur-Profi. Lass den Ball aus der Hand auf deinen Fuß fallen. Spiel ihn mit dem Fuß oder dem Oberschenkel wieder hoch. Zähl laut mit. Bei 10 hast du es geschafft. Mein Tipp: Zieh die Fußspitze ein bisschen hoch. Dann springt der Ball gerade nach oben. |
+| Wand-Doppelpass | e3384f2b.mp3 | Wand-Doppelpass. Stell dich 3 Schritte vor eine Wand. Pass mit rechts. Nimm den Ball mit links an. Dann andersherum. 20 Pässe ohne Fehler. Mein Tipp: Spiel den Ball flach. Mit der Innenseite. |
+| Slalom-Sprint | e0003a08.mp3 | Slalom-Sprint. Stell 6 Hütchen oder Schuhe in eine Reihe. Immer 2 große Schritte Abstand. Dribble hin und zurück durch alle hindurch. Mama oder Papa stoppt die Zeit. Mein Tipp: Mach kleine Schritte. Der Ball bleibt nah am Fuß. |
+| Ziel-Pass | 3dbe0bc7.mp3 | Ziel-Pass. Leg zwei Schuhe einen großen Schritt auseinander. Das ist dein Tor. Geh 5 große Schritte weg. Spiel 10 Pässe. 7 müssen durchgehen. Mein Tipp: Dein Standbein steht neben dem Ball. Du schaust aufs Ziel. |
+| Schwacher Fuß | 1efd0116.mp3 | Schwacher Fuß. Nimm den Fuß, mit dem du sonst nicht schießt. Schieß aus 5 großen Schritten aufs Tor. 3 Treffer – fertig! Mein Tipp: Erst genau schießen. Dann fest. |
+| Cruyff-Drehung | bb5d736c.mp3 | Cruyff-Drehung. Lauf mit dem Ball los. Tu so, als ob du schießt. Zieh den Ball mit der Innenseite hinter deinem Standbein vorbei. Dreh dich mit und lauf in die andere Richtung weiter. Mein Tipp: Übe es erst langsam. Dann wirst du schneller. |
+| Luft-Stopper | 036b58a3.mp3 | Luft-Stopper. Mach einen Kreis, so groß wie ein großer Schritt. Wirf den Ball hoch. Stopp ihn mit dem Fuß oder dem Oberschenkel. Er bleibt im Kreis liegen? Schaffst du das 5-mal? Mein Tipp: Nimm den Ball ganz weich an. Wie mit einem Kissen. |
+| Sohlen-Kreis | dc274163.mp3 | Sohlen-Kreis. Stell deine Sohle auf den Ball. Zieh ihn mit kleinen Schritten einmal rund um dich herum. Dann mit dem anderen Fuß in die andere Richtung. Mein Tipp: Kleine Stupser. Der Ball bleibt dicht bei dir. |
+| Ball behalten | 1c1b4944.mp3 | Ball behalten. Mama oder Papa versucht, an den Ball zu kommen. Ohne zu schubsen. Stell deinen Körper zwischen den Ball und Mama oder Papa. Behalte den Ball 30 Sekunden lang. Mein Tipp: Mach die Arme ein bisschen breit. Der Ball bleibt weit weg vom anderen. |
+| Fußball-Tennis | ff1e31dd.mp3 | Fußball-Tennis. Legt eine Linie zwischen euch. Zum Beispiel ein Seil oder Schuhe. Spielt euch den Ball über die Linie zu. Er darf einmal aufkommen. Schafft ihr 10-mal hin und her? Mein Tipp: Nur mit dem Fuß und dem Oberschenkel. Nicht mit dem Kopf. |
 
 ## 5 Eltern-App – 1 Text(e) (Ziel: `audio/schule/`)
 

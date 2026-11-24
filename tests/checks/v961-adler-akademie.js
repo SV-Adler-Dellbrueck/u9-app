@@ -42,7 +42,7 @@ module.exports = async function (h) {
     out.b.offen = platz ? [...platz.querySelectorAll(".abz-stufe")[1].querySelectorAll(".abz-zeile")].length : 0;
     platz.querySelectorAll(".abz-stufe")[1].querySelector(".abz-info")?.click(); await w(200);
     const det = document.getElementById("abz-detail");
-    out.d.detail = { schritte: det ? det.querySelectorAll(".abz-schritte li").length : 0, tipp: txt(det && det.querySelector(".abz-tipp")), eintragen: !!(det && /Als geschafft eintragen/.test(txt(det))) };
+    out.d.detail = { schritte: det ? det.querySelectorAll(".abz-schritte li").length : 0, tipp: txt(det && det.querySelector(".abz-tipp")), eintragen: !!(det && /Als geschafft eintragen/.test(txt(det))) };   // v962: Kinder haben hier „Ich hab's geschafft!“ (melden), nicht „eintragen“
     det?.remove();
     // c) als Eltern (gleiche Funktion, ohne Kindermodus)
     const kid = _akKindId(); panel.innerHTML = "";   // die Eltern-Ansicht steht in einer anderen App – hier nur nacheinander
@@ -62,12 +62,12 @@ module.exports = async function (h) {
   if (r.a.bronze.length !== 9 || r.a.bronze.includes("ab_kopfball") || r.a.silber.length !== 10 || r.a.silber.some(x => !/^ab2_/.test(x)) || r.a.ohneSchritte || r.a.kopf.length) probleme.push("a) " + JSON.stringify(r.a));
   if (!/Noch 1 Bronze/.test(r.b.zu) || r.b.knoepfe !== 0) probleme.push(`b) 7 Bronze: „${r.b.zu}“, Abhak-Knöpfe im Kindermodus ${r.b.knoepfe}`);
   if (r.b.offen !== 10) probleme.push("b) mit Kopfball (8) ist Silber nicht offen: " + r.b.offen + " Zeilen");
-  if (!/Adler-Akademie/.test(r.d.titel) || !/Theorie · Unterricht/.test(r.d.theorie) || !/Praxis · Trainingsplatz/.test(r.d.praxis)) probleme.push("d) Start " + JSON.stringify(r.d).slice(0, 200));
+  if (!/Adler-Akademie/.test(r.d.titel) || !/Theorie\s*Unterricht/.test(r.d.theorie) || !/Praxis\s*Trainingsplatz/.test(r.d.praxis)) probleme.push("d) Start " + JSON.stringify(r.d).slice(0, 200));
   if (JSON.stringify(r.b.stufen.map(x => x.split(" ")[1])) !== JSON.stringify(["Bronze", "Silber", "Gold"])) probleme.push("d) Stufen " + JSON.stringify(r.b.stufen));
   if (r.d.detail.schritte < 2 || !r.d.detail.tipp || r.d.detail.eintragen) probleme.push("d) Detail " + JSON.stringify(r.d.detail));
   if (!r.c.knopf || !r.c.rpc.length || r.c.rpc[0].p_quelle !== "abzeichen_silber" || !/^ab2_/.test(r.c.rpc[0].p_quelle_id)) probleme.push("c) Eltern-Haken Silber " + JSON.stringify(r.c));
   const kab = fs.readFileSync(path.join(h.REPO, "md-kabine.js"), "utf8");
-  if (!/tile\("kabineQuiz\('schule'\)","🎓","Adler-Akademie"/.test(kab) || /tile\("kabineAbzeichen\(\)"/.test(kab)) probleme.push("e) Kabine-Kacheln");
+  if (!/(tile\("kabineQuiz\('schule'\)","🎓","Adler-Akademie"|id="kab-akademie")/.test(kab) || /tile\("kabineAbzeichen\(\)"/.test(kab)) probleme.push("e) Kabine-Kacheln");   // v962: Akademie als Karte oben
   const mig = fs.readFileSync(path.join(h.REPO, "supabase/migrations/20261124_v961_abzeichen_silber.sql"), "utf8");
   if (!/when 'abzeichen_silber' then 20/.test(mig) || !/p\.quelle in \('abzeichen', 'abzeichen_silber'\)/.test(mig)) probleme.push("e) Migration");
   const f2 = fe.filter(x => !/Failed to load resource/.test(x)); if (f2.length) probleme.push("Konsole: " + f2.slice(0, 2).join(" | "));
