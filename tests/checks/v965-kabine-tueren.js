@@ -16,6 +16,8 @@ module.exports = async function (h) {
   await s.page.reload({ waitUntil: "networkidle" }); await s.page.waitForTimeout(1800);
   const r = await s.page.evaluate(async () => {
     const w = ms => new Promise(x => setTimeout(x, ms)), out = {};
+    /* Unter der Last des vollen Laufs zeichnet die Kabine später als 200 ms – auf das Element warten statt fest (26.11.2026). */
+    const bis = async sel => { for (let i = 0; i < 40; i++) { const e = document.querySelector(sel); if (e) return e; await w(100); } return null; };
     if (typeof kabineTuer !== "function") return { alt: true };
     const tueren = ["ich", "team", "machen"].map(t => document.getElementById("kab-tuer-" + t));
     out.a = { tueren: tueren.filter(Boolean).length, mehr: !!document.getElementById("kab-mehr"),
@@ -33,9 +35,10 @@ module.exports = async function (h) {
     // c) Rückweg
     kabineTuer("ich"); await w(100); kabineStaerken(); await w(300);
     out.c = { inFunktion: !document.getElementById("kab-tuer-seite") };
-    kabineHome(); await w(200);
+    kabineHome(); await bis("#kab-tuer-seite h2");
     out.c.zurTuer = (document.querySelector("#kab-tuer-seite h2") || {}).textContent || "";
-    document.querySelector('#kab-tuer-seite button[onclick="kabineHome(true)"]').click(); await w(200);
+    const zurueck = await bis('#kab-tuer-seite button[onclick="kabineHome(true)"]');
+    if (zurueck) zurueck.click(); await bis("#kab-tueren");
     out.c.start = !!document.getElementById("kab-tueren");
     kabineTuer("team"); await w(100); window._kabTuer = "team"; kabineHome(true); await w(100);
     out.c.frisch = !!document.getElementById("kab-tueren");
