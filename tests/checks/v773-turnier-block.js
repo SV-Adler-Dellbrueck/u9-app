@@ -32,7 +32,7 @@ module.exports = async function (h) {
   const fehler = s.fehler();
 
   if (r.netto !== 35) probleme.push(`Netto ${r.netto} – erwartet 35 (Turnier zählt, Aufwärmen nicht)`);
-  if (r.nettoAbschluss !== 0) probleme.push(`Abschlussspiel zählt jetzt zur Nettozeit (${r.nettoAbschluss}) – darf sich nicht ändern`);
+  if (r.nettoAbschluss !== 20) probleme.push(`Abschlussspiel zählt nicht zur Spielform (${r.nettoAbschluss}) – seit v977 zählt es mit (Charles 26.11.2026)`);
   if (!r.optTurnier) probleme.push("„Turnier“ fehlt im Dialog „Block hinzufügen“");
   if (r.slots.join() !== "warmup,warmup,turnier") probleme.push(`Blöcke ${r.slots}`);
   if (!/Turnier · Spielform/.test(r.kopf)) probleme.push(`Kennzeichnung fehlt: „${r.kopf}“`);
