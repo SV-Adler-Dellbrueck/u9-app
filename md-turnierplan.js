@@ -1863,6 +1863,7 @@ function blzTimerStart(slot){
 function _blzTick(){
   if(!_blzT||_blzT.paused||_blzT.phase!=="lauf")return;
   _blzT.left--;
+  if(_blzT.left>0&&typeof uhrRest==="function")uhrRest(_blzT.left,"in dieser Runde");   // v975
   if(_blzT.left<=0)blzAbpfiff();
   else _blzTimerRender();
 }

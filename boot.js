@@ -5181,6 +5181,7 @@ function stTimerStart(){
 function stTimerTick(){
   if(_stT.paused)return;
   _stT.left--;
+  if(_stT.left>0&&typeof uhrRest==="function")uhrRest(_stT.left,"in dieser Station");   // v975
   if(_stT.left<=0){
     stTimerWhistle();
     if(_stT.ix>=_stT.stations.length-1){ stTimerRender(true); if(_stT.timer){clearInterval(_stT.timer);_stT.timer=null;} return; }
@@ -6621,6 +6622,7 @@ function _tlRender(){
     return;
   }
   const rest=Math.max(0,Math.round((startMs+st.dauer*60000-jetzt)/1000));
+  if(rest>0&&typeof uhrRest==="function")uhrRest(rest,"in diesem Block");   // v975
   if(rest===0&&_tl.gepfiffen!==row.slot){_tl.gepfiffen=row.slot;try{if(typeof stTimerWhistle==="function")stTimerWhistle();}catch(e){}}
   const ich=me&&((row.fertig||{})[me]||[]).includes(row.slot);
   ov.innerHTML=kopf+`<div style="max-width:520px;margin:2vh auto 0">
