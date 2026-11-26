@@ -3056,6 +3056,18 @@ async function elternHelferKachelLoad(t){
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/event_helfer?termin_id=eq.${t.id}&select=id,name,aufgabe,user_id&order=created_at.asc`,{headers:sbAuthHeaders()});if(r.ok)rows=await r.json();}catch(e){}
   const uid=_sbUid();
+  /* v980 (Charles 26.11. mit Bildschirmfoto: „Seh nichts davon“): Becher-Hinweis und Tee-Staffel standen nur im Termin-Fenster.
+     Jetzt auch hier – dieselben Bausteine (teeStaffelHtml), damit beide Stellen gleich bleiben. */
+  let teeBox="", becher="";
+  if(typeof teeTermin==="function"&&teeTermin(t)){
+    _teeOffen[Number(t.id)]=t;
+    becher=`<div class="hk-becher" style="font-size:var(--s-text);color:#334155;margin-top:10px">🥤 Becher bringen die Kinder selbst mit.</div>`;
+    try{
+      const nb=await teeNachbarn(t); t._teeVorher=nb.vorher||null;
+      if(nb.nachher){ let tr=[]; try{const r=await fetch(`${SB_URL}/rest/v1/event_helfer?termin_id=eq.${nb.nachher.id}&aufgabe=eq.${encodeURIComponent(TEE_AUFGABE)}&select=id,name,user_id&order=created_at.asc`,{headers:sbAuthHeaders()});if(r.ok)tr=await r.json();}catch(e){}
+        teeBox=teeStaffelHtml(t,nb.nachher,tr||[],uid).replace('id="td-tee-staffel"','id="hk-tee-staffel"'); }
+    }catch(e){}
+  }
   const je={}; rows.forEach(x=>{(je[x.aufgabe]=je[x.aufgabe]||[]).push(x);});
   const namen=l=>l.length===1?esc(l[0].name):`${esc(l[0].name)} +${l.length-1}`;
 
@@ -3088,7 +3100,7 @@ async function elternHelferKachelLoad(t){
   /* v926: Sind alle Aufgaben besetzt, steht nur eine Zeile da („✓ Wer hilft mit: Tee 2 von 2 · …“); ein Tipp klappt auf. */
   const alleVoll=aufgaben.every(a=>(je[a.t]||[]).length>=a.n);
   const kurzZeile=aufgaben.map(a=>`${esc(a.t.split(" ")[0])} ${(je[a.t]||[]).length} von ${a.n}`).join(" · ");
-  box.innerHTML=`<${alleVoll?'details class="tk-erledigt"':'div'} style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:${alleVoll?4:10}px">
+  box.innerHTML=becher+`<${alleVoll?'details class="tk-erledigt"':'div'} style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:${alleVoll?4:10}px">
     ${alleVoll?`<summary>✓ Wer hilft mit: ${kurzZeile}</summary>`:""}
     <div style="font-weight:700;font-size:var(--s-text);margin-bottom:2px${alleVoll?";display:none":""}">🙌 Wer hilft mit?</div>
     <div style="font-size:var(--s-klein);color:#64748b;margin-bottom:2px">Ein Tipp genügt – nochmal tippen trägt dich wieder aus.</div>
@@ -3102,7 +3114,7 @@ async function elternHelferKachelLoad(t){
       <input id="helfer-eigen-k" maxlength="60" placeholder="Was übernimmst du?" aria-label="Eigene Aufgabe eintragen" style="flex:1;min-width:0;min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);box-sizing:border-box" onkeydown="if(event.key==='Enter')tdHelferAddEigen(${Number(t.id)},this)">
       <button onclick="tdHelferAddEigen(${Number(t.id)},this)" aria-label="Eigene Aufgabe eintragen" class="btn" style="flex:none;min-width:52px;justify-content:center;font-size:var(--s-karte)">✓</button>
     </div>`:""}
-  </${alleVoll?"details":"div"}>`;
+  </${alleVoll?"details":"div"}>`+teeBox;
 }
 function elternHelferEigenAuf(){
   const b=document.getElementById("helfer-eigen-box"); if(!b)return;
@@ -3703,8 +3715,14 @@ async function elternAkademieMeldungen(kids){
   let rows=[];
   try{ const r=await fetch(`${SB_URL}/rest/v1/abzeichen_meldung?spieler_id=in.(${ids.join(",")})&select=id,spieler_id,abzeichen,quelle,created_at&order=created_at.asc&limit=12`,{headers:sbAuthHeaders()}); if(r.ok)rows=(await r.json())||[]; }catch(e){}
   const name=sid=>{ const k=(kids||[]).find(x=>Number(x.spieler_id)===Number(sid)); return (k&&k.kader&&k.kader.name)||"Euer Kind"; };
+  if(typeof skillMonatLaden==="function"){ try{ await skillMonatLaden(); }catch(e){} }
   const html=rows.map(m=>{ const a=abzeichenFinden(m.abzeichen); if(!a)return "";
     const silber=m.quelle==="abzeichen_silber";
+    /* v980: Skill des Monats – abgenommen wird beim Training vom Trainer; die Eltern sehen nur, dass ihr Kind ihn zeigen möchte. */
+    if(typeof skillAbzAktiv==="function"&&skillAbzAktiv(a.id))return `<div class="fh-karte ak-melde ak-skill" role="region" aria-label="Skill des Monats: beim Training zeigen" data-melde="${Number(m.id)}">
+      <div class="fh-titel">⭐ Skill des Monats</div>
+      <div class="fh-was">${esc(name(m.spieler_id))} möchte es beim nächsten Training zeigen: ${a.emo} ${esc(a.name)}</div>
+      <div class="fh-text">Ein Trainer schaut beim Training zu und nimmt es ab – dann gibt es das Abzeichen und ${silber?20:10} Adler-Federn.</div></div>`;
     return `<div class="fh-karte ak-melde" role="region" aria-label="Adler-Akademie: Übung freigeben" data-melde="${Number(m.id)}">
       <div class="fh-titel">🎓 Adler-Akademie</div>
       <div class="fh-was">${esc(name(m.spieler_id))} hat geübt: ${a.emo} ${esc(a.name)}</div>
