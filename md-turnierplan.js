@@ -3687,7 +3687,7 @@ function fstRender(){
     <div style="display:flex;gap:8px;margin-bottom:10px">
       <input id="fst-datum" type="date" value="${esc(_HT.datum||"")}" onchange="fstZeitSpeichern()" style="${fld};flex:1">
       <button class="btn btn-sm" onclick="htShare()" title="Spielplan-Link an Gast-Trainer, Gast-Eltern und unsere Eltern schicken"><i class="ti ti-share"></i>Teilen</button>
-    </div>
+    </div>${typeof fpOpen==="function"?'<button class="btn" onclick="fpOpen()" style="width:100%;min-height:48px;margin-bottom:10px">🧮 Festival-Planer: Teams und Felder rechnen</button>':""}
 
     ${plan.length?`<details id="fst-vorbereitung" style="margin:12px 0;border:var(--border-s);border-radius:12px;background:var(--surface2)">
       <summary style="cursor:pointer;min-height:44px;display:flex;align-items:center;padding:0 12px;font-size:var(--s-text);font-weight:800;color:var(--text2)">⚙️ Vereine, Felder und Zeiten ändern</summary>
@@ -3840,7 +3840,7 @@ function fstPlanHtml(plan,teams,felder,tausch,cfg){
    Anzeigen vorangestellt, nicht in cfg.infos geschrieben – so verschwindet er beim Zurückschalten von selbst. */
 const FST_AUFW_KEINS="🔥 Vor uns läuft noch ein anderes Turnier – zum Aufwärmen sind nicht alle Plätze frei. Eine feste Aufwärmfläche gibt es nicht.";
 function fstAufwKeins(cfg){ return !!cfg&&cfg.aufwaermen==="keins"; }
-function fstInfosText(cfg){ cfg=cfg||{}; const i=String(cfg.infos||"").trim(); return fstAufwKeins(cfg)?(FST_AUFW_KEINS+(i?"\n"+i:"")):i; }
+function fstInfosText(cfg){ cfg=cfg||{}; const p=cfg.planer||{}, i=[String(cfg.infos||"").trim(),p.wechselregel?"🔁 "+p.wechselregel:"",p.betreuer?"👥 Höchstens "+p.betreuer+" Betreuer auf dem Platz.":""].filter(Boolean).join("\n"); return fstAufwKeins(cfg)?(FST_AUFW_KEINS+(i?"\n"+i:"")):i; }   // v979: Planer
 function fstAufwSetzen(v){
   if(!_HT)return; _HT.config=_HT.config||{};
   _HT.config.aufwaermen=v==="keins"?"keins":"felder";
@@ -4445,7 +4445,7 @@ function _htpSeite(wrap,row){
     <div class="htp-raster">
       <div class="htp-links">
         ${jetzt}
-        ${plan.length?`<h2 class="htp-h2">🗓️ Spielplan <small>${f!=null?"nur "+esc(teams[f]):"alle Spiele"}</small></h2>${platzHinweis}${mehr}${planHtml}`
+        ${plan.length?`<h2 class="htp-h2">🗓️ Spielplan <small>${f!=null?"nur "+esc(teams[f]):"alle Spiele"}</small></h2>${(cfg.planer||{}).abweichung?`<div class="htp-leer">⚠️ ${esc(cfg.planer.abweichung)}</div>`:""}${platzHinweis}${mehr}${planHtml}`
           :'<div class="htp-leer">Der Spielplan wird gerade erstellt – gleich nochmal schauen.</div>'}
       </div>
       <div class="htp-rechts">
