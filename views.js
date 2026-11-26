@@ -7433,6 +7433,7 @@ const TR_ICONS={
   "🆕":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 8v8M8 12h8\"/>",
   "🏁":"<path d=\"M6 21V4M6 5h11l-2 4 2 4H6\"/>",
   "⏱️":"<circle cx=\"12\" cy=\"13\" r=\"8\"/><path d=\"M12 9v4l2.5 1.5M9.5 2.5h5\"/>",
+  "⌚":"<rect x=\"7\" y=\"6\" width=\"10\" height=\"12\" rx=\"3\"/><path d=\"M9 6l.6-3h4.8l.6 3M9 18l.6 3h4.8l.6-3M12 10v2.5l1.5 1\"/>",   // v974: Timer an die Uhr
   "⏸️":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M10 9v6M14 9v6\"/>",
   "🖼️":"<rect x=\"3.5\" y=\"4.5\" width=\"17\" height=\"15\" rx=\"2\"/><circle cx=\"9\" cy=\"10\" r=\"1.5\"/><path d=\"m4 17 5-4 4 3 3-2 4 3\"/>",
   "📰":"<rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"2\"/><path d=\"M8 9h8M8 12.5h8M8 16h5\"/>",

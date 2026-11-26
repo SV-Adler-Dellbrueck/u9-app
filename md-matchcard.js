@@ -984,6 +984,75 @@ async function rotPersistTimes(){
    ansieht, was er stehen gelassen hat.
    Weil das die erfassten Einsatzzeiten dieses Spiels verwirft, wird gefragt – und die
    Nullen werden auch gespeichert, sonst käme die alte Zahl beim nächsten Laden zurück. */
+/* ═══ v974 · Timer an die Uhr (Charles 26.11.: „Ist es technisch möglich, Teile der App wie Countdown, Wechseltimer,
+   Übungstimer auf eine Smartwatch zu übertragen?“ – Stufe 1 beschlossen) ═══
+   Eine Web-App kann keine Uhren-App ersetzen; aber Android spiegelt Benachrichtigungen vom Handy auf die gekoppelte Uhr.
+   Liegt in md-matchcard.js (Welle 2, nur Trainer und Eltern), nicht in core.js: die schlanke Turnierseite (v899) lädt core.js
+   und hat ein Größenbudget. Aufrufer aus Welle 1 (stTimerWhistle) prüfen mit typeof.
+   Deshalb meldet jedes Timer-Signal (Abpfiff, Wechsel, Vorwarnung) zusätzlich eine Benachrichtigung mit kräftigem
+   Vibrationsmuster – nur wenn der Trainer es auf diesem Gerät eingeschaltet hat (localStorage, je Gerät) und die
+   Erlaubnis erteilt ist. Gleicher tag „adler-uhr“: die neue Meldung ersetzt die alte, statt sich zu stapeln.
+   Grenze: Die App muss auf dem Handy offen sein – bei gesperrtem Gerät bremst der Browser die Zeitgeber. */
+const UHR_KEY="adler_uhr_meldung";
+function uhrMeldungAn(){ try{ return localStorage.getItem(UHR_KEY)==="1"; }catch(e){ return false; } }
+async function uhrMeldung(titel,text,opt){
+  opt=opt||{};
+  if(!opt.test&&!uhrMeldungAn())return false;
+  if(typeof Notification==="undefined"||Notification.permission!=="granted")return false;
+  const jetzt=Date.now();
+  if(!opt.test&&uhrMeldung._z&&jetzt-uhrMeldung._z<1500)return false;   // zwei Signale im selben Moment: eine Meldung
+  uhrMeldung._z=jetzt;
+  const ordner=/\/eltern\//.test(location.pathname)?"./eltern/":"./trainer/";
+  const o={body:text||"",tag:"adler-uhr",renotify:true,vibrate:opt.vibrate||[400,150,400,150,400],data:{url:ordner}};
+  try{
+    const reg=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();
+    if(reg&&reg.showNotification){
+      o.icon=new URL("logo.png",reg.scope).href; o.badge=new URL("badge-adler.png",reg.scope).href;
+      await reg.showNotification(titel,o); return true;
+    }
+  }catch(e){}
+  try{ new Notification(titel,o); return true; }catch(e){ return false; }
+}
+async function uhrMeldungSchalten(an){
+  if(an){
+    if(typeof Notification==="undefined"){ if(typeof toast==="function")toast("Dieses Gerät kann keine Benachrichtigungen anzeigen","err"); return uhrMeldungRender(); }
+    let p=Notification.permission;
+    if(p==="default"){ try{ p=await Notification.requestPermission(); }catch(e){} }
+    if(p!=="granted"){ if(typeof toast==="function")toast("Benachrichtigungen sind für die App gesperrt – in den Einstellungen des Handys erlauben","err"); return uhrMeldungRender(); }
+  }
+  try{ localStorage.setItem(UHR_KEY,an?"1":"0"); }catch(e){}
+  if(typeof toast==="function")toast(an?"⌚ Timer melden sich jetzt auch an der Uhr":"Timer melden sich nur noch am Handy");
+  uhrMeldungRender();
+}
+async function uhrMeldungTest(){
+  const ok=await uhrMeldung("⌚ Test an die Uhr","Kommt diese Meldung an deiner Uhr an und vibriert sie? Dann klappt es auch mit den Timern.",{test:true});
+  if(typeof toast==="function")toast(ok?"Test gesendet – schau auf deine Uhr":"Test nicht gesendet – erst einschalten und Benachrichtigungen erlauben",ok?undefined:"err");
+}
+function uhrMeldungOpen(){
+  document.getElementById("uhr-modal")?.remove();
+  const m=document.createElement("div"); m.id="uhr-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Timer an die Uhr");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.style.zIndex=(typeof zOben==="function")?zOben(10004):10004;
+  m.onclick=e=>{ if(e.target===m)m.remove(); };
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:480px;width:100%;margin:auto">
+    ${typeof mdlHead==="function"?mdlHead("uhr-modal","⌚","Timer an die Uhr","Abpfiff, Wechsel und Vorwarnung vibrieren am Handgelenk","var(--blue)"):"<b>⌚ Timer an die Uhr</b>"}
+    <div id="uhr-inhalt"></div></div>`;
+  document.body.appendChild(m);
+  uhrMeldungRender();
+}
+function uhrMeldungRender(){
+  const box=document.getElementById("uhr-inhalt"); if(!box)return;
+  const an=uhrMeldungAn(), erlaubt=typeof Notification!=="undefined"&&Notification.permission==="granted";
+  const gesperrt=typeof Notification!=="undefined"&&Notification.permission==="denied";
+  const knopf=(aktiv,v,txt)=>`<button type="button" class="seg-btn${aktiv?" active":""}" aria-pressed="${aktiv?"true":"false"}" onclick="uhrMeldungSchalten(${v})">${txt}</button>`;
+  box.innerHTML=`<div style="font-size:var(--s-text);line-height:1.5;margin-bottom:10px">Jeder Timer-Pfiff kommt zusätzlich als Benachrichtigung – deine Uhr zeigt sie und vibriert, wenn sie Meldungen vom Handy anzeigt (Galaxy Watch: in der Galaxy-Wearable-App für Chrome bzw. die Adler-App erlauben).</div>
+    <div class="seg-ctrl" id="uhr-schalter" role="group" aria-label="Timer an die Uhr">${knopf(!an,false,"Aus")}${knopf(an,true,"An")}</div>
+    ${gesperrt?`<div style="font-size:var(--s-klein);color:var(--red-text,#b91c1c);margin-top:8px">Benachrichtigungen sind für die App gesperrt. Erlauben in den Einstellungen des Handys (App-Info → Benachrichtigungen).</div>`:""}
+    <button type="button" class="btn" id="uhr-test" onclick="uhrMeldungTest()" style="width:100%;min-height:48px;margin-top:12px"${an&&erlaubt?"":" disabled"}>⌚ Test an die Uhr</button>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px;line-height:1.45">Gilt nur für dieses Handy. Die App muss während des Trainings offen bleiben – bei gesperrtem Handy kommen die Meldungen verspätet.</div>`;
+}
+
 async function rotReset(){   // v874: async – die Rückfrage ist ein Fenster der App
   const gespielt=Object.values(rotFieldSec||{}).some(v=>v>0);
   if(gespielt&&!await frageJaNein({emoji:"🔄",titel:"Wechsel-Timer zurücksetzen?",text:"Die erfassten Spielzeiten dieses Spiels werden dabei auf 0:00 gesetzt.",ja:"Zurücksetzen",ton:"rot"}))return;
