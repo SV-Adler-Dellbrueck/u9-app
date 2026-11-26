@@ -2348,28 +2348,3 @@ body.tp-sheet-offen{overflow:hidden}
 @media (prefers-reduced-motion:reduce){.sp-aus.sp-wackel{animation:none}}
 :root[data-theme="dark"] .sp-aus-ei{background:#064e3b!important}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .sp-aus-ei{background:#064e3b!important}}
-/* v976: Freier Timer – kleine Stoppuhr im Training-Tab, groß als Vollbild */
-.fu-karte{display:flex;align-items:center;gap:14px;width:100%;margin-top:12px;padding:12px 14px;background:var(--surface);border:2px solid var(--blue);border-radius:16px;color:var(--blue);font-family:inherit;text-align:left;cursor:pointer;min-height:76px}
-.fu-karte svg{flex:0 0 auto}
-.fu-karte-tx b{display:block;font-size:var(--s-karte);color:var(--text)}
-.fu-karte-tx span{font-size:var(--s-text);color:var(--text2)}
-#fu-timer{position:fixed;inset:0;z-index:11000;background:#0b1220;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 16px;box-sizing:border-box;overflow-y:auto;text-align:center;font-family:inherit}
-#fu-timer .fu-uhr{width:min(68vw,250px);height:auto;flex:0 0 auto}
-#fu-timer .fu-lb{font-size:var(--s-klein);letter-spacing:1px;color:#a5b4c8;text-transform:uppercase;margin-top:10px}
-#fu-timer .fu-chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:6px 0;max-width:420px}
-#fu-timer .fu-chip{min-width:48px;min-height:44px;padding:0 10px;border-radius:10px;background:#1e293b;border:1px solid #64748b;color:#fff;font:inherit;font-weight:800;cursor:pointer}
-#fu-timer .fu-chip[aria-pressed="true"]{background:#fff;color:#0b1220;border-color:#fff;box-shadow:0 0 0 3px #22c55e}
-#fu-timer .fu-eigen input{width:84px;min-height:44px;box-sizing:border-box;border-radius:10px;background:#1e293b;border:1px solid #64748b;color:#fff;font:inherit;font-weight:800;text-align:center}
-#fu-timer .fu-eigen.an input{background:#fff;color:#0b1220;box-shadow:0 0 0 3px #22c55e}
-#fu-timer .fu-eigen input::placeholder{color:#a5b4c8;font-weight:600}
-#fu-timer .fu-start{margin-top:16px;width:100%;max-width:420px;min-height:56px;border:none;border-radius:14px;background:#15803d;color:#fff;font:inherit;font-size:var(--s-teil);font-weight:800;cursor:pointer}
-#fu-timer .fu-zu{margin-top:8px;min-height:44px;background:transparent;border:none;color:#cbd5e1;font:inherit;text-decoration:underline;cursor:pointer}
-#fu-timer .fu-titel{font-size:26px;font-weight:800;margin:10px 0 4px}
-#fu-timer .fu-unter{color:#a5b4c8;font-size:var(--s-text);margin-top:4px}
-#fu-timer .fu-reihe{display:flex;gap:8px;width:100%;max-width:440px;margin-top:16px;flex-wrap:wrap}
-#fu-timer .fu-k{flex:1 1 30%;min-height:52px;border:none;border-radius:12px;background:#334155;color:#fff;font:inherit;font-weight:700;cursor:pointer;padding:0 8px}
-#fu-timer .fu-blau{background:#1a56db}
-#fu-timer .fu-rand{background:transparent;border:1px solid #64748b;color:#cbd5e1}
-#fu-timer button:focus-visible,#fu-timer input:focus-visible{outline:3px solid #fbbf24;outline-offset:2px}
-:root[data-theme="dark"] .fu-karte{color:#60a5fa;border-color:#60a5fa}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .fu-karte{color:#60a5fa;border-color:#60a5fa}}

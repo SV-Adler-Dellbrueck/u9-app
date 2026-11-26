@@ -974,6 +974,32 @@ document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&document.getElemen
 const FU_MINUTEN=[1,2,3,5,10,15], FU_RUNDEN=[1,2,3,4,6], FU_PAUSEN=[0,30,60,120];
 const FU_WAHL_KEY="adler_fu_wahl";
 let _fu=null;
+/* Das CSS steht hier, nicht in styles.css: die öffentliche Turnierseite lädt styles.css und hat ein Budget (v899). */
+const FU_CSS=`.fu-karte{display:flex;align-items:center;gap:14px;width:100%;margin-top:12px;padding:12px 14px;background:var(--surface);border:2px solid var(--blue);border-radius:16px;color:var(--blue);font-family:inherit;text-align:left;cursor:pointer;min-height:76px}
+.fu-karte svg{flex:0 0 auto}
+.fu-karte-tx b{display:block;font-size:var(--s-karte);color:var(--text)}
+.fu-karte-tx span{font-size:var(--s-text);color:var(--text2)}
+#fu-timer{position:fixed;inset:0;z-index:11000;background:#0b1220;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 16px;box-sizing:border-box;overflow-y:auto;text-align:center;font-family:inherit}
+#fu-timer .fu-uhr{width:min(68vw,250px);height:auto;flex:0 0 auto}
+#fu-timer .fu-lb{font-size:var(--s-klein);letter-spacing:1px;color:#a5b4c8;text-transform:uppercase;margin-top:10px}
+#fu-timer .fu-chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:6px 0;max-width:420px}
+#fu-timer .fu-chip{min-width:48px;min-height:44px;padding:0 10px;border-radius:10px;background:#1e293b;border:1px solid #64748b;color:#fff;font:inherit;font-weight:800;cursor:pointer}
+#fu-timer .fu-chip[aria-pressed="true"]{background:#fff;color:#0b1220;border-color:#fff;box-shadow:0 0 0 3px #22c55e}
+#fu-timer .fu-eigen input{width:84px;min-height:44px;box-sizing:border-box;border-radius:10px;background:#1e293b;border:1px solid #64748b;color:#fff;font:inherit;font-weight:800;text-align:center}
+#fu-timer .fu-eigen.an input{background:#fff;color:#0b1220;box-shadow:0 0 0 3px #22c55e}
+#fu-timer .fu-eigen input::placeholder{color:#a5b4c8;font-weight:600}
+#fu-timer .fu-start{margin-top:16px;width:100%;max-width:420px;min-height:56px;border:none;border-radius:14px;background:#15803d;color:#fff;font:inherit;font-size:var(--s-teil);font-weight:800;cursor:pointer}
+#fu-timer .fu-zu{margin-top:8px;min-height:44px;background:transparent;border:none;color:#cbd5e1;font:inherit;text-decoration:underline;cursor:pointer}
+#fu-timer .fu-titel{font-size:26px;font-weight:800;margin:10px 0 4px}
+#fu-timer .fu-unter{color:#a5b4c8;font-size:var(--s-text);margin-top:4px}
+#fu-timer .fu-reihe{display:flex;gap:8px;width:100%;max-width:440px;margin-top:16px;flex-wrap:wrap}
+#fu-timer .fu-k{flex:1 1 30%;min-height:52px;border:none;border-radius:12px;background:#334155;color:#fff;font:inherit;font-weight:700;cursor:pointer;padding:0 8px}
+#fu-timer .fu-blau{background:#1a56db}
+#fu-timer .fu-rand{background:transparent;border:1px solid #64748b;color:#cbd5e1}
+#fu-timer button:focus-visible,#fu-timer input:focus-visible{outline:3px solid #fbbf24;outline-offset:2px}
+:root[data-theme="dark"] .fu-karte{color:#60a5fa;border-color:#60a5fa}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .fu-karte{color:#60a5fa;border-color:#60a5fa}}`;
+function _fuStil(){ if(document.getElementById("fu-stil"))return; const st=document.createElement("style"); st.id="fu-stil"; st.textContent=FU_CSS; document.head.appendChild(st); }
 function _fuWahlLaden(){
   let w={min:3,runden:1,pause:30};
   try{ const j=JSON.parse(localStorage.getItem(FU_WAHL_KEY)||"null"); if(j&&typeof j==="object")w=Object.assign(w,j); }catch(e){}
@@ -986,12 +1012,14 @@ function _fuZeit(s){ s=Math.max(0,Math.ceil(s)); const m=Math.floor(s/60), r=s%6
 function _fuPauseText(s){ return s?_fuZeit(s):"0"; }
 /* Die kleine Uhr im Training-Tab (views.js ruft sie geschützt auf). */
 function fuKarteHtml(){
+  _fuStil();
   return `<button type="button" class="fu-karte" onclick="fuOpen()" aria-label="Freier Timer öffnen – Minuten und Runden wählen">
     <svg width="54" height="62" viewBox="0 0 62 70" aria-hidden="true" focusable="false"><rect x="25" y="2" width="12" height="7" rx="2" fill="currentColor"/><rect x="28" y="8" width="6" height="6" fill="currentColor"/><rect x="47" y="12" width="9" height="5" rx="2" transform="rotate(40 51 14)" fill="currentColor"/><circle cx="31" cy="41" r="26" fill="var(--surface)" stroke="currentColor" stroke-width="4"/><g stroke="var(--text2)" stroke-width="2"><line x1="31" y1="19" x2="31" y2="24"/><line x1="53" y1="41" x2="48" y2="41"/><line x1="31" y1="63" x2="31" y2="58"/><line x1="9" y1="41" x2="14" y2="41"/></g><line x1="31" y1="41" x2="42" y2="30" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/><circle cx="31" cy="41" r="3" fill="var(--text)"/></svg>
     <span class="fu-karte-tx"><b>Freier Timer</b><span>Antippen – Minuten und Runden wählen</span></span>
   </button>`;
 }
 function fuOpen(){
+  _fuStil();
   fuStop(true);
   _fu=Object.assign(_fuWahlLaden(),{phase:"wahl",runde:1,ende:0,gesamt:0,rest:0,pausiert:false,timer:null});
   const ov=document.createElement("div"); ov.id="fu-timer"; ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-label","Freier Timer");
