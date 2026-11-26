@@ -3749,6 +3749,7 @@ function fstRender(){
           </div>`
         : ""}
       ${fstAufwaermZeile(_HT)?`<div style="font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border-radius:10px;padding:8px 10px;margin-bottom:8px">🔥 <b>Aufwärmen vor der ersten Runde:</b> ${fstAufwaermZeile(_HT)}</div>`:""}
+      ${fstAufwKeins(cfg)?`<div class="fst-aufw-keins" style="font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border-radius:10px;padding:8px 10px;margin-bottom:8px">🔥 <b>Aufwärmen:</b> kein Feld zugewiesen – vor uns läuft ein anderes Turnier.</div>`:""}
       ${fstZuKleinHtml(plan,fstTeamsBauen(cfg.vereine||[]),felder)}
       <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:6px">${_fstTauschWahl?"Tauschen: jetzt das zweite Team antippen":"Teams antippen zum Tauschen"+(htErgebnisseAn(_HT)?" · Ergebnis rechts antippen":"")}</div>
       ${fstPlanHtml(plan,_HT.teams||[],felder,true,cfg)}
@@ -3758,6 +3759,7 @@ function fstRender(){
       ${_HT.edit_code&&htErgebnisseAn(_HT)?`<button class="btn btn-sm" onclick="htShareErgebnis()" style="width:100%;margin-top:2px"><i class="ti ti-pencil"></i>Ergebnis-Link (Anzeigetisch)</button>
       <div style="font-size:var(--s-klein);color:var(--text3);margin:4px 0 6px">Trägt den Schreib-Code: wer ihn hat, darf Ergebnisse eintragen – sonst nichts. Nur an den Anzeigetisch und die Gast-Trainer, nicht in die Eltern-Gruppe.</div>`:""}`:""}
 
+    ${fstAufwWahlHtml(cfg)}
     <div style="font-size:var(--s-text);font-weight:800;margin:16px 0 6px">Infos für die Gäste</div>
     <textarea id="fst-infos" rows="4" onchange="fstZeitSpeichern()" style="${fld};width:100%;resize:vertical">${esc(cfg.infos||HT_INFOS_VORLAGE)}</textarea>
 
@@ -3830,8 +3832,28 @@ function fstPlanHtml(plan,teams,felder,tausch,cfg){
    den Plan feststehen." Vor der ersten Runde sind alle Felder frei – wir nehmen den Käfig, die
    Gäste verteilen sich der Reihe nach auf die übrigen. Mehr Vereine als Felder: dann teilen sich
    zwei ein Feld, das sagt die Liste dann auch. */
+/* v971 · Charles 26.11.: „Wenn vor uns ein anderes Turnier läuft, sind nicht alle Plätze zum Warmmachen verfügbar. Das sollten wir
+   in der Info an die anderen Vereine und Eltern festhalten – bzw. bei der Erstellung auswählen können, ob wir jedem Team einen
+   Platz zum Aufwärmen zuweisen oder den Part komplett weglassen.“ cfg.aufwaermen: fehlt/„felder“ = wie bisher, „keins“ = keine
+   Liste; stattdessen steht FST_AUFW_KEINS über den Infos für die Gäste (Wortlaut: „Nur Hinweis, kein Ort“). Der Satz wird beim
+   Anzeigen vorangestellt, nicht in cfg.infos geschrieben – so verschwindet er beim Zurückschalten von selbst. */
+const FST_AUFW_KEINS="🔥 Vor uns läuft noch ein anderes Turnier – zum Aufwärmen sind nicht alle Plätze frei. Eine feste Aufwärmfläche gibt es nicht.";
+function fstAufwKeins(cfg){ return !!cfg&&cfg.aufwaermen==="keins"; }
+function fstInfosText(cfg){ cfg=cfg||{}; const i=String(cfg.infos||"").trim(); return fstAufwKeins(cfg)?(FST_AUFW_KEINS+(i?"\n"+i:"")):i; }
+function fstAufwSetzen(v){
+  if(!_HT)return; _HT.config=_HT.config||{};
+  _HT.config.aufwaermen=v==="keins"?"keins":"felder";
+  fstZeitSpeichern();
+}
+function fstAufwWahlHtml(cfg){
+  const k=fstAufwKeins(cfg), b=(an,v,txt)=>`<button type="button" class="seg-btn${an?" active":""}" aria-pressed="${an?"true":"false"}" onclick="fstAufwSetzen('${v}')">${txt}</button>`;
+  return `<div style="font-size:var(--s-text);font-weight:800;margin:16px 0 6px">🔥 Aufwärmen vor der ersten Runde</div>
+    <div class="seg-ctrl" id="fst-aufw" role="group" aria-label="Aufwärmen vor der ersten Runde" style="flex-wrap:wrap">${b(!k,"felder","Jedes Team bekommt ein Feld")}${b(k,"keins","Kein Feld – vor uns läuft ein Turnier")}</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">${k?"Gäste und Eltern lesen unter „Gut zu wissen“: „"+esc(FST_AUFW_KEINS.replace(/^🔥 /,""))+"“":"Die Adler wärmen im Käfig auf, die Gäste der Reihe nach auf den übrigen Feldern."}</div>`;
+}
 function fstAufwaermen(row){
   const cfg=(row&&row.config)||{};
+  if(fstAufwKeins(cfg))return [];   // v971
   const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
   const vereine=(cfg.vereine||[]).map(v=>String(v.name||"").trim()).filter(Boolean);
   if(!vereine.length||!felder.length)return [];
@@ -3968,7 +3990,7 @@ function fstInfoOpen(){
     ${karte("Parken",`<div style="font-size:var(--s-text);line-height:1.55;margin-bottom:8px">Direkt am Platz gibt es Parkplätze, wenn ihr hineinfahrt – die sind aber oft schon belegt. <b>Besser gleich an der Straße parken (Thurner Kamp)</b>, dort ist genug Platz.</div>${fstSkizzeParken()}`)}
     ${karte("WC &amp; Kabinen",`<div style="font-size:var(--s-text);line-height:1.55">🚻 Ebenerdig unter dem Vereinsheim – gleich hinter dem großen Platz.</div>`)}
     ${karte("Wo welches Feld liegt",`<div style="font-size:var(--s-text);color:#475569;margin-bottom:8px">Wir spielen im Käfig und auf der linken Hälfte des großen Platzes.</div>${fstZonenSatz(felder)?`<div style="font-size:var(--s-text);line-height:1.55;color:#0f172a;background:#fef2f2;border-left:4px solid #b91c1c;border-radius:8px;padding:8px 10px;margin-bottom:8px">🙌 ${esc(fstZonenSatz(felder))}</div>`:""}${fstAufwaermZeile(row)?`<div style="font-size:var(--s-text);color:#0f172a;margin-bottom:8px">🔥 Aufwärmen: ${fstAufwaermZeile(row)}</div>`:""}<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${felder.map((f,i)=>{const F=_fstF(f.form);return `<span style="font-size:var(--s-klein);font-weight:700;color:#fff;background:${F.farbe};border-radius:20px;padding:5px 11px">${esc(fstFeldName(felder,i))} · ${F.label} · ${F.tore}</span>`;}).join("")}</div>${fstSkizzeFelder(felder)}`)}
-    ${cfg.infos?karte("Gut zu wissen",`<div style="font-size:var(--s-text);white-space:pre-wrap;line-height:1.6">${esc(cfg.infos)}</div>`):""}
+    ${fstInfosText(cfg)?karte("Gut zu wissen",`<div style="font-size:var(--s-text);white-space:pre-wrap;line-height:1.6">${esc(fstInfosText(cfg))}</div>`):""}
     <button class="btn btn-p" onclick="document.getElementById('fst-info').remove()" style="width:100%;min-height:48px;justify-content:center;font-size:var(--s-karte)">Zurück zum Spielplan</button>
   </div>`;
   document.body.appendChild(d);
@@ -4155,9 +4177,9 @@ function _fstPublicRender(wrap,row){
       </div>`;}).join("")
       :'<div style="background:#fff;border-radius:14px;padding:20px;text-align:center;color:#64748b;font-size:var(--s-text)">Der Spielplan wird gerade erstellt.</div>'}
 
-    ${cfg.infos?`<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-top:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+    ${fstInfosText(cfg)?`<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-top:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
       <div style="font-size:var(--s-text);font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Gut zu wissen</div>
-      <div style="font-size:var(--s-text);white-space:pre-wrap;line-height:1.6">${esc(cfg.infos)}</div></div>`:""}
+      <div style="font-size:var(--s-text);white-space:pre-wrap;line-height:1.6">${esc(fstInfosText(cfg))}</div></div>`:""}
 
     <div style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin-top:16px;line-height:1.6">
       ${mitErg?"Wir spielen ohne Tabelle":"Wir zählen keine Ergebnisse"} – bei uns gewinnt die Freude am Spiel.<br>SV Adler Dellbrück · U9 · Die Seite aktualisiert sich von selbst
@@ -4429,7 +4451,7 @@ function _htpSeite(wrap,row){
         ${tabs}
         ${fp!=null&&!ende?`<div class="htp-fairplay-zeile"><b>🤝 Fair-Play-Pokal: ${esc(teams[fp])}</b><div>Das fairste Team des Turniers – Glückwunsch!</div></div>`:""}
         <h2 class="htp-h2">ℹ️ Gut zu wissen</h2>
-        ${cfg.infos?`<details class="htp-info" id="htp-info-ablauf"><summary>🚗 Anfahrt &amp; Ablauf</summary><div class="inhalt">${esc(cfg.infos)}</div></details>`:""}
+        ${fstInfosText(cfg)?`<details class="htp-info" id="htp-info-ablauf"><summary>🚗 Anfahrt &amp; Ablauf</summary><div class="inhalt">${esc(fstInfosText(cfg))}</div></details>`:""}
         ${cfg.regeln?`<details class="htp-info" id="htp-info-regeln"><summary>📖 Regelwerk${sf?" ("+esc(sf)+")":""}</summary><div class="inhalt">${esc(cfg.regeln)}</div></details>`:""}
         <details class="htp-info" id="htp-info-rand"><summary>🤝 Am Spielfeldrand</summary><div class="inhalt">Anfeuern ja, coachen nein – die Kinder entscheiden selbst, die Trainer begleiten.\n${esc(FST_FAN_SATZ)}</div></details>
         <div class="htp-aktionen">
