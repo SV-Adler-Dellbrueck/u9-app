@@ -903,6 +903,7 @@ function awRenderList(){
   wrap.innerHTML=html;
   awRenderStats();
   awZaehlen();
+  if(typeof skillAbnahmeRender==="function")skillAbnahmeRender(datum);   // v980: Skill des Monats abnehmen
 }
 function awZaehlen(){
   const alle=[...document.querySelectorAll("#aw-list .aw-tile")], da=alle.filter(b=>b.classList.contains("on")).length, fehlt=alle.length-da;
@@ -915,6 +916,7 @@ function awToggle(btn,name){
   window._awDirty=true; awStandRender(); // Haken gesetzt, aber noch nicht gespeichert
   btn.classList.toggle("on");
   awZaehlen();
+  if(typeof skillAbnahmeRender==="function")skillAbnahmeRender((document.getElementById("aw-date")||{}).value||"");   // v980
 }
 /* v475: Trainer-Haken in der Anwesenheit. Ist der Tag noch nicht da, geht der Tipp in die
    Quelle (Rueckmeldung des Trainings-Termins); am Tag selbst ist er Teil der Anwesenheit

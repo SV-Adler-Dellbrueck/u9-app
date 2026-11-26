@@ -269,7 +269,7 @@ async function elternSkillLoad(kids){
     <div style="font-size:var(--s-karte);font-weight:700;color:#6d28d9;margin:2px 0">${esc(sk.titel)}</div>
     ${sk.beschreibung?`<div style="font-size:var(--s-text);color:#475569;margin-bottom:8px">${esc(sk.beschreibung)}</div>`:""}
     ${(typeof skillVideoHtml==="function"&&skillVideoHtml(sk,"skm-video-eltern"))||(sk.video_url&&/^https:/.test(sk.video_url)?`<a href="${esc(sk.video_url)}" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;padding:11px;border:1.5px solid #7c3aed;border-radius:10px;background:#faf5ff;color:#6d28d9;font-weight:700;font-size:var(--s-text);text-decoration:none;margin-bottom:8px">▶️ Video ansehen</a>`:"")}
-    ${abz?`<div style="font-size:var(--s-text);color:#475569;margin-top:8px">Euer Kind übt es in der Adler-Akademie (${abz.emo} ${esc(abz.name)}) und meldet „Ich hab's geschafft!“. Ihr gebt es dann oben unter „Für euch“ frei – das bringt 50 Federn dazu.</div>`
+    ${abz?`<div style="font-size:var(--s-text);color:#475569;margin-top:8px">Euer Kind übt es in der Adler-Akademie (${abz.emo} ${esc(abz.name)}). Abgenommen wird beim Training von einem Trainer – dann gibt es das Abzeichen und die Federn.</div>`
       :`<div style="font-size:var(--s-klein);color:#64748b;margin-bottom:8px">Zuhause geübt und geschafft? Dann Federn freigeben:</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">${kidBtns}</div>`}
   </div>`;

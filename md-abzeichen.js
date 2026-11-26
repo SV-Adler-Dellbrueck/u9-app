@@ -51,7 +51,7 @@ async function abzeichenStandLaden(spielerId){
   const hol=async q=>{ try{ const r=await fetch(`${SB_URL}/rest/v1/rpc/xp_events_for`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_spieler_id:spielerId,p_quelle:q})}); return r.ok?((await r.json())||[]):[]; }catch(e){ return []; } };
   /* v962: dazu die offenen „Ich hab's geschafft!“-Meldungen (abzeichen_meldung); fehlt die Tabelle, bleibt die Menge leer */
   const gem=async()=>{ try{ const r=await fetch(`${SB_URL}/rest/v1/abzeichen_meldung?spieler_id=eq.${Number(spielerId)}&select=abzeichen`,{headers:sbAuthHeaders()}); return r.ok?((await r.json())||[]).map(x=>x.abzeichen):[]; }catch(e){ return []; } };
-  const [b,s,g]=await Promise.all([hol("abzeichen"),hol("abzeichen_silber"),gem()]);
+  const [b,s,g]=await Promise.all([hol("abzeichen"),hol("abzeichen_silber"),gem(),(typeof skillMonatLaden==="function"?skillMonatLaden():null)]);
   _abzStand[spielerId]={bronze:new Set(b.map(String)),silber:new Set(s.map(String)),gemeldet:new Set(g.map(String))};
   return _abzStand[spielerId];
 }
@@ -104,7 +104,7 @@ function abzeichenDetail(id,spielerId,kidsMode){
   const a=abzeichenFinden(id); if(!a)return;
   const silber=TECHNIK_SILBER.includes(a);
   const st=_abzStand[spielerId]||{bronze:new Set(),silber:new Set(),gemeldet:new Set()}, an=(silber?st.silber:st.bronze).has(a.id);
-  const gemeldet=!!(st.gemeldet&&st.gemeldet.has(a.id));
+  const gemeldet=!!(st.gemeldet&&st.gemeldet.has(a.id)), skill=skillAbzAktiv(a.id);
   const {karte}=fensterAuf("abz-detail",{mitte:true,breite:420,aussen:true});
   const schritte=a.schritte||[a.desc];
   const text=abzeichenSprechtext(a);
@@ -113,12 +113,14 @@ function abzeichenDetail(id,spielerId,kidsMode){
     ${a.tipp?`<div class="abz-tipp">💡 <b>Mein Tipp:</b> ${esc(a.tipp)}</div>`:""}
     <button type="button" class="btn abz-vorlesen" onclick="abzeichenVorlesen(this)" data-text="${esc(text)}" style="width:100%;min-height:48px;margin-top:10px;justify-content:center"><span class="abz-ton" aria-hidden="true">🔊</span> Vorlesen</button>
     ${/* v962 · Charles 24.11.: Kinder melden selbst „geschafft“, die Eltern geben es oben in ihrer App frei */""}
+    ${/* v980 · Charles 26.11.: Den Skill des Monats nimmt ein Trainer beim Training ab – nicht die Eltern. */""}
     ${an?`<div class="abz-fertig">✓ Schon geschafft – stark!</div>`
-      :kidsMode?(gemeldet?`<div class="abz-fertig">⏳ Du hast es gemeldet. Mama oder Papa schauen es sich an.</div>`
-        :`<button type="button" class="btn btn-p abz-melden" onclick="abzeichenMelden('${a.id}',${Number(spielerId)},this)" style="width:100%;min-height:56px;margin-top:10px;justify-content:center">🙋 Ich hab's geschafft!</button>
-          <div class="abz-fertig" style="font-weight:400">Dann bekommen Mama oder Papa Bescheid.</div>`)
-      :(!Number(spielerId)?"":gemeldet?`<div class="abz-fertig">🙋 Dein Kind hat es als geschafft gemeldet.</div>`:"")}
-    ${(!an&&!kidsMode&&Number(spielerId))?`<button type="button" class="btn btn-p" onclick="document.getElementById('abz-detail')?.remove();abzeichenAward(${Number(spielerId)},'${a.id}',null,'${silber?"abzeichen_silber":"abzeichen"}')" style="width:100%;min-height:56px;margin-top:10px;justify-content:center"><i class="ti ti-check"></i>Als geschafft eintragen</button>`:""}`;
+      :kidsMode?(gemeldet?`<div class="abz-fertig">${skill?"⏳ Zeig es deinem Trainer beim nächsten Training.":"⏳ Du hast es gemeldet. Mama oder Papa schauen es sich an."}</div>`
+        :`<button type="button" class="btn btn-p abz-melden" onclick="abzeichenMelden('${a.id}',${Number(spielerId)},this)" style="width:100%;min-height:56px;margin-top:10px;justify-content:center">${skill?"🙋 Ich kann's – beim Training zeigen":"🙋 Ich hab's geschafft!"}</button>
+          <div class="abz-fertig" style="font-weight:400">${skill?"Dann weiß dein Trainer Bescheid und schaut beim Training zu.":"Dann bekommen Mama oder Papa Bescheid."}</div>`)
+      :(!Number(spielerId)?"":gemeldet?`<div class="abz-fertig">🙋 ${skill?"Euer Kind möchte es beim nächsten Training zeigen.":"Dein Kind hat es als geschafft gemeldet."}</div>`:"")}
+    ${(skill&&!an&&!kidsMode&&!skillAbnahmeDarf())?`<div class="abz-fertig" style="font-weight:400">⭐ Skill des Monats: Abgenommen wird beim Training von einem Trainer.</div>`:""}
+    ${(!an&&!kidsMode&&Number(spielerId)&&(!skill||skillAbnahmeDarf()))?`<button type="button" class="btn btn-p" onclick="document.getElementById('abz-detail')?.remove();abzeichenAward(${Number(spielerId)},'${a.id}',null,'${silber?"abzeichen_silber":"abzeichen"}')" style="width:100%;min-height:56px;margin-top:10px;justify-content:center"><i class="ti ti-check"></i>Als geschafft eintragen</button>`:""}`;
 }
 /* v962: Lennart liest vor (audio/schule/<hash>.mp3 über kfVorlesen aus quiz.js); fehlt die Aufnahme oder quiz.js, die Gerätestimme. */
 function abzeichenVorlesen(k){
@@ -144,7 +146,7 @@ async function abzeichenMelden(id,spielerId,btn){
     if(!r.ok&&r.status!==409)throw new Error("HTTP "+r.status);
     const st=_abzStand[spielerId]; if(st){ st.gemeldet=st.gemeldet||new Set(); st.gemeldet.add(a.id); }
     document.getElementById("abz-detail")?.remove();
-    toast("Super! 🎉 Mama oder Papa bekommen Bescheid.");
+    toast(skillAbzAktiv(a.id)?"Super! 🎉 Zeig es deinem Trainer beim nächsten Training.":"Super! 🎉 Mama oder Papa bekommen Bescheid.");
     if(document.getElementById("abzeichen-list"))abzeichenRender(spielerId);
     else if(typeof akademiePraxisLaden==="function")akademiePraxisLaden();
   }catch(e){ toast("Das hat nicht geklappt. Probier es gleich noch mal.","err"); if(btn)btn.disabled=false; }
@@ -158,6 +160,9 @@ async function abzeichenMeldungWeg(spielerId,id){
    youtube-nocookie, oder eigener Clip unter video/), verknüpft mit einem Abzeichen. Daten: skill_woche (aktiv, titel, beschreibung,
    video_url, abzeichen). Hier liegt alles, was Akademie, Kabine, Eltern und Trainingsplanung gemeinsam brauchen. ═══ */
 let _skillMonat;   // undefined = noch nicht geladen, null = keiner aktiv
+/* v980: Gehört das Abzeichen zum aktiven Skill des Monats? Dann nimmt ihn ein Trainer beim Training ab. */
+function skillAbzAktiv(id){ return !!(_skillMonat&&_skillMonat.abzeichen&&_skillMonat.abzeichen===id); }
+function skillAbnahmeDarf(){ return /\/trainer\//.test(location.pathname); }
 async function skillMonatLaden(neu){
   if(_skillMonat!==undefined&&!neu)return _skillMonat;
   try{ const r=await fetch(`${SB_URL}/rest/v1/skill_woche?aktiv=eq.true&select=*&order=created_at.desc&limit=1`,{headers:sbAuthHeaders()}); _skillMonat=r.ok?((await r.json())[0]||null):null; }
@@ -202,8 +207,47 @@ function skillMonatKarteHtml(sk,spielerId,kidsMode){
     ${sk.beschreibung?`<div class="skm-text">${esc(sk.beschreibung)}</div>`:""}
     <div class="skm-text">Schau es dir an und üb es zu Hause. Im Training üben wir es zusammen!</div>
     ${skillVideoHtml(sk,"skm-video")}
-    ${a?`<button type="button" class="btn skm-abz" onclick="abzeichenDetail('${a.id}',${Number(spielerId)},${kidsMode?1:0})">${an?"✓ Schon geschafft – stark!":gem?"⏳ Gemeldet – Mama oder Papa schauen es sich an":"So geht's – und dann melden"}</button>`:""}
+    ${a?`<button type="button" class="btn skm-abz" onclick="abzeichenDetail('${a.id}',${Number(spielerId)},${kidsMode?1:0})">${an?"✓ Schon geschafft – stark!":gem?"⏳ Gemeldet – zeig es beim nächsten Training":"So geht's – und dann melden"}</button>`:""}
   </section>`;
+}
+/* ═══ v980 · Skill des Monats beim Training abnehmen (Charles 26.11.: „der Skill des Monats muss von einem Trainer abgenommen
+   werden bei einem Training“). In der Anwesenheit (Trainer-Bereich), für den gewählten Tag bis heute: die anwesenden Kinder, wer sich
+   gemeldet hat zuerst. Abnehmen mit zwei Tipps (kalte Finger: der erste fragt, der zweite gilt) – vergibt Abzeichen und Federn über
+   abzeichenAward wie bisher und löscht die Meldung. ═══ */
+async function skillAbnahmeRender(datum){
+  const box=document.getElementById("aw-skill"); if(!box)return;
+  const sk=(typeof skillMonatLaden==="function")?await skillMonatLaden():null;
+  const a=sk&&sk.abzeichen?abzeichenFinden(sk.abzeichen):null;
+  if(!a||!datum||(typeof isoLokal==="function"&&datum>isoLokal())||!skillAbnahmeDarf()){ box.innerHTML=""; return; }
+  const da=[...document.querySelectorAll("#aw-list .aw-tile.on")].map(b=>b.dataset.player);
+  const kids=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.aktiv!==false&&da.includes(k.name)).map(k=>({name:k.name,id:Number(typeof kidId==="function"?kidId(k.name):k.id)})).filter(k=>k.id);
+  const silber=TECHNIK_SILBER.includes(a);
+  await Promise.all(kids.map(k=>abzeichenStandLaden(k.id).catch(()=>null)));
+  const st=k=>_abzStand[k.id]||{bronze:new Set(),silber:new Set(),gemeldet:new Set()};
+  const hat=k=>(silber?st(k).silber:st(k).bronze).has(a.id), gem=k=>!!(st(k).gemeldet&&st(k).gemeldet.has(a.id));
+  kids.sort((x,y)=>(gem(y)-gem(x))||(hat(x)-hat(y)));
+  const zeile=k=>hat(k)
+    ?`<div class="skab-zeile skab-ok" style="display:flex;justify-content:space-between;align-items:center;min-height:48px;padding:0 12px;margin-top:8px;border:1px solid #15803d;border-radius:12px;background:#f0fdf4;color:#166534;font-weight:700"><span>✓ ${esc(k.name)}</span><span>abgenommen</span></div>`
+    :`<button type="button" class="btn btn-zeile skab-zeile" data-sid="${k.id}" onclick="skillAbnehmen(${k.id},this)" style="justify-content:space-between;margin-top:8px">
+        <span>${gem(k)?"🙋 ":""}${esc(k.name)}</span>${gem(k)?`<span class="skab-hin" style="font-size:var(--s-klein);font-weight:700;border:1px solid #b45309;color:#92400e;border-radius:99px;padding:2px 8px">möchte zeigen</span>`:`<span class="skab-hin" style="font-size:var(--s-klein);color:var(--text2)">antippen</span>`}</button>`;
+  box.innerHTML=`<section id="skab" style="border:var(--border-s);border-radius:14px;padding:12px;margin-top:14px" aria-label="Skill des Monats abnehmen">
+    <div style="font-weight:800;font-size:var(--s-karte)">⭐ Skill des Monats abnehmen</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:2px">${a.emo} ${esc(a.name)} · zweimal tippen = abgenommen (Abzeichen, ${(silber?20:10)+50} Federn)</div>
+    ${kids.length?kids.map(zeile).join(""):'<div style="font-size:var(--s-text);color:var(--text2);margin-top:8px">Erst die Anwesenheit abhaken – dann stehen hier die Kinder, die da sind.</div>'}
+  </section>`;
+}
+async function skillAbnehmen(sid,btn){
+  const a=_skillMonat&&_skillMonat.abzeichen?abzeichenFinden(_skillMonat.abzeichen):null; if(!a||!btn)return;
+  if(btn.dataset.sicher!=="1"){
+    btn.dataset.sicher="1"; const hin=btn.querySelector(".skab-hin"), alt=hin?hin.textContent:""; if(hin)hin.textContent="nochmal tippen = abgenommen";
+    clearTimeout(btn._t); btn._t=setTimeout(()=>{ btn.dataset.sicher=""; if(hin)hin.textContent=alt; },3500);
+    return;
+  }
+  clearTimeout(btn._t);
+  await abzeichenAward(sid,a.id,btn,TECHNIK_SILBER.includes(a)?"abzeichen_silber":"abzeichen");
+  /* wie früher die Eltern-Freigabe (v963): dazu die Federn des Skills (50), je Kind und Skill nur einmal */
+  if(_skillMonat&&_skillMonat.id)await xpAward(sid,"skillwoche",_skillMonat.id);
+  const de=document.getElementById("aw-date"); skillAbnahmeRender(de?de.value:"");
 }
 async function abzeichenAward(spielerId,badgeId,btn,quelle){
   if(btn)btn.disabled=true;

@@ -6,6 +6,7 @@
       (youtube-nocookie, autoplay=1, rel=0); „So geht's“ öffnet das verknüpfte Abzeichen.
    c) Eigener Clip (video/…mp4): direkt ein <video> mit Steuerung, kein iframe.
    d) Eltern: Freigabe des verknüpften Abzeichens gibt zusätzlich skillwoche-Federn (quelle_id = Skill).
+      Seit v980 nimmt das ein Trainer beim Training ab (v980-skill-abnahme-tee-karte.js): die Eltern-Meldung hat keinen Knopf mehr, es geht nichts hinaus.
    e) Kabine: keine Kachel „Skill der Woche“ mehr; Trainer-Eingabe nimmt video/…mp4 und ein Abzeichen; Migration. */
 "use strict";
 const fs = require("fs"), path = require("path");
@@ -80,17 +81,18 @@ module.exports = async function (h) {
     const r = await e.page.evaluate(async () => {
       const w = ms => new Promise(x => setTimeout(x, ms));
       const k = document.querySelector("#fe-bahn .ak-melde");
+      const ohneKnopf = !!k && k.classList.contains("ak-skill") && !k.querySelector("button");
       k && [...k.querySelectorAll("button")].find(b => /Ja, geschafft/.test(b.textContent))?.click(); await w(800);
       const slot = document.getElementById("skill-slot");
-      return { karte: !!k, slot: slot ? slot.textContent.replace(/\s+/g, " ").trim().slice(0, 160) : "", knoepfe: slot ? slot.querySelectorAll("button[onclick^='skillGeschafft']").length : -1 };
+      return { karte: !!k, ohneKnopf, slot: slot ? slot.textContent.replace(/\s+/g, " ").trim().slice(0, 160) : "", knoepfe: slot ? slot.querySelectorAll("button[onclick^='skillGeschafft']").length : -1 };
     }).catch(x => ({ fehler: String(x) }));
     const award = e.gesendet.filter(x => /xp_award_event/.test(x.pfad)).map(x => typeof x.body === "string" ? x.body : JSON.stringify(x.body));
     await e.schliessen();
     if (r.fehler || !r.karte) probleme.push("d) Eltern " + JSON.stringify(r));
-    if (!award.some(b => /"p_quelle":"abzeichen_silber"/.test(b) && /ab2_cruyff/.test(b)) || !award.some(b => /"p_quelle":"skillwoche"/.test(b) && /"p_quelle_id":"7"/.test(b)))
+    if (award.length || !r.ohneKnopf)
       probleme.push("d) Federn " + JSON.stringify(award));
     if (r.knoepfe !== 0 || !/Skill des Monats/.test(r.slot)) probleme.push("d) Eltern-Karte des Skills: " + JSON.stringify(r));
-    zeilen.push(`d) Freigabe → ${award.length} Federn-Aufrufe (Abzeichen + Skill) · Eltern-Karte ohne eigene Knöpfe`);
+    zeilen.push(`d) seit v980: Eltern-Meldung ohne Freigabe-Knopf, ${award.length} Federn-Aufrufe · Eltern-Karte ohne eigene Knöpfe`);
   }
 
   // ── e) Quelltext ─────────────────────────────────────────────────────────────────────
