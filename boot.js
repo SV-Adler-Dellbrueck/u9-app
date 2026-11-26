@@ -5188,7 +5188,8 @@ function stTimerTick(){
   }
   stTimerRender();
 }
-function stTimerWhistle(){ try{if(typeof rotBeep==="function"){rotBeep();setTimeout(rotBeep,260);}}catch(e){} try{navigator.vibrate&&navigator.vibrate([120,80,120]);}catch(e){} }
+function stTimerWhistle(){ try{if(typeof rotBeep==="function"){rotBeep();setTimeout(rotBeep,260);}}catch(e){} try{navigator.vibrate&&navigator.vibrate([120,80,120]);}catch(e){}
+  try{ if(typeof uhrMeldung==="function")uhrMeldung("⏱️ Abpfiff","Die Zeit ist um."); }catch(e){} }   // v974: auch an die Uhr
 function stTimerNext(){
   if(!_stT.stations.length)return; stTimerWhistle();
   if(_stT.ix>=_stT.stations.length-1){ stTimerRender(true); if(_stT.timer){clearInterval(_stT.timer);_stT.timer=null;} return; }

@@ -915,6 +915,7 @@ function rotBeep(freq,dauer){
 const ROT_VORWARNUNG_SEK=15;
 function rotVorwarnung(){
   try{navigator.vibrate&&navigator.vibrate([200,100,200]);}catch(e){}
+  try{ if(typeof uhrMeldung==="function")uhrMeldung("⏳ Gleich Wechsel","Noch "+ROT_VORWARNUNG_SEK+" Sekunden.",{vibrate:[200,100,200]}); }catch(e){}   // v974
   rotBeep(660,.25);
   const cd=document.getElementById("rot-cd"); if(cd){ cd.classList.remove("rot-blink"); void cd.offsetWidth; cd.classList.add("rot-blink"); }
 }
@@ -953,6 +954,7 @@ function rotTick(){
   if(ivl>ROT_VORWARNUNG_SEK&&vorher<ivl-ROT_VORWARNUNG_SEK&&rotElapsed>=ivl-ROT_VORWARNUNG_SEK&&rotElapsed<ivl)rotVorwarnung();
   if(rotElapsed>=ivl){
     rotElapsed=rotElapsed%ivl;rotBeep();try{navigator.vibrate&&navigator.vibrate([100,60,100]);}catch(e){}
+    try{ if(typeof uhrMeldung==="function")uhrMeldung("🔁 Wechsel","Jetzt durchwechseln."); }catch(e){}   // v974: auch an die Uhr
   }
   rotPersistCtr+=d;
   if(rotPersistCtr>=30){rotPersistCtr=0;rotPersistTimes();} // Faire Einsatzzeiten: alle 30s sichern
