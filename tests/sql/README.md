@@ -235,3 +235,16 @@ Erwartet: Das Kindergerät meldet Bronze und Silber für sich; doppelt, für ein
 fremder Kennung scheitert es (vier Fehler), löschen kann es nicht (0 Zeilen), ohne Appzeit kein Melden (ein Fehler).
 Andere Eltern sehen nichts, löschen nichts und melden nicht für fremde Kinder. Die eigenen Eltern sehen zwei Meldungen
 und erledigen eine. `anon`: permission denied.
+
+## v978 · Unbekannte Namen im Zusammenhang
+
+```bash
+createdb t && for f in tests/sql/supabase-attrappe.sql tests/sql/v804-export-vorher.sql supabase/migrations/20261111_v804_export_lese.sql \
+  supabase/migrations/20261112_v807_export_execute.sql supabase/migrations/20261113_v808_namen_aehnlich.sql \
+  supabase/migrations/20261114_v812_elternnamen.sql supabase/migrations/20261126_v978_namen_kontext.sql tests/sql/v978-namen-kontext.sql; do psql -d t -f $f; done
+```
+
+Erwartet: „Eltern von X“, „Xs Mama“, „X’ Papa“ mit unbekanntem X ergeben 3; bekanntes Kind wird ersetzt und nicht gemeldet (0);
+„Eltern von Kindern“, „von Anfang“, „Mutter von Charles“ bleiben stumm (0); ohne Zusammenhang kein Verdacht (0); `namen_verdacht`
+meldet den Eintrag mit 1; nach einer Schreibweise ohne Buchstaben steht „ein Kind“ und der Verdacht ist weg; die Leserolle liest,
+`anon` nicht. v808 und v812 liefern mit v978 zeichengleich dasselbe wie ohne.
