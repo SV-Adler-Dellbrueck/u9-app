@@ -5483,7 +5483,7 @@ function skzSpecSaeubern(spec){
   const punkt=(e,rest)=>{ const a=x(e&&e[0]), b=y(e&&e[1]); return (a===null||b===null)?null:[a,b].concat(rest?rest(e):[]); };
   const strecke=(e,rest)=>{ const a=x(e&&e[0]), b=y(e&&e[1]), c=x(e&&e[2]), d=y(e&&e[3]);
                             return (a===null||b===null||c===null||d===null)?null:[a,b,c,d].concat(rest?rest(e):[]); };
-  const F="grbyw", GER=["stange","teller","huerde","depot","ring","dummy","trainer"];
+  const F="grbyw", GER=["stange","teller","huerde","depot","ring","dummy","trainer","matte","gymball"];   // v968: Skillmatte, Gymnastikball
   const aus={};
   if(hoch)aus.hoch=true;
   if(spec.wurf===true)aus.wurf=true;   // v700: Wurfspiel – Pass und Schuss heißen Zuwurf und Torwurf
@@ -5715,6 +5715,18 @@ function _skz(o,opt){
       S.push('<line x1="'+(x-5)+'" y1="'+(y+6.5)+'" x2="'+(x+5)+'" y2="'+(y+6.5)+'" stroke="'+c+'" stroke-width="1.5" stroke-linecap="round"/>');
       S.push('<rect x="'+(x-3)+'" y="'+(y-4.5)+'" width="6" height="11" rx="3" fill="'+c+'" stroke="'+P.huetchenRand+'" stroke-width="0.8"/>');
       S.push('<circle cx="'+x+'" cy="'+(y-7.5)+'" r="2.4" fill="'+c+'" stroke="'+P.huetchenRand+'" stroke-width="0.8"/>');
+    }else if(art==='matte'){
+      /* v968 (Charles 26.11., Übung „Skillmatte – Pass – Tor“): die Skillmatte liegt flach wie eine Fußmatte,
+         rund 24 × 16. Sechs kleine Zahlen (Ecken und Mitten der Längsseiten) machen sie erkennbar – auch ohne Farbe. */
+      const dunkel=(g[3]==='r'||g[3]==='b'), zc=dunkel?'#ffffff':'#111827';
+      S.push('<rect x="'+(x-12)+'" y="'+(y-8)+'" width="24" height="16" rx="2" fill="'+c+'" stroke="'+P.huetchenRand+'" stroke-width="1"/>');
+      [[-8.5,-4.2,1],[0,-4.2,2],[8.5,-4.2,3],[-8.5,5.6,4],[0,5.6,5],[8.5,5.6,6]].forEach(t=>S.push('<text x="'+(x+t[0])+'" y="'+(y+t[1])+'" text-anchor="middle" fill="'+zc+'" font-size="4.6" font-family="sans-serif" font-weight="700">'+t[2]+'</text>'));
+    }else if(art==='gymball'){
+      /* v968: Der kleine Gymnastikball ist farbig und hat einen Glanzpunkt – der Fußball (r 4) ist weiß mit dunklem Rand.
+         Kleiner (r 3,2) und mit Streifen, damit er auch ohne Farbwahrnehmung nicht wie ein Fußball aussieht. */
+      S.push('<circle cx="'+x+'" cy="'+y+'" r="3.2" fill="'+c+'" stroke="'+P.huetchenRand+'" stroke-width="0.8"/>');
+      S.push('<path d="M'+(x-3)+' '+(y+0.6)+' Q'+x+' '+(y-1.6)+' '+(x+3)+' '+(y+0.6)+'" fill="none" stroke="'+P.huetchenRand+'" stroke-width="0.7"/>');
+      S.push('<circle cx="'+(x-1.1)+'" cy="'+(y-1.3)+'" r="0.8" fill="#ffffff" opacity=".85"/>');
     }else if(art==='depot'){
       [[0,-3],[-3.5,2],[3.5,2]].forEach(t=>S.push('<circle cx="'+(x+t[0])+'" cy="'+(y+t[1])+'" r="2.6" fill="'+P.ball+'" stroke="'+P.ballRand+'" stroke-width="0.8"/>'));
       S.push('<path d="M'+(x-8)+','+(y+5.5)+' Q'+x+','+(y+10)+' '+(x+8)+','+(y+5.5)+'" fill="none" stroke="'+P.text+'" stroke-width="1.2"/>');
@@ -5777,7 +5789,11 @@ function _skz(o,opt){
     if(sp[3])S.push('<text x="'+sp[0]+'" y="'+(sp[1]+3)+'" text-anchor="middle" fill="'+P.kuerzel+'" font-size="8" font-family="sans-serif" font-weight="700">'+E(sp[3])+'</text>');
     if(sp[4]==='b')S.push('<circle cx="'+(sp[0]+7)+'" cy="'+(sp[1]+7)+'" r="4" fill="'+P.ball+'" stroke="'+P.ballRand+'" stroke-width="1"/>');});
   (o.b||[]).forEach(b=>S.push('<circle cx="'+b[0]+'" cy="'+b[1]+'" r="4" fill="'+P.ball+'" stroke="'+P.ballRand+'" stroke-width="1"/>'));
-  (o.tx||[]).forEach(t=>S.push('<text x="'+t[0]+'" y="'+t[1]+'" text-anchor="middle" fill="'+P.text+'" font-size="9" font-family="sans-serif" font-weight="600">'+E(t[2])+'</text>'));
+  /* v968: Ein langer Bildtext lief über den Feldrand hinaus (rund 0,56 × Schriftgröße je Zeichen). Passt er nicht zwischen
+     Mitte und Rand, wird die Schrift kleiner – höchstens bis 6,5; der Text selbst bleibt, wie der Trainer ihn geschrieben hat. */
+  (o.tx||[]).forEach(t=>{ const x=Number(t[0])||0, platz=2*Math.max(10,Math.min(x,SB-x)-3), n=String(t[2]||"").length;
+    const fs=Math.max(6.5,Math.min(9,platz/(0.56*Math.max(1,n)))); const fsT=Math.round(fs*10)/10;
+    S.push('<text x="'+t[0]+'" y="'+t[1]+'" text-anchor="middle" fill="'+P.text+'" font-size="'+fsT+'" font-family="sans-serif" font-weight="600">'+E(t[2])+'</text>'); });
   return '<svg viewBox="0 0 '+SB+' '+SH+'" width="100%" style="max-width:'+SB+'px;display:block;margin:8px auto;border-radius:6px" xmlns="http://www.w3.org/2000/svg">'+S.join('')+'</svg>';
 }
 /* Einheitliche Linien-Legende (PO): erscheint unter jeder Skizze im Detail-Fenster.
@@ -5785,7 +5801,7 @@ function _skz(o,opt){
    (gestrichelt), s=Schuss (dick), d=Dribbling (durchgezogen geschwungen, seit v578). */
 /* v559: Was für Geräte in einer Zeichnung steckt, steht in der Legende – aber nur, was
    wirklich vorkommt. Eine Legende, die immer alles zeigt, erklärt am Ende nichts mehr. */
-const SKZ_GER_NAME={stange:"Stange",teller:"Markierungsteller",huerde:"Minihürde",depot:"Balldepot",ring:"Koordinationsring",dummy:"Freistoß-Dummy",trainer:"Trainer"};
+const SKZ_GER_NAME={stange:"Stange",teller:"Markierungsteller",huerde:"Minihürde",depot:"Balldepot",ring:"Koordinationsring",dummy:"Freistoß-Dummy",trainer:"Trainer",matte:"Skillmatte",gymball:"Gymnastikball"};
 function _skzGerProbe(art){ return {ger:[[16,9,art,"y"]]}; }
 /* v587 – DIE LEGENDE ZEIGT NUR, WAS VORKOMMT.
 
@@ -5872,14 +5888,14 @@ const SKZ_MAT_NAME={
   minitor:"Minitore", jugendtor:"Jugendtore", huetchen:"Hütchen", stange:"Stangen",
   teller:"Markierungsteller", huerde:"Minihürden", leiter:"Koordinationsleiter",
   wand:"Banden", ball:"Bälle", depot:"Balldepots", ring:"Koordinationsringe",   // v749: vorher „2 Balldepot“
-  dummy:"Freistoß-Dummys"
+  dummy:"Freistoß-Dummys", matte:"Skillmatten", gymball:"Gymnastikbälle"   // v968
 };
 /* „1 Bälle" liest niemand zweimal, ohne zu stolpern. */
 const SKZ_MAT_EINS={
   minitor:"Minitor", jugendtor:"Jugendtor", huetchen:"Hütchen", stange:"Stange",
   teller:"Markierungsteller", huerde:"Minihürde", leiter:"Koordinationsleiter",
   wand:"Bande", ball:"Ball", depot:"Balldepot", ring:"Koordinationsring",
-  dummy:"Freistoß-Dummy"
+  dummy:"Freistoß-Dummy", matte:"Skillmatte", gymball:"Gymnastikball"
 };
 function skzMatWort(schluessel,anzahl){
   return (anzahl===1?SKZ_MAT_EINS:SKZ_MAT_NAME)[schluessel]||schluessel;
@@ -5906,11 +5922,13 @@ function skzMaterial(spec){
     else if(a==="depot")dazu("depot",1);
     else if(a==="ring")dazu("ring",1);
     else if(a==="dummy")dazu("dummy",1);
+    else if(a==="matte")dazu("matte",1);       // v968
+    else if(a==="gymball")dazu("gymball",1);
   });
   /* Ein Dribbeltor steht auf zwei Pfosten – gezählt werden die Pfosten, denn die holt
      man aus dem Schrank, nicht das Tor. */
   (o.dtor||[]).forEach(d=>dazu(d[4]==="h"?"huetchen":"stange",2));
-  const reihe=["minitor","jugendtor","huetchen","stange","teller","ring","huerde","leiter","dummy","wand","ball","depot"];
+  const reihe=["minitor","jugendtor","huetchen","stange","matte","gymball","teller","ring","huerde","leiter","dummy","wand","ball","depot"];
   return reihe.filter(k=>z[k]).map(k=>({schluessel:k,was:skzMatWort(k,z[k]),anzahl:z[k]}));
 }
 function skzMaterialText(spec){
@@ -5922,7 +5940,7 @@ function skzMaterialText(spec){
 function skzMaterialSumme(specs){
   const max={};
   (specs||[]).forEach(sp=>skzMaterial(sp).forEach(m=>{ max[m.schluessel]=Math.max(max[m.schluessel]||0,m.anzahl); }));
-  const reihe=["minitor","jugendtor","huetchen","stange","teller","ring","huerde","leiter","dummy","wand","ball","depot"];
+  const reihe=["minitor","jugendtor","huetchen","stange","matte","gymball","teller","ring","huerde","leiter","dummy","wand","ball","depot"];
   return reihe.filter(k=>max[k]).map(k=>({schluessel:k,was:skzMatWort(k,max[k]),anzahl:max[k]}));
 }
 /* Symbolskizzen je Kategorie: Fallback für eigene und ältere KI-Übungen ohne eigene
@@ -6543,6 +6561,8 @@ const UEBUNG_ART_VORSCHLAG={
   /* v833 – Technik-Parcours (Training 16.11., Auftrag doku/auftrag-uebung-technik-parcours): acht Stationen, der Ablauf
      je Station ist vorgegeben – Übungsform, wie im Paket beschlossen. */
   "Technik-Parcours – acht Stationen, freie Wahl, Laufzettel":"uebung",
+  /* v968 (Charles 26.11.): Ablauf vorgegeben – Zahlenfolge, Pass, Abschluss, Wechsel; erst die Zusatzregel 4 macht ein 1 gegen 1 */
+  "Skillmatte – Pass – Tor":"uebung",
   /* v667 – Saisonformat (Entwurf abgenommen 29.09.): vier Spielformen mit Gegner. */
   "3+1 gegen 3 – Ball halten, der Torwart ist die Rettung":"spiel",
   "FUNiño 2 gegen 2 – abschirmen, dann Seite wechseln":"spiel",
@@ -6741,4 +6761,6 @@ const UEBUNG_BETREUUNG_VORSCHLAG={
   /* v941: Übungen aus der Praxis (Vorschlag, gilt erst nach der Durchsicht) */
   "Anbieten und Freilaufen – Einstimmen":"allein",   // feste Passfolge, die Kinder rufen und spielen selbst
   "Pylonen-Spiel – Läufer gegen Wächter":"fuehrt",   // Trainer gibt das Kommando und wechselt die Rollen
+  /* v968 (Charles 26.11.): der Trainer nennt die Zahlenfolge und gibt den Druck im Rücken – er ist an die Station gebunden */
+  "Skillmatte – Pass – Tor":"fuehrt",
 };

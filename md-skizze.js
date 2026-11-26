@@ -198,6 +198,9 @@ const SKZ_WERK=[
   /* v560 – Geräte, die der Verein für alle Mannschaften vorhält. */
   {id:"ring",   emo:"⭕", lbl:"Ring",     feld:"ger", typ:"ring", gruppe:"Geräte"},
   {id:"dummy",  emo:"🧍", lbl:"Dummy",    feld:"ger", typ:"dummy", gruppe:"Geräte"},
+  /* v968: Skillmatte (Sohlentechnik nach Zahlen) und kleiner Gymnastikball (Druck im Rücken) */
+  {id:"matte",  emo:"🔢", lbl:"Skillmatte", feld:"ger", typ:"matte", gruppe:"Geräte"},
+  {id:"gymball",emo:"🟠", lbl:"Gymnastikball", feld:"ger", typ:"gymball", gruppe:"Geräte"},
   {id:"leiter", emo:"🪜", lbl:"Leiter",   feld:"leiter", gruppe:"Geräte"}
 ];
 const SKZ_FARBEN=[["g","Grün","#4ade80"],["r","Rot","#f87171"],["b","Blau","#60a5fa"],["y","Gelb","#fbbf24"],["w","Weiß","#ffffff"]];
@@ -561,7 +564,7 @@ function skzVorlagenLeiste(){
 /* v579: Die Kacheln unter ihren Überschriften. Gerendert wird einmal beim Öffnen; das
    Hervorheben der gewählten Kachel läuft wie bisher über `#skz-palette button`. */
 function skzPaletteHtml(){
-  const kachel=w=>`<button data-werk="${w.id}" onclick="skzSetWerkzeug('${w.id}')" title="${_skzWerkLbl(w)}" aria-label="${_skzWerkLbl(w)}" style="min-height:46px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:3px"><span style="font-size:16px;line-height:1">${w.emo}</span><span class="skz-werk-lbl">${esc(_skzWerkLbl(w))}</span></button>`;
+  const kachel=w=>`<button data-werk="${w.id}" onclick="skzSetWerkzeug('${w.id}')" title="${_skzWerkLbl(w)}" aria-label="${_skzWerkLbl(w)}" style="min-height:48px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:3px"><span style="font-size:16px;line-height:1">${w.emo}</span><span class="skz-werk-lbl">${esc(_skzWerkLbl(w))}</span></button>`;
   const raster=inhalt=>`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:6px">${inhalt}</div>`;
   const kopf=t=>`<div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:4px 0 4px">${esc(t)}</div>`;
   let aus=raster(SKZ_WERK.filter(w=>!w.gruppe).map(kachel).join(""));

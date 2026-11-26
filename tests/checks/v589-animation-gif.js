@@ -36,7 +36,9 @@ module.exports = async function (h) {
       if (!_skzBewegt(a, b)) { z += 1; continue; }
       z += Math.max(1, Math.round(_skzGleitDauer(a, b) / schritt));
     }
-    const L = (typeof skzLegendeArten === "function") ? skzLegendeArten(spec).size : 6;
+    /* v968: Die Export-Legende nennt auch die Gerätearten der Skizze (je Art ein Eintrag). */
+    const ger = new Set((spec.ger || []).map(g => String((g && g[2]) || "stange")).filter(a => typeof SKZ_GER_NAME !== "undefined" && SKZ_GER_NAME[a]));
+    const L = ((typeof skzLegendeArten === "function") ? skzLegendeArten(spec).size : 6) + ger.size;
     return { bilder: z, n, legendeZeilen: Math.max(1, Math.ceil(L / 2)) };
   }, { spec: u.skizze, fps: 2, schlussMs: 2000 });
   await s.schliessen();

@@ -79,6 +79,11 @@ function _eiSkizzeFehler(x){
      Eine Zeichenkette („hoch“, „ja“) wäre in JavaScript wahr und legte das Feld still um. */
   if(x.hoch!=null&&typeof x.hoch!=="boolean")f.push("„hoch“ ist kein Ja/Nein-Wert – hochkant wird mit true gesetzt");
   if(x.wurf!=null&&typeof x.wurf!=="boolean")f.push("„wurf“ ist kein Ja/Nein-Wert – ein Wurfspiel wird mit true gesetzt");   // v700
+  /* v968: Eine unbekannte Geräteart fiel bisher still weg (skzSpecSaeubern) – das Bild sah dann anders aus als
+     gedacht. Jetzt nennt die Prüfung sie, mit den erlaubten Arten. */
+  if(Array.isArray(x.ger)&&typeof SKZ_GER_NAME!=="undefined"){
+    x.ger.forEach((g,i)=>{ const a=String((g&&g[2])||"stange"); if(!SKZ_GER_NAME[a])f.push(`Gerät ${i+1}: Art „${a}“ gibt es nicht – erlaubt sind ${Object.keys(SKZ_GER_NAME).join(", ")}`); });
+  }
   if(f.length)return f;
   if(x.schritte==null)return f;
   const max=(typeof SKZ_SCHRITTE_MAX!=="undefined")?SKZ_SCHRITTE_MAX:6;
