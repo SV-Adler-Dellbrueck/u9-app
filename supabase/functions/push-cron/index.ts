@@ -1,6 +1,7 @@
 /* Edge Function push-cron — täglicher Lauf (pg_cron „push-reminders-daily“, 15:00 UTC):
    Zusage-Erinnerung für morgen samt Wetterwarnung, Helfer-Vorabend-Push und die
    48-Stunden-Erinnerungen.
+   v969: Tee-Staffel – Erinnerung „morgen eine Teekanne mitnehmen“ und Nachfrage, wenn für den nächsten Tee jemand fehlt.
    v705: beachtet die Ruhezeit je Empfänger (push_ruhende, Warteschlange).
 
    NIE von Hand mit dem echten Cron-Schlüssel aufrufen – das verdoppelt die Mitteilungen an
@@ -44,7 +45,7 @@ Deno.serve(async (req) => {
       await geheimnis(admin, "adler_vapid_public"), await geheimnis(admin, "adler_vapid_private"));
     const t = new Date(); t.setDate(t.getDate() + 1);
     const morgen = t.toISOString().slice(0, 10);
-    const { data: termine } = await admin.from("termine").select("id,typ,titel,gegner,uhrzeit").in("typ", ["training", "spiel", "turnier"]).eq("datum", morgen).order("uhrzeit", { ascending: true });
+    const { data: termine } = await admin.from("termine").select("id,typ,titel,gegner,uhrzeit,platz_status").in("typ", ["training", "spiel", "turnier"]).eq("datum", morgen).order("uhrzeit", { ascending: true });
     const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth,user_id,rolle");
     const gone: string[] = [];
     /* v705: Wer gerade Ruhezeit hat (push_ruhezeit; Eltern ohne eigene Wahl 21:30–7), bekommt die
@@ -89,7 +90,7 @@ Deno.serve(async (req) => {
       return n;
     };
     // v845: Hinweis an alle Familien, deren Kind NICHT abgesagt oder krank gemeldet ist (Training gilt als zugesagt).
-    const pushKommende = async (terminId: number, payload: any) => {
+    const pushKommende = async (terminId: number, payload: any, ohne?: Set<string>) => {
       const { data: rm } = await admin.from("rueckmeldungen").select("spieler_id,status").eq("termin_id", terminId);
       const fehlt = new Set((rm || []).filter((r: any) => r.status === "abgesagt" || r.status === "krank").map((r: any) => r.spieler_id));
       let n = 0;
@@ -99,12 +100,13 @@ Deno.serve(async (req) => {
         const kids = email ? emailKids[email] : null;
         if (!kids || !kids.length) continue;
         if (!kids.some((id) => !fehlt.has(id))) continue;
+        if (ohne && ohne.has((s as any).user_id)) continue;   // v969: wer schon eingetragen ist, wird nicht gefragt
         if (await send(s, payload)) n++;
       }
       return n;
     };
 
-    let sent = 0, skipped = 0, helferSent = 0;
+    let sent = 0, skipped = 0, helferSent = 0, teeSent = 0;
     if (termine && termine.length) {
       // ── Teil 1: RSVP-Erinnerung fuer den ersten Termin morgen (+ Wetter-Warnung, L4) ──
       /* v845 (Charles 17.11.2026): Ein Training gilt als zugesagt – also keine Bitte um Rückmeldung.
@@ -157,6 +159,45 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── Teil 2b (v969): Tee-Staffel ──
+    /* Charles 26.11.: Wer am nächsten Tee-Termin eingetragen ist, nimmt nach dem (letzten) Termin morgen eine Pumpkanne mit,
+       spült sie und bringt sie mit Tee zurück. „Es sollte vor dem Training schon feststehen, wer mitnimmt.“ Deshalb heute:
+       Erinnerung an die Eingetragenen und – sind nicht alle Kannen vergeben – EINE Nachfrage an die Familien, deren Kind morgen
+       kommt. Der Lauf ist täglich und meint nur „morgen“, also gibt es beides höchstens einmal je Termin. Ausgefallene Termine
+       zählen nicht. Die Plätze folgen der App (2, oder was das Trainerteam am Termin freigegeben hat). */
+    if (termine && termine.length) {
+      const TEE = "🫖 Tee mitbringen";
+      const morgenDa = (termine as any[]).filter((x: any) => x.platz_status !== "abgesagt");
+      const tLetzt: any = morgenDa[morgenDa.length - 1] || null;
+      if (tLetzt) {
+        const { data: nx } = await admin.from("termine").select("id,typ,datum,uhrzeit,platz_status,helfer_aufgaben")
+          .in("typ", ["training", "spiel", "turnier"]).gt("datum", morgen)
+          .order("datum", { ascending: true }).order("uhrzeit", { ascending: true, nullsFirst: false }).limit(8);
+        const n0: any = (nx || []).find((x: any) => x.platz_status !== "abgesagt") || null;
+        if (n0) {
+          const f = Array.isArray(n0.helfer_aufgaben) ? n0.helfer_aufgaben.find((x: any) => x && x.t === TEE) : null;
+          const plaetze = f ? Math.max(1, Math.min(20, parseInt(f.n, 10) || 1)) : 2;
+          const { data: th } = await admin.from("event_helfer").select("user_id").eq("termin_id", n0.id).eq("aufgabe", TEE);
+          const drin = new Set<string>(((th || []) as any[]).map((x: any) => x.user_id).filter(Boolean));
+          const tag = new Date(n0.datum + "T12:00:00Z").toLocaleDateString("de-DE", { weekday: "long", timeZone: "Europe/Berlin" });
+          const was = tLetzt.typ === "training" ? "Training" : (tLetzt.typ === "turnier" ? "Turnier" : "Spiel");
+          for (const s of subs || []) {
+            if (!drin.has((s as any).user_id)) continue;
+            if (await send(s, { title: "🫖 Morgen eine Teekanne mitnehmen", body: `Nach dem ${was} morgen bitte eine Teekanne mitnehmen – am ${tag} bringst du sie mit warmem Tee zurück.`, url: "./eltern/", tag: "tee" })) teeSent++;
+          }
+          const fehlt = plaetze - ((th || []) as any[]).length;
+          if (fehlt > 0) {
+            teeSent += await pushKommende(tLetzt.id, {
+              title: "🫖 Für den Tee fehlt noch jemand",
+              body: `Für den Tee am ${tag} fehlt noch ${fehlt === 1 ? "eine Familie" : fehlt + " Familien"}. Wer morgen nach dem ${was} eine Kanne mitnimmt, bringt sie am ${tag} mit Tee zurück – eintragen im Termin.`,
+              url: "./eltern/",
+              tag: "tee-frage",
+            }, drin);
+          }
+        }
+      }
+    }
+
     // ── Teil 3 (Spond-Muster): Auto-Reminder-Zeitschiene, je Termin genau EINMAL pro Art ──
     // vor48: Termin ist in 2 Tagen und Familien haben noch nicht geantwortet.
     // nach48: Termin wurde vor >=48 h angelegt (liegt noch in der Zukunft) und es fehlen Antworten.
@@ -195,6 +236,6 @@ Deno.serve(async (req) => {
     }
 
     if (gone.length) await admin.from("push_subscriptions").delete().in("endpoint", gone);
-    return json({ ok: true, sent, skipped_answered: skipped, helfer: helferSent, auto48, wartet, removed: gone.length });
+    return json({ ok: true, sent, skipped_answered: skipped, helfer: helferSent, tee: teeSent, auto48, wartet, removed: gone.length });
   } catch (e) { return json({ error: String(e) }, 500); }
 });
