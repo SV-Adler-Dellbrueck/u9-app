@@ -3061,11 +3061,13 @@ async function elternHelferKachelLoad(t){
   let teeBox="", becher="";
   if(typeof teeTermin==="function"&&teeTermin(t)){
     _teeOffen[Number(t.id)]=t;
-    becher=`<div class="hk-becher" style="font-size:var(--s-text);color:#334155;margin-top:10px">🥤 Becher bringen die Kinder selbst mit.</div>`;
+    becher=`<div class="hk-becher" style="font-size:var(--s-text);color:#334155;margin-top:8px">🥤 Becher bringen die Kinder selbst mit.</div>`;
     try{
       const nb=await teeNachbarn(t); t._teeVorher=nb.vorher||null;
       if(nb.nachher){ let tr=[]; try{const r=await fetch(`${SB_URL}/rest/v1/event_helfer?termin_id=eq.${nb.nachher.id}&aufgabe=eq.${encodeURIComponent(TEE_AUFGABE)}&select=id,name,user_id&order=created_at.asc`,{headers:sbAuthHeaders()});if(r.ok)tr=await r.json();}catch(e){}
-        teeBox=teeStaffelHtml(t,nb.nachher,tr||[],uid).replace('id="td-tee-staffel"','id="hk-tee-staffel"'); }
+        /* Startkarte: eine Zeile zum Aufklappen, damit die Seite kurz bleibt (v926: unter 2.100 px) */
+        const frei=Math.max(0,teeKannen(nb.nachher)-(tr||[]).length), mein=(tr||[]).some(x=>x.user_id===uid);
+        teeBox=`<details class="tk-erledigt" id="hk-tee-staffel" style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:4px"><summary>🫖 Für den nächsten Tee: ${mein?"du nimmst eine Kanne mit":frei?frei+" "+(frei===1?"Kanne":"Kannen")+" frei":"Kannen sind vergeben"}</summary>${teeStaffelHtml(t,nb.nachher,tr||[],uid).replace('id="td-tee-staffel"','class="hk-tee-inhalt"')}</details>`; }
     }catch(e){}
   }
   const je={}; rows.forEach(x=>{(je[x.aufgabe]=je[x.aufgabe]||[]).push(x);});
@@ -3722,7 +3724,7 @@ async function elternAkademieMeldungen(kids){
     if(typeof skillAbzAktiv==="function"&&skillAbzAktiv(a.id))return `<div class="fh-karte ak-melde ak-skill" role="region" aria-label="Skill des Monats: beim Training zeigen" data-melde="${Number(m.id)}">
       <div class="fh-titel">⭐ Skill des Monats</div>
       <div class="fh-was">${esc(name(m.spieler_id))} möchte es beim nächsten Training zeigen: ${a.emo} ${esc(a.name)}</div>
-      <div class="fh-text">Ein Trainer schaut beim Training zu und nimmt es ab – dann gibt es das Abzeichen und ${silber?20:10} Adler-Federn.</div></div>`;
+      <div class="fh-text">Ein Trainer schaut beim Training zu und nimmt es ab – dann gibt es das Abzeichen und ${(silber?20:10)+50} Adler-Federn.</div></div>`;
     return `<div class="fh-karte ak-melde" role="region" aria-label="Adler-Akademie: Übung freigeben" data-melde="${Number(m.id)}">
       <div class="fh-titel">🎓 Adler-Akademie</div>
       <div class="fh-was">${esc(name(m.spieler_id))} hat geübt: ${a.emo} ${esc(a.name)}</div>

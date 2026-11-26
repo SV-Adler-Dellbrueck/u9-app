@@ -43,7 +43,7 @@ module.exports = async function (h) {
     const betr = document.querySelector("#betreuung-card details.tk-erledigt summary");
     out.betreuung = txt(betr); out.betrHoch = betr ? Math.round(betr.getBoundingClientRect().height) : 0;
     const helfer = document.querySelector("#helfer-card");
-    out.helferOffen = helfer ? /Wer hilft mit\?/.test(helfer.textContent) && !helfer.querySelector("details") : null;
+    out.helferOffen = helfer ? /Wer hilft mit\?/.test(helfer.textContent) && !helfer.querySelector("details:not(#hk-tee-staffel)") /* v980: die Tee-Staffel darunter ist bewusst eine Zeile zum Aufklappen */ : null;
     const sek = [...document.querySelectorAll("#ep-dash-body div")].filter(d => /^(🎮 Für die Kinder|👥 Fürs Team)$/.test(d.textContent.trim()) && d.children.length === 0).map(d => d.textContent.trim());
     out.reihenfolge = sek.join(" → ");
     const gitter = document.querySelector(".el-gitter"), g2 = gitter && [...gitter.children].filter(x => !x.classList.contains("el-breit"));

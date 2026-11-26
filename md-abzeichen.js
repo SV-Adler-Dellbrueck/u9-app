@@ -228,11 +228,11 @@ async function skillAbnahmeRender(datum){
   kids.sort((x,y)=>(gem(y)-gem(x))||(hat(x)-hat(y)));
   const zeile=k=>hat(k)
     ?`<div class="skab-zeile skab-ok" style="display:flex;justify-content:space-between;align-items:center;min-height:48px;padding:0 12px;margin-top:8px;border:1px solid #15803d;border-radius:12px;background:#f0fdf4;color:#166534;font-weight:700"><span>✓ ${esc(k.name)}</span><span>abgenommen</span></div>`
-    :`<button type="button" class="skab-zeile" data-sid="${k.id}" onclick="skillAbnehmen(${k.id},this)" style="display:flex;justify-content:space-between;align-items:center;width:100%;min-height:48px;padding:0 12px;margin-top:8px;border:1px solid ${gem(k)?"#b45309":"var(--rand-bedien)"};border-radius:12px;background:${gem(k)?"#fffbeb":"var(--surface)"};color:var(--text);font:inherit;font-size:var(--s-text);cursor:pointer;text-align:left">
+    :`<button type="button" class="btn btn-zeile skab-zeile" data-sid="${k.id}" onclick="skillAbnehmen(${k.id},this)" style="justify-content:space-between;margin-top:8px">
         <span>${gem(k)?"🙋 ":""}${esc(k.name)}</span>${gem(k)?`<span class="skab-hin" style="font-size:var(--s-klein);font-weight:700;border:1px solid #b45309;color:#92400e;border-radius:99px;padding:2px 8px">möchte zeigen</span>`:`<span class="skab-hin" style="font-size:var(--s-klein);color:var(--text2)">antippen</span>`}</button>`;
   box.innerHTML=`<section id="skab" style="border:var(--border-s);border-radius:14px;padding:12px;margin-top:14px" aria-label="Skill des Monats abnehmen">
     <div style="font-weight:800;font-size:var(--s-karte)">⭐ Skill des Monats abnehmen</div>
-    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:2px">${a.emo} ${esc(a.name)} · zweimal tippen = abgenommen (Abzeichen + ${silber?20:10} Federn)</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:2px">${a.emo} ${esc(a.name)} · zweimal tippen = abgenommen (Abzeichen, ${(silber?20:10)+50} Federn)</div>
     ${kids.length?kids.map(zeile).join(""):'<div style="font-size:var(--s-text);color:var(--text2);margin-top:8px">Erst die Anwesenheit abhaken – dann stehen hier die Kinder, die da sind.</div>'}
   </section>`;
 }
@@ -240,11 +240,13 @@ async function skillAbnehmen(sid,btn){
   const a=_skillMonat&&_skillMonat.abzeichen?abzeichenFinden(_skillMonat.abzeichen):null; if(!a||!btn)return;
   if(btn.dataset.sicher!=="1"){
     btn.dataset.sicher="1"; const hin=btn.querySelector(".skab-hin"), alt=hin?hin.textContent:""; if(hin)hin.textContent="nochmal tippen = abgenommen";
-    btn.style.borderColor="#15803d"; clearTimeout(btn._t); btn._t=setTimeout(()=>{ btn.dataset.sicher=""; if(hin)hin.textContent=alt; btn.style.borderColor=""; },3500);
+    clearTimeout(btn._t); btn._t=setTimeout(()=>{ btn.dataset.sicher=""; if(hin)hin.textContent=alt; },3500);
     return;
   }
   clearTimeout(btn._t);
   await abzeichenAward(sid,a.id,btn,TECHNIK_SILBER.includes(a)?"abzeichen_silber":"abzeichen");
+  /* wie früher die Eltern-Freigabe (v963): dazu die Federn des Skills (50), je Kind und Skill nur einmal */
+  if(_skillMonat&&_skillMonat.id)await xpAward(sid,"skillwoche",_skillMonat.id);
   const de=document.getElementById("aw-date"); skillAbnahmeRender(de?de.value:"");
 }
 async function abzeichenAward(spielerId,badgeId,btn,quelle){

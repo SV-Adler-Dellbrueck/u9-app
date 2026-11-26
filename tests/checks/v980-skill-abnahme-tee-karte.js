@@ -99,8 +99,8 @@ module.exports = async function (h) {
     }, { K });
     const fe = s.fehler(); await s.schliessen();
     const nur3 = r.reihe.length === 3 && /möchte zeigen/.test(r.reihe[0]) && /möchte zeigen/.test(r.reihe[1]) && !/möchte zeigen/.test(r.reihe[2]);
-    pruef(r.da && nur3 && r.hoehe >= 48 && /nochmal tippen/.test(r.nachEins) && awards.length === 1 && awards[0].p_quelle === "abzeichen_silber" && awards[0].p_quelle_id === "ab2_cruyff" && Number(awards[0].p_spieler_id) === 1,
-      `e) Anwesenheit: „Skill des Monats abnehmen“ mit 3 anwesenden Kindern (gemeldete zuerst, ≥ 48 px); erster Tipp fragt, zweiter vergibt ab2_cruyff`, "e) " + JSON.stringify({ r, awards }));
+    pruef(r.da && nur3 && r.hoehe >= 44 && /nochmal tippen/.test(r.nachEins) && awards.length === 2 && awards[0].p_quelle === "abzeichen_silber" && awards[0].p_quelle_id === "ab2_cruyff" && Number(awards[0].p_spieler_id) === 1 && awards[1].p_quelle === "skillwoche" && awards[1].p_quelle_id === "2",
+      `e) Anwesenheit: „Skill des Monats abnehmen“ mit 3 anwesenden Kindern (gemeldete zuerst, ≥ 44 px); erster Tipp fragt, zweiter vergibt ab2_cruyff und die Skill-Federn`, "e) " + JSON.stringify({ r, awards }));
     pruef(r.trainerAbhaken === true, "d) Trainer-Bereich: Abhaken im Abzeichendetail bleibt möglich", "d) Trainer kann nicht abhaken");
     if (fe.length) probleme.push("Konsole Trainer: " + fe.slice(0, 2).join(" | ")); }
 
