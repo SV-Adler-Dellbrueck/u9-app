@@ -966,4 +966,164 @@ function _taRender(){
   const sw=ov.querySelector(".ta-sw"); if(sw&&_ta.swOffen)sw.open=true; if(sw)sw.addEventListener("toggle",()=>{ if(_ta)_ta.swOffen=sw.open; });
 }
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&document.getElementById("ta-ov")&&!document.querySelector("#ta-ov ~ [role=dialog]"))taSchliessen(); });
+/* ═══ v976: Freier Timer – eine klassische Stoppuhr für Trainer (Charles 26.11.2026) ═══
+   Bis hierher lief jeder Timer nur aus einem Zusammenhang (Plan, Matchcard, Turnier). Diese Uhr
+   braucht nichts davon: Minuten, Runden und Pause wählen, starten. Die Zeit läuft gegen ein festes
+   Ende (Date.now), damit ein gedrosselter Hintergrund-Tab nicht nachgeht. Abpfiff und Restzeit
+   gehen über dieselben Wege wie bei den anderen Timern an die Uhr (uhrMeldung, uhrRest). */
+const FU_MINUTEN=[1,2,3,5,10,15], FU_RUNDEN=[1,2,3,4,6], FU_PAUSEN=[0,30,60,120];
+const FU_WAHL_KEY="adler_fu_wahl";
+let _fu=null;
+/* Das CSS steht hier, nicht in styles.css: die öffentliche Turnierseite lädt styles.css und hat ein Budget (v899). */
+const FU_CSS=`.fu-karte{display:flex;align-items:center;gap:14px;width:100%;margin-top:12px;padding:12px 14px;background:var(--surface);border:2px solid var(--blue);border-radius:16px;color:var(--blue);font-family:inherit;text-align:left;cursor:pointer;min-height:76px}
+.fu-karte svg{flex:0 0 auto}
+.fu-karte-tx b{display:block;font-size:var(--s-karte);color:var(--text)}
+.fu-karte-tx span{font-size:var(--s-text);color:var(--text2)}
+#fu-timer{position:fixed;inset:0;z-index:11000;background:#0b1220;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 16px;box-sizing:border-box;overflow-y:auto;text-align:center;font-family:inherit}
+#fu-timer .fu-uhr{width:min(68vw,250px);height:auto;flex:0 0 auto}
+#fu-timer .fu-lb{font-size:var(--s-klein);letter-spacing:1px;color:#a5b4c8;text-transform:uppercase;margin-top:10px}
+#fu-timer .fu-chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:6px 0;max-width:420px}
+#fu-timer .fu-chip{min-width:48px;min-height:44px;padding:0 10px;border-radius:10px;background:#1e293b;border:1px solid #64748b;color:#fff;font:inherit;font-weight:800;cursor:pointer}
+#fu-timer .fu-chip[aria-pressed="true"]{background:#fff;color:#0b1220;border-color:#fff;box-shadow:0 0 0 3px #22c55e}
+#fu-timer .fu-eigen input{width:84px;min-height:44px;box-sizing:border-box;border-radius:10px;background:#1e293b;border:1px solid #64748b;color:#fff;font:inherit;font-weight:800;text-align:center}
+#fu-timer .fu-eigen.an input{background:#fff;color:#0b1220;box-shadow:0 0 0 3px #22c55e}
+#fu-timer .fu-eigen input::placeholder{color:#a5b4c8;font-weight:600}
+#fu-timer .fu-start{margin-top:16px;width:100%;max-width:420px;min-height:56px;border:none;border-radius:14px;background:#15803d;color:#fff;font:inherit;font-size:var(--s-teil);font-weight:800;cursor:pointer}
+#fu-timer .fu-zu{margin-top:8px;min-height:44px;background:transparent;border:none;color:#cbd5e1;font:inherit;text-decoration:underline;cursor:pointer}
+#fu-timer .fu-titel{font-size:26px;font-weight:800;margin:10px 0 4px}
+#fu-timer .fu-unter{color:#a5b4c8;font-size:var(--s-text);margin-top:4px}
+#fu-timer .fu-reihe{display:flex;gap:8px;width:100%;max-width:440px;margin-top:16px;flex-wrap:wrap}
+#fu-timer .fu-k{flex:1 1 30%;min-height:52px;border:none;border-radius:12px;background:#334155;color:#fff;font:inherit;font-weight:700;cursor:pointer;padding:0 8px}
+#fu-timer .fu-blau{background:#1a56db}
+#fu-timer .fu-rand{background:transparent;border:1px solid #64748b;color:#cbd5e1}
+#fu-timer button:focus-visible,#fu-timer input:focus-visible{outline:3px solid #fbbf24;outline-offset:2px}
+:root[data-theme="dark"] .fu-karte{color:#60a5fa;border-color:#60a5fa}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .fu-karte{color:#60a5fa;border-color:#60a5fa}}`;
+function _fuStil(){ if(document.getElementById("fu-stil"))return; const st=document.createElement("style"); st.id="fu-stil"; st.textContent=FU_CSS; document.head.appendChild(st); }
+function _fuWahlLaden(){
+  let w={min:3,runden:1,pause:30};
+  try{ const j=JSON.parse(localStorage.getItem(FU_WAHL_KEY)||"null"); if(j&&typeof j==="object")w=Object.assign(w,j); }catch(e){}
+  w.min=Math.min(90,Math.max(1,Math.round(Number(w.min)||3)));
+  w.runden=Math.min(20,Math.max(1,Math.round(Number(w.runden)||1)));
+  w.pause=Math.min(600,Math.max(0,Math.round(Number(w.pause)||0)));
+  return w;
+}
+function _fuZeit(s){ s=Math.max(0,Math.ceil(s)); const m=Math.floor(s/60), r=s%60; return m+":"+(r<10?"0":"")+r; }
+function _fuPauseText(s){ return s?_fuZeit(s):"0"; }
+/* Die kleine Uhr im Training-Tab (views.js ruft sie geschützt auf). */
+function fuKarteHtml(){
+  _fuStil();
+  return `<button type="button" class="fu-karte" onclick="fuOpen()" aria-label="Freier Timer öffnen – Minuten und Runden wählen">
+    <svg width="54" height="62" viewBox="0 0 62 70" aria-hidden="true" focusable="false"><rect x="25" y="2" width="12" height="7" rx="2" fill="currentColor"/><rect x="28" y="8" width="6" height="6" fill="currentColor"/><rect x="47" y="12" width="9" height="5" rx="2" transform="rotate(40 51 14)" fill="currentColor"/><circle cx="31" cy="41" r="26" fill="var(--surface)" stroke="currentColor" stroke-width="4"/><g stroke="var(--text2)" stroke-width="2"><line x1="31" y1="19" x2="31" y2="24"/><line x1="53" y1="41" x2="48" y2="41"/><line x1="31" y1="63" x2="31" y2="58"/><line x1="9" y1="41" x2="14" y2="41"/></g><line x1="31" y1="41" x2="42" y2="30" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/><circle cx="31" cy="41" r="3" fill="var(--text)"/></svg>
+    <span class="fu-karte-tx"><b>Freier Timer</b><span>Antippen – Minuten und Runden wählen</span></span>
+  </button>`;
+}
+function fuOpen(){
+  _fuStil();
+  fuStop(true);
+  _fu=Object.assign(_fuWahlLaden(),{phase:"wahl",runde:1,ende:0,gesamt:0,rest:0,pausiert:false,timer:null});
+  const ov=document.createElement("div"); ov.id="fu-timer"; ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-label","Freier Timer");
+  document.body.appendChild(ov);
+  _fuRender();
+}
+function fuWahl(feld,wert){
+  if(!_fu||_fu.phase!=="wahl")return;
+  if(feld==="min"){ wert=Math.min(90,Math.max(1,Math.round(Number(wert)||0))); if(!wert)return; }
+  _fu[feld]=Number(wert);
+  try{ localStorage.setItem(FU_WAHL_KEY,JSON.stringify({min:_fu.min,runden:_fu.runden,pause:_fu.pause})); }catch(e){}
+  _fuRender();
+}
+function _fuPhaseStarten(phase){
+  _fu.phase=phase; _fu.gesamt=phase==="pause"?_fu.pause:_fu.min*60;
+  _fu.rest=_fu.gesamt; _fu.ende=Date.now()+_fu.gesamt*1000; _fu.pausiert=false;
+}
+function fuStart(){
+  if(!_fu)return;
+  _fu.runde=1; _fuPhaseStarten("lauf");
+  if(_fu.timer)clearInterval(_fu.timer);
+  _fu.timer=setInterval(_fuTick,250);
+  try{ if(typeof requestWakeLock==="function")requestWakeLock(); }catch(e){}
+  _fuRender();
+}
+function _fuSignal(titel,text){
+  try{ if(typeof rotBeep==="function"){ rotBeep(); setTimeout(rotBeep,260); } }catch(e){}
+  try{ navigator.vibrate&&navigator.vibrate([120,80,120]); }catch(e){}
+  try{ if(typeof uhrMeldung==="function")uhrMeldung(titel,text); }catch(e){}
+}
+function _fuTick(){
+  if(!_fu||_fu.pausiert||(_fu.phase!=="lauf"&&_fu.phase!=="pause"))return;
+  _fu.rest=Math.max(0,(_fu.ende-Date.now())/1000);
+  if(_fu.rest<=0){ _fuWeiter(); return; }
+  try{ if(typeof uhrRest==="function")uhrRest(_fu.rest,_fu.phase==="pause"?"Pause":"in dieser Runde"); }catch(e){}
+  _fuRender();
+}
+/* Phase beenden: nach einer Runde Pause oder nächste Runde, nach der letzten Schluss. */
+function _fuWeiter(){
+  if(!_fu)return;
+  if(_fu.phase==="lauf"){
+    if(_fu.runde>=_fu.runden){ _fuSignal("⏱️ Abpfiff","Die Zeit ist um."); _fu.phase="fertig"; if(_fu.timer){clearInterval(_fu.timer);_fu.timer=null;} try{ if(typeof releaseWakeLock==="function")releaseWakeLock(); }catch(e){} _fuRender(); return; }
+    if(_fu.pause>0){ _fuSignal("⏸ Pause","Runde "+_fu.runde+" ist um – "+_fuZeit(_fu.pause)+" Pause."); _fuPhaseStarten("pause"); _fuRender(); return; }
+  }
+  _fu.runde++; _fuSignal("▶ Runde "+_fu.runde,"Weiter geht's – Runde "+_fu.runde+" von "+_fu.runden+".");
+  _fuPhaseStarten("lauf"); _fuRender();
+}
+function fuNaechste(){ if(_fu&&(_fu.phase==="lauf"||_fu.phase==="pause"))_fuWeiter(); }
+function fuPause(){
+  if(!_fu||(_fu.phase!=="lauf"&&_fu.phase!=="pause"))return;
+  if(_fu.pausiert){ _fu.ende=Date.now()+_fu.rest*1000; _fu.pausiert=false; }
+  else{ _fu.rest=Math.max(0,(_fu.ende-Date.now())/1000); _fu.pausiert=true; }
+  _fuRender();
+}
+function fuStop(still){
+  if(_fu&&_fu.timer)clearInterval(_fu.timer);
+  const offen=!!document.getElementById("fu-timer");
+  document.getElementById("fu-timer")?.remove();
+  if(_fu&&_fu.phase!=="wahl"&&offen&&!still){ try{ if(typeof releaseWakeLock==="function")releaseWakeLock(); }catch(e){} }
+  _fu=null;
+}
+function _fuUhrSvg(anteil,farbe,gross,klein){
+  const C=603.19, off=(C*(1-Math.max(0,Math.min(1,anteil)))).toFixed(1);
+  return `<svg class="fu-uhr" viewBox="0 0 250 280" aria-hidden="true" focusable="false"><rect x="104" y="4" width="42" height="20" rx="5" fill="#94a3b8"/><rect x="115" y="22" width="20" height="16" fill="#94a3b8"/><rect x="196" y="40" width="30" height="14" rx="4" transform="rotate(40 211 47)" fill="#94a3b8"/>
+    <circle cx="125" cy="160" r="112" fill="#111a2e" stroke="#94a3b8" stroke-width="8"/>
+    <circle cx="125" cy="160" r="96" fill="none" stroke="#1e293b" stroke-width="12"/>
+    <circle class="fu-ring" cx="125" cy="160" r="96" fill="none" stroke="${farbe}" stroke-width="12" stroke-linecap="round" stroke-dasharray="603.19" stroke-dashoffset="${off}" transform="rotate(-90 125 160)"/>
+    <text x="125" y="${klein?172:178}" text-anchor="middle" font-size="58" font-weight="900" fill="#fff" font-family="inherit">${esc(gross)}</text>
+    ${klein?`<text x="125" y="206" text-anchor="middle" font-size="15" fill="#94a3b8" font-family="inherit">${esc(klein)}</text>`:""}</svg>`;
+}
+function _fuChips(feld,werte,aktiv,txt){
+  return `<div class="fu-chips" role="group">${werte.map(w=>`<button type="button" class="fu-chip" aria-pressed="${w===aktiv}" onclick="fuWahl('${feld}',${w})">${esc(txt?txt(w):String(w))}</button>`).join("")}</div>`;
+}
+function _fuRender(){
+  const ov=document.getElementById("fu-timer"); if(!ov||!_fu)return;
+  const f=_fu;
+  if(f.phase==="wahl"){
+    const eigen=FU_MINUTEN.indexOf(f.min)<0;
+    ov.innerHTML=`${_fuUhrSvg(1,"#22c55e",_fuZeit(f.min*60),f.runden>1?"Runde 1 von "+f.runden:"")}
+      <div class="fu-lb" id="fu-lb-min">Minuten</div>
+      <div class="fu-chips" role="group" aria-labelledby="fu-lb-min">${FU_MINUTEN.map(w=>`<button type="button" class="fu-chip" aria-pressed="${w===f.min}" onclick="fuWahl('min',${w})">${w}</button>`).join("")}
+        <label class="fu-eigen${eigen?" an":""}"><input type="number" aria-label="Eigene Minuten (1 bis 90)" inputmode="numeric" min="1" max="90" value="${eigen?f.min:""}" placeholder="eigene" onchange="fuWahl('min',this.value)"></label></div>
+      <div class="fu-lb">Runden</div>${_fuChips("runden",FU_RUNDEN,f.runden)}
+      ${f.runden>1?`<div class="fu-lb">Pause dazwischen</div>${_fuChips("pause",FU_PAUSEN,f.pause,_fuPauseText)}`:""}
+      <button type="button" class="fu-start" onclick="fuStart()">▶ Start</button>
+      <button type="button" class="fu-zu" onclick="fuStop()">Schließen</button>`;
+    return;
+  }
+  if(f.phase==="fertig"){
+    ov.innerHTML=`<div style="font-size:60px" aria-hidden="true">🏁</div><div class="fu-titel">Zeit ist um</div>
+      <div class="fu-unter">${f.runden>1?f.runden+" Runden à "+_fuZeit(f.min*60):_fuZeit(f.min*60)+" gelaufen"}</div>
+      <div class="fu-reihe"><button type="button" class="fu-k fu-blau" onclick="fuOpen()">↺ Nochmal</button><button type="button" class="fu-k fu-rand" onclick="fuStop()">✕ Schließen</button></div>`;
+    return;
+  }
+  const pause=f.phase==="pause";
+  const kopf=pause?"Pause":(f.runden>1?"Runde "+f.runde+" von "+f.runden:"Läuft");
+  const unten=pause?"Gleich Runde "+(f.runde+1)+" von "+f.runden:(f.runde<f.runden&&f.pause?"danach "+_fuZeit(f.pause)+" Pause":"");
+  ov.innerHTML=`<div class="fu-lb" style="margin:0 0 4px" aria-live="polite">${esc(kopf)}${f.pausiert?" · ⏸ angehalten":""}</div>
+    ${_fuUhrSvg(f.gesamt?f.rest/f.gesamt:0,pause?"#f59e0b":(f.rest<=10?"#ef4444":"#22c55e"),_fuZeit(f.rest),pause?"Pause":"")}
+    ${unten?`<div class="fu-unter">${esc(unten)}</div>`:""}
+    <div class="fu-reihe">
+      <button type="button" class="fu-k" onclick="fuPause()">${f.pausiert?"▶ Weiter":"⏸ Pause"}</button>
+      <button type="button" class="fu-k fu-blau" onclick="fuNaechste()">⏭ ${pause?"Pause vorbei":"Nächste"}</button>
+      <button type="button" class="fu-k fu-rand" onclick="fuStop()">✕ Stopp</button>
+    </div>`;
+}
 function blockModulDa(){ return true; }
