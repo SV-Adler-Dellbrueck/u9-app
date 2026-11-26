@@ -34,6 +34,7 @@ module.exports = async function (h) {
     localStorage.removeItem("adler_uhr_meldung"); perm = "default";
     uhrMeldungOpen(); await w(50);
     const m = document.getElementById("uhr-modal"), kn = () => [...m.querySelectorAll("#uhr-schalter .seg-btn")];
+    o.c0 = /Immer auf beiden anzeigen/.test(m.textContent);   // v975
     o.c = { dialog: m && m.getAttribute("role") === "dialog" && m.getAttribute("aria-modal") === "true", knopfe: kn().map(b => b.textContent.trim() + ":" + b.getAttribute("aria-pressed") + ":" + Math.round(b.getBoundingClientRect().height)), testAus: document.getElementById("uhr-test").disabled };
     kn().find(b => b.textContent.trim() === "An").click(); await w(200);
     o.c.nach = { gespeichert: localStorage.getItem("adler_uhr_meldung"), gefragt, knopfe: kn().map(b => b.textContent.trim() + ":" + b.getAttribute("aria-pressed")), testAn: !document.getElementById("uhr-test").disabled };
@@ -54,6 +55,7 @@ module.exports = async function (h) {
       probleme.push("c) " + JSON.stringify(c));
     else zeilen.push(`c) Fenster: ${c.knopfe.join(" · ")}, Test erst eingeschaltet; „An“ fragt einmal und speichert; Test kommt an`);
   }
+  if (!r.c0) probleme.push("c) v975: Hinweis „Immer auf beiden anzeigen“ fehlt im Fenster"); else zeilen.push("c) v975: Fenster nennt „Immer auf beiden anzeigen“ (Galaxy Watch)");
   const v = fs.readFileSync(path.join(h.REPO, "views.js"), "utf8");
   if (!/\{emo:"⌚",label:"Timer an die Uhr",fn:"uhrMeldungOpen"\}/.test(v)) probleme.push("d) Kachel fehlt in den Einstellungen"); else zeilen.push("d) Kachel „⌚ Timer an die Uhr“ unter Einstellungen");
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));

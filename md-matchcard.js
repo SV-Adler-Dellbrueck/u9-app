@@ -1046,7 +1046,7 @@ function uhrMeldungRender(){
   const an=uhrMeldungAn(), erlaubt=typeof Notification!=="undefined"&&Notification.permission==="granted";
   const gesperrt=typeof Notification!=="undefined"&&Notification.permission==="denied";
   const knopf=(aktiv,v,txt)=>`<button type="button" class="seg-btn${aktiv?" active":""}" aria-pressed="${aktiv?"true":"false"}" onclick="uhrMeldungSchalten(${v})">${txt}</button>`;
-  box.innerHTML=`<div style="font-size:var(--s-text);line-height:1.5;margin-bottom:10px">Jeder Timer-Pfiff kommt zusätzlich als Benachrichtigung – deine Uhr zeigt sie und vibriert, wenn sie Meldungen vom Handy anzeigt (Galaxy Watch: in der Galaxy-Wearable-App für Chrome bzw. die Adler-App erlauben).</div>
+  box.innerHTML=`<div style="font-size:var(--s-text);line-height:1.5;margin-bottom:10px">Jeder Timer-Pfiff kommt zusätzlich als Benachrichtigung – deine Uhr zeigt sie und vibriert, wenn sie Meldungen vom Handy anzeigt (Galaxy Watch: in der Galaxy-Wearable-App unter „Benachrichtigungen“ die Adler-App bzw. Chrome erlauben und „Immer auf beiden anzeigen“ wählen – sonst kommen die Meldungen bei offener App nur aufs Handy).</div>
     <div class="seg-ctrl" id="uhr-schalter" role="group" aria-label="Timer an die Uhr">${knopf(!an,false,"Aus")}${knopf(an,true,"An")}</div>
     ${gesperrt?`<div style="font-size:var(--s-klein);color:var(--red-text,#b91c1c);margin-top:8px">Benachrichtigungen sind für die App gesperrt. Erlauben in den Einstellungen des Handys (App-Info → Benachrichtigungen).</div>`:""}
     <button type="button" class="btn" id="uhr-test" onclick="uhrMeldungTest()" style="width:100%;min-height:48px;margin-top:12px"${an&&erlaubt?"":" disabled"}>⌚ Test an die Uhr</button>
