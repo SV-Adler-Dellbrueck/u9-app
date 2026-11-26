@@ -2492,7 +2492,7 @@ function teeStaffelHtml(t,n,rows,uid){
   const wer=plaetze===1?"die Kanne":"eine der Kannen";
   const knopf=mein
     ?`<button class="btn" onclick="teeKanneWeg(${Number(n.id)},${Number(t.id)})" style="width:100%;justify-content:center;margin-top:8px;min-height:48px">✓ Du nimmst eine Kanne mit · austragen</button>`
-    :(offen?`<button class="btn" onclick="teeKanneNehmen(${Number(n.id)},${Number(t.id)})" style="width:100%;justify-content:center;margin-top:8px;min-height:48px;background:#1f2937;color:#fff;border-color:#1f2937">Ich nehme eine Kanne mit</button>`:"");
+    :(offen?`<button class="btn" onclick="teeKanneNehmen(${Number(n.id)},${Number(t.id)})" style="width:100%;justify-content:center;margin-top:8px;min-height:48px">Ich nehme eine Kanne mit</button>`:"");
   return `<div id="td-tee-staffel" style="border-left:4px solid #b45309;background:#fffbeb;border-radius:10px;padding:10px;margin-top:10px;font-size:var(--s-text);line-height:1.45;color:#1f2937">
     <b>🫖 Für den nächsten Tee (${esc(teeWann(n))})</b><br>Wer mag, nimmt nach ${t.typ==="training"?"diesem Training":"diesem Termin"} ${wer} mit, spült sie und bringt sie am ${esc(teeWann(n))} mit warmem Tee zurück – ganz freiwillig, danke!
     ${zeilen}${knopf}</div>`;
