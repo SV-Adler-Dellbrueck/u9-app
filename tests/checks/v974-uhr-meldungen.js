@@ -40,6 +40,19 @@ module.exports = async function (h) {
     o.c.nach = { gespeichert: localStorage.getItem("adler_uhr_meldung"), gefragt, knopfe: kn().map(b => b.textContent.trim() + ":" + b.getAttribute("aria-pressed")), testAn: !document.getElementById("uhr-test").disabled };
     const vor = calls.length; await uhrMeldungTest(); await w(50); o.c.test = calls.length - vor === 1 ? calls[calls.length - 1].t : null;
     m.remove();
+    // v975: Restzeit jede Minute, still
+    localStorage.setItem("adler_uhr_meldung", "1"); localStorage.setItem("adler_uhr_rest", "0"); perm = "granted";
+    uhrMeldung._z = 0; _uhrRestLetzt = "";
+    let v0 = calls.length; await uhrRest(185, "in dieser Übung"); o.r = { ausGesperrt: calls.length === v0 };
+    localStorage.setItem("adler_uhr_rest", "1");
+    v0 = calls.length; await uhrRest(185, "in dieser Übung"); await uhrRest(181, "in dieser Übung"); await uhrRest(179, "in dieser Übung"); await uhrRest(40, "in dieser Übung");
+    o.r.folge = calls.slice(v0).map(c => c.t + "|" + c.o.body + "|" + c.o.silent + "|" + c.o.renotify + "|" + c.o.tag + "|" + (c.o.vibrate ? "vib" : "still"));
+    uhrMeldung._z = Date.now(); v0 = calls.length; await uhrRest(100, "bis zum Wechsel"); o.r.gehalten = calls.length === v0;
+    uhrMeldung._z = 0;
+    uhrMeldungOpen(); await w(50);
+    const m2 = document.getElementById("uhr-modal");
+    o.r.schalter = [...m2.querySelectorAll("#uhr-rest .seg-btn")].map(b => b.textContent.trim() + ":" + b.getAttribute("aria-pressed") + ":" + Math.round(b.getBoundingClientRect().height));
+    m2.remove();
     return o;
   });
   const fe = s.fehler(); await s.schliessen();
@@ -56,6 +69,13 @@ module.exports = async function (h) {
     else zeilen.push(`c) Fenster: ${c.knopfe.join(" · ")}, Test erst eingeschaltet; „An“ fragt einmal und speichert; Test kommt an`);
   }
   if (!r.c0) probleme.push("c) v975: Hinweis „Immer auf beiden anzeigen“ fehlt im Fenster"); else zeilen.push("c) v975: Fenster nennt „Immer auf beiden anzeigen“ (Galaxy Watch)");
+  if (r.r) {
+    const f = r.r.folge || [];
+    const soll = ["⏱️ Noch 3 Min.|in dieser Übung|true|false|adler-uhr|still", "⏱️ Noch 2 Min.|in dieser Übung|true|false|adler-uhr|still", "⏱️ Noch weniger als 1 Min.|in dieser Übung|true|false|adler-uhr|still"];
+    if (!r.r.ausGesperrt || f.join() !== soll.join() || !r.r.gehalten || r.r.schalter.length !== 2 || r.r.schalter.some(s => Number(s.split(":")[2]) < 44) || r.r.schalter[1].split(":")[1] !== "true")
+      probleme.push("e) v975 Restzeit: " + JSON.stringify(r.r));
+    else zeilen.push(`e) v975 Restzeit: ${f.map(x => x.split("|")[0]).join(" → ")} – still, gleicher tag, 3:05 und 3:01 = eine Meldung; nach einem Pfiff 20 s Ruhe; Schalter ${r.r.schalter.map(s => s.split(":").slice(0, 2).join(":")).join(" · ")}`);
+  }
   const v = fs.readFileSync(path.join(h.REPO, "views.js"), "utf8");
   if (!/\{emo:"⌚",label:"Timer an die Uhr",fn:"uhrMeldungOpen"\}/.test(v)) probleme.push("d) Kachel fehlt in den Einstellungen"); else zeilen.push("d) Kachel „⌚ Timer an die Uhr“ unter Einstellungen");
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));

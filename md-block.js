@@ -895,6 +895,7 @@ function taSchliessen(){
 function _taTick(){
   if(!_ta||!document.getElementById("ta-ov")){ if(_ta)clearInterval(_ta.tick); return; }
   const r=_taRest();
+  if(_ta.laeuft&&r>0&&typeof uhrRest==="function")uhrRest(r,"in dieser Übung");   // v975
   if(_ta.laeuft&&r<=0&&_ta.gepfiffen!==_ta.i){ _ta.gepfiffen=_ta.i; try{ if(typeof stTimerWhistle==="function")stTimerWhistle(); }catch(e){} }
   const u=document.getElementById("ta-uhr"); if(u){ u.textContent=r<=0&&_ta.laeuft?"Abpfiff!":_taFmt(r); u.classList.toggle("ta-aus",r<=0&&_ta.laeuft); }
   const b=document.getElementById("ta-bis"); if(b)b.textContent=_taBisText(r);

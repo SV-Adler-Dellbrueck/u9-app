@@ -948,6 +948,7 @@ function rotTick(){
   if(_rotLetzt!==null){ d=Math.floor((jetzt-_rotLetzt+50)/1000); if(d<1)return; _rotLetzt+=d*1000; }
   const ivl=rotIntervalMin*60, vorher=rotElapsed;
   rotElapsed+=d;
+  if(ivl>0)uhrRest(ivl-(rotElapsed%ivl),"bis zum Wechsel");   // v975
   rotBench.forEach(n=>{rotBenchSec[n]=(rotBenchSec[n]||0)+d;});
   rotField.forEach(n=>{rotFieldSec[n]=(rotFieldSec[n]||0)+d;}); // HOTFIX 12: Spielzeit der Feldspieler
   if(rotTW)rotFieldSec[rotTW]=(rotFieldSec[rotTW]||0)+d; // Torwart spielt auch (feste Position)
@@ -1048,11 +1049,44 @@ function uhrMeldungRender(){
   const knopf=(aktiv,v,txt)=>`<button type="button" class="seg-btn${aktiv?" active":""}" aria-pressed="${aktiv?"true":"false"}" onclick="uhrMeldungSchalten(${v})">${txt}</button>`;
   box.innerHTML=`<div style="font-size:var(--s-text);line-height:1.5;margin-bottom:10px">Jeder Timer-Pfiff kommt zusätzlich als Benachrichtigung – deine Uhr zeigt sie und vibriert, wenn sie Meldungen vom Handy anzeigt (Galaxy Watch: in der Galaxy-Wearable-App unter „Benachrichtigungen“ die Adler-App bzw. Chrome erlauben und „Immer auf beiden anzeigen“ wählen – sonst kommen die Meldungen bei offener App nur aufs Handy).</div>
     <div class="seg-ctrl" id="uhr-schalter" role="group" aria-label="Timer an die Uhr">${knopf(!an,false,"Aus")}${knopf(an,true,"An")}</div>
+    ${an?`<div style="font-size:var(--s-text);font-weight:700;margin:14px 0 6px">⏱️ Restzeit jede Minute (leise)</div>
+    <div class="seg-ctrl" id="uhr-rest" role="group" aria-label="Restzeit jede Minute">${[[false,"Aus"],[true,"An"]].map(([v,t])=>`<button type="button" class="seg-btn${uhrRestAn()===v?" active":""}" aria-pressed="${uhrRestAn()===v?"true":"false"}" onclick="uhrRestSchalten(${v})">${t}</button>`).join("")}</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Die Meldung auf der Uhr wird zu jeder vollen Minute still ersetzt: „Noch 3 Min.“ – vibriert wird nur bei Vorwarnung und Abpfiff.</div>`:""}
     ${gesperrt?`<div style="font-size:var(--s-klein);color:var(--red-text,#b91c1c);margin-top:8px">Benachrichtigungen sind für die App gesperrt. Erlauben in den Einstellungen des Handys (App-Info → Benachrichtigungen).</div>`:""}
     <button type="button" class="btn" id="uhr-test" onclick="uhrMeldungTest()" style="width:100%;min-height:48px;margin-top:12px"${an&&erlaubt?"":" disabled"}>⌚ Test an die Uhr</button>
     <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px;line-height:1.45">Gilt nur für dieses Handy. Die App muss während des Trainings offen bleiben – bei gesperrtem Handy kommen die Meldungen verspätet.</div>`;
 }
 
+/* v975 · Restzeit an die Uhr (Charles 26.11.: „Mehr als vibrieren geht nicht? Also z. B. die Zeit als Countdown anzuzeigen?“ –
+   gewählt: stille Minuten-Meldung). Läuft ein Timer, ersetzt die App ihre Benachrichtigung (gleicher tag „adler-uhr“) zu jeder
+   vollen Minute leise durch „⏱️ Noch n Min.“ – ohne Vibration, ohne erneutes Melden (silent, renotify false). Vorwarnung,
+   Wechsel und Abpfiff ersetzen sie wie bisher mit Vibration. Gezählt wird abgerundet: bei 2:59 steht „Noch 2 Min.“, unter einer
+   Minute „Noch weniger als 1 Min.“. Sekunden gehen nicht – die Weiterleitung zur Uhr ist für Sekundentakt nicht gebaut. */
+const UHR_REST_KEY="adler_uhr_rest";
+function uhrRestAn(){ try{ return localStorage.getItem(UHR_REST_KEY)==="1"; }catch(e){ return false; } }
+let _uhrRestLetzt="";
+async function uhrRest(sek,was){
+  if(!uhrMeldungAn()||!uhrRestAn())return false;
+  if(typeof Notification==="undefined"||Notification.permission!=="granted")return false;
+  sek=Math.floor(Number(sek)||0); if(sek<=0)return false;
+  if(uhrMeldung._z&&Date.now()-uhrMeldung._z<20000)return false;   // Abpfiff, Wechsel, Vorwarnung bleiben 20 s stehen
+  const min=Math.floor(sek/60), schl=String(was||"")+"|"+min;
+  if(schl===_uhrRestLetzt)return false;
+  _uhrRestLetzt=schl;
+  const titel=min>=1?`⏱️ Noch ${min} Min.`:"⏱️ Noch weniger als 1 Min.";
+  const o={body:String(was||""),tag:"adler-uhr",renotify:false,silent:true,data:{url:/\/eltern\//.test(location.pathname)?"./eltern/":"./trainer/"}};
+  try{
+    const reg=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();
+    if(reg&&reg.showNotification){ o.icon=new URL("logo.png",reg.scope).href; o.badge=new URL("badge-adler.png",reg.scope).href; await reg.showNotification(titel,o); return true; }
+  }catch(e){}
+  return false;
+}
+function uhrRestSchalten(an){
+  try{ localStorage.setItem(UHR_REST_KEY,an?"1":"0"); }catch(e){}
+  _uhrRestLetzt="";
+  if(typeof toast==="function")toast(an?"⏱️ Die Uhr zeigt jetzt jede Minute die Restzeit":"Restzeit auf der Uhr aus");
+  uhrMeldungRender();
+}
 async function rotReset(){   // v874: async – die Rückfrage ist ein Fenster der App
   const gespielt=Object.values(rotFieldSec||{}).some(v=>v>0);
   if(gespielt&&!await frageJaNein({emoji:"🔄",titel:"Wechsel-Timer zurücksetzen?",text:"Die erfassten Spielzeiten dieses Spiels werden dabei auf 0:00 gesetzt.",ja:"Zurücksetzen",ton:"rot"}))return;
