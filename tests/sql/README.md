@@ -248,3 +248,18 @@ Erwartet: „Eltern von X“, „Xs Mama“, „X’ Papa“ mit unbekanntem X e
 „Eltern von Kindern“, „von Anfang“, „Mutter von Charles“ bleiben stumm (0); ohne Zusammenhang kein Verdacht (0); `namen_verdacht`
 meldet den Eintrag mit 1; nach einer Schreibweise ohne Buchstaben steht „ein Kind“ und der Verdacht ist weg; die Leserolle liest,
 `anon` nicht. v808 und v812 liefern mit v978 zeichengleich dasselbe wie ohne.
+
+## v981 · Tee-Kannen
+
+```bash
+psql -d t -f tests/sql/supabase-attrappe.sql && psql -d t -f tests/sql/v981-vorher.sql \
+  && psql -d t -f supabase/migrations/20261127_v981_tee_kannen.sql && psql -d t -f tests/sql/v981-tee-kannen.sql
+```
+
+Erwartet: `anon` bekommt keinen Stand; Eltern lesen die Tabelle nicht direkt (0 Zeilen). Eltern A nehmen am laufenden Training
+Kanne 1 (Training ohne Rückmeldung zählt als zugesagt), eine zweite Kanne und das Mitnehmen an einem späteren Termin scheitern.
+Eltern B (Kind abgesagt) dürfen nicht mitnehmen, sehen Kanne 1 „unterwegs“ ohne Name und Datum und können sie weder bringen noch
+austragen. Eltern C bekommen Kanne 1 nicht (false), aber Kanne 2; zum Spiel mit „unsicher“ und zum ausfallenden Training dürfen sie
+sie nicht bringen. Eltern A bringen Kanne 1 zum Training übermorgen (doppelt = ein Tee-Eintrag), tragen aus (Eintrag weg), tragen
+fürs Spiel ein; direktes Schreiben scheitert. Der Trainer sieht Namen und Termine, setzt Kanne 2 zurück; Eltern dürfen das nicht.
+Hat das Spiel begonnen, ist Kanne 1 wieder frei. Neun Fehlermeldungen im Lauf sind gewollt.

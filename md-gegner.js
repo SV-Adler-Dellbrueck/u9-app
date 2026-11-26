@@ -604,19 +604,39 @@ async function helferTrainerFill(t){
   const box=document.getElementById("helfer-tm-"+t.id); if(!box)return;
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/event_helfer?termin_id=eq.${t.id}&select=name,aufgabe&order=created_at.asc`,{headers:sbAuthHeaders()});if(r.ok)rows=await r.json();}catch(e){}
-  /* v969: Tee-Staffel – wer heute nach dem Termin die Kannen für den nächsten Tee mitnimmt (Eintragungen am nächsten Termin). */
+  /* v981: Tee-Kannen – bei wem sie gerade sind (Trainer sehen die Namen); Zurücksetzen in der Anwesenheit. */
   let tee="";
-  if(typeof teeTermin==="function"&&teeTermin(t)&&!(typeof terminVorbei==="function"&&terminVorbei(t))){
-    const nb=await teeNachbarn(t);
-    if(nb.nachher){
-      let tr=[];
-      try{const r=await fetch(`${SB_URL}/rest/v1/event_helfer?termin_id=eq.${nb.nachher.id}&aufgabe=eq.${encodeURIComponent(TEE_AUFGABE)}&select=name&order=created_at.asc`,{headers:sbAuthHeaders()});if(r.ok)tr=await r.json();}catch(e){}
-      const n=teeKannen(nb.nachher), fehlt=Math.max(0,n-(tr||[]).length);
-      tee=`<div class="tm-tee-kannen" style="margin-top:4px">🫖 <b>Kannen für den Tee am ${esc(teeWann(nb.nachher))}</b>: ${(tr||[]).length?(tr||[]).map(x=>esc(x.name)).join(", "):"noch niemand"}${fehlt?` · <b>frei: ${fehlt}</b>`:" · ✓ steht"}</div>`;
-    }
+  if(typeof teeTermin==="function"&&teeTermin(t)&&typeof teeKannenStand==="function"){
+    const st=await teeKannenStand();
+    if(st&&st.length)tee=`<div class="tm-tee-kannen" style="margin-top:4px">🫖 <b>Tee-Kannen</b>: ${st.map(k=>`${Number(k.nr)} ${k.frei?"am Platz":"bei "+esc(k.name||"einer Familie")+(Number(k.tee_termin_id)===Number(t.id)?" (bringt Tee mit)":"")}`).join(" · ")}</div>`;
   }
   if(!rows.length){box.innerHTML='🙌 Helfer: noch niemand eingetragen'+tee;return;}
   box.innerHTML='🙌 <b>Helfer</b>: '+rows.map(x=>`${esc(x.aufgabe)} (${esc(x.name)})`).join(" · ")+tee;
+}
+/* v981 · Tee-Kannen in der Anwesenheit: wo sind sie, seit wann, wer bringt sie mit Tee mit – und „ist zurück“, falls eine hängen
+   bleibt (erster Tipp fragt, zweiter setzt zurück). Ohne Datenbank-Antwort bleibt der Bereich leer. */
+async function teeAnwesenheitRender(){
+  const box=document.getElementById("aw-tee"); if(!box)return;
+  if(typeof teeKannenStand!=="function"){ box.innerHTML=""; return; }
+  const st=await teeKannenStand(); if(!st||!st.length){ box.innerHTML=""; return; }
+  const tage=iso=>{ const d=Math.floor((Date.now()-new Date(iso).getTime())/86400000); return d>=1?d:0; };
+  const zeile=k=>{
+    if(k.frei)return `<div class="tee-aw-zeile" style="display:flex;justify-content:space-between;align-items:center;min-height:44px;border-top:1px solid var(--rand,#e2e8f0)"><span><b>Kanne ${Number(k.nr)}</b> · am Platz</span></div>`;
+    const seit=k.seit?new Date(k.seit).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}):"", n=k.seit?tage(k.seit):0;
+    const unter=k.tee_termin_id?`<span style="font-size:var(--s-klein);color:var(--text2)">bringt Tee mit ✓</span>`
+      :(n>=7?`<span style="font-size:var(--s-klein);color:#9a3412">seit ${n} Tagen – noch kein Tee-Termin</span>`:"");
+    return `<div class="tee-aw-zeile" style="display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:52px;border-top:1px solid var(--rand,#e2e8f0)">
+      <span><b>Kanne ${Number(k.nr)}</b> · ${esc(k.name||"eine Familie")}${seit?" · seit "+esc(seit):""}${unter?"<br>"+unter:""}</span>
+      <button type="button" class="btn btn-sm" style="min-height:44px" data-nr="${Number(k.nr)}" onclick="teeKanneZurueck(${Number(k.nr)},this)">ist zurück</button></div>`;
+  };
+  box.innerHTML=`<section id="tee-aw" style="margin-top:14px"><div style="font-weight:700">🫖 Tee-Kannen</div>${st.map(zeile).join("")}</section>`;
+}
+async function teeKanneZurueck(nr,btn){
+  if(!btn)return;
+  if(btn.dataset.sicher!=="1"){ btn.dataset.sicher="1"; btn.textContent="nochmal tippen"; clearTimeout(btn._t); btn._t=setTimeout(()=>{ btn.dataset.sicher=""; btn.textContent="ist zurück"; },3500); return; }
+  clearTimeout(btn._t); btn.disabled=true;
+  try{ const r=await fetch(`${SB_URL}/rest/v1/rpc/tee_kanne_zurueck`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_nr:nr})}); if(!r.ok)toast("Konnte nicht zurücksetzen","err"); }catch(e){ toast("Kein Netz","err"); }
+  teeAnwesenheitRender();
 }
 // F4: Eltern-Puls-Aggregat fürs Trainer-Detail (anonym via puls_aggregate).
 async function pulsTrainerFill(t){
