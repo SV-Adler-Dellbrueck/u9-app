@@ -2021,6 +2021,7 @@ function tdDetailOben(t){
     ${(t.ort||t.heim===true)?routeBtn(t.ort||VEREIN_ADRESSE,{block:true}):""}
     ${infoRow("🏟️","Platz", t.platz?esc(t.platz):"")}
     ${infoRow("⚽","Spielform", spielformLbl)}
+    ${(typeof teeTermin==="function"&&teeTermin(t)&&!(typeof terminVorbei==="function"&&terminVorbei(t)))?`<div class="td-becher" style="display:flex;gap:8px;align-items:center;background:var(--surface2);border-radius:10px;padding:8px 10px;font-size:var(--s-text);color:var(--text);margin:6px 0">🥤 <span>Bitte <b>eigenen Becher</b> mitgeben – mit Namen.</span></div>`:""}
     ${faelltAus&&typeof elternPlatzHinweisHtml==="function"?elternPlatzHinweisHtml(t):""}
     <div id="td-anhang"></div>
     <div id="td-spielplan"></div>
@@ -2398,7 +2399,7 @@ const HELFER_AUFGABEN=[
      Helferbuttons“. Steht IMMER da (ohne Freigabe am Termin); TEE_STANDARD = so viele Kannen. */
   {t:"🫖 Tee mitbringen", typen:["training","spiel","turnier"], immer:true,
    kurz:()=>"Tee mitbringen",
-   d:()=>"Eine Thermoskanne warmen Tee für die Kinder mitbringen."},
+   d:t=>teeBeschreibung(t)},   // v969: Kannen-Staffel – die Kanne kommt vom Termin davor
   {t:"📸 Fotografieren", typen:["spiel","turnier","event"],
    kurz:()=>"Fotos machen",
    d:()=>"Ein paar Fotos machen und sie danach in die Galerie laden. Das Handy reicht völlig."}
@@ -2438,6 +2439,84 @@ function helferAbSatz(t,min){
    eigene Aufgaben des Trainers tragen ihren Hinweis selbst. `t` bleibt der Schlüssel in
    event_helfer.aufgabe. */
 const TEE_STANDARD=2;
+/* v969 · Tee-Staffel (Charles 26.11.): „Wir haben zwei große Pumpkannen, die Kinder bringen ihre eigenen Becher mit. Wenn jemand
+   den Tee in der Kanne mitbringt, müsste ein anderes Elternteil sich schon bereit erklären, fürs nächste Mal Tee zu machen und die
+   Kanne mitzunehmen.“ Beschlossen nach Bild: Wer sich für den Tee an einem Termin einträgt, nimmt am Termin DAVOR (letztes
+   Training/Spiel/Turnier, das nicht ausfällt) je eine Kanne mit, spült sie und bringt sie mit Tee zurück. Zwei Familien, je eine
+   Kanne (TEE_STANDARD). Freiwillig (Charles: „nicht wie bei der Grillhütte als jeder muss es mal machen“) – kein „fehlt“, keine
+   Reihenfolge, niemand wird eingeteilt. Gespeichert wird nichts Neues: die Eintragung bleibt event_helfer am Termin MIT Tee; der Termin davor zeigt
+   sie nur an („Für den nächsten Tee“) und trägt von dort aus ein. Fehlt jemand, fragt push-cron am Vortag des Termins davor nach. */
+const TEE_AUFGABE="🫖 Tee mitbringen", TEE_TYPEN=["training","spiel","turnier"];
+function teeTermin(t){ return !!t&&TEE_TYPEN.includes(t.typ)&&!(typeof terminFaelltAus==="function"&&terminFaelltAus(t)); }
+function _teeKey(t){ return String((t&&t.datum)||"")+" "+String((t&&t.uhrzeit)||"99:99").slice(0,5); }
+function teeWann(t){
+  const d=new Date(String(t.datum)+"T12:00:00");
+  return d.toLocaleDateString("de-DE",{weekday:"long"})+", "+d.toLocaleDateString("de-DE",{day:"numeric",month:"numeric"});
+}
+function teeTypWort(t){ return t&&t.typ==="training"?"Training":(t&&t.typ==="turnier"?"Turnier":"Spiel"); }
+function teeKannen(t){
+  const f=(t&&Array.isArray(t.helfer_aufgaben))?t.helfer_aufgaben.find(x=>x&&x.t===TEE_AUFGABE):null;
+  return f?Math.max(1,Math.min(20,parseInt(f.n,10)||1)):TEE_STANDARD;
+}
+/* Der Termin davor und der danach – frisch aus der Datenbank, weil ELTERN_TERMINE erst bei heute beginnt und der Trainer-
+   bereich eine eigene Liste führt. Termine, die ausfallen, überspringt die Staffel. */
+async function teeNachbarn(t){
+  const sel="id,datum,uhrzeit,typ,titel,gegner,platz_status,helfer_aufgaben", typ="typ=in.(training,spiel,turnier)";
+  let nach=[],vor=[];
+  try{
+    const [a,b]=await Promise.all([
+      fetch(`${SB_URL}/rest/v1/termine?select=${sel}&${typ}&datum=gte.${t.datum}&order=datum.asc,uhrzeit.asc.nullslast&limit=8`,{headers:sbAuthHeaders()}),
+      fetch(`${SB_URL}/rest/v1/termine?select=${sel}&${typ}&datum=lte.${t.datum}&order=datum.desc,uhrzeit.desc.nullsfirst&limit=8`,{headers:sbAuthHeaders()})]);
+    if(a.ok)nach=await a.json(); if(b.ok)vor=await b.json();
+  }catch(e){}
+  const k=_teeKey(t), anders=x=>x&&Number(x.id)!==Number(t.id);
+  return {nachher:(nach||[]).filter(x=>anders(x)&&_teeKey(x)>k&&teeTermin(x))[0]||null,
+          vorher:(vor||[]).filter(x=>anders(x)&&_teeKey(x)<k&&teeTermin(x))[0]||null};
+}
+/* Beschreibung der Tee-Aufgabe: mit dem Termin davor, sobald er bekannt ist (tdHelferLoad setzt t._teeVorher). */
+function teeBeschreibung(t){
+  const v=t?t._teeVorher:undefined, becher=" Becher bringen die Kinder selbst mit.";
+  if(v===undefined)return "Am Termin davor eine der Pumpkannen mitnehmen, spülen und mit warmem Tee mitbringen."+becher;
+  if(v&&!(typeof terminVorbei==="function"&&terminVorbei(v)))return `Am ${teeWann(v)} nach dem ${teeTypWort(v)} eine der Pumpkannen mitnehmen, spülen und hierher mit warmem Tee mitbringen.`+becher;
+  return "Eine der Pumpkannen mit warmem Tee mitbringen – die Kanne gibt es beim Trainerteam."+becher;
+}
+/* „Für den nächsten Tee“ am Termin davor: je Kanne eine Zeile (Wort und Farbe), dazu der eine Knopf. Weiße Karte, feste helle Werte
+   wie die übrigen Zeilen der Helfer-Box. */
+function teeStaffelHtml(t,n,rows,uid){
+  if(!n)return "";
+  const plaetze=teeKannen(n), mein=rows.some(r=>r.user_id===uid), offen=rows.length<plaetze;
+  const zeilen=Array.from({length:plaetze},(_,i)=>{ const r=rows[i];
+    return `<div class="tee-kanne" style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px">
+      <span>Kanne ${i+1} · ${r?"<b>"+esc(r.name)+"</b>":"noch offen"}</span>
+      <span style="flex:none;font-size:var(--s-klein);font-weight:700;border-radius:99px;padding:3px 9px;border:1px solid ${r?"#15803d;color:#166534;background:#f0fdf4":"#b91c1c;color:#991b1b;background:#fef2f2"}">${r?"✓ steht":"frei"}</span></div>`; }).join("");
+  const wer=plaetze===1?"die Kanne":"eine der Kannen";
+  const knopf=mein
+    ?`<button class="btn" onclick="teeKanneWeg(${Number(n.id)},${Number(t.id)})" style="width:100%;justify-content:center;margin-top:8px;min-height:48px">✓ Du nimmst eine Kanne mit · austragen</button>`
+    :(offen?`<button class="btn" onclick="teeKanneNehmen(${Number(n.id)},${Number(t.id)})" style="width:100%;justify-content:center;margin-top:8px;min-height:48px">Ich nehme eine Kanne mit</button>`:"");
+  return `<div id="td-tee-staffel" style="border-left:4px solid #b45309;background:#fffbeb;border-radius:10px;padding:10px;margin-top:10px;font-size:var(--s-text);line-height:1.45;color:#1f2937">
+    <b>🫖 Für den nächsten Tee (${esc(teeWann(n))})</b><br>Wer mag, nimmt nach ${t.typ==="training"?"diesem Training":"diesem Termin"} ${wer} mit, spült sie und bringt sie am ${esc(teeWann(n))} mit warmem Tee zurück – ganz freiwillig, danke!
+    ${zeilen}${knopf}</div>`;
+}
+async function teeKanneNehmen(naechsterId,terminId){
+  const schl="tee|"+naechsterId; if(!teeKanneNehmen._busy)teeKanneNehmen._busy=new Set();
+  if(teeKanneNehmen._busy.has(schl))return; teeKanneNehmen._busy.add(schl); setTimeout(()=>teeKanneNehmen._busy.delete(schl),1500);
+  try{const r=await fetch(`${SB_URL}/rest/v1/event_helfer`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({termin_id:naechsterId,name:_helferName(),aufgabe:TEE_AUFGABE})});if(!r.ok){toast("Konnte nicht eintragen","err");return;}}catch(e){toast("Netzwerkfehler","err");return;}
+  try{navigator.vibrate&&navigator.vibrate(30);}catch(e){}
+  adlerDank();
+  _teeNeu(terminId);   // neu gezeichnet wird der Termin, in dem man gerade ist – nicht der nächste
+}
+/* Der offene Termin, so wie tdHelferLoad ihn bekam – ELTERN_TERMINE reicht nur 15 Termine weit, und ohne Typ fiele die Staffel weg. */
+const _teeOffen={};
+function _teeNeu(terminId){
+  const t=_teeOffen[Number(terminId)];
+  if(!t){ _helferReload(terminId); return; }
+  tdHelferLoad(t);
+  if(typeof elternHelferKachelLoad==="function")elternHelferKachelLoad(t);
+}
+async function teeKanneWeg(naechsterId,terminId){
+  try{await fetch(`${SB_URL}/rest/v1/event_helfer?termin_id=eq.${naechsterId}&aufgabe=eq.${encodeURIComponent(TEE_AUFGABE)}&user_id=eq.${_sbUid()}`,{method:"DELETE",headers:sbAuthHeaders()});}catch(e){if(typeof toast==="function")toast("Austragen fehlgeschlagen – kein Netz?","err");}
+  _teeNeu(terminId);
+}
 function helferTasksFuer(typ,t){
   const frei=(t&&Array.isArray(t.helfer_aufgaben))?t.helfer_aufgaben:[];
   /* v809: Aufgaben mit `immer` stehen bei ihren Termintypen auch ohne Freigabe da (Tee). */
@@ -2459,6 +2538,17 @@ async function tdHelferLoad(t){
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/event_helfer?termin_id=eq.${t.id}&select=id,name,aufgabe,user_id&order=created_at.asc`,{headers:sbAuthHeaders()});if(r.ok)rows=await r.json();}catch(e){}
   const uid=_sbUid();
+  /* v969: Tee-Staffel – der Termin davor (für die Beschreibung) und der nächste Tee (wer heute die Kannen mitnimmt). */
+  let teeBox="";
+  if(teeTermin(t)){
+    _teeOffen[Number(t.id)]=t;
+    const nb=await teeNachbarn(t); t._teeVorher=nb.vorher||null;
+    if(nb.nachher){
+      let tr=[];
+      try{const r=await fetch(`${SB_URL}/rest/v1/event_helfer?termin_id=eq.${nb.nachher.id}&aufgabe=eq.${encodeURIComponent(TEE_AUFGABE)}&select=id,name,user_id&order=created_at.asc`,{headers:sbAuthHeaders()});if(r.ok)tr=await r.json();}catch(e){}
+      teeBox=teeStaffelHtml(t,nb.nachher,tr||[],uid);
+    }
+  }
   const mine=new Set(rows.filter(x=>x.user_id===uid).map(x=>x.aufgabe));
   const list=rows.length?rows.map(x=>`<div style="display:flex;align-items:center;gap:6px;font-size:var(--s-text);padding:3px 0">
       <span style="flex:1">${esc(x.aufgabe)} · <b>${esc(x.name)}</b></span>
@@ -2486,6 +2576,7 @@ async function tdHelferLoad(t){
     ${t.helfer_hinweis?`<div style="font-size:var(--s-klein);color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:7px 9px;margin-bottom:8px;line-height:1.4">💬 ${esc(t.helfer_hinweis)}</div>`:""}
     ${list}
     <div style="margin-top:8px">${buttons}</div>
+    ${teeBox}
     <!-- Freifeld: was die Liste nicht kennt. Der Text wird zur Aufgabe – deshalb das feste
          ✏️ davor, damit ein getipptes „Aufbau" nie zufaellig auf einen festen Aufgaben-
          schluessel faellt und dessen Knopf als angehakt erscheinen laesst. -->

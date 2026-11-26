@@ -602,8 +602,19 @@ async function helferTrainerFill(t){
   const box=document.getElementById("helfer-tm-"+t.id); if(!box)return;
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/event_helfer?termin_id=eq.${t.id}&select=name,aufgabe&order=created_at.asc`,{headers:sbAuthHeaders()});if(r.ok)rows=await r.json();}catch(e){}
-  if(!rows.length){box.innerHTML='🙌 Helfer: noch niemand eingetragen';return;}
-  box.innerHTML='🙌 <b>Helfer</b>: '+rows.map(x=>`${esc(x.aufgabe)} (${esc(x.name)})`).join(" · ");
+  /* v969: Tee-Staffel – wer heute nach dem Termin die Kannen für den nächsten Tee mitnimmt (Eintragungen am nächsten Termin). */
+  let tee="";
+  if(typeof teeTermin==="function"&&teeTermin(t)&&!(typeof terminVorbei==="function"&&terminVorbei(t))){
+    const nb=await teeNachbarn(t);
+    if(nb.nachher){
+      let tr=[];
+      try{const r=await fetch(`${SB_URL}/rest/v1/event_helfer?termin_id=eq.${nb.nachher.id}&aufgabe=eq.${encodeURIComponent(TEE_AUFGABE)}&select=name&order=created_at.asc`,{headers:sbAuthHeaders()});if(r.ok)tr=await r.json();}catch(e){}
+      const n=teeKannen(nb.nachher), fehlt=Math.max(0,n-(tr||[]).length);
+      tee=`<div class="tm-tee-kannen" style="margin-top:4px">🫖 <b>Kannen für den Tee am ${esc(teeWann(nb.nachher))}</b>: ${(tr||[]).length?(tr||[]).map(x=>esc(x.name)).join(", "):"noch niemand"}${fehlt?` · <b>frei: ${fehlt}</b>`:" · ✓ steht"}</div>`;
+    }
+  }
+  if(!rows.length){box.innerHTML='🙌 Helfer: noch niemand eingetragen'+tee;return;}
+  box.innerHTML='🙌 <b>Helfer</b>: '+rows.map(x=>`${esc(x.aufgabe)} (${esc(x.name)})`).join(" · ")+tee;
 }
 // F4: Eltern-Puls-Aggregat fürs Trainer-Detail (anonym via puls_aggregate).
 async function pulsTrainerFill(t){
