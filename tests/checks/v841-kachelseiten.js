@@ -44,7 +44,7 @@ module.exports = async function (h) {
   else zeilen.push(`b) Orga: ${r.orga.offen} Kacheln offen, „Einstellungen“ als Klappe, Benachrichtigungen außerhalb`);
   const klein = r.elki.klappen.concat(r.orga.klappen).filter(k => k.h < 56 || !/\d+ Eintr/.test(k.text));
   if (klein.length) probleme.push("c) Klappe unter 56 px oder ohne Anzahl: " + JSON.stringify(klein));
-  if (!r.c.offen || r.c.kacheln !== 5 /* v939: + Mein Geburtstag */ || r.c.gemerkt !== "1" || !r.c.nachWechsel) probleme.push("c) Öffnen und Merken: " + JSON.stringify(r.c));
+  if (!r.c.offen || r.c.kacheln !== 6 /* v939: + Mein Geburtstag, v974: + Timer an die Uhr */ || r.c.gemerkt !== "1" || !r.c.nachWechsel) probleme.push("c) Öffnen und Merken: " + JSON.stringify(r.c));
   else zeilen.push("c) Tipp öffnet fünf Kacheln; nach dem Wechsel der Seite ist die Klappe noch offen");
   const SOLL_ELKI = ["rufeEinstieg", "ansageTrainerOpen", "epollTrainerOpen", "einladungskartenOpen", "rueckmeldeStatistikOpen", "pushAbdeckungOpen", "elternTeamEditOpen", "federnVergebenOpen", "questEditorOpen", "urkundenOpen", "adlerWeltOpen", "codexKinderEditOpen", "wahlTrainerOpen", "albumFotosOpen", "go", "nestEditorOpen", "stadionheftOpen"];
   const SOLL_ORGA = ["trainerPlanOpen", "trainerMeetingOpen", "tagebuchGedanke", "mitbringTrainerOpen", "kasseOpen", "materialOpen", "fundbueroOpen", "setupTrainerOpen", "pwChangeOpen", "trainerGeburtstagOpen", "nutzungOpen", "backupExport"];

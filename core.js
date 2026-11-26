@@ -2451,3 +2451,4 @@ async function freudeStart(art){
   }
   setTimeout(()=>freudeMeilenstein(art,name),1500);
 }
+
