@@ -51,6 +51,11 @@ module.exports = async function (h) {
   const koepfe = String(u.ablauf_lang).split("\n").filter(z => /^[A-ZÄÖÜ][A-ZÄÖÜ -]+$/.test(z.trim())).map(z => z.trim());
   if (JSON.stringify(koepfe) !== JSON.stringify(KOEPFE)) probleme.push("a) Überschriften " + koepfe.join(" · "));
   if (String(bib.stand) < "2026-11-26-1") probleme.push(`a) Stand „${bib.stand}“ nicht hochgesetzt`);
+  /* v973: Coaching mit drei Kernpunkten und Korrekturen, Eskalation leichter/schwerer (Charles 26.11.: „Skillmatte angleichen“) */
+  const L = String(u.ablauf_lang), teil = (k, n) => L.slice(L.indexOf(k + "\n"), L.indexOf(n + "\n"));
+  const coach = teil("COACHING-ASPEKTE", "ESKALATIONSSTUFEN"), esk = teil("ESKALATIONSSTUFEN", "ZUSATZREGELN");
+  const kp = (coach.match(/^\d\./gm) || []).length;
+  if (kp !== 3 || !/^Korrekturen:/m.test(coach) || !/^Leichter:/m.test(esk) || !/^Schwerer:/m.test(esk) || String(bib.stand) < "2026-11-26-2") probleme.push(`a) Schema: ${kp} Kernpunkte, Korrekturen ${/^Korrekturen:/m.test(coach)}, leichter/schwerer ${/^Leichter:/m.test(esk)}/${/^Schwerer:/m.test(esk)}, Stand ${bib.stand}`);
   if (!probleme.length) zeilen.push(`a) Schema vollständig, 5 Bilder, kurz ${String(u.kurz).length} Zeichen, zwölf Überschriften, Prüfungen ohne Befund`);
   // b)
   const nb = probleme.length;
