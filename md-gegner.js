@@ -508,6 +508,7 @@ function _tmdKarte(t){
         <div id="gegner-contact-tm"></div>`:""}
       ${trainerBlock}
       ${sec("Am Platz")}
+      ${tmKabineHtml(t)}
       <div id="wx-tm-${t.id}"></div>
       ${notizClean?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:6px">${esc(notizClean)}</div>`:""}
       ${ampelBlock}
@@ -537,6 +538,7 @@ function _tmdKarte(t){
       ${ampelBlock}
       ${sec("Termin verwalten")}
       ${kacheln(verwalten)}
+      ${tmKabineHtml(t)}
       ${(t.heim===true&&istSpiel&&kommt)?`<div id="bd-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:10px">🔥 Grillhütte: lädt …</div>`:""}
       ${kommt?`<div id="helfer-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:6px"></div>`:""}
       ${istMeeting?`<div id="meet-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:8px;line-height:1.5"></div>
@@ -1038,6 +1040,7 @@ function tmEdit(id){
       <button type="button" class="btn btn-sm" onclick="gegnerAddrSearch('te-ort','te-titel','te-addr-results')" aria-label="Adresse suchen (OpenStreetMap)"><i class="ti ti-map-search"></i>Finden</button></div>
     <div id="te-addr-results"></div>
     ${(isTraining||isSpiel)?`<label id="te-platz-row" style="font-size:var(--s-klein);color:var(--text2);display:${ausw?"none":"block"};margin-top:8px">${isSpiel?"Spielfeld-Aufteilung":"Platz"}<select id="te-platz" style="${fld}">${platzOpts}</select></label>`:''}
+    ${isSpiel?`<label id="te-kabine-row" style="font-size:var(--s-klein);color:var(--text2);display:${ausw?"none":"block"};margin-top:8px">Kabine (nur für Trainer)<select id="te-kabine" style="${fld}"><option value="">noch offen</option>${Object.entries(TM_KABINEN).map(([k,l])=>`<option value="${k}"${t.kabine===k?" selected":""}>${l}</option>`).join("")}</select></label>`:''}
     ${isSpiel?`<div style="margin-top:8px"><div id="te-sf-lbl" style="font-size:var(--s-klein);color:var(--text2);margin-bottom:3px">${ausw?"Spielform – was der Gastgeber anbietet, mehrere möglich":"Spielform – mehrere möglich"}</div>
       <div class="seg-ctrl" id="te-sf" role="group" aria-labelledby="te-sf-lbl" style="flex-wrap:wrap">${sfKnoepfe}</div></div>`:''}
     ${isSpiel?`<div style="margin-top:8px"><div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:3px">Spieldauer</div>
@@ -1140,6 +1143,7 @@ async function tmEditSave(id){
   const teAusw=!!document.querySelector('#te-heim-seg .seg-btn[data-val="ausw"].active');
   if(document.getElementById("te-heim-seg"))body.heim=!teAusw;
   if(g("te-platz"))body.platz=teAusw?null:((g("te-platz").value||"").trim()||null);   // v708: auswärts kein Feld
+  if(g("te-kabine"))body.kabine=teAusw?null:(TM_KABINEN[g("te-kabine").value]?g("te-kabine").value:null);   // v970
   if(g("te-sf"))body.spielform=[...document.querySelectorAll("#te-sf .te-sf-k.active")].map(b=>b.dataset.val).join(",")||null;
   if(g("te-dauer"))body.spieldauer_min=parseInt(g("te-dauer").value)||10;
   if(g("te-hz"))body.halbzeiten=parseInt(g("te-hz").value)||2;
@@ -1170,6 +1174,12 @@ function tmEditSf(btn){
   const an=!btn.classList.contains("active");
   btn.classList.toggle("active",an); btn.setAttribute("aria-pressed",String(an));
 }
+/* v970 · Charles 26.11.: „Wir brauchen noch ein Infofeld für die Trainer, in welcher Kabine wir an Heimspielen sind. Heim 1,
+   Heim 2, Gast 1, Gast 2.“ – termine.kabine (Schlüssel, Prüfregel in der Migration v970). Sichtbar nur im Trainerbereich
+   (Beschluss: nur Trainer); auswärts gibt es das Feld nicht. */
+const TM_KABINEN={heim1:"Heim 1",heim2:"Heim 2",gast1:"Gast 1",gast2:"Gast 2"};
+function tmKabineText(t){ return (t&&t.heim===true&&(t.typ==="spiel"||t.typ==="turnier")&&TM_KABINEN[t.kabine])||""; }
+function tmKabineHtml(t){ const k=tmKabineText(t); return k?`<div class="tm-kabine" style="font-size:var(--s-text);color:var(--text);margin-top:6px">🚪 <b>Kabine:</b> ${esc(k)}</div>`:""; }
 /* v708: Heim/Auswärts im Bearbeiten-Fenster – auswärts verschwindet die Spielfeld-Aufteilung,
    und aus „Wer hilft“ wird „Wer betreut die Kinder mit?“. Schon angehakte Aufgaben bleiben
    erhalten, solange das Fenster offen ist (Betreuung wird übernommen). */
@@ -1179,6 +1189,7 @@ function tmEditHeim(heim,id){
   const frei=(typeof tmHelferFreigabeLesen==="function"&&document.getElementById("te-helfer-frei"))?tmHelferFreigabeLesen():t.helfer_aufgaben;
   const tt=Object.assign({},t,{heim:!!heim,helfer_aufgaben:frei});
   const row=document.getElementById("te-platz-row"); if(row)row.style.display=heim?"block":"none";
+  const kr=document.getElementById("te-kabine-row"); if(kr)kr.style.display=heim?"block":"none";   // v970
   const box=document.getElementById("te-helfer-box"); if(box)box.innerHTML=tmHelferFreigabeHtml(tt);
   const ti=document.getElementById("te-helfer-titel"); if(ti)ti.textContent=heim?"Wer hilft":"Wer betreut die Kinder mit?";
   const hl=document.getElementById("te-hinweis-lbl"); if(hl)hl.textContent=heim?"Hinweis für Helfer":"Hinweis für die Betreuung";
