@@ -1831,7 +1831,7 @@ function _tpTwKindAufSeite(){
     if(Array.isArray(kind[si]))kind[si]=kind[si].filter(n=>angebot.includes(n));
     const an=tpKinderVon(si), roll=tpRollVon(si), w=d.wer[si];
     boxen.forEach(c=>{ const soll=an.includes(c.value); if(c.checked!==soll)c.checked=soll; });
-    w.querySelectorAll(".tp-ind-modus .seg-btn").forEach(b=>{ const soll=String(!!roll===(b.dataset.roll==="1")); if(b.getAttribute("aria-pressed")!==soll)b.setAttribute("aria-pressed",soll); });
+    w.querySelectorAll(".tp-ind-modus .seg-btn").forEach(b=>{ const soll=String(!!roll===(b.dataset.roll==="1")); if(b.getAttribute("aria-pressed")!==soll)b.setAttribute("aria-pressed",soll); b.classList.toggle("active",soll==="true"); });
     const ausw=w.querySelector(".tp-ind-auswahl"), rol=w.querySelector(".tp-ind-roll");
     if(ausw)ausw.hidden=!!roll; if(rol)rol.hidden=!roll;
     if(roll){ const nS=w.querySelector(".tp-ind-n"), tS=w.querySelector(".tp-ind-takt"); if(nS&&nS.value!==String(roll.n))nS.value=String(roll.n); if(tS&&tS.value!==String(roll.takt))tS.value=String(roll.takt); }
@@ -3413,20 +3413,21 @@ function _tpRenderTimelineIntern(){
       html+=`<div class="tp-ind-wer" data-slot="${si}">
         <div style="font-size:var(--s-klein);color:var(--text2);font-weight:600;margin-bottom:4px" id="tp-ind-wer-${si}">Wer?</div>
         <div class="seg-ctrl tp-ind-modus" role="group" aria-labelledby="tp-ind-wer-${si}" style="margin-bottom:8px">
-          <button type="button" class="seg-btn" data-roll="0" aria-pressed="true" onclick="tpRollSetzen(${si},null);tpGeaendert({speichern:'verzoegert'})">✓ Ausgewählte</button>
+          <button type="button" class="seg-btn active" data-roll="0" aria-pressed="true" onclick="tpRollSetzen(${si},null);tpGeaendert({speichern:'verzoegert'})">✓ Ausgewählte</button>
           <button type="button" class="seg-btn" data-roll="1" aria-pressed="false" onclick="tpRollSetzen(${si},{});tpGeaendert({speichern:'verzoegert'})">🔄 Alle rollierend</button>
         </div>
         <div class="tp-ind-auswahl">
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-            ${kids.map(k=>`<label class="tp-check"><input type="checkbox" value="${esc(k.name)}" class="tp-ind-player" data-slot="${si}" onchange="tpKindSetzen(Number(this.dataset.slot),this.value,this.checked);tpIndPlayerChange(${si});tpGeaendert({zeichnen:false,speichern:'verzoegert'})"> ${esc(k.name)}</label>`).join("")||`<span style="font-size:var(--s-klein);color:var(--text2)">Noch keine Kinder im Kader.</span>`}
+            ${kids.map(k=>`<label class="tp-check"><input type="checkbox" value="${esc(k.name)}" class="tp-ind-player" data-slot="${si}" onchange="tpKindSetzen(Number(this.dataset.slot),this.value,this.checked);tpIndPlayerChange(${si});tpGeaendert({zeichnen:false,speichern:'verzoegert'})"><span>${esc(k.name)}</span></label>`).join("")||`<span style="font-size:var(--s-klein);color:var(--text2)">Noch keine Kinder im Kader.</span>`}
           </div>
         </div>
         <div class="tp-ind-roll" hidden>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:var(--s-text)">
+          <div style="display:grid;grid-template-columns:auto 84px auto;gap:8px 10px;align-items:center;font-size:var(--s-text)">
             <label for="tp-ind-n-${si}">Gleichzeitig</label>
-            <select id="tp-ind-n-${si}" class="tp-ind-n" style="min-height:44px" onchange="tpRollSetzen(${si},{n:this.value});tpIndPlayerChange(${si});tpGeaendert({zeichnen:false,speichern:'verzoegert'})">${TP_ROLL_N.map(n=>`<option value="${n}">${n}</option>`).join("")}</select>
-            <label for="tp-ind-takt-${si}">Kinder · Wechsel alle</label>
-            <select id="tp-ind-takt-${si}" class="tp-ind-takt" style="min-height:44px" onchange="tpRollSetzen(${si},{takt:this.value});tpIndPlayerChange(${si});tpGeaendert({zeichnen:false,speichern:'verzoegert'})">${TP_ROLL_TAKT.map(n=>`<option value="${n}">${n}</option>`).join("")}</select>
+            <select id="tp-ind-n-${si}" class="tp-ind-n" style="min-height:44px;width:84px" onchange="tpRollSetzen(${si},{n:this.value});tpIndPlayerChange(${si});tpGeaendert({zeichnen:false,speichern:'verzoegert'})">${TP_ROLL_N.map(n=>`<option value="${n}">${n}</option>`).join("")}</select>
+            <span>Kinder</span>
+            <label for="tp-ind-takt-${si}">Wechsel alle</label>
+            <select id="tp-ind-takt-${si}" class="tp-ind-takt" style="min-height:44px;width:84px" onchange="tpRollSetzen(${si},{takt:this.value});tpIndPlayerChange(${si});tpGeaendert({zeichnen:false,speichern:'verzoegert'})">${TP_ROLL_TAKT.map(n=>`<option value="${n}">${n}</option>`).join("")}</select>
             <span>Min.</span>
           </div>
           <div class="tp-ind-roll-hinweis" style="font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border-radius:10px;padding:8px 10px;margin-top:8px"></div>

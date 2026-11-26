@@ -986,6 +986,7 @@ html[data-theme="dark"] .aw-tile.on,body.dark .aw-tile.on{background:#14532d;bor
 .tp-check span{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:6px 14px;border:var(--border-s);border-radius:18px;background:var(--surface2);color:var(--text2);font-size:var(--s-text);font-weight:700;cursor:pointer;user-select:none}
 .tp-check span::before{content:"🧢"}
 .tp-check input:checked+span{background:#15803d;border-color:#15803d;color:#fff}
+.tp-ind-auswahl .tp-check span::before{content:"🎯"}.tp-ind-auswahl .tp-check input:checked+span::before{content:"✓"}   .tp-check input:focus-visible+span{outline:3px solid var(--blue);outline-offset:2px}   /* v977: Individual-Kinder; Fokus der Chips sichtbar */
 
 /* Übungs-Picker-Button in der Planung (ersetzt das sichtbare Dropdown) */
 .tp-pick{flex:1;min-width:0;min-height:48px;text-align:left;border:var(--border-s);border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:600;cursor:pointer;padding:8px 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
