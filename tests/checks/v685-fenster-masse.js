@@ -48,12 +48,12 @@ module.exports = async function (h) {
     }
     // b) Doppelung: To-do-Kasten mit zwei Zeilen, „Wie war's?“ steht für t2
     const slot = document.getElementById("trainer-todo-slot") || document.body.appendChild(Object.assign(document.createElement("div"), { id: "trainer-todo-slot" }));
-    slot.innerHTML = `<div class="card"><div class="todo-zeile" data-termin="t2"><button>Spiel nachbereiten</button></div><div class="todo-zeile" data-termin="d2026-01-01"><button>Einheit nachbereiten</button></div><button>📝 Nachbereiten – Training, Spiel, Festival</button></div>`;
+    slot.innerHTML = `<div class="card"><div class="todo-zeile" data-termin="t2"><button>Spiel nachbereiten</button></div><div class="todo-zeile" data-termin="d2026-01-01"><button>Einheit nachbereiten</button></div><button class="btn eb-einstieg" data-offen="2">📝 Nachbereiten – 2 offen</button></div>`;   // v972: Knopf wie seit v957 (zwei offen → bleibt als Zeile)
     window._wieWarsKey = "t2"; todoDoppelWeg();
     const b1 = { t2: !!slot.querySelector('[data-termin="t2"]'), andere: !!slot.querySelector('[data-termin="d2026-01-01"]') };
     window._wieWarsKey = "d2026-01-01"; todoDoppelWeg();
     const unten = document.getElementById("home-nachbereiten");   // v929: Einstieg ohne To-do unter „Für dich“
-    const b2 = { zeilen: slot.querySelectorAll(".todo-zeile").length, einstieg: /Nachbereiten – Training/.test(slot.textContent + (unten ? unten.textContent : "")), karte: !!slot.querySelector(".card") };
+    const b2 = { zeilen: slot.querySelectorAll(".todo-zeile").length, einstieg: /Nachbereiten – 2 offen/.test(unten ? unten.textContent : ""), karte: !!slot.querySelector(".card") };
     window._wieWarsKey = null;
     return { fenster, b1, b2 };
   });
