@@ -66,8 +66,8 @@ module.exports = async function (h) {
     }, b => JSON.stringify(b.slots.find(x => x.typ === "tw").tw) === "[1]");
     await schritt("Einzelblock hinzufügen", () => tpDoAddSlot("individual"), b => b.slots.some(x => x.typ === "individual"));
     await schritt("Einzelkind wählen", () => {
-      const ind = tpSlots.findIndex(x => x.typ === "individual"), sel = document.getElementById(`tp-ind-player-${ind}`);
-      sel.value = "Kind E"; sel.dispatchEvent(new Event("change"));
+      const ind = tpSlots.findIndex(x => x.typ === "individual"), sel = document.querySelector(`.tp-ind-player[data-slot="${ind}"][value="Kind E"]`);   // v977: Häkchen
+      sel.checked = true; sel.dispatchEvent(new Event("change"));
     }, b => b.slots.find(x => x.typ === "individual").kind != null);
     await schritt("Ziel-Dauer", () => { const d = document.getElementById("tp-dauer"); d.value = d.options[0].value; d.dispatchEvent(new Event("change")); }, () => true);
     const fe = s.fehler(); pruef(!fe.length, `keine Fehler in der Konsole${fe.length ? " · " + fe[0] : ""}`);

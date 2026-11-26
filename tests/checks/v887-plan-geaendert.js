@@ -171,9 +171,9 @@ module.exports = async function (h) {
       });
       await schritt("tpDoAddSlot (Einzel)", () => { tpDoAddSlot("individual"); });
       await schritt("Einzelkind", () => {
-        const ind = tpSlots.findIndex(s => s.typ === "individual"), sel = document.getElementById(`tp-ind-player-${ind}`);
-        if (!sel) return { fehler: "keine Auswahl Einzelkind" };
-        sel.value = "Kind E"; sel.dispatchEvent(new Event("change"));
+        const ind = tpSlots.findIndex(s => s.typ === "individual"), sel = document.querySelector(`.tp-ind-player[data-slot="${ind}"][value="Kind E"]`);   // v977: Häkchen
+        if (!sel) return { fehler: "kein Häkchen Einzelkind" };
+        sel.checked = true; sel.dispatchEvent(new Event("change"));
       });
       await schritt("Ziel-Dauer", () => { const d = document.getElementById("tp-dauer"); d.value = "90"; d.dispatchEvent(new Event("change")); });
       await schritt("tpSetCoach", () => { const tw = tpSlots.findIndex(s => s.typ === "tw"); tpSetCoach(`tp-form-${tw}-0`, "Kenneth"); });

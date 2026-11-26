@@ -35,7 +35,7 @@ module.exports = async function (h) {
     out.titel1 = [...titel(1)].map(x => x.textContent.trim()); out.titel2 = [...titel(2)].map(x => x.textContent.trim());
     out.hinweis = (document.querySelector(".tp-parallel-hinweis") || {}).textContent || "";
     out.twChips = [...document.querySelectorAll(".tp-tw-player")].map(c => c.value);
-    out.indOpts = [...(document.querySelector('select[id^="tp-ind-player-"]') || { options: [] }).options].map(o => o.value).filter(Boolean);
+    out.indOpts = [...document.querySelectorAll(".tp-ind-player")].map(c => c.value);   // v977: Häkchen
     // Trainingsstart nimmt dieselbe Zusammenlegung
     const snap = _tlSnapshot(); const h1 = snap.find(st => st.label === "Hauptteil 1"), h2 = snap.find(st => st.label === "Hauptteil 2");
     out.startH1 = h1.gruppen.filter(g => !g.einzel).map(g => (g.kinder || []).length); out.startH2 = h2.gruppen.map(g => (g.kinder || []).length);

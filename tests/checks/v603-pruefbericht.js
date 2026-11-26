@@ -114,11 +114,10 @@ module.exports = async function (h) {
       out.optionText = opt ? opt.textContent : null;
       // Einzelspieler-Empfehlung
       localStorage.setItem("adler_player_Kind <b>A</b>", JSON.stringify({ f_pass: 1 }));
-      const ps = document.createElement("select"); ps.id = "tp-ind-player-97";
-      const o = document.createElement("option"); o.value = "Kind <b>A</b>"; o.textContent = "Kind A"; ps.append(o); ps.value = o.value;
+      tpKindSetzen(97, "Kind <b>A</b>");   // v977: das Kind kommt aus dem Zustand, nicht mehr aus einer Auswahl
       const reco = document.createElement("div"); reco.id = "tp-ind-reco-97";
-      document.body.append(ps, reco);
-      tpIndPlayerChange(97);
+      document.body.append(reco);
+      tpIndPlayerChange(97); delete TP_ZUSTAND.kind[97];
       out.recoImg = reco.querySelectorAll("img").length;
       out.recoB = reco.querySelectorAll("b").length;
       out.recoText = reco.textContent;
