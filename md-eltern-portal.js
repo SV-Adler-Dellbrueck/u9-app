@@ -2489,7 +2489,7 @@ function teeKannenHtml(t,stand,kommt){
   if(!stand||!stand.length)return "";
   const mein=stand.find(k=>k.mein), begonnen=teeBegonnen(t);
   const box=(innen,id)=>`<div id="${id}" class="tee-kannen" style="border-left:4px solid #b45309;background:#fffbeb;border-radius:10px;padding:10px;margin-top:10px;font-size:var(--s-text);line-height:1.45;color:#1f2937">${innen}</div>`;
-  const knopf=(txt,on,stark)=>`<button class="btn" onclick="${on}" style="width:100%;justify-content:center;margin-top:8px;min-height:48px${stark?";font-weight:800":""}">${txt}</button>`;
+  const knopf=(txt,on)=>`<button class="btn" onclick="${on}" style="width:100%;justify-content:center;margin-top:8px;min-height:48px">${txt}</button>`;
   if(mein){
     const nr=Number(mein.nr), seit=mein.seit?` (seit ${esc(_teeDatum(mein.seit))})`:"";
     if(Number(mein.tee_termin_id)===Number(t.id))
@@ -2497,7 +2497,7 @@ function teeKannenHtml(t,stand,kommt){
     if(mein.tee_termin_id)return box(`🫖 Ihr habt Kanne ${nr}${seit} und bringt sie zu einem anderen Termin mit Tee mit.`,"tee-mein");
     let nicht=false; try{ nicht=localStorage.getItem(_teeNichtKey(t.id))==="1"; }catch(e){}
     if(!begonnen&&kommt&&!nicht)
-      return box(`<b>🫖 Ihr habt Kanne ${nr}</b>${seit}<br>Bringt ihr sie ${teeHeute(t)?"heute":"am "+esc(teeWann(t))} mit warmem Tee mit?${knopf("Ja, wir bringen Tee mit",`teeKanneBringen(${nr},${Number(t.id)})`,true)}${knopf("Diesmal nicht",`teeKanneNicht(${Number(t.id)})`)}`,"tee-mein");
+      return box(`<b>🫖 Ihr habt Kanne ${nr}</b>${seit}<br>Bringt ihr sie ${teeHeute(t)?"heute":"am "+esc(teeWann(t))} mit warmem Tee mit?${knopf("Ja, wir bringen Tee mit",`teeKanneBringen(${nr},${Number(t.id)})`)}${knopf("Diesmal nicht",`teeKanneNicht(${Number(t.id)})`)}`,"tee-mein");
     if(begonnen)return box(`<b>🫖 Ihr habt Kanne ${nr}</b>${seit} – danke!<br>Beim nächsten Termin, zu dem euer Kind kommt, fragt die App, ob ihr sie mit warmem Tee mitbringt.`,"tee-mein-ok");
     return "";   // Kind kommt nicht oder „Diesmal nicht“: kein Hinweis – die Kanne bleibt bei der Familie
   }
