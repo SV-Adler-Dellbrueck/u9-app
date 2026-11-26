@@ -140,7 +140,7 @@ module.exports = async function (h) {
       ["Torwart-Übung wählen", p => p.evaluate(() => { const tw = tpSlots.findIndex(s => s.typ === "tw"); const sel = document.getElementById(`tp-form-${tw}-0`); const v = [...sel.options].map(o => o.value).find(x => x !== ""); tpPickerOpen(sel.id); tpPickerSet(Number(v)); })],
       ["Einzeltraining, Kind E per Ereignis", p => p.evaluate(() => {
         tpDoAddSlot("individual"); const ind = tpSlots.findIndex(s => s.typ === "individual");
-        const sel = document.getElementById(`tp-ind-player-${ind}`); sel.value = "Kind E"; sel.dispatchEvent(new Event("change"));
+        const sel = document.querySelector(`.tp-ind-player[data-slot="${ind}"][value="${"Kind E"}"]`); sel.checked = true; sel.dispatchEvent(new Event("change"));   // v977: Häkchen
         const reco = (document.getElementById(`tp-ind-reco-${ind}`) || {}).innerHTML || "";
         return tpKindVon(ind) === "Kind E" && reco ? null : { fehler: `Zustand „${tpKindVon(ind)}“, Empfehlung ${reco ? "da" : "leer"}` };
       })],
@@ -152,16 +152,16 @@ module.exports = async function (h) {
     pruef(!!soll && ist === soll, `G6 mit Ereignissen: gespeicherter Körper = Sollwert G6 „Plan speichern“${soll && ist !== soll ? abweichung(ist, soll) : ""}`);
     pruef(!r.zeilen.length && r.bw === 0 && r.btw === 0, `G6 mit Ereignissen: Seite = Zustand nach jedem Schritt, Brücke entfernt${r.bw ? " · noch da" : ""}${r.zeilen.length ? " · " + r.zeilen.slice(0, 3).join(" | ") : ""}`);
     const z = r.zustand || { tw: {}, kind: {} };
-    pruef(Object.values(z.tw).some(l => JSON.stringify(l) === '["Kind A"]') && Object.values(z.kind).includes("Kind E"), `G6: Zustand tw ${JSON.stringify(z.tw)}, kind ${JSON.stringify(z.kind)}`);
+    pruef(Object.values(z.tw).some(l => JSON.stringify(l) === '["Kind A"]') && Object.values(z.kind).flat().includes("Kind E"), `G6: Zustand tw ${JSON.stringify(z.tw)}, kind ${JSON.stringify(z.kind)}`);
     /* Einzelblock löschen und Rückgängig: das Kind kommt zurück, wie bisher über die Auswahl */
     try {
       const d = await r.s.page.evaluate(() => {
         const ind = tpSlots.findIndex(s => s.typ === "individual");
         tpRemoveSlot(ind);
-        const weg = tpSlots.every(s => s.typ !== "individual") && !Object.values(TP_ZUSTAND.kind).includes("Kind E");
+        const weg = tpSlots.every(s => s.typ !== "individual") && !Object.values(TP_ZUSTAND.kind).flat().includes("Kind E");
         const k = [...document.querySelectorAll("#undo-toast button")].find(x => /Rückgängig/.test(x.textContent)); if (k) k.click();
         const ind2 = tpSlots.findIndex(s => s.typ === "individual");
-        return { weg, ind, ind2, kind: tpKindVon(ind2), seite: (document.getElementById(`tp-ind-player-${ind2}`) || {}).value, pruefen: tpZustandPruefen({ fremd: true }), tw: tpTwAn(tpSlots.findIndex(s => s.typ === "tw")) };
+        return { weg, ind, ind2, kind: tpKindVon(ind2), seite: [...document.querySelectorAll(`.tp-ind-player[data-slot="${ind2}"]`)].filter(c => c.checked).map(c => c.value).join(", "), pruefen: tpZustandPruefen({ fremd: true }), tw: tpTwAn(tpSlots.findIndex(s => s.typ === "tw")) };
       });
       pruef(d.weg && d.ind2 === d.ind && d.kind === "Kind E" && d.seite === "Kind E" && !d.pruefen.length,
         `Einzelblock löschen → Rückgängig: Block wieder an Stelle ${d.ind2}, Kind „${d.kind}“ (Seite „${d.seite}“), Torwart-Haken unberührt ${JSON.stringify(d.tw)}${d.pruefen.length ? " · " + d.pruefen[0] : ""}`);

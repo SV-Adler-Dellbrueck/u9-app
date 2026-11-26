@@ -7,7 +7,8 @@
    Geprüft werden die Abnahmekriterien des Pakets:
    1) Eine bestehende Vorlage mit „main" lädt unverändert und zählt als Spielform.
    2) „uebungsform" lädt, erscheint im Plan und ist erkennbar – nicht allein über Farbe.
-   3) Nettozeit = Summe der Spielform-Blöcke; Übungsform, Warm-up und Abschluss nicht.
+   3) Nettozeit = Summe der Spielform-Blöcke; Übungsform und Warm-up nicht. Seit v977 zählt der Abschluss mit
+      (Charles 26.11.2026 – hebt Abnahme 3 auf).
    4) Der Wochenstand summiert die Einheiten der Kalenderwoche gegen den Richtwert.
    5) Unter dem Richtwert erscheint der Hinweis, darüber kein Lob.
    6) Der Richtwert kommt aus der Team-Konfiguration und ist ohne Codeänderung änderbar.
@@ -66,7 +67,7 @@ module.exports = async function (h) {
     // „main" und „spielform" ergeben dieselbe Zahl
     out.nettoMain  = tpNettoMinuten([{ typ: "main", dauer: 24 }]);
     out.nettoSpiel = tpNettoMinuten([{ typ: "spielform", dauer: 24 }]);
-    // Abschluss zählt nicht (Abnahme 3)
+    // v977: Abschluss zählt mit (vorher Abnahme 3: zählt nicht)
     out.nettoAbschluss = tpNettoMinuten([{ typ: "abschluss", dauer: 20 }]);
 
     // 6) Richtwert aus der Team-Konfiguration
@@ -116,7 +117,7 @@ module.exports = async function (h) {
   if (r.netto !== 60) probleme.push(`Nettozeit ${r.netto} Min. (erwartet 60 – Spielform 30 + main 30, ohne Warm-up und Übungsform)`);
   if (r.nettoBeispiel !== 30) probleme.push(`Testfall des Pakets: ${r.nettoBeispiel} Min. (erwartet 30, nicht 60)`);
   if (r.nettoMain !== r.nettoSpiel) probleme.push(`„main“ (${r.nettoMain}) und „spielform“ (${r.nettoSpiel}) ergeben nicht dieselbe Zahl`);
-  if (r.nettoAbschluss !== 0) probleme.push(`der Abschluss zählt mit (${r.nettoAbschluss} Min.) – laut Abnahme 3 zählt er nicht`);
+  if (r.nettoAbschluss !== 20) probleme.push(`der Abschluss zählt nicht mit (${r.nettoAbschluss} Min.) – seit v977 zählt er (20 erwartet)`);
 
   // 4)+5)+6) Woche und Richtwert
   if (r.richtwert !== 48) probleme.push(`Richtwert ${r.richtwert} (erwartet 48 aus der Team-Konfiguration)`);

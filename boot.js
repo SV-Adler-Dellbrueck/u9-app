@@ -1519,7 +1519,9 @@ const TP_HAUPT_TYPEN=["main","spielform","uebungsform"];
 /* v773: „Turnier" – ein Block, in dem nur noch Turnier gespielt wird (Aufwärmen davor, dann
    Turnier bis zum Schluss). Er braucht keine Übung und keine Gruppen wie das Abschlussspiel,
    zählt aber – anders als dieses – als Spielform: Nettospielzeit und Spielform-Anteil. */
-const TP_SPIEL_TYPEN=["main","spielform","turnier"];
+/* v977 (Charles 26.11.2026): Das Abschlussspiel zählt jetzt mit – es ist freies Spiel mit Toren und Gegner.
+   Damit ist die Vorgabe von Paket 3 („Abschluss zählt NICHT“, Abnahme 3) aufgehoben. */
+const TP_SPIEL_TYPEN=["main","spielform","turnier","abschluss"];
 function tpIstHauptteil(typ){ return TP_HAUPT_TYPEN.includes(typ||"main"); }
 function tpIstSpielform(typ){ return TP_SPIEL_TYPEN.includes(typ||"main"); }
 /* Nettospielzeit einer Einheit: die Summe der Spielform-Blöcke. Parallele Blöcke
@@ -1734,12 +1736,15 @@ let tpCoaches={};
    allein. Ein sel.value= von außen ohne Ereignis ändert weder Zustand noch Speicherung; das
    nächste Zeichnen setzt das Feld zurück. Übernommen wird nur, was über ein Ereignis
    (tpOnSelectChange) oder einen Setter kommt. */
-const TP_ZUSTAND={wahl:{},tw:{},kind:{}};
+const TP_ZUSTAND={wahl:{},tw:{},kind:{},roll:{}};
 /* ═══ v886 · 4.8 Schritt 6 – TORWART-HAKEN UND EINZELKIND IM ZUSTAND ═══════════════════════
    TP_ZUSTAND.tw:   Blockindex → Liste der angehakten Torhüter-Namen; fehlt der Eintrag
                     (undefined), gilt die Vorgabe „alle angebotenen“ (tpTwAngebot) – wie früher
                     der frisch gezeichnete Haken ohne gemerkten Wert.
-   TP_ZUSTAND.kind: Blockindex → Name des Kindes im Einzeltraining oder "".
+   TP_ZUSTAND.kind: Blockindex → Liste der Kinder im Einzeltraining (v977: Häkchen statt einer Auswahl;
+                    vorher ein Name oder "").
+   TP_ZUSTAND.roll: Blockindex → {n,takt} – „Alle rollierend“ (v977): niemand fehlt im Hauptteil, der Trainer
+                    holt sich alle takt Minuten n Kinder heraus; fehlt der Eintrag, gilt „Ausgewählte“.
    Geändert wird über tpTwSetzen/tpKindSetzen (Haken und Auswahl rufen sie), beim Öffnen über
    tpZustandLaden, beim Verschieben über _tpTwKindUmbenennen. Das Zeichnen projiziert beides auf
    .checked bzw. den Wert der Auswahl (_tpTwKindAufSeite). Einträge ohne Haken/Auswahl auf der
@@ -1748,7 +1753,18 @@ const TP_ZUSTAND={wahl:{},tw:{},kind:{}};
    ändert den Zustand nicht; Haken und Auswahl rufen ihre Setter per onchange. */
 /* Angehakte Torhüter des Blocks si in der Reihenfolge des Angebots (wie die Haken auf der Seite). */
 function tpTwAn(si){ const l=TP_ZUSTAND.tw[si]; return tpTwAngebot(si).map(k=>k.name).filter(n=>l===undefined||l.includes(n)); }
-function tpKindVon(si){ return TP_ZUSTAND.kind[si]||""; }
+/* v977: Kinder des Einzelblocks als Liste; tpKindVon bleibt die Zeile zum Anzeigen („Kind A, Kind B“). */
+function tpKinderVon(si){ const k=TP_ZUSTAND.kind[si]; return Array.isArray(k)?k.slice():(k?[String(k)]:[]); }
+function tpKindVon(si){ return tpKinderVon(si).join(", "); }
+function tpRollVon(si){ const r=TP_ZUSTAND.roll[si]; return r?{n:r.n,takt:r.takt}:null; }
+const TP_ROLL_N=[1,2,3,4], TP_ROLL_TAKT=[3,4,5,6,7,8,10];
+/* „Alle rollierend“ an/aus; obj ergänzt n oder takt. Speichert nicht selbst. */
+function tpRollSetzen(si,obj){
+  if(!obj){ delete TP_ZUSTAND.roll[si]; return; }
+  const alt=TP_ZUSTAND.roll[si]||{n:2,takt:6};
+  const n=Number(obj.n!=null?obj.n:alt.n), takt=Number(obj.takt!=null?obj.takt:alt.takt);
+  TP_ZUSTAND.roll[si]={n:TP_ROLL_N.includes(n)?n:2,takt:TP_ROLL_TAKT.includes(takt)?takt:6};
+}
 /* Haken name an/aus; name null: zurück zur Vorgabe (alle angebotenen). Speichert nicht selbst – der
    Haken ruft danach tpGeaendert (v895: verzögert speichern, Fehlerbild 7 behoben). */
 function tpTwSetzen(si,name,an){
@@ -1756,10 +1772,17 @@ function tpTwSetzen(si,name,an){
   if(name==null)delete tw[si];
   else{ const l=(tw[si]===undefined?tpTwAngebot(si).map(k=>k.name):tw[si]).filter(n=>n!==name); if(an)l.push(String(name)); tw[si]=l; }
 }
-function tpKindSetzen(si,name){ TP_ZUSTAND.kind[si]=name?String(name):""; }
+/* v977: mit an (true/false) ein Häkchen; ohne an wie früher: genau dieses Kind (oder keins). Eine Liste setzt alle. */
+function tpKindSetzen(si,name,an){
+  if(Array.isArray(name)){ TP_ZUSTAND.kind[si]=name.map(String); return; }
+  if(an===undefined){ TP_ZUSTAND.kind[si]=name?[String(name)]:[]; return; }
+  const l=tpKinderVon(si).filter(n=>n!==String(name)); if(an)l.push(String(name));
+  const reihe=KADER.map(k=>k.name); l.sort((a,b)=>reihe.indexOf(a)-reihe.indexOf(b));
+  TP_ZUSTAND.kind[si]=l;
+}
 /* Neue Blockindizes (tpSlotsNeuOrdnen): neuVon alter → neuer Index; fehlt einer, ist der Block weg. */
 function _tpTwKindUmbenennen(neuVon){
-  ["tw","kind"].forEach(art=>{
+  ["tw","kind","roll"].forEach(art=>{
     const alt=TP_ZUSTAND[art], neu={};
     Object.keys(alt).forEach(si=>{ const ni=neuVon[si]; if(ni!=null)neu[ni]=alt[si]; });
     TP_ZUSTAND[art]=neu;
@@ -1767,10 +1790,12 @@ function _tpTwKindUmbenennen(neuVon){
 }
 /* Haken und Auswahl auf der Seite, je Blockindex. */
 function _tpTwKindAufDom(){
-  const tw={}, kind={};
+  const tw={}, kind={}, wer={};
   document.querySelectorAll(".tp-tw-player").forEach(c=>{ const si=c.dataset.slot; if(/^\d+$/.test(si))(tw[si]=tw[si]||[]).push(c); });
-  document.querySelectorAll('select[id^="tp-ind-player-"]').forEach(s=>{ const m=/^tp-ind-player-(\d+)$/.exec(s.id); if(m)kind[m[1]]=s; });
-  return {tw,kind};
+  /* v977: Häkchen je Kind statt einer Auswahl; dazu der Umschalter „Ausgewählte / Alle rollierend“ */
+  document.querySelectorAll(".tp-ind-player").forEach(c=>{ const si=c.dataset.slot; if(/^\d+$/.test(si))(kind[si]=kind[si]||[]).push(c); });
+  document.querySelectorAll(".tp-ind-wer").forEach(w=>{ const si=w.dataset.slot; if(/^\d+$/.test(si))wer[si]=w; });
+  return {tw,kind,wer};
 }
 const _tpTwSoll=(l,name)=>l===undefined||l.includes(name);
 /* Gespeicherte Slots → tw/kind (index: gespeicherter Block → heutiger Index). Ohne Seite: ein Haken
@@ -1782,10 +1807,12 @@ function _tpTwKindLaden(slots,index){
     const si=index?index[si0]:si0; if(si==null||!tpSlots[si])return;
     const art=_tpFeldArt(tpSlots[si]);
     if(Array.isArray(s.tw)&&art==="tw"){ TP_ZUSTAND.tw[si]=((typeof kidListFromIds==="function")?kidListFromIds(s.tw):s.tw).map(String); }
-    if(s.kind!=null&&art==="einzel"){
-      const n=(typeof kidName==="function"&&/^\d+$/.test(String(s.kind)))?kidName(s.kind):s.kind;
-      if(n&&KADER.some(k=>k.aktiv!==false&&k.name===n))tpKindSetzen(si,n);
+    if(s.kind!=null&&art==="einzel"){   // v977: ein Kind (ID) wie bisher oder eine Liste
+      const name=x=>(typeof kidName==="function"&&/^\d+$/.test(String(x)))?kidName(x):x;
+      const l=(Array.isArray(s.kind)?s.kind:[s.kind]).map(name).filter(n=>n&&KADER.some(k=>k.aktiv!==false&&k.name===n));
+      if(l.length)tpKindSetzen(si,l);
     }
+    if(s.rolliert&&art==="einzel")tpRollSetzen(si,s.rolliert);
   });
 }
 /* Projektion: Zustand → Haken (.checked) und Auswahl (Wert); danach die Empfehlungen im
@@ -1795,17 +1822,25 @@ function _tpTwKindAufSeite(){
   const d=_tpTwKindAufDom(), tw=TP_ZUSTAND.tw, kind=TP_ZUSTAND.kind;
   Object.keys(d.tw).forEach(si=>d.tw[si].forEach(c=>{ const soll=_tpTwSoll(tw[si],c.value); if(c.checked!==soll)c.checked=soll; }));
   Object.keys(tw).forEach(si=>{ if(!d.tw[si])delete tw[si]; });
-  Object.keys(kind).forEach(si=>{ if(!d.kind[si])delete kind[si]; });
-  Object.keys(d.kind).forEach(si=>{
-    const s=d.kind[si], v=kind[si]||"";
-    if(s.value!==v)s.value=v;
-    if(s.value!==v)kind[si]="";
-    if(s.value&&typeof tpIndPlayerChange==="function")tpIndPlayerChange(Number(si));
+  /* v977: Häkchen der Kinder, Umschalter und die beiden Zahlen bei „rollierend“; ein Kind, das nicht
+     (mehr) angeboten wird, fällt still weg. */
+  Object.keys(kind).forEach(si=>{ if(!d.wer[si])delete kind[si]; });
+  Object.keys(TP_ZUSTAND.roll).forEach(si=>{ if(!d.wer[si])delete TP_ZUSTAND.roll[si]; });
+  Object.keys(d.wer).forEach(si=>{
+    const boxen=d.kind[si]||[], angebot=boxen.map(c=>c.value);
+    if(Array.isArray(kind[si]))kind[si]=kind[si].filter(n=>angebot.includes(n));
+    const an=tpKinderVon(si), roll=tpRollVon(si), w=d.wer[si];
+    boxen.forEach(c=>{ const soll=an.includes(c.value); if(c.checked!==soll)c.checked=soll; });
+    w.querySelectorAll(".tp-ind-modus .seg-btn").forEach(b=>{ const soll=String(!!roll===(b.dataset.roll==="1")); if(b.getAttribute("aria-pressed")!==soll)b.setAttribute("aria-pressed",soll); b.classList.toggle("active",soll==="true"); });
+    const ausw=w.querySelector(".tp-ind-auswahl"), rol=w.querySelector(".tp-ind-roll");
+    if(ausw)ausw.hidden=!!roll; if(rol)rol.hidden=!roll;
+    if(roll){ const nS=w.querySelector(".tp-ind-n"), tS=w.querySelector(".tp-ind-takt"); if(nS&&nS.value!==String(roll.n))nS.value=String(roll.n); if(tS&&tS.value!==String(roll.takt))tS.value=String(roll.takt); }
+    if(typeof tpIndPlayerChange==="function")tpIndPlayerChange(Number(si));
   });
   /* Was die Projektion zuletzt gezeigt hat – daran erkennt tpZustandPruefen einen fremden Eingriff. */
   _tpTwKindProj={tw:{},kind:{}};
   Object.keys(d.tw).forEach(si=>{ const m=_tpTwKindProj.tw[si]={}; d.tw[si].forEach(c=>{ m[c.value]=c.checked; }); });
-  Object.keys(d.kind).forEach(si=>{ _tpTwKindProj.kind[si]=d.kind[si].value; });
+  Object.keys(d.kind).forEach(si=>{ const m=_tpTwKindProj.kind[si]={}; d.kind[si].forEach(c=>{ m[c.value]=c.checked; }); });
 }
 let _tpTwKindProj={tw:{},kind:{}};
 /* Gespeicherte Haken und Kind setzen und gleich zeigen (für eine bereits gezeichnete Zeitleiste). */
@@ -1946,12 +1981,12 @@ function tpZustandPruefen(opt){
     if(!fremd||opt.fremd)ab.push(`Torwart-Haken ${si}/${c.value}: Seite ${c.checked?"an":"aus"} · Zustand ${soll?"an":"aus"}${fremd?" (fremder Eingriff, nicht übernommen)":""}`);
   }));
   Object.keys(tw).forEach(si=>{ if(!d.tw[si])ab.push(`Torwart-Haken ${si}: im Zustand ${JSON.stringify(tw[si])}, aber keine Haken`); });
-  Object.keys(d.kind).forEach(si=>{
-    const v=d.kind[si].value; if(v===(kind[si]||""))return;
-    const fremd=si in pj.kind&&pj.kind[si]!==v;
-    if(!fremd||opt.fremd)ab.push(`Einzelkind ${si}: Seite „${v}“ · Zustand „${kind[si]||""}“${fremd?" (fremder Eingriff, nicht übernommen)":""}`);
-  });
-  Object.keys(kind).forEach(si=>{ if(!d.kind[si])ab.push(`Einzelkind ${si}: im Zustand „${kind[si]}“, aber keine Auswahl`); });
+  Object.keys(d.kind).forEach(si=>d.kind[si].forEach(c=>{   // v977: Häkchen je Kind
+    const soll=tpKinderVon(si).includes(c.value); if(c.checked===soll)return;
+    const zuletzt=pj.kind[si]?pj.kind[si][c.value]:undefined, fremd=zuletzt!==undefined&&zuletzt!==c.checked;
+    if(!fremd||opt.fremd)ab.push(`Einzelkind ${si}/${c.value}: Seite ${c.checked?"an":"aus"} · Zustand ${soll?"an":"aus"}${fremd?" (fremder Eingriff, nicht übernommen)":""}`);
+  }));
+  Object.keys(kind).forEach(si=>{ if(!d.wer[si]&&tpKinderVon(si).length)ab.push(`Einzelkind ${si}: im Zustand „${tpKindVon(si)}“, aber keine Auswahl`); });
   return ab;
 }
 /* Ein Trainer, ein Platz: wer an einem parallelen Block (Torwart-/Einzeltraining) dieses
@@ -3372,11 +3407,31 @@ function _tpRenderTimelineIntern(){
         <div id="tp-form-${si}-0-hist"></div>
       </div>`;
     } else if(art==="einzel"){
-      const playerOpts=KADER.filter(k=>k.aktiv!==false).map(k=>`<option value="${esc(k.name)}">${esc(k.name)}</option>`).join("");
-      html+=`<div class="tp-feld"><label for="tp-ind-player-${si}">Spieler</label>
-        <select id="tp-ind-player-${si}" onchange="tpKindSetzen(${si},this.value);tpIndPlayerChange(${si});tpGeaendert({zeichnen:false,speichern:'verzoegert'})">
-          <option value="">— Spieler wählen —</option>${playerOpts}
-        </select>
+      /* v977 (Charles 26.11.): mehrere Kinder per Häkchen – oder „Alle rollierend“: niemand fehlt im Hauptteil,
+         der Trainer holt sich alle paar Minuten zwei heraus und gibt die anderen zurück. */
+      const kids=KADER.filter(k=>k.aktiv!==false);
+      html+=`<div class="tp-ind-wer" data-slot="${si}">
+        <div style="font-size:var(--s-klein);color:var(--text2);font-weight:600;margin-bottom:4px" id="tp-ind-wer-${si}">Wer?</div>
+        <div class="seg-ctrl tp-ind-modus" role="group" aria-labelledby="tp-ind-wer-${si}" style="margin-bottom:8px">
+          <button type="button" class="seg-btn active" data-roll="0" aria-pressed="true" onclick="tpRollSetzen(${si},null);tpGeaendert({speichern:'verzoegert'})">✓ Ausgewählte</button>
+          <button type="button" class="seg-btn" data-roll="1" aria-pressed="false" onclick="tpRollSetzen(${si},{});tpGeaendert({speichern:'verzoegert'})">🔄 Alle rollierend</button>
+        </div>
+        <div class="tp-ind-auswahl">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+            ${kids.map(k=>`<label class="tp-check"><input type="checkbox" value="${esc(k.name)}" class="tp-ind-player" data-slot="${si}" onchange="tpKindSetzen(Number(this.dataset.slot),this.value,this.checked);tpIndPlayerChange(${si});tpGeaendert({zeichnen:false,speichern:'verzoegert'})"><span>${esc(k.name)}</span></label>`).join("")||`<span style="font-size:var(--s-klein);color:var(--text2)">Noch keine Kinder im Kader.</span>`}
+          </div>
+        </div>
+        <div class="tp-ind-roll" hidden>
+          <div style="display:grid;grid-template-columns:auto 84px auto;gap:8px 10px;align-items:center;font-size:var(--s-text)">
+            <label for="tp-ind-n-${si}">Gleichzeitig</label>
+            <select id="tp-ind-n-${si}" class="tp-ind-n" style="min-height:44px;width:84px" onchange="tpRollSetzen(${si},{n:this.value});tpIndPlayerChange(${si});tpGeaendert({zeichnen:false,speichern:'verzoegert'})">${TP_ROLL_N.map(n=>`<option value="${n}">${n}</option>`).join("")}</select>
+            <span>Kinder</span>
+            <label for="tp-ind-takt-${si}">Wechsel alle</label>
+            <select id="tp-ind-takt-${si}" class="tp-ind-takt" style="min-height:44px;width:84px" onchange="tpRollSetzen(${si},{takt:this.value});tpIndPlayerChange(${si});tpGeaendert({zeichnen:false,speichern:'verzoegert'})">${TP_ROLL_TAKT.map(n=>`<option value="${n}">${n}</option>`).join("")}</select>
+            <span>Min.</span>
+          </div>
+          <div class="tp-ind-roll-hinweis" style="font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border-radius:10px;padding:8px 10px;margin-top:8px"></div>
+        </div>
       </div>
       <div id="tp-ind-reco-${si}" style="margin-bottom:8px"></div>
       <div class="tp-feld"><label for="tp-form-${si}-0">Übung</label>
@@ -3751,10 +3806,18 @@ function tpShowExFromSel(selId){
 }
 
 function tpIndPlayerChange(slotIdx){
-  const sel=document.getElementById("tp-ind-player-"+slotIdx);
   const reco=document.getElementById("tp-ind-reco-"+slotIdx);
-  if(!sel||!reco)return;
-  const name=sel.value;
+  /* v977: aus dem Zustand. Bei „rollierend“ steht die Rechnung im Hinweis, eine Empfehlung gibt es nur
+     für genau ein Kind (das Profil gehört zu einem Kind). */
+  const roll=tpRollVon(slotIdx), hinweis=document.querySelector(`.tp-ind-wer[data-slot="${slotIdx}"] .tp-ind-roll-hinweis`);
+  if(hinweis&&roll){
+    const slot=tpSlots[slotIdx]||{}, dauer=Number(slot.dauer)||0, ziel=tpSlots[slot.parallelZu];
+    const runden=Math.max(1,Math.ceil(dauer/roll.takt)), dran=runden*roll.n, alle=KADER.filter(k=>k.aktiv!==false).length;
+    hinweis.textContent=`Alle bleiben in ${ziel?tpSlotName(ziel.label):"der Spielform"} eingeteilt. Du holst dir alle ${roll.takt} Min. ${roll.n} ${roll.n===1?"Kind":"Kinder"} heraus und gibst die anderen zurück – in ${dauer} Min. ${alle&&dran>=alle?"kommen alle "+alle+" Kinder dran":"kommen "+dran+" Kinder dran"}. Der Timer meldet jeden Wechsel („🔄 Wechsel Individual“).`;
+  }
+  if(!reco)return;
+  const kinder=roll?[]:tpKinderVon(slotIdx);
+  const name=kinder.length===1?kinder[0]:"";
   if(!name){reco.innerHTML="";return;}
   const allForms=tpAllForms();
   const indForms=allForms.map((f,i)=>({i,f})).filter(x=>x.f.kat==="individual");
@@ -3905,7 +3968,8 @@ function tpRemoveSlot(idx){
      gab es beim Rückgängig nie, der Fehler blieb ohne Folge). v890 (Fehlerbild 2): die Torwart-Haken
      werden mitgemerkt und kommen so zurück, wie sie vor dem Löschen waren (vorher: alle angehakt). */
   const wahlAlt=tpWahlFelder(idx).map(id=>tpWahlIdx(id));
-  const kindAlt=TP_ZUSTAND.kind[idx];
+  const kindAlt=TP_ZUSTAND.kind[idx]!==undefined?tpKinderVon(idx):undefined;   // v977: Liste
+  const rollAlt=tpRollVon(idx);
   const twAlt=Array.isArray(TP_ZUSTAND.tw[idx])?TP_ZUSTAND.tw[idx].slice():undefined;
   const offenAlt=_tpOffen.has(idx);   // v891: Klappzustand kommt mit zurück
   const sheetAlt=typeof _tpSheetSlot!=="undefined"&&_tpSheetSlot===slot;   // v954: offenes Block-Fenster kommt mit zurück
@@ -3923,6 +3987,7 @@ function tpRemoveSlot(idx){
     const felderNeu=tpWahlFelder(n);
     wahlAlt.forEach((i,p)=>{ const id=`tp-form-${n}-${p}`; if(!felderNeu.includes(id))return; const w=TP_ZUSTAND.wahl[id]||{}; tpWahlSetzen(id,i,{station:w.station,alle:w.alle,erbt:w.erbt}); });
     if(kindAlt!==undefined&&_tpFeldArt(tpSlots[n])==="einzel")tpKindSetzen(n,kindAlt);
+    if(rollAlt&&_tpFeldArt(tpSlots[n])==="einzel")tpRollSetzen(n,rollAlt);
     if(twAlt!==undefined&&_tpFeldArt(tpSlots[n])==="tw")TP_ZUSTAND.tw[n]=twAlt.slice();   // v890: Haken wie vor dem Löschen
     else tpTwSetzen(n,null);                                                               // nie geändert: Vorgabe (alle)
     if(offenAlt)_tpOffen.add(n); else _tpOffen.delete(n);   // v891: tpSlotsNeuOrdnen zieht ihn an die alte Stelle
@@ -4461,14 +4526,16 @@ function tpPlanAusZustand(z){
 function tpSlotsAusZustand(z){
   const ids=arr=>(typeof kidListToIds==="function")?kidListToIds(arr):arr;
   const id=n=>{const k=(typeof kidId==="function")?kidId(n):null; return k!=null?k:n;};
-  const coaches=z.coaches||{}, felder=z.felder||[], tw=z.tw||{}, kind=z.kind||{};
+  const coaches=z.coaches||{}, felder=z.felder||[], tw=z.tw||{}, kind=z.kind||{}, roll=z.roll||{};
   return (z.slots||[]).map((s,si)=>{
-    const o={...s}; delete o.coaches; delete o.trainer; delete o.tw; delete o.kind;
+    const o={...s}; delete o.coaches; delete o.trainer; delete o.tw; delete o.kind; delete o.rolliert;
     const typ=s.typ||"main";
     if(tpKannParallel(typ)){
       const t=coaches[`tp-form-${si}-0`]; if(t)o.trainer=t;
       if(typ==="tw"){const an=tw[si]; if(Array.isArray(an))o.tw=ids(an.slice());}
-      else{const k=kind[si]; if(k)o.kind=id(k);}
+      /* v977: „rollierend“ ohne Kinder; ein Kind wie bisher als ID, mehrere als Liste */
+      else if(roll[si])o.rolliert={n:roll[si].n,takt:roll[si].takt};
+      else{const k=Array.isArray(kind[si])?kind[si]:(kind[si]?[kind[si]]:[]); if(k.length===1)o.kind=id(k[0]); else if(k.length)o.kind=ids(k.slice());}
     }else if(tpIstHauptteil(typ)){
       /* v881: Felderzahl aus dem Modell (z.felderZahl); ohne sie zählen die Felder des Zustands */
       const c=[];
@@ -4492,12 +4559,12 @@ function _tpZustandJetzt(){
   Object.keys(wahl).filter(id=>!drin.has(id)&&wahl[id].i!=null).forEach(id=>felder.push(feld(id)));
   /* v886: Torwart-Haken und Einzelkind aus dem Zustand – die Haken in der Reihenfolge des Angebots
      (tpTwAngebot, wie früher die Haken auf der Seite), nur an Blöcken mit Angebot bzw. Auswahl. */
-  const tw={}, kind={};
+  const tw={}, kind={}, roll={};
   tpSlots.forEach((s,si)=>{
     if(tpTwAngebot(si).length)tw[si]=tpTwAn(si);
-    if(_tpFeldArt(s)==="einzel")kind[si]=tpKindVon(si);
+    if(_tpFeldArt(s)==="einzel"){ kind[si]=tpKinderVon(si); const r=tpRollVon(si); if(r)roll[si]=r; }   // v977
   });
-  return {slots:tpSlots,coaches:tpCoaches,trainer:tpGetCheckedTrainers(),formen:tpAllForms(),felder,tw,kind,felderZahl:tpSlots.map((s,si)=>tpFelderZahl(si))};
+  return {slots:tpSlots,coaches:tpCoaches,trainer:tpGetCheckedTrainers(),formen:tpAllForms(),felder,tw,kind,roll,felderZahl:tpSlots.map((s,si)=>tpFelderZahl(si))};
 }
 /* Der geplante Zeitplan als Datenstruktur – frueher nur inline in evalRenderList.
    Wird auch von tpPlanSave() gebraucht, damit "Einheit bewerten" spaeter weiss,
@@ -4613,7 +4680,7 @@ async function tpPlanSave(erzwungen){
   const slots=tpSlotsMitZuordnung();
   /* v514: `versatz` gehört zur Zuordnung. Ohne ihn hielt die Schutzregel unten einen
      Plan, in dem NUR die Gruppen weitergerückt wurden, für leer – und speicherte ihn nie. */
-  const zuordnung=slots.some(s=>s.trainer||s.coaches||s.tw||s.kind!=null||s.versatz!=null);
+  const zuordnung=slots.some(s=>s.trainer||s.coaches||s.tw||s.kind!=null||s.rolliert||s.versatz!=null);
   // Automatik: einen leeren Plan nie ueber einen vollen schreiben. Der Knopf darf immer.
   if(!plan.length&&!zuordnung&&!erzwungen)return;
   /* v542: Hat jemand anderes seit dem Laden geschrieben? Nur prüfen, wenn wir beim Laden
@@ -4978,7 +5045,7 @@ function tpZustandLaden(slots,plan){
       if(r.neu)out.meldungen.push(`${r.neu===1?"Ein Hauptteil":r.neu+" Hauptteile"} als Durchgang angelegt – die Einheit dauert jetzt ${nachher} statt ${vorher} Min.`);
       else if(r.weg)out.meldungen.push(`Durchgang entfernt – die Einheit dauert jetzt ${nachher} Min.`);
     }
-    TP_ZUSTAND.tw={}; TP_ZUSTAND.kind={};   // v892: nichts vom zuvor geöffneten Termin (Fehlerbild 6)
+    TP_ZUSTAND.tw={}; TP_ZUSTAND.kind={}; TP_ZUSTAND.roll={};   // v892: nichts vom zuvor geöffneten Termin (Fehlerbild 6)
     _tpTwKindLaden(slots,out.index);   // v886: Torwart-Haken und Einzelkind (vorher nach dem Zeichnen im DOM)
   }
   if(plan===undefined)return out;
@@ -5134,6 +5201,28 @@ function _tpWahlText(id){
   return `${f.name} (${f.dauer})`.replace(/\s*\([^)]*\)\s*$/,"").trim();
 }
 // Stationen aus dem aktuellen Zeitplan: Label + Dauer je Slot, plus die gewählten Übungen.
+/* ═══ v977 · Rollierendes Einzeltraining: alle takt Minuten ein Wechsel-Signal ═══
+   Der Individual-Block mit „Alle rollierend“ hängt an seinem Hauptteil; der Timer, der diesen Hauptteil zählt
+   (Stationen-Timer, Trainingsstart auf allen Handys, Trainingsablauf), meldet jeden Wechsel – kurz, ein Ton,
+   eine Vibration und dieselbe Meldung an die Uhr. Nicht in den letzten Sekunden: dann kommt ohnehin der Abpfiff. */
+function einzelRollAn(si){
+  const p=tpSlots.findIndex((x,pi)=>tpIstParallel(x)&&(x.typ||"")!=="tw"&&tpRollVon(pi)&&(x.alle?tpIstHauptteil((tpSlots[si]||{}).typ):x.parallelZu===si));
+  if(p<0)return null;
+  const r=tpRollVon(p); return {n:r.n,takt:r.takt,dauer:Number(tpSlots[p].dauer)||0};
+}
+function einzelRollTick(roll,verstrichen,dauerSek,merk,schluessel){
+  if(!roll||!roll.takt||!merk)return false;
+  const t=roll.takt*60, nr=Math.floor(verstrichen/t), ende=Math.min(dauerSek,(roll.dauer||0)*60||dauerSek);
+  if(nr<1||verstrichen>=ende-5)return false;
+  const marke=String(schluessel)+":"+nr;
+  if(merk.einzelRoll===marke)return false;
+  merk.einzelRoll=marke;
+  try{ if(typeof rotBeep==="function")rotBeep(); }catch(e){}
+  try{ navigator.vibrate&&navigator.vibrate([200]); }catch(e){}
+  try{ if(typeof uhrMeldung==="function")uhrMeldung("🔄 Wechsel Individual",`${roll.n===1?"Ein Kind zurück in die Spielform, das nächste zu dir.":roll.n+" Kinder zurück in die Spielform, die nächsten zu dir."}`); }catch(e){}
+  try{ if(typeof toast==="function")toast(`🔄 Wechsel Individual – ${roll.n===1?"das nächste Kind":"die nächsten "+roll.n}`); }catch(e){}
+  return true;
+}
 function stTimerStations(){
   /* v605: Durchgänge werden zu eigenen Stationen – mit der weitergerückten Einteilung. */
   /* v609: Torwart- und Einzeltraining laufen PARALLEL zu ihrem Hauptteil. Als eigene Station
@@ -5143,7 +5232,8 @@ function stTimerStations(){
     if(tpTwExtern(p)){ const w=tpTwAn(pi); return `🧤 Torwart-Training${w.length?" ("+w.join(", ")+")":""}: mit ${p.extern||"Torwarttrainer"}`; }   // v959
     const uebung=tpWahlFelder(pi).length?(_tpWahlText(`tp-form-${pi}-0`)||"Übung wählen"):"Übung wählen";   // v883: aus dem Zustand
     const tw=(p.typ||"")==="tw";
-    const wer=tw?tpTwAn(pi).join(", "):tpKindVon(pi);   // v886: aus dem Zustand
+    const roll=tw?null:tpRollVon(pi);   // v977
+    const wer=tw?tpTwAn(pi).join(", "):roll?`🔄 ${roll.n} rollierend, alle ${roll.takt} Min.`:tpKindVon(pi);   // v886: aus dem Zustand
     return `${tw?"🧤 Torwart":"🎯 Einzeltraining"}${wer?" ("+wer+")":""}: ${uebung}`;
   });
   return tpSlots.flatMap((slot,si)=>{
@@ -5162,7 +5252,8 @@ function stTimerStations(){
       }
     }catch(e){}
     gruppen=gruppen.concat(zusatz(si));
-    return {label:(slot.label||("Block "+(si+1)))+(nDg>1?` · Durchgang ${d+1}/${nDg}`:""),dauer:nDg>1?minuten[d]:Math.max(1,slot.dauer||10),farbe:slot.farbe||"#1a56db",forms:[...new Set(forms)],gruppen};
+    const roll=einzelRollAn(si);   // v977: rollierendes Einzeltraining an diesem Hauptteil
+    return {label:(slot.label||("Block "+(si+1)))+(nDg>1?` · Durchgang ${d+1}/${nDg}`:""),dauer:nDg>1?minuten[d]:Math.max(1,slot.dauer||10),farbe:slot.farbe||"#1a56db",forms:[...new Set(forms)],gruppen,...(roll?{roll}:{})};
     });
   });
 }
@@ -5182,6 +5273,7 @@ function stTimerTick(){
   if(_stT.paused)return;
   _stT.left--;
   if(_stT.left>0&&typeof uhrRest==="function")uhrRest(_stT.left,"in dieser Station");   // v975
+  { const st=_stT.stations[_stT.ix]; if(st&&st.roll)einzelRollTick(st.roll,st.dauer*60-_stT.left,st.dauer*60,_stT,_stT.ix); }   // v977
   if(_stT.left<=0){
     stTimerWhistle();
     if(_stT.ix>=_stT.stations.length-1){ stTimerRender(true); if(_stT.timer){clearInterval(_stT.timer);_stT.timer=null;} return; }
@@ -6320,9 +6412,10 @@ function _tlSnapshot(){
     const selId=tpWahlFelder(si).length?`tp-form-${si}-0`:null, i0=selId?tpWahlIdx(selId):null;   // v883: aus dem Zustand
     const f=i0!=null?forms[i0]:null;
     const twBlock=(slot.typ||"main")==="tw";
+    const roll=twBlock?null:tpRollVon(si);   // v977: rollierend – niemand fehlt in den Feldgruppen
     const kinder=twBlock
       ? tpTwAn(si)   // v886: aus dem Zustand
-      : [tpKindVon(si)].filter(Boolean);
+      : roll?[]:tpKinderVon(si);
     ziele.forEach(ziel=>ziel.gruppen.forEach(g=>{if(g.kinder&&kinder.length)g.kinder=g.kinder.filter(k=>!kinder.includes(k));}));
     if(twBlock&&tpTwExtern(slot)){   // v959: ohne Übung, mit dem Torwarttrainer
       if(!kinder.length)return;
@@ -6331,8 +6424,8 @@ function _tlSnapshot(){
     }
     const titel=twBlock
       ? `🧤 Torwart-Training${kinder.length?" mit "+kinder.join(", "):""}: ${f?f.name:"(Übung wählen)"}`
-      : `🎯 Einzeltraining${kinder.length?" mit "+kinder[0]:""}: ${f?f.name:"(Übung wählen)"}`;
-    ziele.forEach(ziel=>ziel.gruppen.push({trainer:(selId&&tpCoaches[selId])||"?",uebung:titel,gruppe:null,kinder:kinder.length?kinder:null,einzel:true}));
+      : `🎯 Einzeltraining${roll?` · 🔄 ${roll.n} ${roll.n===1?"Kind":"Kinder"} rollierend, Wechsel alle ${roll.takt} Min.`:kinder.length?" mit "+kinder.join(", "):""}: ${f?f.name:"(Übung wählen)"}`;
+    ziele.forEach(ziel=>ziel.gruppen.push({trainer:(selId&&tpCoaches[selId])||"?",uebung:titel,gruppe:null,kinder:kinder.length?kinder:null,einzel:true,...(roll?{roll}:{})}));
   });
   return stationen.map(({si,...rest})=>rest);
 }
@@ -6623,6 +6716,7 @@ function _tlRender(){
   }
   const rest=Math.max(0,Math.round((startMs+st.dauer*60000-jetzt)/1000));
   if(rest>0&&typeof uhrRest==="function")uhrRest(rest,"in diesem Block");   // v975
+  { const roll=(st.gruppen||[]).map(g=>g&&g.roll).find(Boolean); if(roll&&rest>0)einzelRollTick(roll,st.dauer*60-rest,st.dauer*60,_tl,row.slot); }   // v977
   if(rest===0&&_tl.gepfiffen!==row.slot){_tl.gepfiffen=row.slot;try{if(typeof stTimerWhistle==="function")stTimerWhistle();}catch(e){}}
   const ich=me&&((row.fertig||{})[me]||[]).includes(row.slot);
   ov.innerHTML=kopf+`<div style="max-width:520px;margin:2vh auto 0">

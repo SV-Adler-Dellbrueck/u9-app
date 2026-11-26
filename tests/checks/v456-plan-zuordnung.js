@@ -29,7 +29,7 @@ module.exports = async function (h) {
     tpSetCoach(`tp-form-${tw}-0`, T[3]);                                   // Finn an den Torwart-Block
     tpDoAddSlot("individual"); const ind = tpSlots.findIndex(x => x.typ === "individual"); tpSlots[ind].parallelZu = 2; tpRenderTimeline();
     { const c = document.querySelector(`.tp-tw-player[data-slot="${tw}"][value="${K[2]}"]`); c.checked = false; c.dispatchEvent(new Event("change")); }   // ein Torhueter bleibt im Feld (v888: mit Ereignis)
-    const sel = document.getElementById(`tp-ind-player-${ind}`); sel.value = K[5]; sel.dispatchEvent(new Event("change"));   // v888: onchange ruft tpKindSetzen und tpIndPlayerChange
+    const sel = document.querySelector(`.tp-ind-player[data-slot="${ind}"][value="${K[5]}"]`); sel.checked = true; sel.dispatchEvent(new Event("change"));   // v977: Häkchen   // v888: onchange ruft tpKindSetzen und tpIndPlayerChange
     tpSetCoach("tp-form-1-1", T[2]);                                       // Feld 2 von Hand an Trainer 3
     let toastText = ""; const alt = window.toast; window.toast = (t, art) => { toastText = t + "|" + (art || ""); }; await tpPlanSave(true); window.toast = alt;
     return { felder1: document.querySelectorAll('.tp-form-sel[id^="tp-form-1-"]').length, toastText, twIdx: tw, indIdx: ind };
@@ -55,7 +55,7 @@ module.exports = async function (h) {
     return { felder1: document.querySelectorAll('.tp-form-sel[id^="tp-form-1-"]').length,
       twTrainer: tpCoaches[`tp-form-${twIdx}-0`] === T[3], feld2: tpCoaches["tp-form-1-1"] === T[2],
       twHaken: [...document.querySelectorAll(`.tp-tw-player[data-slot="${twIdx}"]`)].map(c => c.value + ":" + c.checked),
-      kind: document.getElementById(`tp-ind-player-${indIdx}`)?.value, hinweis: (document.querySelector(".tp-parallel-hinweis") || {}).textContent || "" };
+      kind: [...document.querySelectorAll(`.tp-ind-player[data-slot="${indIdx}"]`)].filter(c => c.checked).map(c => c.value).join(", "), hinweis: (document.querySelector(".tp-parallel-hinweis") || {}).textContent || "" };
   }, { K, twIdx: planA.twIdx, indIdx: planA.indIdx });
   const fehler = b.fehler(); await b.schliessen();
   if (planB.felder1 !== 3) probleme.push(`Geraet B: ${planB.felder1} Felder statt 3 – Zuordnung nicht zurueck`);

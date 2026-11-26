@@ -69,7 +69,7 @@ module.exports = async function (h) {
         tpSetCoach(`tp-form-${tw}-0`, "Kenneth");
         tpDoAddSlot("individual");
         const ind = tpSlots.findIndex(x => x.typ === "individual");
-        const k = document.getElementById(`tp-ind-player-${ind}`); k.value = "Kind E"; k.dispatchEvent(new Event("change"));
+        const k = document.querySelector(`.tp-ind-player[data-slot="${ind}"][value="${"Kind E"}"]`); k.checked = true; k.dispatchEvent(new Event("change"));   // v977: Häkchen statt Auswahl
         return { tw, ind };
       });
       await golden.ruhe(s);
@@ -78,15 +78,14 @@ module.exports = async function (h) {
         const h1 = tpSlots.findIndex(x => /^Hauptteil 1$/.test(x.label || "")), id = `tp-form-${h1}-0`;
         const sel = document.getElementById(id), alt = tpWahlIdx(id);
         const fremd = [...sel.options].map(o => o.value).filter(v => v !== "" && v !== String(alt))[1];
-        const k = document.getElementById(`tp-ind-player-${ind}`);
-        const kind = [...k.options].map(o => o.value).find(v => v && v !== "Kind E");
+        const kind = [...document.querySelectorAll(`.tp-ind-player[data-slot="${ind}"]`)].map(c => c.value).find(v => v && v !== "Kind E");   // v977
         return { h1, id, alt, fremd: Number(fremd), kind, tw, ind, twVorher: tpTwAn(tw), kindVorher: tpKindVon(ind) };
       }, start);
 
       /* b) ohne Ereignis */
       const b = await p.evaluate(z => {
-        const sel = document.getElementById(z.id), haken = document.querySelector(`.tp-tw-player[data-slot="${z.tw}"][value="Kind B"]`), k = document.getElementById(`tp-ind-player-${z.ind}`);
-        sel.value = String(z.fremd); haken.checked = false; k.value = z.kind;
+        const sel = document.getElementById(z.id), haken = document.querySelector(`.tp-tw-player[data-slot="${z.tw}"][value="Kind B"]`), k = document.querySelector(`.tp-ind-player[data-slot="${z.ind}"][value="${z.kind}"]`);
+        sel.value = String(z.fremd); haken.checked = false; k.checked = true;   // v977: ein weiteres Häkchen ohne Ereignis
         const zustand = { wahl: tpWahlIdx(z.id), tw: tpTwAn(z.tw), kind: tpKindVon(z.ind) };
         return { zustand, fremd: tpZustandPruefen({ fremd: true }), normal: tpZustandPruefen(),
           plan: tpPlanEntries().filter(e => e.block === z.h1 && e.feld === 0).map(e => e.formIdx) };
@@ -94,7 +93,7 @@ module.exports = async function (h) {
       const b1 = await speichern();
       const nachZeichnen = await p.evaluate(z => {
         tpRenderTimeline();
-        return { pruefen: tpZustandPruefen({ fremd: true }), feld: document.getElementById(z.id).value, haken: document.querySelector(`.tp-tw-player[data-slot="${z.tw}"][value="Kind B"]`).checked, kind: document.getElementById(`tp-ind-player-${z.ind}`).value };
+        return { pruefen: tpZustandPruefen({ fremd: true }), feld: document.getElementById(z.id).value, haken: document.querySelector(`.tp-tw-player[data-slot="${z.tw}"][value="Kind B"]`).checked, kind: [...document.querySelectorAll(`.tp-ind-player[data-slot="${z.ind}"]`)].filter(c => c.checked).map(c => c.value).join(", ") };
       }, ziel);
       const b2 = await speichern();
       const zustandGleich = b.zustand.wahl === ziel.alt && JSON.stringify(b.zustand.tw) === JSON.stringify(ziel.twVorher) && b.zustand.kind === ziel.kindVorher;
@@ -111,10 +110,10 @@ module.exports = async function (h) {
 
       /* c) mit Ereignis */
       const c = await p.evaluate(z => {
-        const sel = document.getElementById(z.id), haken = document.querySelector(`.tp-tw-player[data-slot="${z.tw}"][value="Kind B"]`), k = document.getElementById(`tp-ind-player-${z.ind}`);
+        const sel = document.getElementById(z.id), haken = document.querySelector(`.tp-tw-player[data-slot="${z.tw}"][value="Kind B"]`), k = document.querySelector(`.tp-ind-player[data-slot="${z.ind}"][value="${z.kind}"]`), e = document.querySelector(`.tp-ind-player[data-slot="${z.ind}"][value="${"Kind E"}"]`);
         sel.value = String(z.fremd); sel.dispatchEvent(new Event("change"));
         haken.checked = false; haken.dispatchEvent(new Event("change"));
-        k.value = z.kind; k.dispatchEvent(new Event("change"));
+        e.checked = false; e.dispatchEvent(new Event("change")); k.checked = true; k.dispatchEvent(new Event("change"));   // v977: Kind tauschen über zwei Häkchen
         return { wahl: tpWahlIdx(z.id), tw: tpTwAn(z.tw), kind: tpKindVon(z.ind), pruefen: tpZustandPruefen({ fremd: true }),
           twIds: kidListToIds(["Kind A"]), kindId: kidId(z.kind) };
       }, ziel);

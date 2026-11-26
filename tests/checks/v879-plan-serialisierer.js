@@ -52,7 +52,7 @@ function altSlotsMitZuordnung(){
     if(tpKannParallel(typ)){
       const t=tpCoaches[`tp-form-${si}-0`]; if(t)o.trainer=t;
       if(typ==="tw"){const an=[...document.querySelectorAll(`.tp-tw-player[data-slot="${si}"]`)]; if(an.length)o.tw=ids(an.filter(c=>c.checked).map(c=>c.value));}
-      else{const k=document.getElementById(`tp-ind-player-${si}`)?.value; if(k)o.kind=id(k);}
+      else{const k=[...document.querySelectorAll(`.tp-ind-player[data-slot="${si}"]`)].filter(c=>c.checked).map(c=>c.value); if(k.length===1)o.kind=id(k[0]); else if(k.length)o.kind=ids(k);}   // v977: Häkchen
     }else if(tpIstHauptteil(typ)){
       const c=[]; document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`).forEach((sel,p)=>{c[p]=tpCoaches[sel.id]||"";});
       if(c.some(Boolean))o.coaches=c;
@@ -201,7 +201,7 @@ module.exports = async function (h) {
         const b = document.querySelector(`.tp-tw-player[data-slot="${tw}"][value="Kind B"]`); if (b) { b.checked = false; b.dispatchEvent(new Event("change")); }   // v888: mit Ereignis
         tpSetCoach(`tp-form-${tw}-0`, "Kenneth");
         tpDoAddSlot("individual"); const ind = tpSlots.findIndex(s => s.typ === "individual");
-        const sel = document.getElementById(`tp-ind-player-${ind}`); sel.value = "Kind E"; sel.dispatchEvent(new Event("change"));
+        const sel = document.querySelector(`.tp-ind-player[data-slot="${ind}"][value="${"Kind E"}"]`); sel.checked = true; sel.dispatchEvent(new Event("change"));   // v977: Häkchen
         /* Vorlagen-Marken an zwei Feldern, wie sie das Öffnen eines Vorlagen-Plans setzt */
         /* v888: über den Setter, die Seite folgt beim Zeichnen (vorher dataset= über die Brücke) */
         const felder = [...document.querySelectorAll(".tp-form-sel")].filter(x => x.value);

@@ -326,7 +326,7 @@ const SZENARIEN = [
       ["Torwart-Übung wählen", p => p.evaluate(() => { const tw = tpSlots.findIndex(s => s.typ === "tw"); const sel = document.getElementById(`tp-form-${tw}-0`); const v = [...sel.options].map(o => o.value).find(x => x !== ""); tpPickerOpen(sel.id); tpPickerSet(Number(v)); })],
       ["Einzeltraining mit Kind E", p => p.evaluate(() => {
         tpDoAddSlot("individual"); const ind = tpSlots.findIndex(s => s.typ === "individual");
-        const sel = document.getElementById(`tp-ind-player-${ind}`); sel.value = "Kind E"; sel.dispatchEvent(new Event("change"));   // v888: onchange ruft tpKindSetzen und tpIndPlayerChange
+        const sel = document.querySelector(`.tp-ind-player[data-slot="${ind}"][value="${"Kind E"}"]`); sel.checked = true; sel.dispatchEvent(new Event("change"));   // v977: Häkchen   // v888: onchange ruft tpKindSetzen und tpIndPlayerChange
         return { ind, parallelZu: tpSlots[ind].parallelZu };
       })],
       ["Plan speichern", p => p.evaluate(async () => { await tpPlanSave(true); })]
