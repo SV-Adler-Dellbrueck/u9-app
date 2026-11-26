@@ -5,7 +5,8 @@
    c) Die Tee-Aufgabe am Termin mit Tee nennt den Termin davor („Am Dienstag … nach dem Training … Pumpkannen“);
       liegt der Termin davor schon zurück: „beim Trainerteam“
    d) Becher-Hinweis bei Training/Spiel/Turnier, nicht bei sonstigen Terminen; ausgefallene Termine überspringt die Staffel
-   e) Trainer-Termindetail: „Kannen für den Tee am …“ mit „fehlt: n“
+   e) Trainer-Termindetail: „Kannen für den Tee am …“ mit „frei: n“
+   g) Freiwillig (Charles 26.11.): kein „fehlt“, Bitte statt Pflicht
    f) push-cron kennt Erinnerung und Nachfrage (Teil 2b), fragt Eingetragene nicht und liest platz_status */
 "use strict";
 const fs = require("fs"), path = require("path");
@@ -72,9 +73,9 @@ module.exports = async function (h) {
   const fe = s.fehler(); await s.schliessen();
   if (r.fehlt) probleme.push("teeStaffelHtml fehlt");
   else {
-    if (!r.a.da || r.a.zeilen !== 2 || !/Für den nächsten Tee/.test(r.a.text) || !/Kind As Familie/.test(r.a.text) || !/✓ steht/.test(r.a.text) || !/fehlt/.test(r.a.text) || !r.a.knopf.length || r.a.knopf[0].t !== "Ich nehme eine Kanne mit" || r.a.knopf[0].h < 44)
+    if (!r.a.da || r.a.zeilen !== 2 || !/Für den nächsten Tee/.test(r.a.text) || !/Kind As Familie/.test(r.a.text) || !/✓ steht/.test(r.a.text) || !/frei/.test(r.a.text) || /fehlt/.test(r.a.text) || !/freiwillig/.test(r.a.text) || !r.a.knopf.length || r.a.knopf[0].t !== "Ich nehme eine Kanne mit" || r.a.knopf[0].h < 44)
       probleme.push("a) " + JSON.stringify(r.a).slice(0, 300));
-    else zeilen.push(`a) Termin davor: zwei Kannen-Zeilen („✓ steht“/„fehlt“), Knopf „${r.a.knopf[0].t}“ ${Math.round(r.a.knopf[0].h)} px`);
+    else zeilen.push(`a) Termin davor: zwei Kannen-Zeilen („✓ steht“/„frei“, „freiwillig“), Knopf „${r.a.knopf[0].t}“ ${Math.round(r.a.knopf[0].h)} px`);
     const p = posts[0] || {};
     if (p.termin_id !== 503 || p.aufgabe !== TEE) probleme.push("a) Eintrag nicht am nächsten Termin: " + JSON.stringify(posts));
     if (!r.b.knopf.length || !/Du nimmst eine Kanne mit/.test(r.b.knopf[0].t) || !/Für den nächsten Tee/.test(r.b.text)) probleme.push("b) nach dem Eintragen: " + JSON.stringify(r.b).slice(0, 300));
@@ -85,11 +86,11 @@ module.exports = async function (h) {
     if (!probleme.some(x => x.startsWith("c)"))) zeilen.push("c) Tee-Aufgabe nennt den Termin davor (Dienstag, ausgefallener Donnerstag übersprungen), sonst „beim Trainerteam“");
     if (r.d.join() !== "true,true,true,false" || r.d2) probleme.push("d) Becher: " + JSON.stringify([r.d, r.d2]));
     else zeilen.push("d) Becher-Hinweis bei Training, Spiel, Turnier – nicht bei sonstigen und ausgefallenen Terminen");
-    if (!r.e || !/Kannen für den Tee am Freitag/.test(r.e) || !/fehlt: 1/.test(r.e)) probleme.push("e) Trainer: " + r.e);
+    if (!r.e || !/Kannen für den Tee am Freitag/.test(r.e) || !/frei: 1/.test(r.e)) probleme.push("e) Trainer: " + r.e);
     else zeilen.push("e) Trainer: „" + r.e.match(/🫖[^·]*·[^·]*$/)?.[0]?.trim() + "“");
   }
   const pc = fs.readFileSync(path.join(h.REPO, "supabase/functions/push-cron/index.ts"), "utf8");
-  if (!/Teil 2b \(v969\): Tee-Staffel/.test(pc) || !/Morgen eine Teekanne mitnehmen/.test(pc) || !/Für den Tee fehlt noch jemand/.test(pc) || !/ohne && ohne\.has/.test(pc) || !/uhrzeit,platz_status"\)/.test(pc)) probleme.push("f) push-cron ohne Tee-Staffel");
+  if (!/Teil 2b \(v969\): Tee-Staffel/.test(pc) || !/Morgen eine Teekanne mitnehmen/.test(pc) || !/Mag jemand den Tee übernehmen\?/.test(pc) || !/freiwillig/.test(pc) || !/ohne && ohne\.has/.test(pc) || !/uhrzeit,platz_status"\)/.test(pc)) probleme.push("f) push-cron ohne Tee-Staffel");
   else zeilen.push("f) push-cron: Erinnerung an Eingetragene, Nachfrage an kommende Familien ohne die Eingetragenen, Ausfälle zählen nicht");
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
   return h.ergebnis("v969 Tee-Staffel: Kannen am Termin davor, eigene Becher", !probleme.length, zeilen.concat(probleme));

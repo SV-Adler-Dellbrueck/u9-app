@@ -610,7 +610,7 @@ async function helferTrainerFill(t){
       let tr=[];
       try{const r=await fetch(`${SB_URL}/rest/v1/event_helfer?termin_id=eq.${nb.nachher.id}&aufgabe=eq.${encodeURIComponent(TEE_AUFGABE)}&select=name&order=created_at.asc`,{headers:sbAuthHeaders()});if(r.ok)tr=await r.json();}catch(e){}
       const n=teeKannen(nb.nachher), fehlt=Math.max(0,n-(tr||[]).length);
-      tee=`<div class="tm-tee-kannen" style="margin-top:4px">🫖 <b>Kannen für den Tee am ${esc(teeWann(nb.nachher))}</b>: ${(tr||[]).length?(tr||[]).map(x=>esc(x.name)).join(", "):"noch niemand"}${fehlt?` · <b>fehlt: ${fehlt}</b>`:" · ✓ steht"}</div>`;
+      tee=`<div class="tm-tee-kannen" style="margin-top:4px">🫖 <b>Kannen für den Tee am ${esc(teeWann(nb.nachher))}</b>: ${(tr||[]).length?(tr||[]).map(x=>esc(x.name)).join(", "):"noch niemand"}${fehlt?` · <b>frei: ${fehlt}</b>`:" · ✓ steht"}</div>`;
     }
   }
   if(!rows.length){box.innerHTML='🙌 Helfer: noch niemand eingetragen'+tee;return;}

@@ -163,7 +163,7 @@ Deno.serve(async (req) => {
     /* Charles 26.11.: Wer am nächsten Tee-Termin eingetragen ist, nimmt nach dem (letzten) Termin morgen eine Pumpkanne mit,
        spült sie und bringt sie mit Tee zurück. „Es sollte vor dem Training schon feststehen, wer mitnimmt.“ Deshalb heute:
        Erinnerung an die Eingetragenen und – sind nicht alle Kannen vergeben – EINE Nachfrage an die Familien, deren Kind morgen
-       kommt. Der Lauf ist täglich und meint nur „morgen“, also gibt es beides höchstens einmal je Termin. Ausgefallene Termine
+       kommt – als Bitte, freiwillig (Charles 26.11.). Der Lauf ist täglich und meint nur „morgen“, also gibt es beides höchstens einmal je Termin. Ausgefallene Termine
        zählen nicht. Die Plätze folgen der App (2, oder was das Trainerteam am Termin freigegeben hat). */
     if (termine && termine.length) {
       const TEE = "🫖 Tee mitbringen";
@@ -188,8 +188,8 @@ Deno.serve(async (req) => {
           const fehlt = plaetze - ((th || []) as any[]).length;
           if (fehlt > 0) {
             teeSent += await pushKommende(tLetzt.id, {
-              title: "🫖 Für den Tee fehlt noch jemand",
-              body: `Für den Tee am ${tag} fehlt noch ${fehlt === 1 ? "eine Familie" : fehlt + " Familien"}. Wer morgen nach dem ${was} eine Kanne mitnimmt, bringt sie am ${tag} mit Tee zurück – eintragen im Termin.`,
+              title: "🫖 Mag jemand den Tee übernehmen?",
+              body: `Für ${tag} ${fehlt === 1 ? "ist noch eine Teekanne" : "sind noch " + fehlt + " Teekannen"} frei. Wer mag, nimmt morgen nach dem ${was} eine mit und bringt sie am ${tag} mit Tee zurück – ganz freiwillig, eintragen im Termin.`,
               url: "./eltern/",
               tag: "tee-frage",
             }, drin);

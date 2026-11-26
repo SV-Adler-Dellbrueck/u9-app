@@ -2443,7 +2443,8 @@ const TEE_STANDARD=2;
    den Tee in der Kanne mitbringt, müsste ein anderes Elternteil sich schon bereit erklären, fürs nächste Mal Tee zu machen und die
    Kanne mitzunehmen.“ Beschlossen nach Bild: Wer sich für den Tee an einem Termin einträgt, nimmt am Termin DAVOR (letztes
    Training/Spiel/Turnier, das nicht ausfällt) je eine Kanne mit, spült sie und bringt sie mit Tee zurück. Zwei Familien, je eine
-   Kanne (TEE_STANDARD). Gespeichert wird nichts Neues: die Eintragung bleibt event_helfer am Termin MIT Tee; der Termin davor zeigt
+   Kanne (TEE_STANDARD). Freiwillig (Charles: „nicht wie bei der Grillhütte als jeder muss es mal machen“) – kein „fehlt“, keine
+   Reihenfolge, niemand wird eingeteilt. Gespeichert wird nichts Neues: die Eintragung bleibt event_helfer am Termin MIT Tee; der Termin davor zeigt
    sie nur an („Für den nächsten Tee“) und trägt von dort aus ein. Fehlt jemand, fragt push-cron am Vortag des Termins davor nach. */
 const TEE_AUFGABE="🫖 Tee mitbringen", TEE_TYPEN=["training","spiel","turnier"];
 function teeTermin(t){ return !!t&&TEE_TYPEN.includes(t.typ)&&!(typeof terminFaelltAus==="function"&&terminFaelltAus(t)); }
@@ -2487,13 +2488,13 @@ function teeStaffelHtml(t,n,rows,uid){
   const zeilen=Array.from({length:plaetze},(_,i)=>{ const r=rows[i];
     return `<div class="tee-kanne" style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px">
       <span>Kanne ${i+1} · ${r?"<b>"+esc(r.name)+"</b>":"noch offen"}</span>
-      <span style="flex:none;font-size:var(--s-klein);font-weight:700;border-radius:99px;padding:3px 9px;border:1px solid ${r?"#15803d;color:#166534;background:#f0fdf4":"#b91c1c;color:#991b1b;background:#fef2f2"}">${r?"✓ steht":"fehlt"}</span></div>`; }).join("");
-  const wer=plaetze===1?"eine Familie die Kanne":`${plaetze} Familien je eine Kanne`;
+      <span style="flex:none;font-size:var(--s-klein);font-weight:700;border-radius:99px;padding:3px 9px;border:1px solid ${r?"#15803d;color:#166534;background:#f0fdf4":"#b91c1c;color:#991b1b;background:#fef2f2"}">${r?"✓ steht":"frei"}</span></div>`; }).join("");
+  const wer=plaetze===1?"die Kanne":"eine der Kannen";
   const knopf=mein
     ?`<button class="btn" onclick="teeKanneWeg(${Number(n.id)},${Number(t.id)})" style="width:100%;justify-content:center;margin-top:8px;min-height:48px">✓ Du nimmst eine Kanne mit · austragen</button>`
     :(offen?`<button class="btn" onclick="teeKanneNehmen(${Number(n.id)},${Number(t.id)})" style="width:100%;justify-content:center;margin-top:8px;min-height:48px;background:#1f2937;color:#fff;border-color:#1f2937">Ich nehme eine Kanne mit</button>`:"");
   return `<div id="td-tee-staffel" style="border-left:4px solid #b45309;background:#fffbeb;border-radius:10px;padding:10px;margin-top:10px;font-size:var(--s-text);line-height:1.45;color:#1f2937">
-    <b>🫖 Für den nächsten Tee (${esc(teeWann(n))})</b><br>Nach ${t.typ==="training"?"diesem Training":"diesem Termin"} nehmen ${wer} mit, spülen sie und bringen sie am ${esc(teeWann(n))} mit warmem Tee zurück.
+    <b>🫖 Für den nächsten Tee (${esc(teeWann(n))})</b><br>Wer mag, nimmt nach ${t.typ==="training"?"diesem Training":"diesem Termin"} ${wer} mit, spült sie und bringt sie am ${esc(teeWann(n))} mit warmem Tee zurück – ganz freiwillig, danke!
     ${zeilen}${knopf}</div>`;
 }
 async function teeKanneNehmen(naechsterId,terminId){
