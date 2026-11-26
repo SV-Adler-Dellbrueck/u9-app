@@ -4792,19 +4792,19 @@ async function tpKopfLaden(datum){
    Tor mit Jugendtor-Marke oder ab 32 Breite = Tor, schmaler = Minitor. Feldmarkierung (Zonen, Linien) zählt nicht.
    Eine eigene Angabe (kopf.material) gilt vor dem Vorschlag und lässt sich hier setzen. */
 const TP_MAT_NAMEN=[["tore","Tor","Tore"],["minitore","Minitor","Minitore"],["huetchen","Hütchen","Hütchen"],["stangen","Stange","Stangen"],
-  ["teller","Teller","Teller"],["dummys","Dummy","Dummys"],["leitern","Leiter","Leitern"]];
+  ["teller","Teller","Teller"],["dummys","Dummy","Dummys"],["leitern","Leiter","Leitern"],["matten","Skillmatte","Skillmatten"],["gymbaelle","Gymnastikball","Gymnastikbälle"]];   // v968
 function tpMaterialVonSpec(sp){
-  const m={tore:0,minitore:0,huetchen:0,stangen:0,teller:0,dummys:0,leitern:0}; if(!sp)return m;
+  const m={tore:0,minitore:0,huetchen:0,stangen:0,teller:0,dummys:0,leitern:0,matten:0,gymbaelle:0}; if(!sp)return m;
   (sp.tor||[]).forEach(t=>{ if(t[4]==="j"||Number(t[3])>=32)m.tore++; else m.minitore++; });
   m.huetchen+=(sp.h||[]).length;
   (sp.dtor||[]).forEach(t=>{ if(t[4]==="s")m.stangen+=2; else m.huetchen+=2; });
-  (sp.ger||[]).forEach(g=>{ const t=g[2]; if(t==="stange")m.stangen++; else if(t==="teller")m.teller++; else if(t==="dummy")m.dummys++; });
+  (sp.ger||[]).forEach(g=>{ const t=g[2]; if(t==="stange")m.stangen++; else if(t==="teller")m.teller++; else if(t==="dummy")m.dummys++; else if(t==="matte")m.matten++; else if(t==="gymball")m.gymbaelle++; });
   m.leitern+=(sp.leiter||[]).length;
   return m;
 }
 function tpMaterialZaehlen(){
   const alle=tpAllForms(), slots=(typeof tpSlots!=="undefined"?tpSlots:[]);
-  const jeSlot=slots.map(()=>({tore:0,minitore:0,huetchen:0,stangen:0,teller:0,dummys:0,leitern:0}));
+  const jeSlot=slots.map(()=>({tore:0,minitore:0,huetchen:0,stangen:0,teller:0,dummys:0,leitern:0,matten:0,gymbaelle:0}));
   const ohne=new Set(); let gezaehlt=0;
   slots.forEach((s,si)=>{
     tpWahlFelder(si).forEach(id=>{   // v883: Wahl aus dem Zustand
@@ -4815,7 +4815,7 @@ function tpMaterialZaehlen(){
   });
   // Parallele Blöcke laufen gleichzeitig mit ihrem Hauptteil: dazurechnen
   slots.forEach((s,si)=>{ if(s&&s.parallelZu!=null&&jeSlot[s.parallelZu]){ Object.keys(jeSlot[si]).forEach(k=>{ jeSlot[s.parallelZu][k]+=jeSlot[si][k]; jeSlot[si][k]=0; }); } });
-  const summe={tore:0,minitore:0,huetchen:0,stangen:0,teller:0,dummys:0,leitern:0};
+  const summe={tore:0,minitore:0,huetchen:0,stangen:0,teller:0,dummys:0,leitern:0,matten:0,gymbaelle:0};
   jeSlot.forEach(m=>Object.keys(m).forEach(k=>{ if(m[k]>summe[k])summe[k]=m[k]; }));
   const kinder=(typeof _tgPool==="function")?_tgPool().namen.length:0;
   return {summe,ohne:[...ohne],gezaehlt,baelle:kinder};

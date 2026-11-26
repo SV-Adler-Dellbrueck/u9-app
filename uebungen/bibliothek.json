@@ -1,6 +1,6 @@
 {
   "schema": "adler-uebungen/1",
-  "stand": "2026-11-23-1",
+  "stand": "2026-11-26-1",
   "uebungen": [
     {
       "name": "Warm up Adler",
@@ -9255,6 +9255,253 @@
             160,
             "Läufer stößt um – Wächter stellen auf"
           ]
+        ]
+      }
+    },
+    {
+      "name": "Skillmatte – Pass – Tor",
+      "kat": "individual",
+      "kurz": "Zahlenfolge auf der Matte, Pass am Tor vorbei, Abschluss aufs Minitor",
+      "spieler": "2",
+      "feld": "ca. 9 m Linie: Skillmatte 3 m hinter, Markierungsplatte 5 m vor dem Minitor",
+      "dauer": "8",
+      "diff": 1,
+      "ablauf": "Trainer nennt eine Zahlenfolge, A zieht den Ball mit der Sohle über die Matte, geht links oder rechts am Tor vorbei und passt flach zu B. B nimmt an, dribbelt kurz und schließt aufs Minitor ab. Danach Wechsel: B an die Matte, A an die Platte. Läuft als Station in der Rotation.",
+      "coaching": "Gehst du links oder rechts am Tor vorbei, und warum? Auf welchen Fuß passt du B den Ball am besten? Wo soll der Ball nach deiner Annahme liegen: rechts neben dir, genau vor dir oder links vor dir?",
+      "varianten": "Leichter: kurze Zahlenfolgen, Trainer ohne Druck, Annahme frei. Schwerer: längere Zahlenfolgen und die Zusatzregeln aus der ganzen Beschreibung.",
+      "ablauf_lang": "ZIEL\nBallkontrolle mit der Sohle unter Anleitung, Entscheidung für eine Seite, genauer Flachpass, gerichtete Annahme und Abschluss im Tempo.\n\nKURZBESCHREIBUNG\nZwei Kinder, ein Minitor, eine Skillmatte. Eines arbeitet an der Matte und passt, das andere nimmt an und schließt ab. Danach tauschen sie die Rollen.\n\nAUFBAU\nEin Minitor. Die Skillmatte liegt 3 m hinter dem Tor, eine Markierungsplatte 5 m davor. Der Trainer steht direkt hinter der Matte. Ein Ball. Für die Zusatzregel ein kleiner Gymnastikball.\n\nABLAUF\nA steht mit dem Ball an der Matte, B an der Platte und tippelt auf der Stelle. Der Trainer nennt eine Zahlenfolge, zum Beispiel 1-4-1-4-1. A schiebt und zieht den Ball mit der Sohle von Zahl zu Zahl. Bei der letzten Zahl entscheidet A selbst, ob es links oder rechts am Tor vorbeigeht, und spielt auf Torhöhe einen Flachpass zu B. B nimmt an, dribbelt kurz im Tempo aufs Tor und schließt ab. B holt den Ball aus dem Tor und geht an die Matte, A geht an die Platte.\n\nREGELN\nAn der Matte nur mit der Sohle. Gepasst wird erst auf Torhöhe. B tippelt, bis der Pass kommt.\n\nCOACHING-ASPEKTE\nGehst du links oder rechts am Tor vorbei, und warum? Auf welchen Fuß passt du B den Ball am besten, links oder rechts? Wo soll der Ball nach deiner Annahme liegen: rechts neben dir, genau vor dir oder links vor dir?\n\nESKALATIONSSTUFEN\nStufe 1: kurze Zahlenfolgen, kein Druck. Stufe 2: längere Folgen, leichter Druck mit der Hand im Rücken. Stufe 3: Druck mit dem Gymnastikball, Namen rufen, erster Kontakt auf den starken Fuß. Stufe 4: nach dem Pass 1 gegen 1.\n\nZUSATZREGELN\n(1) Der Trainer drückt mit der Hand oder dem Gymnastikball leicht in den Rücken von A, je nach Spielstärke. Frage: Wie stellst du dich gegen den Druck im Rücken, damit der Ball bei dir bleibt und du ihn trotzdem unter Kontrolle hast? (2) A nimmt vor dem Pass den Kopf hoch und ruft laut den Namen von B. Frage: Wohin schaust du, bevor du passt? (3) B legt sich mit dem ersten Kontakt den Ball nach vorn auf den starken Fuß. Frage: In welche Richtung willst du nach der Annahme weiterlaufen? (4) Nach dem Pass verteidigt A, und es wird 1 gegen 1 gespielt. Frage an B: Wie kommst du am besten an A vorbei? Frage an A: Wo stehst du, damit B nicht einfach durchkommt?\n\nVORTEILE\nViele Ballkontakte je Kind. Die Schwierigkeit lässt sich je Kind über Zahlenfolge und Druck genau einstellen.\n\nNACHTEILE\nNur zwei Kinder je Matte, deshalb nur als Station in einer Rotation. Der Trainer ist an die Station gebunden.\n\nTYPISCHE FEHLERBILDER\nDer Ball springt von der Sohle weg. A passt zu früh oder ohne Blick. B nimmt den Ball frontal an und bleibt stehen.\n\nWORAUF ACHTEN\nDie Zahlenfolge nur so lang machen, dass das Kind sie sich merken kann. Den Druck im Rücken dosieren, nicht schubsen.",
+      "skizze": {
+        "hoch": true,
+        "tor": [
+          [
+            80,
+            148,
+            "h",
+            20
+          ]
+        ],
+        "ger": [
+          [
+            90,
+            36,
+            "teller",
+            "y"
+          ],
+          [
+            90,
+            212,
+            "matte",
+            "w"
+          ],
+          [
+            90,
+            254,
+            "trainer",
+            "w"
+          ],
+          [
+            108,
+            256,
+            "gymball",
+            "y"
+          ]
+        ],
+        "s": [
+          [
+            90,
+            228,
+            "g",
+            "A"
+          ],
+          [
+            90,
+            50,
+            "g",
+            "B"
+          ]
+        ],
+        "b": [
+          [
+            90,
+            212
+          ]
+        ],
+        "p": [
+          [
+            104,
+            206,
+            122,
+            166,
+            "d"
+          ]
+        ],
+        "tx": [
+          [
+            90,
+            270,
+            "Trainer nennt Zahlenfolge, z. B. 1-4-1-4-1"
+          ]
+        ],
+        "schritte": [
+          {
+            "s": [
+              [
+                124,
+                156,
+                "g",
+                "A"
+              ],
+              [
+                90,
+                50,
+                "g",
+                "B"
+              ]
+            ],
+            "b": [
+              [
+                118,
+                146
+              ]
+            ],
+            "p": [
+              [
+                116,
+                140,
+                98,
+                64,
+                "p"
+              ]
+            ],
+            "tx": [
+              [
+                90,
+                270,
+                "Kopf hoch, Namen rufen, Flachpass"
+              ]
+            ]
+          },
+          {
+            "b": [
+              [
+                98,
+                60
+              ]
+            ],
+            "p": [
+              [
+                84,
+                72,
+                84,
+                104,
+                "d"
+              ],
+              [
+                88,
+                112,
+                90,
+                142,
+                "s"
+              ]
+            ],
+            "tx": [
+              [
+                90,
+                270,
+                "Annahme auf den starken Fuß, Abschluss"
+              ]
+            ]
+          },
+          {
+            "s": [
+              [
+                124,
+                156,
+                "g",
+                "A"
+              ],
+              [
+                90,
+                126,
+                "g",
+                "B"
+              ]
+            ],
+            "b": [
+              [
+                90,
+                151
+              ]
+            ],
+            "p": [
+              [
+                110,
+                134,
+                110,
+                200,
+                "l"
+              ],
+              [
+                118,
+                138,
+                98,
+                66,
+                "l"
+              ]
+            ],
+            "tx": [
+              [
+                90,
+                270,
+                "Wechsel: B an die Matte, A an die Platte"
+              ]
+            ]
+          },
+          {
+            "s": [
+              [
+                120,
+                124,
+                "g",
+                "A"
+              ],
+              [
+                90,
+                96,
+                "g",
+                "B"
+              ]
+            ],
+            "b": [
+              [
+                97,
+                103
+              ]
+            ],
+            "p": [
+              [
+                86,
+                112,
+                88,
+                138,
+                "d"
+              ],
+              [
+                112,
+                136,
+                98,
+                140,
+                "l"
+              ]
+            ],
+            "tx": [
+              [
+                90,
+                270,
+                "Zusatzregel: A verteidigt, 1 gegen 1"
+              ]
+            ]
+          }
         ]
       }
     }

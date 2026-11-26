@@ -49,6 +49,12 @@ function imBrowserHelfer(){
       {key:"sz",art:"linie",c:"#fbbf24",   w:2,  dash:"5,4",kopf:false,txt:"Schusszone"},
       {key:"m", art:"linie",c:"rgba(255,255,255,.7)",w:2,dash:"",kopf:false,txt:"Mittellinie"}
     ].filter(e=>!A||A.has(e.key));
+    /* v968: Geräte stehen wie in der App in der Legende (Skillmatte, Gymnastikball, Teller …) – gezeichnet mit
+       demselben Code wie auf dem Platz (_skzGerProbe), damit Legende und Bild nicht auseinanderlaufen. */
+    if(typeof SKZ_GER_NAME!=="undefined"&&spec&&Array.isArray(spec.ger)){
+      const arten=[]; spec.ger.forEach(g=>{ const a=String((g&&g[2])||"stange"); if(SKZ_GER_NAME[a]&&!arten.includes(a))arten.push(a); });
+      arten.forEach(a=>eintraege.push({key:"ger-"+a,art:"ger",ger:a,txt:SKZ_GER_NAME[a]}));
+    }
     const spalten=BREITE<220?2:3, zeilen=Math.max(1,Math.ceil(eintraege.length/spalten));
     const H_LEG=12+zeilen*16;
     const teile=[];
@@ -61,7 +67,13 @@ function imBrowserHelfer(){
          Strichstaerke, und der dicke Schuss-Strich haette darunter verschwunden.
          Genauso macht es die Legende der App in skzLegende(). */
       const ende=e.kopf?x0+15:x0+22;
-      if(e.art==="welle"&&typeof _skzWelle==="function"){
+      if(e.art==="ger"){
+        const roh=_skz(_skzGerProbe(e.ger),{});
+        const inhalt=roh.slice(roh.indexOf("</defs>")+7,roh.lastIndexOf("</svg>"));
+        /* v968: Die Skillmatte ist 24 × 16 gross und reichte über die Zeilenhöhe von 16 in den Nachbartext – in der Legende auf die Hälfte, etwas nach rechts. */
+        const k=e.ger==="matte"?0.5:1, dx=e.ger==="matte"?14:12;
+        teile.push('<g transform="translate('+(x0+dx)+','+y+') scale('+k+') translate(-16,-9)">'+inhalt+'</g>');
+      }else if(e.art==="welle"&&typeof _skzWelle==="function"){
         teile.push('<path d="'+_skzWelle(x0,y,ende,y)+'" fill="none" stroke="'+e.c+'" stroke-width="'+e.w+'" stroke-linecap="round"/>');
       }else{
         teile.push('<line x1="'+x0+'" y1="'+y+'" x2="'+ende+'" y2="'+y+'" stroke="'+e.c+'" stroke-width="'+e.w+'"'

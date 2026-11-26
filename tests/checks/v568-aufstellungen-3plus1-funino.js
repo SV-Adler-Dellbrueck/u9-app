@@ -144,7 +144,10 @@ module.exports = async function (h) {
   else if (klinke > 37) probleme.push(`Die Sperrklinke aus v549 ist von 37 auf ${klinke} gestiegen`);
 
   // ── Der Browser: Abgleich gegen den Bestand, Prüfung, Kacheln, Skizzen, Übernehmen ──
-  const zwei = h.tagePlus(2), drei = h.tagePlus(4);
+  /* v968: montags setzt die App seit v959 den Torwart-Block neben die Hauptteile – dann stimmt die Zählung der
+     Hauptteile hier nicht. Die Testtage weichen deshalb einem Montag aus (rot war es, wenn heute + 4 ein Montag ist). */
+  const keinMontag = n => new Date(h.tagePlus(n) + "T12:00:00Z").getUTCDay() === 1 ? h.tagePlus(n + 1) : h.tagePlus(n);
+  const zwei = keinMontag(2), drei = keinMontag(4);
   const gruppen = [
     { name: "Blau", emo: "🔵", kinder: [h.KINDER[0], h.KINDER[1], h.KINDER[2]] },
     { name: "Grün", emo: "🟢", kinder: [h.KINDER[3], h.KINDER[4], h.KINDER[5]] }
