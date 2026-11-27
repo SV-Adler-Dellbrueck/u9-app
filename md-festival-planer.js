@@ -397,7 +397,7 @@ function _fpErgebnisHtml() {
   const T = i => { const t = p.teams[i]; return `<span class="fp-punkt" style="background:${t.farbe}" aria-hidden="true"></span>${esc(t.name)}`; };
   const fNr = p.genutzteFelder;
   const tab = `<table class="fp-tab"><thead><tr><th>Runde</th>${fNr.map(n => `<th>Feld ${n}</th>`).join("")}<th>Pause</th></tr></thead><tbody>${p.runden.map(r =>
-    `<tr><td>${r.nr}</td>${fNr.map(n => { const g = r.spiele.find(x => x.feld === n); return `<td>${g ? T(g.a) + "<br>" + T(g.b) : "–"}</td>`; }).join("")}<td>${r.pause.map(T).join("<br>") || "–"}</td></tr>`).join("")}</tbody></table>`;
+    `<tr><td>${r.nr}</td>${fNr.map(n => { const g = r.spiele.find(x => x.feld === n); return `<td>${g ? T(g.a) + "<br>" + T(g.b) : "–"}</td>`; }).join("")}<td>${r.pause.length ? r.pause.map(T).join("<br>") + (fpBuntAn() ? "<br>→ 🌈 Buntes Feld" : "") : "–"}</td></tr>`).join("")}</tbody></table>`;
   const zahl = x => String(x).replace(".", ",");
   const kz = `<div class="fp-kz">
       <div><b>${p.teams.length}</b><span>Teams</span></div><div><b>${fNr.length} von ${p.felder.length}</b><span>Felder belegt</span></div><div><b>${k.runden}</b><span>Runden</span></div>
@@ -409,7 +409,7 @@ function _fpErgebnisHtml() {
   const felder = p.felder.map(f => `<div class="fp-hin"><b>Feld ${f.nr}</b><div>${esc(f.tore)} · ${esc(f.label)} · ${esc(f.mass)} · ${f.schusszone ? "Schusszone ca. " + FP_REGELN.schusszoneM + " m" : "nur Mittellinie, Tore auf " + FP_REGELN.jugendtorHoehe}${p.freieFelder.includes(f.nr) ? " · <b>bleibt frei</b>" : ""}</div></div>`).join("");
   return `${wahl}
     <div class="fp-h">Hinweise</div>${p.hinweise.length ? p.hinweise.map(_fpHinweisHtml).join("") : '<div style="color:var(--text2)">Keine Abweichung von der Empfehlung.</div>'}
-    <div class="fp-h">Kennzahlen</div>${kz}
+    <div class="fp-h">Kennzahlen</div>${kz}${fpBuntAn() ? `<div class="fp-bunt-mat" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Dazu 🌈 Buntes Feld: ${FP_BUNT_MATERIAL}.</div>` : ""}
     <div class="fp-h">Rundenplan</div><div style="overflow-x:auto">${tab}</div>
     <div class="fp-h">Teams</div><div style="overflow-x:auto">${teams}</div>
     <div class="fp-h">Felder und Aufbau</div>${felder}
@@ -433,4 +433,30 @@ async function fpUebernehmen() {
 }
 
 /* letzte Definition der Datei – MODUL_WACHE prüft diesen Namen */
+/* v982 · 🌈 Buntes Feld (Charles 27.11.: „Wenn zb ein team Pause hat … und es noch von anderen Mannschaften spieler gibt die pausieren
+   oder auswechsel spieler sind und bei der Kälte nicht rumstehen wollen oder sollen“; Bild freigegeben: immer ein FUNiño-Feld oben links
+   im Feldplan, „sonst kein Buntes Feld“). Der Schalter steht im Festival-Fenster; die Turnierseite zeigt Karte, Feld im Plan und
+   „Pause → 🌈 Buntes Feld“ (fstBunt in md-turnierplan.js). Der Spielplan selbst bleibt unverändert. Hier, nicht in md-turnierplan.js,
+   weil die Turnierseite ein festes Größenbudget hat (v899) und den Schalter nicht braucht. */
+const FP_BUNT_MATERIAL = "4 Minitore, 6 Hütchen";
+function fstBuntPlatz(cfg) {
+  const f = (cfg && cfg.felder && cfg.felder.length) ? cfg.felder : FST_STANDARD_FELDER;
+  return fstBunt({ bunt: true }, f);
+}
+function fstBuntSetzen(an) {
+  if (!_HT) return; _HT.config = _HT.config || {};
+  _HT.config.bunt = !!an && fstBuntPlatz(_HT.config);
+  fstZeitSpeichern();
+}
+function fstBuntWahlHtml(cfg) {
+  cfg = cfg || {};
+  const platz = fstBuntPlatz(cfg), an = !!cfg.bunt && platz;
+  const b = (on, v, txt) => `<button type="button" class="seg-btn${on ? " active" : ""}" aria-pressed="${on ? "true" : "false"}" onclick="fstBuntSetzen(${v})"${!platz && v ? " disabled" : ""}>${txt}</button>`;
+  return `<div style="font-size:var(--s-text);font-weight:800;margin:16px 0 6px">🌈 Buntes Feld</div>
+    <div class="seg-ctrl" id="fst-bunt-wahl" role="group" aria-label="Buntes Feld" style="flex-wrap:wrap">${b(an, 1, "Ja, wir bauen eins auf")}${b(!an, 0, "Nein")}</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">${platz
+      ? "Ein FUNiño-Feld oben links für alle, die gerade Pause haben oder ausgewechselt sind: kicken, warm bleiben, spontan ein Spiel – Kinder aller Vereine gemischt, ohne Ergebnis. Material: " + FP_BUNT_MATERIAL + ". Die Turnierseite zeigt es im Feldplan und bei jeder Pause."
+      : "Oben links ist heute kein Platz frei (dort liegen schon zwei Felder oder ein Jugendtor-Feld) – deshalb gibt es kein Buntes Feld."}</div>`;
+}
+function fpBuntAn() { return typeof _HT !== "undefined" && !!_HT && !!(_HT.config && _HT.config.bunt) && fstBuntPlatz(_HT.config); }
 function festivalPlanerModulDa() { return true; }
