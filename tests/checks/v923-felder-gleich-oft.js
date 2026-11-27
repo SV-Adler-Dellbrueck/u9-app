@@ -25,7 +25,13 @@ module.exports = async function (h) {
   const doppelt = (plan, key) => { const s = {}; return plan.some(p => { const k = key(p) + "|" + p.feld; if (s[k]) return true; s[k] = 1; return false; }); };
   /* a) + b) Festival */
   const faelle = [[4, ["f3", "funino"], 5, 1], [4, ["f3", "funino"], 6, 1], [5, ["f4", "funino"], 6, 1], [6, ["f4", "funino", "funino"], 6, 1],
-    [6, ["f3", "funino"], 7, 1], [7, ["f4", "funino", "funino"], 8, 1], [3, ["f3", "funino"], 6, 1], [12, ["f4", "f4", "funino", "funino"], 10, 1], [8, ["f4", "f4", "funino", "funino"], 7, 2]];
+    [6, ["f3", "funino"], 7, 1], [7, ["f4", "funino", "funino"], 8, 1], [12, ["f4", "f4", "funino", "funino"], 10, 1], [8, ["f4", "f4", "funino", "funino"], 7, 2]];
+  /* v984 (Charles 27.11.): Bleiben Felder frei, ist das Jugendtor-Feld in jeder Runde belegt. 3 Teams auf Käfig + FUNiño
+     (ein Spiel je Runde) spielen deshalb immer im Käfig – der frühere Fall „3/2 gleich oft“ gilt nicht mehr. */
+  { const teams = Array.from({ length: 3 }, (_, i) => ({ name: "T" + i, verein: "V" + i }));
+    const plan = fstPlanBauen(teams, { felder: [{ form: "f3" }, { form: "funino" }], spieldauer: 8, wechsel: 2, dauer: 58, start: "10:00" });
+    if (!plan.length || !plan.every(p => p.feld === 1)) probleme.push("a) 3 Teams auf Käfig + FUNiño: nicht jedes Spiel im Käfig – " + plan.map(p => p.feld).join(","));
+    else zeilen.push(`a) 3 Teams, ein Spiel je Runde: alle ${plan.length} Spiele im Käfig (v984)`); }
   const ergebnis = [];
   for (const [n, ff, runden, soll] of faelle) {
     const teams = Array.from({ length: n }, (_, i) => ({ name: "T" + i, verein: "V" + i }));
