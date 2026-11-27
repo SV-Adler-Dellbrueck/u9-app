@@ -39,8 +39,16 @@ module.exports = async function (h) {
     /* v968: Die Export-Legende nennt auch die Gerätearten der Skizze (je Art ein Eintrag). */
     const ger = new Set((spec.ger || []).map(g => String((g && g[2]) || "stange")).filter(a => typeof SKZ_GER_NAME !== "undefined" && SKZ_GER_NAME[a]));
     const L = ((typeof skzLegendeArten === "function") ? skzLegendeArten(spec).size : 6) + ger.size;
-    return { bilder: z, n, legendeZeilen: Math.max(1, Math.ceil(L / 2)) };
+    return { bilder: z, n, L, legendeZeilen: Math.max(1, Math.ceil(L / 2)) };
   }, { spec: u.skizze, fps: 2, schlussMs: 2000 });
+  /* v991: Die Legende legt ihre Spalten nach der gemessenen Textbreite an (lange Einträge liefen bei 180 Einheiten in die
+     Nachbarspalte) – die Zeilenzahl folgt deshalb der Spaltenzahl, die der Export-Helfer wählt, nicht starr zwei. */
+  const modH = require(path.join(h.REPO, "doku/auftrag-lehrgangsskizzen/export-skizzen.js"));
+  if (typeof modH.imBrowserHelfer === "function") {
+    await s.page.evaluate(modH.imBrowserHelfer);
+    const sp = await s.page.evaluate(spec => (_expLegende(spec, 180, 280).spalten || 2), u.skizze);
+    soll.legendeZeilen = Math.max(1, Math.ceil(soll.L / sp));
+  }
   await s.schliessen();
 
   // b) Die Datei

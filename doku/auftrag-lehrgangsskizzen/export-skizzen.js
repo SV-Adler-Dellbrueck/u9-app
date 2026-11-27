@@ -55,14 +55,25 @@ function imBrowserHelfer(){
       const arten=[]; spec.ger.forEach(g=>{ const a=String((g&&g[2])||"stange"); if(SKZ_GER_NAME[a]&&!arten.includes(a))arten.push(a); });
       arten.forEach(a=>eintraege.push({key:"ger-"+a,art:"ger",ger:a,txt:SKZ_GER_NAME[a]}));
     }
-    const spalten=BREITE<220?2:3, zeilen=Math.max(1,Math.ceil(eintraege.length/spalten));
+    /* v991: Spalten nach der gemessenen Textbreite statt starr BREITE/3 – „Markierungsteller“ (rund 80 Einheiten in 8 px fett)
+       passte nicht in die 65, die eine Drittelspalte nach Symbol (28) übrig ließ, und wurde rechts abgeschnitten. Jede Spalte
+       ist so breit wie ihr längster Eintrag, der Rest verteilt sich gleichmäßig; reicht die Breite nicht, eine Spalte weniger. */
+    const mess=(()=>{ try{ const c=document.createElement("canvas").getContext("2d"); c.font='600 8px sans-serif'; return t=>c.measureText(String(t)).width; }catch(e){ return t=>String(t).length*5; } })();
+    const bedarf=eintraege.map(e=>6+28+Math.ceil(mess(e.txt))+6);
+    let spalten=Math.max(1,Math.min(BREITE<220?2:3,eintraege.length)), spB=[];
+    for(;spalten>=1;spalten--){
+      spB=Array.from({length:spalten},(_,sp)=>Math.max(0,...bedarf.filter((_,i)=>i%spalten===sp)));
+      if(spalten===1||spB.reduce((a,b)=>a+b,0)<=BREITE)break;
+    }
+    const frei=Math.max(0,(BREITE-spB.reduce((a,b)=>a+b,0))/spalten);
+    const spX=spB.map((_,sp)=>spB.slice(0,sp).reduce((a,b)=>a+b+frei,0));
+    const zeilen=Math.max(1,Math.ceil(eintraege.length/spalten));
     const H_LEG=12+zeilen*16;
     const teile=[];
     teile.push('<rect x="0" y="'+H_SKZ+'" width="'+BREITE+'" height="'+H_LEG+'" fill="#1f4d1f"/>');
-    const zellB=BREITE/spalten;
     eintraege.forEach((e,i)=>{
       const sp=i%spalten, ze=Math.floor(i/spalten);
-      const x0=sp*zellB+6, y=H_SKZ+12+ze*16;
+      const x0=spX[sp]+6, y=H_SKZ+12+ze*16;
       /* Pfeilspitze als eigener Pfad statt als Marker – ein Marker waechst mit der
          Strichstaerke, und der dicke Schuss-Strich haette darunter verschwunden.
          Genauso macht es die Legende der App in skzLegende(). */
@@ -82,7 +93,7 @@ function imBrowserHelfer(){
       if(e.kopf)teile.push('<path d="M'+ende+','+(y-3.2)+' L'+(x0+22)+','+y+' L'+ende+','+(y+3.2)+' Z" fill="'+e.c+'"/>');
       teile.push('<text x="'+(x0+28)+'" y="'+(y+3)+'" fill="rgba(255,255,255,.85)" font-size="8" font-family="sans-serif" font-weight="600">'+e.txt+'</text>');
     });
-    return {teile,H_LEG};
+    return {teile,H_LEG,spalten};
   };
   /* Ein Bild (Skizze plus Legende) als eigenstaendiges SVG. */
   /* legendeSpec: woraus die Legende ihre Einträge nimmt – bei der Animation die GANZE
@@ -263,4 +274,5 @@ async function exportAnimation(opt){
 
 module.exports=exportSkizzen;
 module.exports.exportAnimation=exportAnimation;
+module.exports.imBrowserHelfer=imBrowserHelfer;   // v991: für den Prüffall der Legende
 if(require.main===module)exportSkizzen();

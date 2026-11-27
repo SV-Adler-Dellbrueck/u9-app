@@ -25,7 +25,7 @@ module.exports = async function (h) {
   if (u.spieler !== "7–9") probleme.push("a) spieler: " + u.spieler);
   const ab = String(u.ablauf || ""), lang = String(u.ablauf_lang || "");
   if (ab.length > 1000) probleme.push(`a) Kurzfassung hat ${ab.length} Zeichen (höchstens 1.000)`);
-  if (!(lang.length > ab.length) || !/^AUFBAU: /.test(lang) || !/Korridor/.test(lang) || !/„Wechsel!“/.test(lang) || !/Raute/.test(lang) || !/Joker/.test(lang) || !/MATERIAL: 4 Minitore, 8 Hütchen/.test(lang))
+  if (!(lang.length > ab.length) || !/^AUFBAU: /.test(lang) || !/Korridor/.test(lang) || !/„Wechsel!“/.test(lang) || !/Raute/.test(lang) || !/Joker/.test(lang) || !/MATERIAL: 4 Minitore, 4 Hütchen, 8 Markierungsscheiben/.test(lang))   /* v991: Nachtrag 5 – Scheiben am Korridor, Hütchen nur an den Ecken */
     probleme.push(`a) lange Fassung fehlt oder ist nicht die aus Nachtrag 4 (${lang.length} Zeichen)`);
   // b)
   [[/^AUFBAU: Feld 36 × 24 m\./, "Aufbau mit Feldmaß"], [/5 m breiter Korridor/, "Korridor"], [/Raute/, "Startordnung Raute"], [/„Wechsel!“/, "Ruf „Wechsel!“"],
@@ -45,7 +45,7 @@ module.exports = async function (h) {
     zeilen.push(`c) Korridor ${breiteM.toFixed(1)} m mittig · Trainer bei x ${tr[0] ? tr[0][0] : "?"} (Grundlinie ${z[0]})`);
   }
   if ((sk.li || []).length) probleme.push("c) die alte Mittellinie steht noch in der Skizze");
-  if ((sk.h || []).length !== 8) probleme.push(`c) ${(sk.h || []).length} Hütchen statt 8`);
+  if ((sk.h || []).length !== 4) probleme.push(`c) ${(sk.h || []).length} Hütchen statt 4`);   // v991: nur die Ecken, der Korridor hat 8 Teller (v991-Prüffall)
   const eng = [];
   (sk.s || []).forEach((a, i) => sk.s.forEach((b, j) => { if (j > i && Math.hypot(a[0] - b[0], a[1] - b[1]) < 24) eng.push(i + "↔" + j); }));
   if (eng.length) probleme.push("c) Spieler zu eng: " + eng.join(", "));

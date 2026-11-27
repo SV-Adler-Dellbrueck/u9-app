@@ -110,8 +110,9 @@ module.exports = async function (h) {
   rechts.forEach(t => { if (t[0] !== z[0] + z[2]) probleme.push(`e) rechtes Tor bei x ${t[0]} statt an der Grundlinie ${z[0] + z[2]}`); });
   [links, rechts].forEach(paar => { if (paar.length === 2) { const m = paar.map(t => t[1] + t[3] / 2).sort((a, b) => a - b); if (Math.abs((m[0] + m[1]) / 2 - mitteY) > 0.5) probleme.push(`e) Tore nicht symmetrisch zur Mittellinie (Mitten ${m.join("/")}, Linie ${mitteY})`); } });
   // f)
-  ["4 Minitore", "8 Hütchen", "1 Ball"].forEach(m => { if (!r.material.includes(m)) probleme.push(`f) Material ohne „${m}“: ${r.material.join(", ")}`); });
-  if (r.material.length !== 3) probleme.push(`f) ${r.material.length} Posten statt drei: ${r.material.join(", ")}`);
+  /* v991 (Nachtrag 5): Hütchen nur an den Ecken, der Korridor mit 8 Markierungstellern */
+  ["4 Minitore", "4 Hütchen", "8 Markierungsteller", "1 Ball"].forEach(m => { if (!r.material.includes(m)) probleme.push(`f) Material ohne „${m}“: ${r.material.join(", ")}`); });
+  if (r.material.length !== 4) probleme.push(`f) ${r.material.length} Posten statt vier: ${r.material.join(", ")}`);
   if (r.materialSchluessel.includes("trainer")) probleme.push("f) der Trainer steht in der Materialliste");
   // g)
   if (r.art !== "spiel" || r.artAufgeloest !== "spiel") probleme.push(`g) Übungsart ${r.art} / ${r.artAufgeloest} statt spiel`);
