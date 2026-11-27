@@ -8,7 +8,9 @@ Repo `SV-Adler-Dellbrueck/u9-app`, Stand 27.11.2026. Gilt zusammen mit `CLAUDE.m
 > **Nachtrag 4 erledigt** (27.11.2026) in v988: Weg wie v833 – Zeile 84 gesichert, die sieben Felder und die Skizze in der
 > Datenbank ersetzt, `uebungen/bibliothek.json` gleichgezogen (Stand 2026-11-27-2). Die Kurzfassung (`ablauf`, 998 Zeichen)
 > hat das Projekt gekürzt und wurde wörtlich übernommen; die Fassung aus Nachtrag 4 steht als `ablauf_lang`. Bild neu exportiert.
-> **Nachtrag 5 offen** (27.11.2026), siehe unten.
+> **Nachtrag 5 erledigt** (27.11.2026) in v991: Weg wie v988 – Zeile 84 gesichert, `ablauf`, `ablauf_lang`, `varianten`, `coaching`
+> und Skizze in der Datenbank ersetzt, `uebungen/bibliothek.json` gleichgezogen (Stand 2026-11-27-6); `kurz`, `feld`, `spieler` unverändert.
+> Legende im Export korrigiert (Spalten nach gemessener Textbreite), Bilder zu 3.1 und „Drei Bahnen“ (4.2) neu erzeugt.
 > Nicht zu verwechseln mit `auftrag-lehrgang-3-1/` (Basis-Coach 3.1, erledigt).
 > Dies ist Aufgabe 3.1 der C-Lizenz (Profil Jugend), deshalb eigener Ordner.
 

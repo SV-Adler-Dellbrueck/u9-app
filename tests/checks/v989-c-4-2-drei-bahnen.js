@@ -21,7 +21,8 @@ module.exports = async function (h) {
   const abschnitt = (txt, kopf) => { const t = String(txt || "").split("\n"); const i = t.indexOf(kopf); if (i < 0) return null;
     const rest = t.slice(i + 1); const j = rest.findIndex(l => /^[A-ZÄÖÜ][A-ZÄÖÜ \-]+$/.test(l)); return (j < 0 ? rest : rest.slice(0, j)).join("\n").trim(); };
   // a)
-  const soll = { coaching: "3c5edd28c2973d14", varianten: "2b1da01ab0fbee87", esk: "8f8bbcbbc71440fe", worauf: "a64c1072b298ac31" };
+  /* v990: Rufpaar „deiner“ – „meiner“ im Coaching, Altersanpassung neu (Zellen gefüllt, U17 Neutraler ab Stufe 3) – Summen nachgezogen */
+  const soll = { coaching: "126a1d92608e2044", varianten: "2b1da01ab0fbee87", esk: "8f8bbcbbc71440fe", worauf: "16ef8a65d2f13470" };
   if (sum(u.coaching) !== soll.coaching) probleme.push(`a) coaching nicht wörtlich (${String(u.coaching || "").length} Zeichen)`);
   if (sum(u.varianten) !== soll.varianten) probleme.push(`a) varianten nicht wörtlich (${String(u.varianten || "").length} Zeichen)`);
   if (sum(abschnitt(u.ablauf_lang, "ESKALATIONSSTUFEN")) !== soll.esk) probleme.push("a) ESKALATIONSSTUFEN nicht wörtlich");
