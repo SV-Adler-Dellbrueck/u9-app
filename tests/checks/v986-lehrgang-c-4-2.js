@@ -8,7 +8,7 @@
    d) Kein Spielerkreis näher als 24 an einem anderen; kein Nummernkreis auf Spieler (≥ 16), Hütchen oder Ball
       (beim Prüfen am 27.11. lagen alle neun Nummern 7–12 von einem Spieler – die Läufer stehen jetzt 24 vom Pfeilanfang).
    e) Übung 2: Endzonen bündig mit dem Feld. Übung 3: Dribbeltore an beiden Grundlinien, die Koordinate ist der Anfang –
-      Mitten symmetrisch zur Mittellinie (beim Prüfen lagen sie 12 zu tief). Übung 4: Pfeil 1 nicht durch das Hütchen (140, 113).
+      Mitten symmetrisch zur Mittellinie (beim Prüfen lagen sie 12 zu tief). Übung 4: Pfeil 1 nicht durch die Markierung (140, 113) – seit v989 eine Scheibe statt eines Hütchens.
    f) Material wie gezeichnet; der Trainer zählt nicht.
    g) Übungsart „spiel“, Kategorie „pressing“; keine Kindernamen. */
 "use strict";
@@ -19,7 +19,7 @@ const MATERIAL = {
   "Lehrgang – Zwei-Seiten-Spiel verteidigen": "4 Minitore · 6 Hütchen · 1 Ball",
   "Lehrgang – Fünf-Sekunden-Jagd": "8 Hütchen · 1 Ball",
   "Lehrgang – Erster attackiert, Zweiter sichert": "12 Hütchen · 1 Ball",
-  "Lehrgang – Drei Bahnen, klare Zuständigkeit": "3 Minitore · 14 Hütchen · 1 Ball"
+  "Lehrgang – Drei Bahnen, klare Zuständigkeit": "3 Minitore · 4 Hütchen · 10 Markierungsteller · 1 Ball"   // v989: Scheiben im Feld, Hütchen nur an den Ecken
 };
 module.exports = async function (h) {
   const titel = "v986 Lehrgang C-4.2: vier defensive Spielformen – Abgleich, Skizzen, Abstände, Tore, Material";
@@ -120,11 +120,11 @@ module.exports = async function (h) {
     if (paar.length !== 2 || Math.abs((m[0] + m[1]) / 2 - mitte) > 0.5) probleme.push(`e) Übung 3: Dribbeltore bei x ${x} nicht symmetrisch (Mitten ${m.join(", ")})`);
   });
   const o4 = r.ue.find(o => o.name === "Lehrgang – Drei Bahnen, klare Zuständigkeit");
-  if (!o4 || o4.p1Huetchen < 6) probleme.push(`e) Übung 4: Pfeil 1 läuft durch das Hütchen (140, 113): ${o4 && o4.p1Huetchen.toFixed(1)}`);
+  if (!o4 || o4.p1Huetchen < 6) probleme.push(`e) Übung 4: Pfeil 1 läuft durch die Scheibe (140, 113): ${o4 && o4.p1Huetchen.toFixed(1)}`);
   // g)
   const text = JSON.stringify(soll); const kn = h.KINDER.filter(n => text.includes(n));
   if (kn.length) probleme.push("g) Kindername: " + kn.join(", "));
   if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
-  zeilen.push(`Abgleich legt 4 an (Bestand ${bestand.length} übersprungen) · je 1 Bild quer, Nummern frei, Abstände ≥ 24 · Dribbeltore symmetrisch · Pfeil 1 in Übung 4 mit ${o4 ? o4.p1Huetchen.toFixed(1) : "?"} Abstand zum Hütchen`);
+  zeilen.push(`Abgleich legt 4 an (Bestand ${bestand.length} übersprungen) · je 1 Bild quer, Nummern frei, Abstände ≥ 24 · Dribbeltore symmetrisch · Pfeil 1 in Übung 4 mit ${o4 ? o4.p1Huetchen.toFixed(1) : "?"} Abstand zur Scheibe (140, 113)`);
   return h.ergebnis(titel, !probleme.length, probleme.concat(zeilen));
 };
