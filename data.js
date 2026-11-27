@@ -6558,6 +6558,11 @@ const UEBUNG_ART_VORSCHLAG={
      „Spielform“ wie beim Basis-Coach-Paket beschlossen; der Schlüssel heißt im Code `spiel`. */
   "Lehrgang – Zwei-Seiten-Spiel":"spiel",
   "Zwei-Seiten-Spiel – Platz suchen, Seite wechseln":"spiel",   // v902: U9-Fassung, 3 gegen 3 / 4 gegen 4 auf vier Minitore
+  /* v986 – C-Lizenz Aufgabe 4.2 (Gruppenarbeit, doku/auftrag-lehrgang-c-4-2): vier defensive Spielformen, Kategorie pressing. */
+  "Lehrgang – Zwei-Seiten-Spiel verteidigen":"spiel",
+  "Lehrgang – Fünf-Sekunden-Jagd":"spiel",
+  "Lehrgang – Erster attackiert, Zweiter sichert":"spiel",
+  "Lehrgang – Drei Bahnen, klare Zuständigkeit":"spiel",
   /* v833 – Technik-Parcours (Training 16.11., Auftrag doku/auftrag-uebung-technik-parcours): acht Stationen, der Ablauf
      je Station ist vorgegeben – Übungsform, wie im Paket beschlossen. */
   "Technik-Parcours – acht Stationen, freie Wahl, Laufzettel":"uebung",
@@ -6763,4 +6768,9 @@ const UEBUNG_BETREUUNG_VORSCHLAG={
   "Pylonen-Spiel – Läufer gegen Wächter":"fuehrt",   // Trainer gibt das Kommando und wechselt die Rollen
   /* v968 (Charles 26.11.): der Trainer nennt die Zahlenfolge und gibt den Druck im Rücken – er ist an die Station gebunden */
   "Skillmatte – Pass – Tor":"fuehrt",
+  /* v986: C-Lizenz 4.2 – wie bei 3.1 spielt der Trainer die Bälle ein und achtet auf die Zusatzregeln */
+  "Lehrgang – Zwei-Seiten-Spiel verteidigen":"fuehrt",
+  "Lehrgang – Fünf-Sekunden-Jagd":"fuehrt",
+  "Lehrgang – Erster attackiert, Zweiter sichert":"fuehrt",
+  "Lehrgang – Drei Bahnen, klare Zuständigkeit":"fuehrt",
 };

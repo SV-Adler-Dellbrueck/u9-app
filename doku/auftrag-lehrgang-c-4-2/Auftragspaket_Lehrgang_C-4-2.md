@@ -3,8 +3,12 @@
 Repo `SV-Adler-Dellbrueck/u9-app`, Stand 27.11.2026. Gilt zusammen mit `CLAUDE.md` und
 `Projektgedaechtnis/skizzen-format.md` im privaten Repo.
 
-> **Status: offen.** Aufgabe 4.2 der C-Lizenz (Profil Jugend). Defensives Gegenstück zu
-> `auftrag-lehrgang-c-3-1/`.
+> **Status: erledigt (v986, 27.11.2026).** Aufgabe 4.2 der C-Lizenz (Profil Jugend). Defensives Gegenstück zu
+> `auftrag-lehrgang-c-3-1/`. Beim Prüfen korrigiert: Läufer so gesetzt, dass alle Nummernkreise frei liegen (Pfeil 24 vom
+> Spieler); Dribbeltore in Übung 3 auf die Anfänge 43 und 113 (die Koordinate ist der Anfang); Text in Übung 1 nach oben
+> (lag auf dem Hütchen an der Mittellinie); `kurz` bei Übung 1 und 4 auf höchstens 80 Zeichen; die zwölf Überschriften in
+> `ablauf_lang` je auf eigener Zeile (Wortlaut unverändert). Offen fürs Projekt: Coaching bei Übung 1 und 2 mit vier statt
+> höchstens drei Kernpunkten, ohne „Korrekturen“; Eskalation als Stufe 1–4 statt leichter/schwerer.
 
 ## Ausgangslage
 
