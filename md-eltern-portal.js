@@ -2458,64 +2458,88 @@ function teeKannen(t){
   const f=(t&&Array.isArray(t.helfer_aufgaben))?t.helfer_aufgaben.find(x=>x&&x.t===TEE_AUFGABE):null;
   return f?Math.max(1,Math.min(20,parseInt(f.n,10)||1)):TEE_STANDARD;
 }
-/* Der Termin davor und der danach – frisch aus der Datenbank, weil ELTERN_TERMINE erst bei heute beginnt und der Trainer-
-   bereich eine eigene Liste führt. Termine, die ausfallen, überspringt die Staffel. */
-async function teeNachbarn(t){
-  const sel="id,datum,uhrzeit,typ,titel,gegner,platz_status,helfer_aufgaben", typ="typ=in.(training,spiel,turnier)";
-  let nach=[],vor=[];
-  try{
-    const [a,b]=await Promise.all([
-      fetch(`${SB_URL}/rest/v1/termine?select=${sel}&${typ}&datum=gte.${t.datum}&order=datum.asc,uhrzeit.asc.nullslast&limit=8`,{headers:sbAuthHeaders()}),
-      fetch(`${SB_URL}/rest/v1/termine?select=${sel}&${typ}&datum=lte.${t.datum}&order=datum.desc,uhrzeit.desc.nullsfirst&limit=8`,{headers:sbAuthHeaders()})]);
-    if(a.ok)nach=await a.json(); if(b.ok)vor=await b.json();
-  }catch(e){}
-  const k=_teeKey(t), anders=x=>x&&Number(x.id)!==Number(t.id);
-  return {nachher:(nach||[]).filter(x=>anders(x)&&_teeKey(x)>k&&teeTermin(x))[0]||null,
-          vorher:(vor||[]).filter(x=>anders(x)&&_teeKey(x)<k&&teeTermin(x))[0]||null};
+/* v981 · Tee-Kannen als Gegenstände (Charles 26.11.2026, Bild freigegeben): Bisher leitete die App aus dem Tee-Eintrag am
+   nächsten Termin ab, dass dieselbe Familie die Kanne am Termin davor mitnimmt – auch wenn ihr Kind dort gar nicht dabei ist.
+   Jetzt tragen sich Familien fürs Mitnehmen einer Kanne ein, die App merkt sich, wer welche Kanne hat, und fragt diese Familie
+   beim nächsten Termin, für den ihr Kind zugesagt hat, ob sie die Kanne mit Tee mitbringt (nur dann Hinweis und Erinnerung).
+   Die Datenbank (Tabelle tee_kanne, Funktionen tee_kanne_*) prüft dieselben Regeln: mitnehmen nur am Tag des Termins ab Beginn
+   und wenn ein Kind kommt; zurückbringen nur zu einem Termin, für den ein Kind zugesagt hat (Training: gilt als zugesagt).
+   Mit Beginn des Termins, zu dem die Kanne mit Tee kam, ist sie wieder „am Platz“. Andere Eltern sehen nur „unterwegs“. */
+function teeBeschreibung(){
+  return "Eine unserer zwei Pumpkannen mit warmem Tee mitbringen – die Kanne nimmt eine Familie an einem Termin davor mit. Becher bringen die Kinder selbst mit.";
 }
-/* Beschreibung der Tee-Aufgabe: mit dem Termin davor, sobald er bekannt ist (tdHelferLoad setzt t._teeVorher). */
-function teeBeschreibung(t){
-  const v=t?t._teeVorher:undefined, becher=" Becher bringen die Kinder selbst mit.";
-  if(v===undefined)return "Am Termin davor eine der Pumpkannen mitnehmen, spülen und mit warmem Tee mitbringen."+becher;
-  if(v&&!(typeof terminVorbei==="function"&&terminVorbei(v)))return `Am ${teeWann(v)} nach dem ${teeTypWort(v)} eine der Pumpkannen mitnehmen, spülen und hierher mit warmem Tee mitbringen.`+becher;
-  return "Eine der Pumpkannen mit warmem Tee mitbringen – die Kanne gibt es beim Trainerteam."+becher;
+async function teeKannenStand(){
+  try{ const r=await fetch(`${SB_URL}/rest/v1/rpc/tee_kanne_stand`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"}); if(r.ok)return (await r.json())||[]; }catch(e){}
+  return null;
 }
-/* „Für den nächsten Tee“ am Termin davor: je Kanne eine Zeile (Wort und Farbe), dazu der eine Knopf. Weiße Karte, feste helle Werte
-   wie die übrigen Zeilen der Helfer-Box. */
-function teeStaffelHtml(t,n,rows,uid){
-  if(!n)return "";
-  const plaetze=teeKannen(n), mein=rows.some(r=>r.user_id===uid), offen=rows.length<plaetze;
-  const zeilen=Array.from({length:plaetze},(_,i)=>{ const r=rows[i];
-    return `<div class="tee-kanne" style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px">
-      <span>Kanne ${i+1} · ${r?"<b>"+esc(r.name)+"</b>":"noch offen"}</span>
-      <span style="flex:none;font-size:var(--s-klein);font-weight:700;border-radius:99px;padding:3px 9px;border:1px solid ${r?"#15803d;color:#166534;background:#f0fdf4":"#b91c1c;color:#991b1b;background:#fef2f2"}">${r?"✓ steht":"frei"}</span></div>`; }).join("");
-  const wer=plaetze===1?"die Kanne":"eine der Kannen";
-  const knopf=mein
-    ?`<button class="btn" onclick="teeKanneWeg(${Number(n.id)},${Number(t.id)})" style="width:100%;justify-content:center;margin-top:8px;min-height:48px">✓ Du nimmst eine Kanne mit · austragen</button>`
-    :(offen?`<button class="btn" onclick="teeKanneNehmen(${Number(n.id)},${Number(t.id)})" style="width:100%;justify-content:center;margin-top:8px;min-height:48px">Ich nehme eine Kanne mit</button>`:"");
-  return `<div id="td-tee-staffel" style="border-left:4px solid #b45309;background:#fffbeb;border-radius:10px;padding:10px;margin-top:10px;font-size:var(--s-text);line-height:1.45;color:#1f2937">
-    <b>🫖 Für den nächsten Tee (${esc(teeWann(n))})</b><br>Wer mag, nimmt nach ${t.typ==="training"?"diesem Training":"diesem Termin"} ${wer} mit, spült sie und bringt sie am ${esc(teeWann(n))} mit warmem Tee zurück – ganz freiwillig, danke!
-    ${zeilen}${knopf}</div>`;
+function teeBeginn(t){ return new Date(String(t.datum)+"T"+String(t.uhrzeit||"00:00").slice(0,5)+":00"); }
+function teeBegonnen(t){ return teeBeginn(t).getTime()<=Date.now(); }
+function teeHeute(t){ return !!t&&t.datum===isoLokal(); }
+/* Kommt ein Kind dieser Familie? Wie in der Datenbank: „zugesagt“, beim Training auch ohne Rückmeldung. */
+async function teeKindKommt(t){
+  const ids=(window._elternKids||[]).map(k=>Number(k.spieler_id)).filter(Boolean); if(!ids.length)return false;
+  const st={};
+  try{ const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?termin_id=eq.${Number(t.id)}&spieler_id=in.(${ids.join(",")})&select=spieler_id,status`,{headers:sbAuthHeaders()}); if(r.ok)((await r.json())||[]).forEach(x=>{st[x.spieler_id]=x.status;}); }catch(e){}
+  return ids.some(id=>st[id]==="zugesagt"||(t.typ==="training"&&!st[id]));
 }
-async function teeKanneNehmen(naechsterId,terminId){
-  const schl="tee|"+naechsterId; if(!teeKanneNehmen._busy)teeKanneNehmen._busy=new Set();
-  if(teeKanneNehmen._busy.has(schl))return; teeKanneNehmen._busy.add(schl); setTimeout(()=>teeKanneNehmen._busy.delete(schl),1500);
-  try{const r=await fetch(`${SB_URL}/rest/v1/event_helfer`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({termin_id:naechsterId,name:_helferName(),aufgabe:TEE_AUFGABE})});if(!r.ok){toast("Konnte nicht eintragen","err");return;}}catch(e){toast("Netzwerkfehler","err");return;}
-  try{navigator.vibrate&&navigator.vibrate(30);}catch(e){}
-  adlerDank();
-  _teeNeu(terminId);   // neu gezeichnet wird der Termin, in dem man gerade ist – nicht der nächste
+function _teeNichtKey(id){ return "adler_tee_nicht_"+Number(id); }
+function _teeDatum(iso){ try{ return new Date(iso).toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}); }catch(e){ return ""; } }
+/* Baustein für Termin-Fenster und Startkarte. stand = tee_kanne_stand(), kommt = ein Kind kommt zu t. */
+function teeKannenHtml(t,stand,kommt){
+  if(!stand||!stand.length)return "";
+  const mein=stand.find(k=>k.mein), begonnen=teeBegonnen(t);
+  const box=(innen,id)=>`<div id="${id}" class="tee-kannen" style="border-left:4px solid #b45309;background:#fffbeb;border-radius:10px;padding:10px;margin-top:10px;font-size:var(--s-text);line-height:1.45;color:#1f2937">${innen}</div>`;
+  const knopf=(txt,on)=>`<button class="btn" onclick="${on}" style="width:100%;justify-content:center;margin-top:8px;min-height:48px">${txt}</button>`;
+  if(mein){
+    const nr=Number(mein.nr), seit=mein.seit?` (seit ${esc(_teeDatum(mein.seit))})`:"";
+    if(Number(mein.tee_termin_id)===Number(t.id))
+      return box(`<b>🫖 Ihr bringt Kanne ${nr} mit warmem Tee mit</b> – danke!<div style="font-size:var(--s-klein);color:#475569;margin-top:2px">Mit Beginn des Termins ist die Kanne wieder „am Platz“.</div>${knopf("Doch nicht – austragen",`teeKanneNichtBringen(${nr},${Number(t.id)})`)}`,"tee-mein");
+    if(mein.tee_termin_id)return box(`🫖 Ihr habt Kanne ${nr}${seit} und bringt sie zu einem anderen Termin mit Tee mit.`,"tee-mein");
+    let nicht=false; try{ nicht=localStorage.getItem(_teeNichtKey(t.id))==="1"; }catch(e){}
+    if(!begonnen&&kommt&&!nicht)
+      return box(`<b>🫖 Ihr habt Kanne ${nr}</b>${seit}<br>Bringt ihr sie ${teeHeute(t)?"heute":"am "+esc(teeWann(t))} mit warmem Tee mit?${knopf("Ja, wir bringen Tee mit",`teeKanneBringen(${nr},${Number(t.id)})`)}${knopf("Diesmal nicht",`teeKanneNicht(${Number(t.id)})`)}`,"tee-mein");
+    if(begonnen)return box(`<b>🫖 Ihr habt Kanne ${nr}</b>${seit} – danke!<br>Beim nächsten Termin, zu dem euer Kind kommt, fragt die App, ob ihr sie mit warmem Tee mitbringt.`,"tee-mein-ok");
+    return "";   // Kind kommt nicht oder „Diesmal nicht“: kein Hinweis – die Kanne bleibt bei der Familie
+  }
+  const zeilen=stand.map(k=>`<div class="tee-kanne" style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px">
+      <span>Kanne ${Number(k.nr)}</span>
+      <span style="flex:none;font-size:var(--s-klein);font-weight:700;border-radius:99px;padding:3px 9px;border:1px solid ${k.frei?"#475569;color:#334155;background:#fff":"#b45309;color:#92400e;background:#fff7ed"}">${k.frei?"am Platz":"unterwegs"}</span></div>`).join("");
+  const frei=stand.find(k=>k.frei), darf=teeHeute(t)&&begonnen&&kommt;
+  const text=darf?"Wer mag, nimmt heute eine mit, spült sie und bringt sie beim nächsten Termin mit warmem Tee zurück – ganz freiwillig."
+    :"Ab Beginn des Termins kann eine Familie, deren Kind dabei ist, eine Kanne mitnehmen – ganz freiwillig.";
+  return box(`<b>🫖 Unsere zwei Tee-Kannen</b><br>${text}${zeilen}${darf&&frei?knopf(`Ich nehme Kanne ${Number(frei.nr)} mit`,`teeKanneNehmen(${Number(frei.nr)},${Number(t.id)})`):""}`,"tee-kannen");
 }
-/* Der offene Termin, so wie tdHelferLoad ihn bekam – ELTERN_TERMINE reicht nur 15 Termine weit, und ohne Typ fiele die Staffel weg. */
+async function _teeRpc(fn,body){
+  try{ const r=await fetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!r.ok)return {ok:false};
+    return {ok:true,v:await r.json()}; }catch(e){ return {ok:false,netz:true}; }
+}
+async function teeKanneNehmen(nr,terminId){
+  const e=await _teeRpc("tee_kanne_nehmen",{p_nr:nr,p_termin_id:terminId,p_name:_helferName()});
+  if(!e.ok){ toast(e.netz?"Kein Netz – nochmal versuchen":"Konnte nicht eintragen","err"); return; }
+  if(e.v===false)toast("Die Kanne hat gerade jemand anderes genommen");
+  else { try{navigator.vibrate&&navigator.vibrate(30);}catch(x){} if(typeof adlerDank==="function")adlerDank(); }
+  _teeNeu(terminId);
+}
+async function teeKanneBringen(nr,terminId){
+  const e=await _teeRpc("tee_kanne_bringen",{p_nr:nr,p_termin_id:terminId});
+  if(!e.ok){ toast("Konnte nicht eintragen","err"); return; }
+  try{navigator.vibrate&&navigator.vibrate(30);}catch(x){} if(typeof adlerDank==="function")adlerDank();
+  _teeNeu(terminId);
+}
+async function teeKanneNichtBringen(nr,terminId){
+  const e=await _teeRpc("tee_kanne_nicht_bringen",{p_nr:nr});
+  if(!e.ok)toast("Austragen fehlgeschlagen – kein Netz?","err");
+  _teeNeu(terminId);
+}
+function teeKanneNicht(terminId){ try{ localStorage.setItem(_teeNichtKey(terminId),"1"); }catch(e){} _teeNeu(terminId); }
+/* Der offene Termin, so wie tdHelferLoad ihn bekam – ELTERN_TERMINE reicht nur 15 Termine weit. */
 const _teeOffen={};
 function _teeNeu(terminId){
   const t=_teeOffen[Number(terminId)];
   if(!t){ _helferReload(terminId); return; }
   tdHelferLoad(t);
   if(typeof elternHelferKachelLoad==="function")elternHelferKachelLoad(t);
-}
-async function teeKanneWeg(naechsterId,terminId){
-  try{await fetch(`${SB_URL}/rest/v1/event_helfer?termin_id=eq.${naechsterId}&aufgabe=eq.${encodeURIComponent(TEE_AUFGABE)}&user_id=eq.${_sbUid()}`,{method:"DELETE",headers:sbAuthHeaders()});}catch(e){if(typeof toast==="function")toast("Austragen fehlgeschlagen – kein Netz?","err");}
-  _teeNeu(terminId);
 }
 function helferTasksFuer(typ,t){
   const frei=(t&&Array.isArray(t.helfer_aufgaben))?t.helfer_aufgaben:[];
@@ -2538,16 +2562,12 @@ async function tdHelferLoad(t){
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/event_helfer?termin_id=eq.${t.id}&select=id,name,aufgabe,user_id&order=created_at.asc`,{headers:sbAuthHeaders()});if(r.ok)rows=await r.json();}catch(e){}
   const uid=_sbUid();
-  /* v969: Tee-Staffel – der Termin davor (für die Beschreibung) und der nächste Tee (wer heute die Kannen mitnimmt). */
+  /* v981: Tee-Kannen – wo sind sie, darf diese Familie eine mitnehmen, oder bringt sie ihre mit Tee zurück? */
   let teeBox="";
   if(teeTermin(t)){
     _teeOffen[Number(t.id)]=t;
-    const nb=await teeNachbarn(t); t._teeVorher=nb.vorher||null;
-    if(nb.nachher){
-      let tr=[];
-      try{const r=await fetch(`${SB_URL}/rest/v1/event_helfer?termin_id=eq.${nb.nachher.id}&aufgabe=eq.${encodeURIComponent(TEE_AUFGABE)}&select=id,name,user_id&order=created_at.asc`,{headers:sbAuthHeaders()});if(r.ok)tr=await r.json();}catch(e){}
-      teeBox=teeStaffelHtml(t,nb.nachher,tr||[],uid);
-    }
+    const [stand,kommt]=await Promise.all([teeKannenStand(),teeKindKommt(t)]);
+    teeBox=teeKannenHtml(t,stand,kommt);
   }
   const mine=new Set(rows.filter(x=>x.user_id===uid).map(x=>x.aufgabe));
   const list=rows.length?rows.map(x=>`<div style="display:flex;align-items:center;gap:6px;font-size:var(--s-text);padding:3px 0">
@@ -3056,18 +3076,19 @@ async function elternHelferKachelLoad(t){
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/event_helfer?termin_id=eq.${t.id}&select=id,name,aufgabe,user_id&order=created_at.asc`,{headers:sbAuthHeaders()});if(r.ok)rows=await r.json();}catch(e){}
   const uid=_sbUid();
-  /* v980 (Charles 26.11. mit Bildschirmfoto: „Seh nichts davon“): Becher-Hinweis und Tee-Staffel standen nur im Termin-Fenster.
-     Jetzt auch hier – dieselben Bausteine (teeStaffelHtml), damit beide Stellen gleich bleiben. */
+  /* v980 (Charles 26.11. mit Bildschirmfoto: „Seh nichts davon“): Becher-Hinweis und Tee standen nur im Termin-Fenster.
+     v981: dieselben Kannen-Bausteine wie dort (teeKannenHtml). Offen steht, was die Familie jetzt tun kann (Kanne mitnehmen,
+     mit Tee mitbringen); die bloße Übersicht ist eine Zeile zum Aufklappen, damit die Seite kurz bleibt (v926: unter 2.100 px). */
   let teeBox="", becher="";
   if(typeof teeTermin==="function"&&teeTermin(t)){
     _teeOffen[Number(t.id)]=t;
     becher=`<div class="hk-becher" style="font-size:var(--s-text);color:#334155;margin-top:8px">🥤 Becher bringen die Kinder selbst mit.</div>`;
     try{
-      const nb=await teeNachbarn(t); t._teeVorher=nb.vorher||null;
-      if(nb.nachher){ let tr=[]; try{const r=await fetch(`${SB_URL}/rest/v1/event_helfer?termin_id=eq.${nb.nachher.id}&aufgabe=eq.${encodeURIComponent(TEE_AUFGABE)}&select=id,name,user_id&order=created_at.asc`,{headers:sbAuthHeaders()});if(r.ok)tr=await r.json();}catch(e){}
-        /* Startkarte: eine Zeile zum Aufklappen, damit die Seite kurz bleibt (v926: unter 2.100 px) */
-        const frei=Math.max(0,teeKannen(nb.nachher)-(tr||[]).length), mein=(tr||[]).some(x=>x.user_id===uid);
-        teeBox=`<details class="tk-erledigt" id="hk-tee-staffel" style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:4px"><summary>🫖 Für den nächsten Tee: ${mein?"du nimmst eine Kanne mit":frei?frei+" "+(frei===1?"Kanne":"Kannen")+" frei":"Kannen sind vergeben"}</summary>${teeStaffelHtml(t,nb.nachher,tr||[],uid).replace('id="td-tee-staffel"','class="hk-tee-inhalt"')}</details>`; }
+      const [stand,kommt]=await Promise.all([teeKannenStand(),teeKindKommt(t)]);
+      const h=teeKannenHtml(t,stand,kommt).replace(/id="tee-/g,'id="hk-tee-inhalt-');
+      if(h&&(/hk-tee-inhalt-mein/.test(h)||/teeKanneNehmen\(/.test(h))) teeBox=`<div id="hk-tee" style="margin-top:4px">${h}</div>`;
+      else if(h){ const unterwegs=(stand||[]).filter(k=>!k.frei).length;
+        teeBox=`<details class="tk-erledigt" id="hk-tee" style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:4px"><summary>🫖 Tee-Kannen: ${unterwegs?unterwegs+" unterwegs":"beide am Platz"}</summary>${h}</details>`; }
     }catch(e){}
   }
   const je={}; rows.forEach(x=>{(je[x.aufgabe]=je[x.aufgabe]||[]).push(x);});

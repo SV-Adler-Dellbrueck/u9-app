@@ -1,6 +1,6 @@
 /* v980 · (Charles 26.11.2026)
-   a) Eltern-Startkarte „Nächster Termin“: Becher-Hinweis und Tee-Staffel („Für den nächsten Tee“) stehen jetzt auch hier – vorher nur im
-      Termin-Fenster („Seh nichts davon“); „Ich nehme eine Kanne mit“ trägt am nächsten Termin ein
+   a) Eltern-Startkarte „Nächster Termin“: Becher-Hinweis und Tee-Kannen stehen jetzt auch hier – vorher nur im
+      Termin-Fenster („Seh nichts davon“). Seit v981 sind es die Kannen-Bausteine (Einzelheiten in v981-tee-kannen.js)
    b) Kind: Beim Skill des Monats heißt der Knopf „Ich kann's – beim Training zeigen“, danach „Zeig es deinem Trainer …“;
       andere Abzeichen melden weiter „Ich hab's geschafft!“ an Mama oder Papa
    c) Eltern-Startseite: Meldung zum Skill des Monats ohne Freigabe-Knöpfe („möchte es beim nächsten Training zeigen“);
@@ -34,7 +34,7 @@ module.exports = async function (h) {
       const tid = Number((u.searchParams.get("termin_id") || "").replace("eq.", "")), auf = u.searchParams.get("aufgabe");
       return helfer.filter(x => x.termin_id === tid && (!auf || x.aufgabe === auf.replace(/^eq\./, "")));
     },
-    rpc: { xp_events_for: [], xp_award_event: (u, req) => { let b = {}; try { b = req.postDataJSON() || {}; } catch (e) {} awards.push(b); return 20; } }
+    rpc: { tee_kanne_stand: [{ nr: 1, frei: true, mein: false }, { nr: 2, frei: false, mein: false }], xp_events_for: [], xp_award_event: (u, req) => { let b = {}; try { b = req.postDataJSON() || {}; } catch (e) {} awards.push(b); return 20; } }
   });
 
   // ── Eltern-Seite: a, b, c, d ──
@@ -46,10 +46,8 @@ module.exports = async function (h) {
       const box = id => { let b = document.getElementById(id); if (!b) { b = document.createElement("div"); b.id = id; document.body.appendChild(b); } return b; };
       const o = {};
       box("helfer-card"); await elternHelferKachelLoad(termine[0]); await w(50);
-      const hk = () => document.getElementById("hk-tee-staffel");
-      o.a = { becher: (document.querySelector("#helfer-card .hk-becher") || {}).textContent || "", staffel: hk() ? hk().textContent.replace(/\s+/g, " ") : "", kannen: hk() ? hk().querySelectorAll(".tee-kanne").length : 0, wer: !!document.querySelector("#helfer-card button") };
-      const kn = hk() && [...hk().querySelectorAll("button")].find(b => /Ich nehme eine Kanne mit/.test(b.textContent)); if (kn) kn.click(); await w(400);
-      o.a.nach = hk() ? hk().textContent.replace(/\s+/g, " ") : "";
+      const hk = () => document.getElementById("hk-tee");
+      o.a = { becher: (document.querySelector("#helfer-card .hk-becher") || {}).textContent || "", staffel: hk() ? hk().textContent.replace(/\s+/g, " ") : "", kannen: hk() ? hk().querySelectorAll(".tee-kanne").length : 0 };
       // b) Kind
       await abzeichenStandLaden(2);
       abzeichenDetail("ab2_cruyff", 2, 1); await w(30);
@@ -66,8 +64,8 @@ module.exports = async function (h) {
       return o;
     }, { termine, K });
     const fe = s.fehler(); await s.schliessen();
-    pruef(/Becher bringen die Kinder selbst mit/.test(r.a.becher) && /Für den nächsten Tee/.test(r.a.staffel) && r.a.kannen === 2 && posts.some(p => p.termin_id === 503 && p.aufgabe === TEE) && /Du nimmst eine Kanne mit/.test(r.a.nach),
-      "a) Startkarte: Becher-Hinweis und „Für den nächsten Tee“ mit 2 Kannen; „Ich nehme eine Kanne mit“ trägt am nächsten Termin ein", "a) " + JSON.stringify({ a: r.a, posts }));
+    pruef(/Becher bringen die Kinder selbst mit/.test(r.a.becher) && /Tee-Kannen/.test(r.a.staffel) && r.a.kannen === 2,
+      "a) Startkarte: Becher-Hinweis und „🫖 Tee-Kannen“ mit 2 Kannen", "a) " + JSON.stringify({ a: r.a }));
     pruef(/Ich kann's – beim Training zeigen/.test(r.b.skill) && /Trainer/.test(r.b.skill) && /Ich hab's geschafft!/.test(r.b.anders) && /Mama oder Papa/.test(r.b.anders),
       "b) Kind: Skill „Ich kann's – beim Training zeigen“; andere Abzeichen weiter „Ich hab's geschafft!“", "b) " + JSON.stringify(r.b));
     pruef(/möchte es beim nächsten Training zeigen/.test(r.c.skill) && r.c.skillKnoepfe === 0 && r.c.andereJa,

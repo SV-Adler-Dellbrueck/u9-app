@@ -904,6 +904,7 @@ function awRenderList(){
   awRenderStats();
   awZaehlen();
   if(typeof skillAbnahmeRender==="function")skillAbnahmeRender(datum);   // v980: Skill des Monats abnehmen
+  if(typeof teeAnwesenheitRender==="function")teeAnwesenheitRender();   // v981: Tee-Kannen
 }
 function awZaehlen(){
   const alle=[...document.querySelectorAll("#aw-list .aw-tile")], da=alle.filter(b=>b.classList.contains("on")).length, fehlt=alle.length-da;

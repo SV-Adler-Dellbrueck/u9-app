@@ -1,7 +1,7 @@
 /* Edge Function push-cron — täglicher Lauf (pg_cron „push-reminders-daily“, 15:00 UTC):
    Zusage-Erinnerung für morgen samt Wetterwarnung, Helfer-Vorabend-Push und die
    48-Stunden-Erinnerungen.
-   v969: Tee-Staffel – Erinnerung „morgen eine Teekanne mitnehmen“ und Nachfrage, wenn für den nächsten Tee jemand fehlt.
+   v981: Tee-Kannen – am Vortag die Familie mit einer Kanne, deren Kind morgen kommt (ersetzt die v969-Staffel).
    v705: beachtet die Ruhezeit je Empfänger (push_ruhende, Warteschlange).
 
    NIE von Hand mit dem echten Cron-Schlüssel aufrufen – das verdoppelt die Mitteilungen an
@@ -159,40 +159,27 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ── Teil 2b (v969): Tee-Staffel ──
-    /* Charles 26.11.: Wer am nächsten Tee-Termin eingetragen ist, nimmt nach dem (letzten) Termin morgen eine Pumpkanne mit,
-       spült sie und bringt sie mit Tee zurück. „Es sollte vor dem Training schon feststehen, wer mitnimmt.“ Deshalb heute:
-       Erinnerung an die Eingetragenen und – sind nicht alle Kannen vergeben – EINE Nachfrage an die Familien, deren Kind morgen
-       kommt – als Bitte, freiwillig (Charles 26.11.). Der Lauf ist täglich und meint nur „morgen“, also gibt es beides höchstens einmal je Termin. Ausgefallene Termine
-       zählen nicht. Die Plätze folgen der App (2, oder was das Trainerteam am Termin freigegeben hat). */
+    // ── Teil 2b (v981): Tee-Kannen ──
+    /* Charles 26.11.: Die App merkt sich, welche Familie welche der zwei Kannen hat (tee_kanne). Erinnert wird am Vortag nur die
+       Familie mit einer Kanne, deren Kind für den Termin morgen zugesagt hat (Training: gilt als zugesagt) und die sich noch nicht
+       zum Tee eingetragen hat – wer eingetragen ist, bekommt schon „Morgen bist du dran“ (Teil 2). Ersetzt die v969-Staffel
+       (Eintrag am nächsten Termin ⇒ Kanne am Termin davor). Ausgefallene Termine zählen nicht. */
     if (termine && termine.length) {
-      const TEE = "🫖 Tee mitbringen";
-      const morgenDa = (termine as any[]).filter((x: any) => x.platz_status !== "abgesagt");
-      const tLetzt: any = morgenDa[morgenDa.length - 1] || null;
-      if (tLetzt) {
-        const { data: nx } = await admin.from("termine").select("id,typ,datum,uhrzeit,platz_status,helfer_aufgaben")
-          .in("typ", ["training", "spiel", "turnier"]).gt("datum", morgen)
-          .order("datum", { ascending: true }).order("uhrzeit", { ascending: true, nullsFirst: false }).limit(8);
-        const n0: any = (nx || []).find((x: any) => x.platz_status !== "abgesagt") || null;
-        if (n0) {
-          const f = Array.isArray(n0.helfer_aufgaben) ? n0.helfer_aufgaben.find((x: any) => x && x.t === TEE) : null;
-          const plaetze = f ? Math.max(1, Math.min(20, parseInt(f.n, 10) || 1)) : 2;
-          const { data: th } = await admin.from("event_helfer").select("user_id").eq("termin_id", n0.id).eq("aufgabe", TEE);
-          const drin = new Set<string>(((th || []) as any[]).map((x: any) => x.user_id).filter(Boolean));
-          const tag = new Date(n0.datum + "T12:00:00Z").toLocaleDateString("de-DE", { weekday: "long", timeZone: "Europe/Berlin" });
-          const was = tLetzt.typ === "training" ? "Training" : (tLetzt.typ === "turnier" ? "Turnier" : "Spiel");
-          for (const s of subs || []) {
-            if (!drin.has((s as any).user_id)) continue;
-            if (await send(s, { title: "🫖 Morgen eine Teekanne mitnehmen", body: `Nach dem ${was} morgen bitte eine Teekanne mitnehmen – am ${tag} bringst du sie mit warmem Tee zurück.`, url: "./eltern/", tag: "tee" })) teeSent++;
-          }
-          const fehlt = plaetze - ((th || []) as any[]).length;
-          if (fehlt > 0) {
-            teeSent += await pushKommende(tLetzt.id, {
-              title: "🫖 Mag jemand den Tee übernehmen?",
-              body: `Für ${tag} ${fehlt === 1 ? "ist noch eine Teekanne" : "sind noch " + fehlt + " Teekannen"} frei. Wer mag, nimmt morgen nach dem ${was} eine mit und bringt sie am ${tag} mit Tee zurück – ganz freiwillig, eintragen im Termin.`,
-              url: "./eltern/",
-              tag: "tee-frage",
-            }, drin);
+      const tM: any = (termine as any[]).find((x: any) => x.platz_status !== "abgesagt") || null;
+      if (tM) {
+        const { data: kannen } = await admin.from("tee_kanne").select("nr,user_id,tee_termin_id").not("user_id", "is", null).is("tee_termin_id", null);
+        if (kannen && kannen.length) {
+          const { data: rm } = await admin.from("rueckmeldungen").select("spieler_id,status").eq("termin_id", tM.id);
+          const st: Record<number, string> = {}; for (const r of rm || []) st[(r as any).spieler_id] = (r as any).status;
+          const kommt = (kids: number[]) => kids.some((id) => st[id] === "zugesagt" || (tM.typ === "training" && !st[id]));
+          const was = tM.typ === "training" ? "Training" : (tM.typ === "turnier" ? "Turnier" : "Spiel");
+          for (const k of kannen as any[]) {
+            const email = uidEmail[k.user_id]; const kids = email ? emailKids[email] : null;
+            if (!kids || !kids.length || !kommt(kids)) continue;
+            for (const s of subs || []) {
+              if ((s as any).user_id !== k.user_id) continue;
+              if (await send(s, { title: `🫖 Ihr habt Kanne ${k.nr}`, body: `Bringt ihr sie morgen zum ${was} mit warmem Tee mit? Dann im Termin „Ja, wir bringen Tee mit“ tippen.`, url: "./eltern/", tag: "tee" })) teeSent++;
+            }
           }
         }
       }
