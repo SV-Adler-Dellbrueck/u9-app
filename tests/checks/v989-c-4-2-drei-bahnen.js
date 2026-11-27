@@ -4,7 +4,7 @@
    DFB-Leitlinien laut Handout C-Lizenz (gegnerorientiert, näher dem Gegner), nicht die BDFL-Fassung 2015.
    Die Übung stand noch nicht in der Datenbank – der Abgleich legt sie mit diesem Text an (Datenweg, kein Code).
    a) coaching, varianten und die zwei Abschnitte wörtlich (Prüfsumme), die anderen zehn Überschriften und ihre Texte
-      unverändert, ebenso ablauf, kurz, feld, spieler und skizze
+      unverändert, ebenso kurz, feld und spieler (ablauf und Skizze: v989-drei-bahnen-scheiben.js)
    b) keine Fundstelle „mannorientiert“ oder „am Mann“ in den vier Übungen aus C-4.2
    c) nachtrag-4.json und bibliothek.json gleich; Stand hochgesetzt */
 "use strict";
@@ -29,8 +29,9 @@ module.exports = async function (h) {
   const KOEPFE = ["ZIEL", "KURZBESCHREIBUNG", "AUFBAU", "ABLAUF", "REGELN", "COACHING-ASPEKTE", "ESKALATIONSSTUFEN", "ZUSATZREGELN", "VORTEILE", "NACHTEILE", "TYPISCHE FEHLERBILDER", "WORAUF ACHTEN"];
   const koepfe = String(u.ablauf_lang || "").split("\n").filter(l => /^[A-ZÄÖÜ][A-ZÄÖÜ \-]+$/.test(l));
   if (koepfe.join("|") !== KOEPFE.join("|")) probleme.push("a) Überschriften verändert: " + koepfe.join(", "));
-  const UNVERAENDERT = {"ablauf": "bc2f7a2e7381c95b", "kurz": "c1576e2272904aaa", "feld": "4a38e4d8b5ccd6d6", "spieler": "6b51d431df5d7f14", "skizze": "48f4827fdb90aac1"};
-  Object.keys(UNVERAENDERT).forEach(k => { const v = k === "skizze" ? JSON.stringify(u.skizze) : u[k];
+  /* ablauf und Skizze ändert der Scheiben-Auftrag (Hütchen im Feld → Teller); geprüft in v989-drei-bahnen-scheiben.js */
+  const UNVERAENDERT = {"kurz": "c1576e2272904aaa", "feld": "4a38e4d8b5ccd6d6", "spieler": "6b51d431df5d7f14"};
+  Object.keys(UNVERAENDERT).forEach(k => { const v = u[k];
     if (sum(v) !== UNVERAENDERT[k]) probleme.push(`a) ${k} verändert`); });
   // b)
   bib.uebungen.filter(x => /^Lehrgang – (Zwei-Seiten-Spiel verteidigen|Fünf-Sekunden-Jagd|Erster attackiert, Zweiter sichert|Drei Bahnen, klare Zuständigkeit)$/.test(x.name)).forEach(x => {
@@ -40,6 +41,6 @@ module.exports = async function (h) {
   if (norm(u) !== norm(nt)) probleme.push("c) nachtrag-4.json und bibliothek.json weichen voneinander ab");
   if (String(bib.stand) < "2026-11-27-3") probleme.push(`c) Stand „${bib.stand}“ nicht hochgesetzt`);
   const kn = h.KINDER.filter(n => JSON.stringify(u).includes(n)); if (kn.length) probleme.push("Kindername: " + kn.join(", "));
-  zeilen.push(`coaching ${u.coaching.length} · varianten ${u.varianten.length} · ablauf_lang ${u.ablauf_lang.length} Zeichen · 12 Überschriften · ablauf ${u.ablauf.length} unverändert`);
+  zeilen.push(`coaching ${u.coaching.length} · varianten ${u.varianten.length} · ablauf_lang ${u.ablauf_lang.length} Zeichen · 12 Überschriften · kurz, feld, spieler unverändert`);
   return h.ergebnis(titel, !probleme.length, probleme.concat(zeilen));
 };

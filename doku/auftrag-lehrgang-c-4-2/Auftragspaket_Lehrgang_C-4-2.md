@@ -13,7 +13,8 @@ Repo `SV-Adler-Dellbrueck/u9-app`, Stand 27.11.2026. Gilt zusammen mit `CLAUDE.m
 > **Abgabe (v989, 27.11.2026):** Das Team gibt Übung 4 „Drei Bahnen, klare Zuständigkeit“ ab. `coaching` und `varianten`
 > ersetzt, in `ablauf_lang` ESKALATIONSSTUFEN und WORAUF ACHTEN (Trainerrollen, Altersanpassung); `ablauf`, `kurz`, Skizze
 > unverändert. Wortlaut der Leitlinien laut Handout C-Lizenz (gegnerorientiert, näher dem Gegner). Die Übung stand noch nicht
-> in der Datenbank, deshalb genügt die Bibliothek (Stand 2026-11-27-3); `nachtrag-4.json` gleichgezogen.
+> in der Datenbank, deshalb genügt die Bibliothek (Stand 2026-11-27-4); `nachtrag-4.json` gleichgezogen. Skizze: zehn
+> Markierungsteller auf den Bahnlinien, Hütchen nur an den Ecken (Regel Charles 27.11.); Texte zu „Linien aus Markierungsscheiben“.
 
 ## Ausgangslage
 
