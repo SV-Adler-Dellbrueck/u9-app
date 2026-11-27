@@ -98,7 +98,8 @@ module.exports = async function (h) {
   if (!r.stabil) probleme.push("Ein zweiter Durchlauf des Ausgleichs ändert den Plan noch einmal – er ist nicht in sich fertig");
 
   // ── Die Warnung ───────────────────────────────────────────────────────────
-  if (r.warn.length !== 2) probleme.push(`Die Warnung nennt ${r.warn.length} Fälle statt 2: ${r.warn.join(" · ")}`);
+  /* v984: Der Käfig ist jetzt in jeder Runde belegt (Charles 27.11.) – damit steht einmal mehr ein 4er-Team im 3+1: drei Fälle statt zwei. */
+  if (r.warn.length !== 3) probleme.push(`Die Warnung nennt ${r.warn.length} Fälle statt 3: ${r.warn.join(" · ")}`);
   /* v616: Seit interne Duelle vermieden werden, stehen die Paarungen anders – in welcher Runde
      die Vierer-Teams im Käfig spielen, ist nicht mehr Runde 1. Geprüft wird, dass es der Käfig ist. */
   if (!r.warn.every(x => /^R\d+ Käfig/.test(x))) probleme.push(`Gewarnt wird für ${r.warn.join(" · ")} – erwartet beide Vierer-Teams im Käfig`);
@@ -109,7 +110,7 @@ module.exports = async function (h) {
 
   // ── Sie steht in der Ansicht, lesbar ──────────────────────────────────────
   if (!r.sichtbar) probleme.push("Im Festival-Planer steht keine Warnung – dort, wo es sich noch ändern liesse");
-  if (r.punkte !== 2) probleme.push(`Der Kasten führt ${r.punkte} Zeilen statt 2 auf`);
+  if (r.punkte !== 3) probleme.push(`Der Kasten führt ${r.punkte} Zeilen statt 3 auf`);
   if (r.sichtbar && !/aushelfen/i.test(r.kastenText)) probleme.push("Der Kasten sagt nicht, was jetzt hilft");
   if (r.sichtbar && !/Adler Dellbrück 2/.test(r.kastenText)) probleme.push("Der Kasten nennt die Mannschaft nicht beim Namen – Farbe allein trägt die Bedeutung nicht");
   if (r.kontrast && r.kontrast < 4.5) probleme.push(`Warnkasten ${r.kontrast}:1 (mindestens 4.5)`);
