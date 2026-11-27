@@ -5,7 +5,9 @@ Repo `SV-Adler-Dellbrueck/u9-app`, Stand 27.11.2026. Gilt zusammen mit `CLAUDE.m
 
 > **Status: Teil 1 erledigt** (Übung in der App, Bild unter `Projektgedaechtnis/skizzen/aufgabe-c-3-1/`,
 > App v832). **Nachtrag 3 erledigt** (15.11.2026, v833: die drei Felder direkt in der Datenbank ersetzt, Zeile vorher gesichert; Bibliothek gleichgezogen, Stand 2026-11-15-2). Nachtrag 2 ist darin aufgegangen.
-> **Nachtrag 4 offen** (27.11.2026), siehe unten.
+> **Nachtrag 4 erledigt** (27.11.2026) in v988: Weg wie v833 – Zeile 84 gesichert, die sieben Felder und die Skizze in der
+> Datenbank ersetzt, `uebungen/bibliothek.json` gleichgezogen (Stand 2026-11-27-2). Die Kurzfassung (`ablauf`, 998 Zeichen)
+> hat das Projekt gekürzt und wurde wörtlich übernommen; die Fassung aus Nachtrag 4 steht als `ablauf_lang`. Bild neu exportiert.
 > Nicht zu verwechseln mit `auftrag-lehrgang-3-1/` (Basis-Coach 3.1, erledigt).
 > Dies ist Aufgabe 3.1 der C-Lizenz (Profil Jugend), deshalb eigener Ordner.
 
