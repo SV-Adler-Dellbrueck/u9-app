@@ -302,7 +302,7 @@ function tmRow(t){
   return `<div role="button" tabindex="0" onclick="tmDetailOpen(${t.id},'orga')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" class="tm-zeile" style="display:flex;align-items:center;gap:10px;min-height:56px;background:var(--surface);border:var(--border-s);border-left:3px solid ${faelltAus?"var(--text3)":m.col};border-radius:var(--rl);padding:9px 12px;margin-bottom:6px;cursor:pointer">
     <span style="font-size:var(--s-teil)">${m.icon}</span>
     <div style="flex:1;min-width:0">
-      <div style="font-size:var(--s-text);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${faelltAus?"var(--text2)":"inherit"}">${esc(t.titel||m.label)}${faelltAus?` ${terminAbsageChip(t,true)}`:""}</div>
+      <div style="display:flex;align-items:center;gap:6px;min-width:0;font-size:var(--s-text);font-weight:700"><span style="min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${faelltAus?"var(--text2)":"inherit"}">${esc(t.titel||m.label)}</span>${faelltAus?`<span class="tm-absage" style="flex:none">${terminAbsageChip(t,true)}</span>`:""}</div>
       <div style="font-size:var(--s-klein);color:var(--text2)">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"2-digit"})}${zeit?" · "+zeit:""}${tmMeetingOffenZeile(t)}${(()=>{const o=typeof terminOrtKurz==="function"?terminOrtKurz(t):"";return o?" · "+esc(o):(hb?` · <span style="color:${t.heim?"#15803d":"#b45309"};font-weight:700">${esc(hb)}</span>`:"");})()}</div>
     </div>
     <span style="font-size:var(--s-karte);color:var(--text3)">›</span>
