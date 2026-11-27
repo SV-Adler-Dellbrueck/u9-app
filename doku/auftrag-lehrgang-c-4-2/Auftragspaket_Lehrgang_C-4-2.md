@@ -9,6 +9,11 @@ Repo `SV-Adler-Dellbrueck/u9-app`, Stand 27.11.2026. Gilt zusammen mit `CLAUDE.m
 > (lag auf dem Hütchen an der Mittellinie); `kurz` bei Übung 1 und 4 auf höchstens 80 Zeichen; die zwölf Überschriften in
 > `ablauf_lang` je auf eigener Zeile (Wortlaut unverändert). Offen fürs Projekt: Coaching bei Übung 1 und 2 mit vier statt
 > höchstens drei Kernpunkten, ohne „Korrekturen“; Eskalation als Stufe 1–4 statt leichter/schwerer.
+>
+> **Abgabe (v989, 27.11.2026):** Das Team gibt Übung 4 „Drei Bahnen, klare Zuständigkeit“ ab. `coaching` und `varianten`
+> ersetzt, in `ablauf_lang` ESKALATIONSSTUFEN und WORAUF ACHTEN (Trainerrollen, Altersanpassung); `ablauf`, `kurz`, Skizze
+> unverändert. Wortlaut der Leitlinien laut Handout C-Lizenz (gegnerorientiert, näher dem Gegner). Die Übung stand noch nicht
+> in der Datenbank, deshalb genügt die Bibliothek (Stand 2026-11-27-3); `nachtrag-4.json` gleichgezogen.
 
 ## Ausgangslage
 
