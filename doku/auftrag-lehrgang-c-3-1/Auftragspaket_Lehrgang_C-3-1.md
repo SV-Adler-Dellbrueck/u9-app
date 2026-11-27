@@ -11,11 +11,15 @@ Repo `SV-Adler-Dellbrueck/u9-app`, Stand 27.11.2026. Gilt zusammen mit `CLAUDE.m
 > **Nachtrag 5 erledigt** (27.11.2026) in v991: Weg wie v988 – Zeile 84 gesichert, `ablauf`, `ablauf_lang`, `varianten`, `coaching`
 > und Skizze in der Datenbank ersetzt, `uebungen/bibliothek.json` gleichgezogen (Stand 2026-11-27-6); `kurz`, `feld`, `spieler` unverändert.
 > Legende im Export korrigiert (Spalten nach gemessener Textbreite), Bilder zu 3.1 und „Drei Bahnen“ (4.2) neu erzeugt.
-> **Nachtrag 6 offen** (27.11.2026), siehe unten.
+> **Nachtrag 6 erledigt** (27.11.2026) in v992, siehe unten.
 > Nicht zu verwechseln mit `auftrag-lehrgang-3-1/` (Basis-Coach 3.1, erledigt).
 > Dies ist Aufgabe 3.1 der C-Lizenz (Profil Jugend), deshalb eigener Ordner.
 
 ## Nachtrag 6 (27.11.2026): Altersanpassung U9/U13/U17
+
+> **Erledigt** (27.11.2026) in v992: Zeile 84 gesichert, nur `ablauf_lang` in der Datenbank ersetzt, `uebungen/bibliothek.json`
+> gleichgezogen (Stand 2026-11-27-7). Eine Tabellendarstellung für Altersanpassungen kennt die App nicht – auch bei „Drei Bahnen“
+> steht sie als Text in „Ganze Beschreibung“; 3.1 erscheint deshalb genauso.
 
 Die Abgabe hat eine vierte Folie „Anpassung an die Altersklasse“ als Tabelle (wie bei „Drei Bahnen“, 4.2), mit
 altersgerechter Sprache je Jahrgang. Die U9-Spalte entspricht der vorhandenen U9-Übung „Zwei-Seiten-Spiel – Platz
