@@ -119,7 +119,10 @@ function _fpPlanAusTeams(teams, felder, opt) {
   const n = teams.length, F = felder.length, hinweise = [];
   const spielzeit = opt.spielzeit, wechsel = opt.wechsel;
   const kSpiele = Math.max(0, Math.min(F, Math.floor(n / 2)));
-  const genutzt = felder.slice(0, kSpiele), frei = felder.slice(kSpiele);
+  /* v984 (Charles 27.11.): Gibt es mehr Felder als Spiele, kommt das Jugendtor-Feld (Käfig, 3+1/4+1) immer zuerst dran –
+     bei vier Teams also Käfig und ein FUNiño-Feld, nicht zweimal FUNiño. Ohne Jugendtor-Feld bleibt die Reihenfolge. */
+  const reihe = felder.slice().sort((x, y) => (x.form === "mini") - (y.form === "mini") || x.nr - y.nr);
+  const genutzt = reihe.slice(0, kSpiele).sort((x, y) => x.nr - y.nr), frei = reihe.slice(kSpiele).sort((x, y) => x.nr - y.nr);
   const moeglicheGegner = Math.max(0, n - 1);
   let ziel = Math.min(FP_REGELN.spieleEmpfohlen, moeglicheGegner);
   if (opt.wiederholung && moeglicheGegner > 0) ziel = FP_REGELN.spieleEmpfohlen;
