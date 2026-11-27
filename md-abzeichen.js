@@ -51,8 +51,8 @@ async function abzeichenStandLaden(spielerId){
   const hol=async q=>{ try{ const r=await fetch(`${SB_URL}/rest/v1/rpc/xp_events_for`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_spieler_id:spielerId,p_quelle:q})}); return r.ok?((await r.json())||[]):[]; }catch(e){ return []; } };
   /* v962: dazu die offenen „Ich hab's geschafft!“-Meldungen (abzeichen_meldung); fehlt die Tabelle, bleibt die Menge leer */
   const gem=async()=>{ try{ const r=await fetch(`${SB_URL}/rest/v1/abzeichen_meldung?spieler_id=eq.${Number(spielerId)}&select=abzeichen`,{headers:sbAuthHeaders()}); return r.ok?((await r.json())||[]).map(x=>x.abzeichen):[]; }catch(e){ return []; } };
-  const [b,s,g]=await Promise.all([hol("abzeichen"),hol("abzeichen_silber"),gem(),(typeof skillMonatLaden==="function"?skillMonatLaden():null)]);
-  _abzStand[spielerId]={bronze:new Set(b.map(String)),silber:new Set(s.map(String)),gemeldet:new Set(g.map(String))};
+  const [b,s,g,,k]=await Promise.all([hol("abzeichen"),hol("abzeichen_silber"),gem(),(typeof skillMonatLaden==="function"?skillMonatLaden():null),hol("skillwoche")]);
+  _abzStand[spielerId]={bronze:new Set(b.map(String)),silber:new Set(s.map(String)),gemeldet:new Set(g.map(String)),skill:new Set((k||[]).map(String))};   // v985: skill = abgenommene Skills (skillwoche)
   return _abzStand[spielerId];
 }
 /* Bronze-Zähler: die neun Abzeichen, dazu ein schon verdientes Kopfball-Abzeichen (höchstens 9). */
@@ -102,7 +102,7 @@ async function abzeichenRender(spielerId,kidsMode){
 /* Ein Abzeichen antippen: So geht's, Tipp, Vorlesen – Kinder sehen dasselbe ohne Abhaken. */
 function abzeichenDetail(id,spielerId,kidsMode){
   const a=abzeichenFinden(id); if(!a)return;
-  const silber=TECHNIK_SILBER.includes(a);
+  const silber=!!a&&TECHNIK_SILBER.includes(a);
   const st=_abzStand[spielerId]||{bronze:new Set(),silber:new Set(),gemeldet:new Set()}, an=(silber?st.silber:st.bronze).has(a.id);
   const gemeldet=!!(st.gemeldet&&st.gemeldet.has(a.id)), skill=skillAbzAktiv(a.id);
   const {karte}=fensterAuf("abz-detail",{mitte:true,breite:420,aussen:true});
@@ -207,7 +207,8 @@ function skillMonatKarteHtml(sk,spielerId,kidsMode){
     ${sk.beschreibung?`<div class="skm-text">${esc(sk.beschreibung)}</div>`:""}
     <div class="skm-text">Schau es dir an und üb es zu Hause. Im Training üben wir es zusammen!</div>
     ${skillVideoHtml(sk,"skm-video")}
-    ${a?`<button type="button" class="btn skm-abz" onclick="abzeichenDetail('${a.id}',${Number(spielerId)},${kidsMode?1:0})">${an?"✓ Schon geschafft – stark!":gem?"⏳ Gemeldet – zeig es beim nächsten Training":"So geht's – und dann melden"}</button>`:""}
+    ${a?`<button type="button" class="btn skm-abz" onclick="abzeichenDetail('${a.id}',${Number(spielerId)},${kidsMode?1:0})">${an?"✓ Schon geschafft – stark!":gem?"⏳ Gemeldet – zeig es beim nächsten Training":"So geht's – und dann melden"}</button>`
+      :`<div class="skm-text skm-ohne" style="font-weight:700">${st.skill&&st.skill.has(String(sk.id))?"✓ Schon abgenommen – stark!":"🙋 Kannst du es? Zeig es deinem Trainer beim Training."}</div>`}
   </section>`;
 }
 /* ═══ v980 · Skill des Monats beim Training abnehmen (Charles 26.11.: „der Skill des Monats muss von einem Trainer abgenommen
@@ -218,13 +219,14 @@ async function skillAbnahmeRender(datum){
   const box=document.getElementById("aw-skill"); if(!box)return;
   const sk=(typeof skillMonatLaden==="function")?await skillMonatLaden():null;
   const a=sk&&sk.abzeichen?abzeichenFinden(sk.abzeichen):null;
-  if(!a||!datum||(typeof isoLokal==="function"&&datum>isoLokal())||!skillAbnahmeDarf()){ box.innerHTML=""; return; }
+  /* v985: auch ein Skill ohne verknüpftes Abzeichen wird hier abgenommen (50 Federn, Quelle skillwoche) */
+  if(!sk||!datum||(typeof isoLokal==="function"&&datum>isoLokal())||!skillAbnahmeDarf()){ box.innerHTML=""; return; }
   const da=[...document.querySelectorAll("#aw-list .aw-tile.on")].map(b=>b.dataset.player);
   const kids=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.aktiv!==false&&da.includes(k.name)).map(k=>({name:k.name,id:Number(typeof kidId==="function"?kidId(k.name):k.id)})).filter(k=>k.id);
   const silber=TECHNIK_SILBER.includes(a);
   await Promise.all(kids.map(k=>abzeichenStandLaden(k.id).catch(()=>null)));
-  const st=k=>_abzStand[k.id]||{bronze:new Set(),silber:new Set(),gemeldet:new Set()};
-  const hat=k=>(silber?st(k).silber:st(k).bronze).has(a.id), gem=k=>!!(st(k).gemeldet&&st(k).gemeldet.has(a.id));
+  const st=k=>_abzStand[k.id]||{bronze:new Set(),silber:new Set(),gemeldet:new Set(),skill:new Set()};
+  const hat=k=>a?(silber?st(k).silber:st(k).bronze).has(a.id):!!(st(k).skill&&st(k).skill.has(String(sk.id))), gem=k=>!!a&&!!(st(k).gemeldet&&st(k).gemeldet.has(a.id));
   kids.sort((x,y)=>(gem(y)-gem(x))||(hat(x)-hat(y)));
   const zeile=k=>hat(k)
     ?`<div class="skab-zeile skab-ok" style="display:flex;justify-content:space-between;align-items:center;min-height:48px;padding:0 12px;margin-top:8px;border:1px solid #15803d;border-radius:12px;background:#f0fdf4;color:#166534;font-weight:700"><span>✓ ${esc(k.name)}</span><span>abgenommen</span></div>`
@@ -232,21 +234,23 @@ async function skillAbnahmeRender(datum){
         <span>${gem(k)?"🙋 ":""}${esc(k.name)}</span>${gem(k)?`<span class="skab-hin" style="font-size:var(--s-klein);font-weight:700;border:1px solid #b45309;color:#92400e;border-radius:99px;padding:2px 8px">möchte zeigen</span>`:`<span class="skab-hin" style="font-size:var(--s-klein);color:var(--text2)">antippen</span>`}</button>`;
   box.innerHTML=`<section id="skab" style="border:var(--border-s);border-radius:14px;padding:12px;margin-top:14px" aria-label="Skill des Monats abnehmen">
     <div style="font-weight:800;font-size:var(--s-karte)">⭐ Skill des Monats abnehmen</div>
-    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:2px">${a.emo} ${esc(a.name)} · zweimal tippen = abgenommen (Abzeichen, ${(silber?20:10)+50} Federn)</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:2px">${a?`${a.emo} ${esc(a.name)} · zweimal tippen = abgenommen (Abzeichen, ${(silber?20:10)+50} Federn)`:`${esc(sk.titel||"")} · zweimal tippen = abgenommen (50 Federn)`}</div>
     ${kids.length?kids.map(zeile).join(""):'<div style="font-size:var(--s-text);color:var(--text2);margin-top:8px">Erst die Anwesenheit abhaken – dann stehen hier die Kinder, die da sind.</div>'}
   </section>`;
 }
 async function skillAbnehmen(sid,btn){
-  const a=_skillMonat&&_skillMonat.abzeichen?abzeichenFinden(_skillMonat.abzeichen):null; if(!a||!btn)return;
+  const a=_skillMonat&&_skillMonat.abzeichen?abzeichenFinden(_skillMonat.abzeichen):null; if(!_skillMonat||!btn)return;
   if(btn.dataset.sicher!=="1"){
     btn.dataset.sicher="1"; const hin=btn.querySelector(".skab-hin"), alt=hin?hin.textContent:""; if(hin)hin.textContent="nochmal tippen = abgenommen";
     clearTimeout(btn._t); btn._t=setTimeout(()=>{ btn.dataset.sicher=""; if(hin)hin.textContent=alt; },3500);
     return;
   }
   clearTimeout(btn._t);
-  await abzeichenAward(sid,a.id,btn,TECHNIK_SILBER.includes(a)?"abzeichen_silber":"abzeichen");
+  if(a)await abzeichenAward(sid,a.id,btn,TECHNIK_SILBER.includes(a)?"abzeichen_silber":"abzeichen");
+  else btn.disabled=true;
   /* wie früher die Eltern-Freigabe (v963): dazu die Federn des Skills (50), je Kind und Skill nur einmal */
-  if(_skillMonat&&_skillMonat.id)await xpAward(sid,"skillwoche",_skillMonat.id);
+  const d=(_skillMonat&&_skillMonat.id)?await xpAward(sid,"skillwoche",_skillMonat.id):0;
+  if(!a&&typeof toast==="function")toast(d>0?`⭐ Abgenommen – +${d} ${typeof XP_LABEL!=="undefined"?XP_LABEL:"Federn"}`:"Schon abgenommen");
   const de=document.getElementById("aw-date"); skillAbnahmeRender(de?de.value:"");
 }
 async function abzeichenAward(spielerId,badgeId,btn,quelle){
