@@ -11,8 +11,21 @@ Repo `SV-Adler-Dellbrueck/u9-app`, Stand 27.11.2026. Gilt zusammen mit `CLAUDE.m
 > **Nachtrag 5 erledigt** (27.11.2026) in v991: Weg wie v988 – Zeile 84 gesichert, `ablauf`, `ablauf_lang`, `varianten`, `coaching`
 > und Skizze in der Datenbank ersetzt, `uebungen/bibliothek.json` gleichgezogen (Stand 2026-11-27-6); `kurz`, `feld`, `spieler` unverändert.
 > Legende im Export korrigiert (Spalten nach gemessener Textbreite), Bilder zu 3.1 und „Drei Bahnen“ (4.2) neu erzeugt.
+> **Nachtrag 6 offen** (27.11.2026), siehe unten.
 > Nicht zu verwechseln mit `auftrag-lehrgang-3-1/` (Basis-Coach 3.1, erledigt).
 > Dies ist Aufgabe 3.1 der C-Lizenz (Profil Jugend), deshalb eigener Ordner.
+
+## Nachtrag 6 (27.11.2026): Altersanpassung U9/U13/U17
+
+Die Abgabe hat eine vierte Folie „Anpassung an die Altersklasse“ als Tabelle (wie bei „Drei Bahnen“, 4.2), mit
+altersgerechter Sprache je Jahrgang. Die U9-Spalte entspricht der vorhandenen U9-Übung „Zwei-Seiten-Spiel – Platz
+suchen, Seite wechseln“.
+
+**Geändert in `nachtrag.json`:** nur `ablauf_lang` – am Ende ein Abschnitt `ALTERSANPASSUNG:` (U9, U13, U17 mit Format,
+Feld, Mitte, Tore, Seitenwechsel, Wertung, Durchgänge, Sprache, Schwerpunkt, Coachingfrage, dazu der Hinweis zur U9).
+Alle anderen Felder und die Skizze bleiben wie in v991. Weg wie v991 (Zeile sichern, `ablauf_lang` in der Datenbank
+ersetzen, Bibliothek gleichziehen). Wenn die App für Altersanpassungen eine Tabellendarstellung kennt (wie bei 4.2),
+dieselbe verwenden.
 
 ## Nachtrag 5 (27.11.2026): Bezug zu den DFB-Leitlinien, Markierungsscheiben am Korridor
 
@@ -89,6 +102,7 @@ Quer, **ein Bild**, Schrittnummern 1 bis 3 direkt an den Pfeilen.
 
 ## Entscheidungen
 
+- Altersanpassung U9/U13/U17 als Tabelle mit altersgerechter Sprache, U9 wie die U9-Übung (Charles, 27.11.2026).
 - Bezug zu den DFB-Leitlinien (übergeordnet und offensiv) im Coaching, Korridor mit Markierungsscheiben,
   Hütchen nur an den Ecken (Charles, 27.11.2026).
 - Mittelkorridor 5 m, Aus-Regel mit „Wechsel!“-Ruf, Startordnung Raute, Spielerzahl 7–9, Trainer
@@ -101,4 +115,4 @@ Quer, **ein Bild**, Schrittnummern 1 bis 3 direkt an den Pfeilen.
 
 ## Nicht in diesem Paket
 
-Kein neuer App-Code außer der Legendenkorrektur im Export, keine Vorlage, keine Kindernamen.
+Kein neuer App-Code, keine Vorlage, keine Kindernamen.
