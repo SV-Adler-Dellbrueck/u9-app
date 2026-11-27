@@ -3761,6 +3761,7 @@ function fstRender(){
       <div style="font-size:var(--s-klein);color:var(--text3);margin:4px 0 6px">Trägt den Schreib-Code: wer ihn hat, darf Ergebnisse eintragen – sonst nichts. Nur an den Anzeigetisch und die Gast-Trainer, nicht in die Eltern-Gruppe.</div>`:""}`:""}
 
     ${fstAufwWahlHtml(cfg)}
+    ${typeof fstBuntWahlHtml=="function"?fstBuntWahlHtml(cfg):""}
     <div style="font-size:var(--s-text);font-weight:800;margin:16px 0 6px">Infos für die Gäste</div>
     <textarea id="fst-infos" rows="4" onchange="fstZeitSpeichern()" style="${fld};width:100%;resize:vertical">${esc(cfg.infos||HT_INFOS_VORLAGE)}</textarea>
 
@@ -3876,7 +3877,9 @@ function fstAufwaermZeile(row){
    der grosse Platz quer. Fuers Festival haben wir den Käfig und die LINKE Haelfte des grossen
    Platzes: oben quer „4+1 oben", darunter nebeneinander Funino 1 und 2. Die rechte Haelfte
    bleibt frei. Rechts vom Platz der Parkplatz, unten das Vereinsheim (WC ebenerdig). */
-function fstSkizzeFelder(felder){
+/* v982 · 🌈 Buntes Feld (Charles 27.11.): ein FUNiño-Feld oben links für Kinder in der Pause – nur wenn dort frei ist. */
+function fstBunt(c,f){const l=fstFeldLage(f);return !!(c&&c.bunt)&&(!l.oben.length||l.oben.length==1&&!_fstJugendtore(f[l.oben[0]].form||"funino"));}
+function fstSkizzeFelder(felder,bunt){
   const f=(felder&&felder.length)?felder:FST_STANDARD_FELDER;
   const l=fstFeldLage(f);
   const nm=i=>fstFeldName(f,i);
@@ -3917,9 +3920,10 @@ function fstSkizzeFelder(felder){
     <!-- grosser Platz quer, linke Haelfte fuers Festival -->
     <rect x="64" y="40" width="254" height="190" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
     <line x1="191" y1="40" x2="191" y2="230" stroke="#16a34a" stroke-width="2"/>
-    ${l.oben.length?reihe(l.oben,72,48,112,72,true):frei(72,48,112,72,"oben heute frei")}
+    ${l.oben.length?reihe(l.oben,72,48,112,72,true):bunt?"":frei(72,48,112,72,"oben heute frei")}
+    ${bunt?`<rect x="72" y="48" width="53" height="72" rx="6" fill="#6d28d9" stroke="#c4b5fd" stroke-width="3" stroke-dasharray="7 5"/><text x="98" y="80" text-anchor="middle" font-size="10" font-weight="800" fill="#fff">🌈 Buntes</text><text x="98" y="93" text-anchor="middle" font-size="10" font-weight="800" fill="#fff">Feld</text>`:""}
     ${l.vorne.length?reihe(l.vorne,72,132,112,84,false):frei(72,132,112,84,"vorn heute frei")}
-    ${l.oben.length?zone(96,"#fef2f2","#b91c1c","🚫 nur Spieler & Trainer"):""}
+    ${l.oben.length||bunt?zone(96,"#fef2f2","#b91c1c","🚫 nur Spieler & Trainer"):""}
     ${l.vorne.length||kaefigName?zone(190,"#f0fdf4","#15803d","👏 anfeuern & jubeln"):""}
     <rect x="198" y="48" width="112" height="174" rx="6" fill="#f1f5f9" opacity=".8"/>
     <text x="254" y="130" text-anchor="middle" font-size="10.5" fill="#64748b">rechte Hälfte</text>
@@ -3990,7 +3994,7 @@ function fstInfoOpen(){
       <a href="${mapsUrl(adr)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;margin-top:8px;border-radius:12px;background:#1e3a8a;color:#fff;font-weight:800;font-size:var(--s-karte);text-decoration:none">📍 Route in Karten öffnen</a>`)}
     ${karte("Parken",`<div style="font-size:var(--s-text);line-height:1.55;margin-bottom:8px">Direkt am Platz gibt es Parkplätze, wenn ihr hineinfahrt – die sind aber oft schon belegt. <b>Besser gleich an der Straße parken (Thurner Kamp)</b>, dort ist genug Platz.</div>${fstSkizzeParken()}`)}
     ${karte("WC &amp; Kabinen",`<div style="font-size:var(--s-text);line-height:1.55">🚻 Ebenerdig unter dem Vereinsheim – gleich hinter dem großen Platz.</div>`)}
-    ${karte("Wo welches Feld liegt",`<div style="font-size:var(--s-text);color:#475569;margin-bottom:8px">Wir spielen im Käfig und auf der linken Hälfte des großen Platzes.</div>${fstZonenSatz(felder)?`<div style="font-size:var(--s-text);line-height:1.55;color:#0f172a;background:#fef2f2;border-left:4px solid #b91c1c;border-radius:8px;padding:8px 10px;margin-bottom:8px">🙌 ${esc(fstZonenSatz(felder))}</div>`:""}${fstAufwaermZeile(row)?`<div style="font-size:var(--s-text);color:#0f172a;margin-bottom:8px">🔥 Aufwärmen: ${fstAufwaermZeile(row)}</div>`:""}<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${felder.map((f,i)=>{const F=_fstF(f.form);return `<span style="font-size:var(--s-klein);font-weight:700;color:#fff;background:${F.farbe};border-radius:20px;padding:5px 11px">${esc(fstFeldName(felder,i))} · ${F.label} · ${F.tore}</span>`;}).join("")}</div>${fstSkizzeFelder(felder)}`)}
+    ${karte("Wo welches Feld liegt",`<div style="font-size:var(--s-text);color:#475569;margin-bottom:8px">Wir spielen im Käfig und auf der linken Hälfte des großen Platzes.</div>${fstZonenSatz(felder)?`<div style="font-size:var(--s-text);line-height:1.55;color:#0f172a;background:#fef2f2;border-left:4px solid #b91c1c;border-radius:8px;padding:8px 10px;margin-bottom:8px">🙌 ${esc(fstZonenSatz(felder))}</div>`:""}${fstAufwaermZeile(row)?`<div style="font-size:var(--s-text);color:#0f172a;margin-bottom:8px">🔥 Aufwärmen: ${fstAufwaermZeile(row)}</div>`:""}<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${felder.map((f,i)=>{const F=_fstF(f.form);return `<span style="font-size:var(--s-klein);font-weight:700;color:#fff;background:${F.farbe};border-radius:20px;padding:5px 11px">${esc(fstFeldName(felder,i))} · ${F.label} · ${F.tore}</span>`;}).join("")}</div>${fstSkizzeFelder(felder,fstBunt(cfg,felder))}`)}
     ${fstInfosText(cfg)?karte("Gut zu wissen",`<div style="font-size:var(--s-text);white-space:pre-wrap;line-height:1.6">${esc(fstInfosText(cfg))}</div>`):""}
     <button class="btn btn-p" onclick="document.getElementById('fst-info').remove()" style="width:100%;min-height:48px;justify-content:center;font-size:var(--s-karte)">Zurück zum Spielplan</button>
   </div>`;
@@ -4079,7 +4083,7 @@ function _fstPublicRender(wrap,row){
   const teams=row.teams||[], plan=row.plan||[], cfg=row.config||{};
   const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
   const dat=row.datum?new Date(row.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}):"";
-  const nm=i=>_htWappenImg(cfg,teams[i],24)+esc(teams[i]||("Team "+(i+1)));
+  const nm=i=>_htWappenImg(cfg,teams[i],24)+esc(teams[i]||("Team "+(i+1))), bunt=fstBunt(cfg,felder);
   const runden=[...new Set(plan.map(p=>p.runde))].sort((a,b)=>a-b);
   const mitErg=htErgebnisseAn(row), helfer=mitErg&&!!(_htPub&&_htPub.code), jetzt=fstRundeJetzt(row), verzug=fstVerzug(cfg);
   const wiederher=_fstOffenMerken(wrap);
@@ -4144,6 +4148,7 @@ function _fstPublicRender(wrap,row){
       ${fstAufwaermen(row).map(x=>`<div style="display:flex;gap:8px;align-items:center;padding:3px 0;font-size:var(--s-text)"><span style="min-width:0;flex:1;font-weight:700;display:flex;align-items:center">${_htWappenImg(cfg,x.verein,26)}${esc(x.verein)}</span><span style="font-weight:800;color:#1e3a8a">${esc(x.feld)}</span></div>`).join("")}
     </div>`:""}
 
+    ${bunt?`<div id="fst-bunt" style="background:#f5f3ff;border-left:4px solid #6d28d9;border-radius:14px;padding:12px 14px;margin-bottom:12px;font-size:var(--s-text)"><b>🌈 Buntes Feld · oben links</b><br>Wer Pause hat oder ausgewechselt ist, kickt hier mit Kindern aller Vereine und hält sich warm – ohne Ergebnis, auch spontane Spiele.</div>`:""}
     ${teams.length?`<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
       <div style="font-size:var(--s-text);font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Mannschaften</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">${teams.map((t,i)=>`<span class="fst-team${istMein(i)?" mein":""}">${_htWappenImg(cfg,t,22)}${esc(t)}</span>`).join("")}</div>
@@ -4165,7 +4170,7 @@ function _fstPublicRender(wrap,row){
           <span style="min-width:0;font-size:var(--s-karte);font-weight:700;line-height:1.3">${meins?'<span class="fst-stern">★ euer Spiel</span>':""}${nm(p.a)} <span style="color:var(--text3);font-weight:400">gegen</span> ${nm(p.b)}</span>
           ${!mitErg?"<span></span>":helfer?`<button class="btn btn-sm" onclick="htPubEdit(${mi})" aria-label="Ergebnis eintragen" style="min-height:44px;min-width:64px;justify-content:center;font-size:var(--s-text)">${erg}</button>`
                   :`<span style="font-size:var(--s-karte);font-weight:900;color:${p.ta!=null?"#0f172a":"#cbd5e1"};min-width:44px;text-align:center">${erg}</span>`}
-        </div>`;}).join("");
+        </div>`;}).join("")+(bunt?((f)=>f.length?`<div class="fst-pause" style="font-size:var(--s-klein);font-weight:700;color:#5b21b6;padding-top:6px">Pause: ${f.map(nm).join(", ")} → 🌈 Buntes Feld</div>`:"")(teams.map((t,i)=>i).filter(i=>!spiele.some(p=>p.a===i||p.b===i))):"");
       if(!aktiv)return `<details id="fst-runde-${r}" style="background:#fff;border-radius:14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
         <summary style="cursor:pointer;min-height:48px;display:flex;align-items:center;gap:8px;padding:12px 14px">${kopf}</summary>
         <div style="padding:0 14px 12px">${zeilen}</div></details>`;
