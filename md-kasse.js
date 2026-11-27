@@ -256,36 +256,22 @@ async function skillWocheSave(btn){
   document.getElementById("skw-modal")?.remove();
 }
 
-/* Skill der Woche bei den Eltern: aktive Challenge + "Geschafft" (50 Federn fürs Kind). */
+/* Skill des Monats bei den Eltern: zeigen, was geübt wird – abgenommen wird beim Training vom Trainer (v980/v985). */
 async function elternSkillLoad(kids){
   const slot=document.getElementById("skill-slot"); if(!slot)return;
   let sk=null;
   try{const r=await fetch(`${SB_URL}/rest/v1/skill_woche?aktiv=eq.true&select=*&order=created_at.desc&limit=1`,{headers:sbAuthHeaders()});if(r.ok)sk=(await r.json())[0]||null;}catch(e){}
   if(!sk){ slot.innerHTML=""; return; }
   const abz=(sk.abzeichen&&typeof abzeichenFinden==="function")?abzeichenFinden(sk.abzeichen):null;
-  const kidBtns=abz?"":(kids||[]).map(k=>`<button class="btn" onclick="skillGeschafft(${sk.id},${k.spieler_id},'${jsq((k.kader&&k.kader.name)||"")}')" style="flex:1;min-width:130px;min-height:44px;font-size:var(--s-text);justify-content:center">🎉 ${esc((k.kader&&k.kader.name)||"Kind")} hat's geschafft</button>`).join("");
   slot.innerHTML=`<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
     <div style="font-weight:700;margin-bottom:2px">⭐ Skill des Monats</div>
     <div style="font-size:var(--s-karte);font-weight:700;color:#6d28d9;margin:2px 0">${esc(sk.titel)}</div>
     ${sk.beschreibung?`<div style="font-size:var(--s-text);color:#475569;margin-bottom:8px">${esc(sk.beschreibung)}</div>`:""}
     ${(typeof skillVideoHtml==="function"&&skillVideoHtml(sk,"skm-video-eltern"))||(sk.video_url&&/^https:/.test(sk.video_url)?`<a href="${esc(sk.video_url)}" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;padding:11px;border:1.5px solid #7c3aed;border-radius:10px;background:#faf5ff;color:#6d28d9;font-weight:700;font-size:var(--s-text);text-decoration:none;margin-bottom:8px">▶️ Video ansehen</a>`:"")}
-    ${abz?`<div style="font-size:var(--s-text);color:#475569;margin-top:8px">Euer Kind übt es in der Adler-Akademie (${abz.emo} ${esc(abz.name)}). Abgenommen wird beim Training von einem Trainer – dann gibt es das Abzeichen und die Federn.</div>`
-      :`<div style="font-size:var(--s-klein);color:#64748b;margin-bottom:8px">Zuhause geübt und geschafft? Dann Federn freigeben:</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">${kidBtns}</div>`}
+    <div style="font-size:var(--s-text);color:#475569;margin-top:8px">${abz?`Euer Kind übt es in der Adler-Akademie (${abz.emo} ${esc(abz.name)}). Abgenommen wird beim Training von einem Trainer – dann gibt es das Abzeichen und die Federn.`:"Euer Kind übt es zu Hause. Abgenommen wird beim Training von einem Trainer – dann gibt es 50 Federn."}</div>
   </div>`;
 }
-async function skillGeschafft(skillId,spielerId,name){
-  if(!await frageJaNein({emoji:"🏅",titel:"Skill geschafft?",
-    text:`${name||"Dein Kind"} hat den Skill des Monats geschafft.\n\nEs gibt 50 Federn fürs Kind.`,
-    ja:"Ja, geschafft",nein:"Noch nicht"}))return;
-  let neu=0;
-  try{
-    const r=await fetch(`${SB_URL}/rest/v1/rpc/xp_award_event`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_spieler_id:spielerId,p_quelle:'skillwoche',p_quelle_id:String(skillId)})});
-    if(r.ok){const d=await r.json(); if(d>0)neu=d;}
-    else if(r.status===403){toast("Nur fürs eigene Kind","err");return;}
-  }catch(e){toast("Netzwerkfehler","err");return;}
-  toast(neu>0?`Stark! 🪶 +${neu} Federn fürs Kind`:"Diesen Skill hattet ihr schon – gut geübt! 💪");
-}
+/* v985: skillGeschafft (Eltern bestätigen 50 Federn) entfällt – den Skill des Monats nimmt immer ein Trainer beim Training ab. */
 
 /* Trikot-Wäsche-Rotator (Phase 21.1) bei den Eltern: wer wäscht als Nächstes?
    Meldet sich eine Familie, bekommt das Kind 100 Federn. Anstupsen, wenn die eigene
