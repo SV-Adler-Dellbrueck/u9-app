@@ -11,7 +11,9 @@
       Pfeil 2 (Verlagerung) läuft an keinem Gegnerkreis vorbei, der ihn berührt (Abstand ≥ 12).
    e) Die Minitore sitzen hinter den Grundlinien (Kante an der Zone) und symmetrisch zur Mittellinie –
       im Nachtrag standen sie zuerst, als wäre die Koordinate der Mittelpunkt (sie ist die Ecke).
-   f) Material: 4 Minitore, 6 Hütchen, 1 Ball – der Trainer zählt nicht.
+   f) Material: 4 Minitore, 8 Hütchen, 1 Ball – der Trainer zählt nicht.
+   v988 (Nachtrag 4): Korridor als zweite Zone statt Mittellinie, 8 Hütchen, Beschriftung „Korridor 5 m“;
+   die Tore sind symmetrisch zur Korridormitte. Was Nachtrag 4 sonst verlangt, prüft v988.
    g) Übungsart „spiel“ (= Spielform, wie beim Basis-Coach-Paket beschlossen); keine Kindernamen. */
 "use strict";
 const { bn } = require("../bibliothek-norm.js");
@@ -95,20 +97,20 @@ module.exports = async function (h) {
   if (r.spieler !== 8) probleme.push(`c) ${r.spieler} Spieler statt acht`);
   if (r.wege !== 3) probleme.push(`c) ${r.wege} Wege statt drei`);
   if (String(r.nummern) !== "1,2,3") probleme.push(`c) Schritte ${r.nummern}`);
-  if (!/Seitenwechsel Pflicht vor jedem Torschuss/.test(r.text)) probleme.push("c) Beschriftung fehlt");
+  if (!/Korridor 5 m/.test(r.text)) probleme.push("c) Beschriftung „Korridor 5 m“ fehlt");
   // d)
   if (r.eng.length) probleme.push("d) Spieler zu eng: " + r.eng.join(", "));
   if (r.koll.length) probleme.push("d) Nummernkreise verdeckt: " + r.koll.join(" · "));
   if (r.p2Abstand < 12) probleme.push(`d) Pfeil 2 kommt einem Gegner auf ${r.p2Abstand.toFixed(1)} nahe (nötig 12)`);
   // e) Tore: Ecke ist die Koordinate; Kante an der Zone, Mitte symmetrisch zur Mittellinie
-  const z = u.skizze.z[0], mitteY = u.skizze.li[0][1];
+  const z = u.skizze.z[0], kor = u.skizze.z[1] || [0, 90, 0, 0], mitteY = kor[1] + kor[3] / 2;   // v988: Korridormitte
   const links = u.skizze.tor.filter(t => t[0] < 140), rechts = u.skizze.tor.filter(t => t[0] > 140);
   if (links.length !== 2 || rechts.length !== 2) probleme.push("e) nicht je zwei Tore an beiden Grundlinien");
   links.forEach(t => { if (t[0] + 7 !== z[0]) probleme.push(`e) linkes Tor bei x ${t[0]}: Kante ${t[0] + 7} statt an der Grundlinie ${z[0]}`); });
   rechts.forEach(t => { if (t[0] !== z[0] + z[2]) probleme.push(`e) rechtes Tor bei x ${t[0]} statt an der Grundlinie ${z[0] + z[2]}`); });
   [links, rechts].forEach(paar => { if (paar.length === 2) { const m = paar.map(t => t[1] + t[3] / 2).sort((a, b) => a - b); if (Math.abs((m[0] + m[1]) / 2 - mitteY) > 0.5) probleme.push(`e) Tore nicht symmetrisch zur Mittellinie (Mitten ${m.join("/")}, Linie ${mitteY})`); } });
   // f)
-  ["4 Minitore", "6 Hütchen", "1 Ball"].forEach(m => { if (!r.material.includes(m)) probleme.push(`f) Material ohne „${m}“: ${r.material.join(", ")}`); });
+  ["4 Minitore", "8 Hütchen", "1 Ball"].forEach(m => { if (!r.material.includes(m)) probleme.push(`f) Material ohne „${m}“: ${r.material.join(", ")}`); });
   if (r.material.length !== 3) probleme.push(`f) ${r.material.length} Posten statt drei: ${r.material.join(", ")}`);
   if (r.materialSchluessel.includes("trainer")) probleme.push("f) der Trainer steht in der Materialliste");
   // g)
