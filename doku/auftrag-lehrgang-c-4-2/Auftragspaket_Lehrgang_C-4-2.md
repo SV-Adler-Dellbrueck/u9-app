@@ -1,4 +1,4 @@
-# Auftragspaket: Übung und Skizze zur C-Lizenz-Abgabe 4.2 (Zwei-Seiten-Spiel verteidigen)
+# Auftragspaket: Drei Übungen und Skizzen zur C-Lizenz-Abgabe 4.2 (defensive Spielformen)
 
 Repo `SV-Adler-Dellbrueck/u9-app`, Stand 27.11.2026. Gilt zusammen mit `CLAUDE.md` und
 `Projektgedaechtnis/skizzen-format.md` im privaten Repo.
@@ -9,46 +9,56 @@ Repo `SV-Adler-Dellbrueck/u9-app`, Stand 27.11.2026. Gilt zusammen mit `CLAUDE.m
 ## Ausgangslage
 
 Aufgabe 4.2 „Trainingsform erstellen“ (C-Lizenz, Gruppenarbeit, Team wie bei 3.1):
-gruppentaktisches Defensivthema und Trainingsziel als Blogbeitrag, dazu je eine Spielform zu einem
-gruppentaktischen defensiven Schwerpunkt von 4 gegen 4 bis 6 gegen 6 als Dokument nach der
-FVM-Vorlage (Pptx). Die Skizze entsteht in der App. Die Form ist nicht für die U9 gedacht,
-deshalb steht „Lehrgang“ im Namen.
+gruppentaktisches Defensivthema und Trainingsziel als Blogbeitrag, dazu jeweils eine Spielform zu
+einem gruppentaktischen defensiven Schwerpunkt, 4 gegen 4 bis 6 gegen 6, als Dokument nach der
+FVM-Vorlage (Pptx). Drei Formen mit drei Schwerpunkten, eine je Teammitglied. Die Skizzen
+entstehen in der App. Die Formen sind nicht für die U9 gedacht, deshalb steht „Lehrgang“ im Namen.
 
-Die Form: **Zwei-Seiten-Spiel verteidigen**, 4 gegen 4, Thema ballorientiertes Verschieben.
-Gleicher Aufbau wie das Zwei-Seiten-Spiel (36 x 24 m, Mittellinie längs, vier Minitore), aber
-feste Rollen: Grün greift an und bekommt für ein Tor nach Seitenwechsel 2 Punkte, Rot verteidigt
-und punktet mit Ballgewinn und Konter.
+| Übung | Schwerpunkt | Format | Leitlinien |
+|---|---|---|---|
+| Lehrgang – Zwei-Seiten-Spiel verteidigen | Verschieben und Verdichten | 4 gegen 4, Minitore | 1, 2, 3 |
+| Lehrgang – Fünf-Sekunden-Jagd | Gegenpressing nach Ballverlust | 5 gegen 5, Endzonen | 1, 3, 5 |
+| Lehrgang – Erster attackiert, Zweiter sichert | Anlaufen und Sichern | 4 gegen 4, Dribbeltore | 2, 3, 4 |
 
 ## Der Nachtrag
 
-`nachtrag.json` in diesem Ordner, Schema `adler-uebungen/1`, eine Übung, Kategorie `pressing`
-(aus `EI_KATS`; wenn Claude Code eine andere vorhandene Kategorie für passender hält, vorher
-melden). Übungsart `spielform`. Mit `ablauf_lang` (zwölf Überschriften) und `kurz` unter
-80 Zeichen. Keine Vorlage.
+`nachtrag.json` in diesem Ordner, Schema `adler-uebungen/1`, drei Übungen, Kategorie jeweils
+`pressing` (aus `EI_KATS`; andere vorhandene Kategorie nur nach Rückmeldung). Übungsart
+`spielform`. Mit `ablauf_lang` (zwölf Überschriften) und `kurz` unter 80 Zeichen. Keine Vorlage.
 
-## Absicht der Zeichnung
+## Absicht der Zeichnungen
 
-Quer, **ein Bild**, Schrittnummern 1 bis 3 an den Laufwegen. Aufbau identisch mit dem
-Zwei-Seiten-Spiel, damit beide Bilder in der Abgabe nebeneinander lesbar sind.
+Alle quer, je **ein Bild**, Schrittnummern an den Laufwegen (`l`). Grün mit Kürzeln, Rot ohne.
 
-- **Spieler:** Grün (A, B, C, D) greift nach rechts an, B hat den Ball unten links der Mitte.
-  C und D stehen oben auf der freien Seite. Rot (vier Gegner, ohne Kürzel) hat zur unteren
-  Ballseite verschoben.
-- **Laufwege (`l`):** 1 Der nächste Rote läuft B im Bogen von der Mittellinie her an
-  (Deckungsschatten auf den Pass zu D). 2 Der ballfernste Rote rückt von oben bis an die
-  Mittellinie ein. 3 Ein Roter sichert diagonal hinter dem Anlaufenden.
-- **Beschriftung:** „Ballseite zu – Verlagerung verhindern“ auf der Mittellinie links.
+**1 Zwei-Seiten-Spiel verteidigen.** Aufbau identisch mit dem Zwei-Seiten-Spiel. Grün greift nach
+rechts an, B hat den Ball unten, C und D stehen oben auf der freien Seite. Rot hat zur unteren
+Ballseite verschoben. 1 Der nächste Rote läuft B im Bogen von der Mittellinie her an
+(Deckungsschatten auf den Pass zu D). 2 Der ballfernste Rote rückt bis an die Mittellinie ein.
+3 Ein Roter sichert diagonal hinter dem Anlaufenden. Text „Ballseite zu – Verlagerung verhindern“.
+
+**2 Fünf-Sekunden-Jagd.** Feld mit zwei Endzonen als Zonen, Mittellinie quer (senkrecht im Bild).
+Moment direkt nach dem Ballverlust von Grün: Der rote Spieler in der Mitte rechts hat den Ball
+gerade erobert. 1 A attackiert ihn sofort. 2 B rückt nach und doppelt von unten. 3 C stellt den
+kurzen Rückpass zum rechten Roten zu. E bleibt als Absicherung hinter dem Ball. Text oben über
+dem Feld „Ballverlust: 5 Sekunden zurückerobern“.
+
+**3 Erster attackiert, Zweiter sichert.** Vier Dribbeltore (`dtor`) auf Hütchen, je zwei an den
+Grundlinien. B dribbelt auf das untere rechte Tor zu. 1 Der erste Rote läuft B an. 2 Der zweite
+Rote sichert diagonal dahinter. Text oben „Erster attackiert – Zweiter sichert“.
 
 ## Auftrag
 
-1. `nachtrag.json` **vorher** mit `_euPruefung` und die Skizze mit `_eiSkizzeFehler` prüfen und
-   melden, was beanstandet wird. Koordinaten dürfen angepasst werden. **Besonders prüfen:**
-   Spielerabstand mindestens 24 (D zum oberen Roten, B zum Endpunkt von Pfeil 1), ob die
-   Nummernkreise sichtbar sind und ob die Beschriftung den Spieler C berührt.
-2. Übung anhängen, `stand` hochsetzen, Übungsart `spielform`.
-3. Bild über `exportSkizzen` (`doku/auftrag-lehrgangsskizzen/export-skizzen.js`, `bilder:true`):
-   SVG und PNG mit Legende, Slug `zwei-seiten-spiel-verteidigen`. Ablage im privaten Repo
-   `adler-u9-wissen` unter `Projektgedaechtnis/skizzen/aufgabe-c-4-2/`.
+1. `nachtrag.json` **vorher** mit `_euPruefung` und alle drei Skizzen mit `_eiSkizzeFehler`
+   prüfen und melden, was beanstandet wird. Koordinaten dürfen angepasst werden. **Besonders
+   prüfen:** Spielerabstände mindestens 24, Sichtbarkeit der Nummernkreise, ob die Texte oben
+   bei y = 13 noch auf der Zeichenfläche liegen, ob die `dtor`-Koordinaten bei Übung 3 als
+   Mittelpunkt oder Anfang gelesen werden und die Tore an der Grundlinie sitzen, ob sich die
+   Endzonen-Zonen bei Übung 2 mit der Feldzone sauber decken.
+2. Übungen anhängen, `stand` hochsetzen, Übungsart `spielform`.
+3. Bilder über `exportSkizzen` (`doku/auftrag-lehrgangsskizzen/export-skizzen.js`, `bilder:true`):
+   SVG und PNG mit Legende, Slugs `zwei-seiten-spiel-verteidigen`, `fuenf-sekunden-jagd`,
+   `erster-attackiert-zweiter-sichert`. Ablage im privaten Repo `adler-u9-wissen` unter
+   `Projektgedaechtnis/skizzen/aufgabe-c-4-2/`.
 4. Prüffall in `tests/checks/`.
 5. `node tests/run.js` grün, `sw.js` hochzählen, Funktionsübersicht, PR als Entwurf.
 6. Im privaten Repo `Projektgedaechtnis/stand.md` (Abschnitt Trainerkonzept) und
@@ -56,13 +66,12 @@ Zwei-Seiten-Spiel, damit beide Bilder in der Abgabe nebeneinander lesbar sind.
 
 ## Entscheidungen
 
-- Thema ballorientiertes Verschieben als defensives Gegenstück zum Zwei-Seiten-Spiel,
-  4 gegen 4, feste Rollen (Charles, 27.11.2026).
-- Die gruppentaktischen Prinzipien werden aus den defensiven Leitlinien 1, 2 und 3 der
-  DFB-Spielvision abgeleitet.
-- Zwei weitere Themen für die Teamkollegen: Gegenpressing nach Ballverlust (Leitlinien 3 und 5)
-  und Tor verteidigen nah am Gegenspieler (Leitlinie 4). Deren Formen kommen bei Bedarf als
-  eigener Nachtrag in diesen Ordner.
+- Drei Formen mit drei defensiven Schwerpunkten, eine je Teammitglied (Charles, 27.11.2026).
+- Form 1 ist das defensive Gegenstück zum Zwei-Seiten-Spiel, 4 gegen 4, feste Rollen.
+- Die gruppentaktischen Prinzipien werden aus den defensiven Leitlinien der DFB-Spielvision
+  abgeleitet; zusammen decken die drei Formen alle fünf Leitlinien ab.
+- Video 3.2 bleibt bei der Form aus 3.1; Form 1 aus 4.2 kann in derselben Einheit mitgefilmt
+  werden, weil der Aufbau gleich ist.
 
 ## Nicht in diesem Paket
 
