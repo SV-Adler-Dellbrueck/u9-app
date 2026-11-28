@@ -741,7 +741,9 @@ function terminAbsageGrund(t){ return terminFaelltAus(t)?String(t.platz_status_n
 function terminAbsageChip(t,klein){
   if(!terminFaelltAus(t))return "";
   const g=terminAbsageGrund(t);
-  return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:${klein?"10":"11"}px;font-weight:800;color:#991b1b;background:#fee2e2;border:1px solid #f87171;border-radius:12px;padding:2px 8px;white-space:nowrap">🔴 Fällt aus${g?" · "+esc(g):""}</span>`;
+  /* v993: Der Grund darf umbrechen – ein langer Grund („Die Halle vor Ort ist nicht nutzbar …“) machte das Schild mit nowrap
+     breiter als den Bildschirm, die Seite wurde breiter und öffnete vergrößert. Nur „🔴 Fällt aus“ bleibt zusammen. */
+  return `<span style="display:inline-block;max-width:100%;box-sizing:border-box;font-size:${klein?"10":"11"}px;font-weight:800;color:#991b1b;background:#fee2e2;border:1px solid #f87171;border-radius:12px;padding:2px 8px;white-space:normal;overflow-wrap:anywhere;line-height:1.35"><span style="white-space:nowrap">🔴 Fällt aus</span>${g?" · "+esc(g):""}</span>`;
 }
 function terminAbsageBanner(t){
   if(!terminFaelltAus(t))return "";
