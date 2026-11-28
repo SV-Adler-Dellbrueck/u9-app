@@ -1301,15 +1301,27 @@ function rufeTerminKarteHtml(tid){
         <button type="button" class="btn${s==="zugesagt"?" btn-p":""}" aria-pressed="${s==="zugesagt"}" onclick="rufeTerminZusage(${Number(tid)},${sid},'zugesagt')">✓ Dabei</button>
         <button type="button" class="btn" aria-pressed="${s==="abgesagt"||s==="krank"}" onclick="rufeTerminZusage(${Number(tid)},${sid},'abgesagt')">✗ Absagen</button></div></div>`; }).join("")
     :(training?`<div class="rf-t-zeile">Training – gilt als zugesagt.</div>`:"");
-  const k0=kids[0], mitfahrt=!vorbei&&(!training||st.autos>0)
+  /* v993 (Charles 28.11.): Nicht jeder Termin ist eine Fahrfrage – die Autos stehen nur bei Auswärtsterminen da,
+     oder wenn schon jemand ein Auto angeboten hat. */
+  const k0=kids[0], mitfahrt=!vorbei&&(st.autos>0||(!training&&t.heim===false))
     ?`<div class="rf-t-zeile">🚗 <b>${st.autos} ${st.autos===1?"Auto":"Autos"} · ${st.frei} ${st.frei===1?"Platz":"Plätze"} frei</b>${!_rf.trainer&&k0&&typeof elternCarpoolOpen==="function"?`<div class="rf-t-knoepfe">
         <button type="button" class="btn" onclick="rufeTerminMitfahrt(${Number(tid)},${Number(k0.spieler_id)},'fahren')">🚙 Ich fahre</button>
         <button type="button" class="btn" onclick="rufeTerminMitfahrt(${Number(tid)},${Number(k0.spieler_id)},'mit')">🙋 Mitfahren</button></div>`:""}</div>`:"";
   return `<div class="rf-termin" role="group" aria-label="Termin: ${esc(_rfTerminTitel(t))}">
-    <div class="rf-t-kopf${training?" rf-t-training":""}"><b>${esc(_rfTerminTitel(t))}</b><span>${esc(_rfTerminWann(t))}${t.ort?" · "+esc(t.ort):""}</span></div>
+    <button type="button" class="rf-t-kopf${training?" rf-t-training":""}" onclick="rufeTerminOeffnen(${Number(tid)})" aria-label="Termin öffnen: ${esc(_rfTerminTitel(t))}" style="width:100%;border:0;text-align:left;cursor:pointer;font:inherit"><b>${esc(_rfTerminTitel(t))}</b><span>${esc(_rfTerminWann(t))}${t.ort?" · "+esc(t.ort):""}</span><span style="font-weight:700">Zum Termin ›</span></button>
     ${zusage}
     ${training?"":`<div class="rf-t-zeile rf-t-zahl">✓ ${st.dabei} dabei · ✗ ${st.abgesagt} abgesagt · ${st.offen} offen</div>`}
     ${mitfahrt}</div>`;
+}
+/* v993 (Charles 28.11.): Ein Tipp auf den Kopf der Termin-Karte öffnet den Termin ÜBER dem Chat – Trainer „Termin verwalten“,
+   Eltern ihre Terminansicht. Schließen (×) führt so von selbst zurück in den Chat. */
+async function rufeTerminOeffnen(tid){
+  tid=Number(tid);
+  if(_rf&&_rf.trainer&&typeof tmDetailOpen==="function"){ await tmDetailOpen(tid,"orga"); const m=document.getElementById("tmd-modal"); if(m)m.style.zIndex=_rfZ(10070); return; }
+  if(typeof terminDetailOpen==="function"){
+    if(typeof ELTERN_TERMINE!=="undefined"&&Array.isArray(ELTERN_TERMINE)&&!ELTERN_TERMINE.some(x=>Number(x.id)===tid)&&_rf&&_rf.termine&&_rf.termine[tid])ELTERN_TERMINE.push(Object.assign({},_rf.termine[tid]));
+    await terminDetailOpen(tid); const m=document.getElementById("td-modal"); if(m)m.style.zIndex=_rfZ(10070);
+  }
 }
 function _rfIsoHeute(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 async function rufeTerminZusage(tid,sid,status){
