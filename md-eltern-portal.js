@@ -1157,7 +1157,7 @@ async function elternDashLoad(){
   html+='<div id="saison-slot"></div>';   // v944: Saison-Gruß mit Adler (saisonGruss), direkt unter dem Kopf
   html+=`<section id="fuer-euch" class="fe" aria-label="Für euch" hidden>
     <div class="fe-kopf"><span class="fe-titel">📌 Für euch</span><span id="fe-zahl" class="fe-zahl" aria-live="polite"></span></div>
-    <div id="fe-bahn" class="fe-bahn" tabindex="-1"><div id="akademie-melde-slot"></div><div id="eltern-offen-slot"></div><div id="nest-bogen-slot"></div><div id="feier-slot"></div><div id="fe-todo-slot"><button id="eltern-todo-btn" class="btn btn-zeile" onclick="elternCatOpen('todo')" style="display:none;">
+    <div id="fe-bahn" class="fe-bahn" tabindex="-1"><div id="akademie-melde-slot"></div><div id="eltern-offen-slot"></div><div id="nest-bogen-slot"></div><div id="feier-slot"></div><div id="mitspielen-slot"></div><div id="fe-todo-slot"><button id="eltern-todo-btn" class="btn btn-zeile" onclick="elternCatOpen('todo')" style="display:none;">
     <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:var(--amber-bg);display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1">📌</span>
     <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Zu erledigen</span><span style="display:block;font-size:var(--s-klein);color:var(--text2);font-weight:400;margin-top:1px">Rückmeldungen, Mitbringen, Grillhütte, „Wie war's"</span></span>
     <span id="eltern-todo-badge" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber);font-weight:800;font-size:var(--s-text);border-radius:12px;padding:2px 9px"></span>
@@ -1458,6 +1458,7 @@ async function elternDashLoad(){
   elternGenesungLoad(kids);                    // I-A: Genesungsgrüße für pausierte Teamkinder
   elternHelferTodoLoad();                      // J3: heute als Helfer eingetragen? Erinnerung mit Direktlink
   elternMitbringLoad(kids);                    // Event-Mitbringliste: wer bringt was mit
+  mitspielenObenLoad();                        // v995: Kinder-Eltern-Turnier – „Spielt ihr mit?“ in „Für euch“
   if(typeof feierObenLoad==="function")feierObenLoad(kids);   // v830: Karte „Weihnachtsfeier“ ganz oben (Welle 2, deshalb geprüft)
   elternBuedchenLoad();                        // v646: Grillhütte – eigener Dienst und offene zum Übernehmen
   elternGespraechStatus();                     // laufende Elterngespräch-Anfrage anzeigen
@@ -2104,10 +2105,22 @@ async function tdMitbringLoad(t){
    sehen sie – Entscheidung vom 10.11.), ein Knopf „Ich spiele mit“ (nochmal tippen nimmt es zurück) und ein Feld für
    weitere Personen. Die Kinder werden wie bei jedem Termin über die Rückmeldung an- oder abgemeldet.
    Tabelle event_mitspieler: jeder trägt ein und löscht nur seine eigenen Zeilen; der Trainer darf alle entfernen. */
+/* v995 (Charles 28.11., Bild freigegeben): Verhältnis zur Familie und das Kind der Familie, damit das Trainerteam das Turnier je
+   Familie vorbereiten kann. Ohne die neuen Spalten (Migration v995 fehlt) lädt die Liste wie bisher. */
+const MS_VERHAELTNIS=["Mutter","Vater","Partner(in)","Tochter","Sohn","Oma","Opa","Tante","Onkel","Freund(in)","Sonstige"];
+let _msOhneV995=false;
 async function mitspielerHolen(terminId){
-  try{ const r=await fetch(`${SB_URL}/rest/v1/event_mitspieler?termin_id=eq.${Number(terminId)}&select=id,name,selbst,created_by&order=id.asc`,{headers:sbAuthHeaders()});
-    if(r.ok)return (await r.json())||[]; }catch(e){}
+  try{ const r=await fetch(`${SB_URL}/rest/v1/event_mitspieler?termin_id=eq.${Number(terminId)}&select=id,name,selbst,created_by${_msOhneV995?"":",verhaeltnis,kind_id"}&order=id.asc`,{headers:sbAuthHeaders()});
+    if(r.ok)return (await r.json())||[];
+    if(r.status===400&&!_msOhneV995){ _msOhneV995=true; return mitspielerHolen(terminId); } }catch(e){}
   return null;
+}
+function _msKindId(){ const k=(window._elternKids||[])[0]; return k?Number(k.spieler_id)||null:null; }
+async function _msEintragen(zeile){
+  const senden=z=>fetch(`${SB_URL}/rest/v1/event_mitspieler`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},body:JSON.stringify(z)});
+  let r=await senden(_msOhneV995?zeile:Object.assign({kind_id:_msKindId()},zeile));
+  if(!r.ok&&r.status===400&&!_msOhneV995){ _msOhneV995=true; const z=Object.assign({},zeile); delete z.verhaeltnis; r=await senden(z); }
+  return r;
 }
 /* Unter welchem Namen steht der Elternteil selbst in der Liste? Der eigene Vorname aus „Deine Angaben“ (mit Anfangsbuchstabe
    des Nachnamens), sonst „Elternteil von <Kind>“. */
@@ -2127,7 +2140,7 @@ async function mitspielerLoad(terminId,boxId){
   const uid=_sbUid()||"";
   const ich=liste.find(x=>x.selbst&&x.created_by===uid);
   const zeilen=liste.map(x=>`<div class="ms-zeile" style="display:flex;align-items:center;gap:8px;min-height:44px;border-top:1px solid #f1f5f9;font-size:var(--s-text)">
-      <span style="flex:1;min-width:0;overflow-wrap:anywhere">⚽ <b>${esc(x.name)}</b>${(x.selbst&&x.created_by===uid)?' <span style="color:#64748b;font-size:var(--s-klein)">· das bist du</span>':""}</span>
+      <span style="flex:1;min-width:0;overflow-wrap:anywhere">⚽ <b>${esc(x.name)}</b>${x.verhaeltnis?` · ${esc(x.verhaeltnis)}`:x.selbst?" · Elternteil":""}${(x.selbst&&x.created_by===uid)?' <span style="color:#64748b;font-size:var(--s-klein)">· das bist du</span>':""}</span>
       ${(!x.selbst&&x.created_by===uid)?`<button type="button" onclick="mitspielerWeg(${Number(x.id)},${Number(terminId)})" aria-label="${esc(x.name)} wieder austragen" class="btn btn-sm btn-d" style="flex:none;min-width:44px;justify-content:center">✕</button>`:""}
     </div>`).join("");
   box.innerHTML=`<div class="ms-block" data-termin="${Number(terminId)}" style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
@@ -2136,15 +2149,58 @@ async function mitspielerLoad(terminId,boxId){
     <button type="button" class="ms-ich" aria-pressed="${ich?"true":"false"}" onclick="mitspielerIch(${Number(terminId)})" style="width:100%;min-height:48px;padding:10px;border-radius:12px;border:1.5px solid ${ich?"#15803d":"var(--blue)"};background:${ich?"#15803d":"var(--blue)"};color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">${ich?"✓ Du spielst mit – zum Zurücknehmen tippen":"⚽ Ich spiele mit"}</button>
     <div style="font-size:var(--s-text);font-weight:700;margin-top:12px">${liste.length?`${liste.length} Erwachsene${liste.length===1?"r":""} ${liste.length===1?"spielt":"spielen"} mit`:"Noch niemand eingetragen – mach den Anfang!"}</div>
     ${zeilen}
-    <label for="ms-name-${boxId}" style="display:block;font-size:var(--s-klein);color:#475569;margin-top:10px">Noch jemand dabei? Namen eintragen</label>
-    <div style="display:flex;gap:6px;margin-top:4px">
-      <input id="ms-name-${boxId}" maxlength="40" placeholder="z. B. Opa Heinz" style="flex:1;min-width:0;min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text)" onkeydown="if(event.key==='Enter')mitspielerDazu(${Number(terminId)},'${boxId}')">
-      <button type="button" onclick="mitspielerDazu(${Number(terminId)},'${boxId}')" class="btn btn-sm">Eintragen</button>
+    <label for="ms-name-${boxId}" style="display:block;font-size:var(--s-klein);color:#475569;margin-top:10px">Noch jemand dabei? Wer ist es, und wie heißt er oder sie?</label>
+    <select id="ms-verh-${boxId}" aria-label="Wer ist das?" style="display:block;width:100%;margin-top:4px;min-height:44px;padding:0 8px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">
+      <option value="">Wer ist das? (Oma, Sohn …)</option>${MS_VERHAELTNIS.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join("")}</select>
+    <div style="display:flex;gap:6px;margin-top:6px">
+      <input id="ms-name-${boxId}" maxlength="40" placeholder="Vorname" style="flex:1;min-width:0;min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text)" onkeydown="if(event.key==='Enter')mitspielerDazu(${Number(terminId)},'${boxId}')"><button type="button" onclick="mitspielerDazu(${Number(terminId)},'${boxId}')" class="btn" style="flex:none">Eintragen</button>
     </div>
   </div>`;
   if(typeof elternDarkActive==="function"&&elternDarkActive()&&typeof elternThemeSweep==="function")elternThemeSweep(box);
 }
-function mitspielerNeuLaden(terminId){ ["td-mitspieler","mitspieler-card"].forEach(id=>{ const b=document.getElementById(id); if(b)mitspielerLoad(terminId,id); }); }
+/* v995 · Karte „Spielt ihr mit?“ in „Für euch“ (Charles 28.11.: „Button zu versteckt“, Bild freigegeben).
+   Steht da, solange es ein kommendes Kinder-Eltern-Turnier gibt, die Familie noch niemanden eingetragen hat und die
+   Karte nicht mit ✕ ausgeblendet wurde. Eine Hauptaktion („Ich spiele mit“), daneben der Weg ins Termin-Fenster,
+   wo weitere Mitspieler mit Verhältnis eingetragen werden. Ohne Netz oder ohne Stand: keine Karte statt einer falschen. */
+async function mitspielenObenLoad(){
+  const slot=document.getElementById("mitspielen-slot"); if(!slot)return;
+  const leer=()=>{ const s=document.getElementById("mitspielen-slot"); if(s)s.innerHTML=""; };
+  const uid=_sbUid(); if(!uid){ leer(); return; }
+  let t=null, eigene=null;
+  try{ const r=await fetch(`${SB_URL}/rest/v1/termine?eltern_turnier=is.true&datum=gte.${isoLokal()}&select=*&order=datum.asc&limit=1`,{headers:sbAuthHeaders()});
+    if(r.ok)t=(await r.json())[0]||null; }catch(e){}
+  if(!t||t.eltern_turnier!==true||_elAbgesagt(t)){ leer(); return; }
+  try{ localStorage.getItem("adler_ms_weg_"+t.id)==="1"&&(t=null); }catch(e){}
+  if(!t){ leer(); return; }
+  try{ const r=await fetch(`${SB_URL}/rest/v1/event_mitspieler?termin_id=eq.${Number(t.id)}&created_by=eq.${uid}&select=id&limit=1`,{headers:sbAuthHeaders()});
+    if(r.ok)eigene=(await r.json()).length; }catch(e){}
+  if(eigene!==0||!document.getElementById("mitspielen-slot")){ leer(); return; }
+  const d=new Date(t.datum+"T00:00:00");
+  const wann=d.toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"})+(t.uhrzeit?" · "+String(t.uhrzeit).slice(0,5)+" Uhr":"");
+  const tid=Number(t.id);
+  document.getElementById("mitspielen-slot").innerHTML=`<div class="ms-oben" style="background:var(--surface);color:var(--text);border-radius:14px;padding:16px;margin-bottom:12px;border-left:4px solid var(--green);box-shadow:0 2px 10px rgba(0,0,0,.05);display:flex;flex-direction:column">
+    <button type="button" class="fe-x" onclick="mitspielenObenWeg(${tid})" aria-label="Ausblenden – eintragen geht weiter im Termin">✕</button>
+    <div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;padding-right:44px">Spielt ihr mit?</div>
+    <div style="font-size:var(--s-teil);font-weight:800;margin-top:2px;padding-right:44px">⚽ ${esc(t.titel||"Kinder-Eltern-Turnier")}</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin-top:2px">${esc(wann)}${t.ort?" · "+esc(t.ort):""}</div>
+    <div style="font-size:var(--s-text);margin-top:8px;margin-bottom:12px;line-height:1.5">Damit wir die Teams planen können: Wer aus eurer Familie spielt mit? Oma, Opa, Geschwister – alle sind willkommen.</div>
+    <button type="button" class="ms-oben-ich btn" onclick="mitspielenObenIch(${tid})" style="width:100%;min-height:56px;margin-top:auto;font-size:var(--s-karte);justify-content:center">✓ Ich spiele mit</button>
+    <button type="button" class="ms-oben-mehr btn" onclick="mitspielenObenMehr(${tid})" style="width:100%;margin-top:8px;justify-content:center">Weitere Mitspieler eintragen ›</button>
+  </div>`;
+}
+async function mitspielenObenIch(tid){ await mitspielerIch(tid); mitspielenObenLoad(); }
+function mitspielenObenMehr(tid){
+  if(typeof terminDetailOpen!=="function")return;
+  terminDetailOpen(tid);
+  /* nach dem Öffnen zum Eintragen springen – das Feld lädt nach */
+  let n=0; const iv=setInterval(()=>{ const f=document.getElementById("ms-name-td-mitspieler"); if(f||++n>30){ clearInterval(iv); if(f){ f.scrollIntoView({block:"center"}); f.focus({preventScroll:true}); } } },100);
+}
+function mitspielenObenWeg(tid){
+  try{ localStorage.setItem("adler_ms_weg_"+tid,"1"); }catch(e){}
+  const sl=document.getElementById("mitspielen-slot"); if(sl)sl.innerHTML="";
+  if(typeof toastUndo==="function")toastUndo("Ausgeblendet – eintragen geht weiter im Termin.",()=>{ try{ localStorage.removeItem("adler_ms_weg_"+tid); }catch(e){} mitspielenObenLoad(); });
+}
+function mitspielerNeuLaden(terminId){ ["td-mitspieler","mitspieler-card"].forEach(id=>{ const b=document.getElementById(id); if(b)mitspielerLoad(terminId,id); }); mitspielenObenLoad(); }
 async function mitspielerIch(terminId){
   const uid=_sbUid(); if(!uid){ toast("Bitte zuerst anmelden","err"); return; }
   const liste=(await mitspielerHolen(terminId))||[];
@@ -2152,7 +2208,7 @@ async function mitspielerIch(terminId){
   try{
     const r=ich
       ? await fetch(`${SB_URL}/rest/v1/event_mitspieler?id=eq.${Number(ich.id)}`,{method:"DELETE",headers:sbAuthHeaders()})
-      : await fetch(`${SB_URL}/rest/v1/event_mitspieler`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},body:JSON.stringify({termin_id:Number(terminId),name:await mitspielerEigenerName(),selbst:true})});
+      : await _msEintragen({termin_id:Number(terminId),name:await mitspielerEigenerName(),selbst:true});
     if(!r.ok){ toast("Das hat nicht geklappt – bitte nochmal versuchen","err"); return; }
     toast(ich?"Du bist wieder ausgetragen":"⚽ Du spielst mit – schön!");
   }catch(e){ toast("Offline – bitte später nochmal","err"); return; }
@@ -2161,7 +2217,8 @@ async function mitspielerIch(terminId){
 async function mitspielerDazu(terminId,boxId){
   const feld=document.getElementById("ms-name-"+boxId), name=String((feld&&feld.value)||"").trim().slice(0,40);
   if(!name){ toast("Bitte einen Namen eintragen","err"); if(feld)feld.focus(); return; }
-  try{ const r=await fetch(`${SB_URL}/rest/v1/event_mitspieler`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},body:JSON.stringify({termin_id:Number(terminId),name,selbst:false})});
+  const verh=String((document.getElementById("ms-verh-"+boxId)||{}).value||"")||null;
+  try{ const r=await _msEintragen({termin_id:Number(terminId),name,selbst:false,verhaeltnis:verh});
     if(!r.ok){ toast("Das hat nicht geklappt – bitte nochmal versuchen","err"); return; }
     toast("⚽ "+name+" ist eingetragen");
   }catch(e){ toast("Offline – bitte später nochmal","err"); return; }
@@ -2994,7 +3051,19 @@ async function elternTermineNachladen(){
 function elternTermineListeHtml(rows){
   const kids=window._elternKids||[];
   if(!rows.length)return '<div style="font-size:var(--s-text);color:var(--text3);padding:10px 0">Aktuell sind keine Termine geplant.</div>';
+  /* v995 (Charles 28.11.): „alle Termine an der Liste, gar nicht voneinander abgegrenzt“ – Kopf je Monat, darunter je Kalenderwoche */
+  let mon="", kw="";
   return rows.map((t,i)=>{
+    const d0=new Date(t.datum+"T12:00:00"), mNeu=t.datum.slice(0,7), kNeu=elternKw(d0);
+    let kopf="";
+    if(mNeu!==mon){ mon=mNeu; kw=""; kopf+=`<h3 class="et-monat" style="margin:${i?14:2}px 0 4px;font-size:var(--s-karte);font-weight:800;color:var(--text)">${d0.toLocaleDateString("de-DE",{month:"long",year:"numeric"})}</h3>`; }
+    if(kNeu!==kw){ kw=kNeu; kopf+=`<div class="et-kw" style="margin:8px 0 2px;font-size:var(--s-klein);font-weight:700;color:#475569;border-bottom:1px solid var(--rand-bedien,#cbd5e1);padding-bottom:2px">KW ${kNeu.split("-")[1]}</div>`; }
+    return kopf+elternTerminZeile(t,i,kids);
+  }).join("");
+}
+function elternKw(d){ const x=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())); const tag=x.getUTCDay()||7; x.setUTCDate(x.getUTCDate()+4-tag);
+  const j=x.getUTCFullYear(); return j+"-"+String(Math.ceil(((x-Date.UTC(j,0,1))/864e5+1)/7)).padStart(2,"0"); }
+function elternTerminZeile(t,i,kids){ {
     const tm=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ,col:"#1e3a8a"};
     const td=new Date(t.datum+"T00:00:00"), twtag=["So","Mo","Di","Mi","Do","Fr","Sa"][td.getDay()], tzeit=elternZeitKurz(t);
     const aus=_elAbgesagt(t), rr=_etRsvp[t.id]||{};
@@ -3010,7 +3079,7 @@ function elternTermineListeHtml(rows){
         <span style="flex:1;min-width:0"><span style="display:block;font-weight:700;font-size:var(--s-text);${aus?"color:#64748b;":""}">${esc(t.titel||t.gegner||tm.label)}${i===0?' <span style="font-size:var(--s-klein);color:#2563eb;font-weight:800">· NÄCHSTER</span>':""}</span>
           <span style="display:block;font-size:var(--s-klein);color:#64748b">${twtag} ${td.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${tzeit?" · "+tzeit:""}${heimLabel(t)?" · "+heimLabel(t):""}${t.ort?" · "+esc(t.ort):""}${t.platz?" · 🏟️ "+esc(t.platz):""}</span></span>
         <span style="font-size:var(--s-klein);font-weight:700;color:${tm.col};background:${tm.col}18;border-radius:6px;padding:3px 7px;white-space:nowrap">${tm.label}</span>
-      </button>${kidRows}</div>`;}).join("");
+      </button>${kidRows}</div>`;}
 }
 async function elternTerminRsvp(terminId,spielerId,status){
   const cur=(_etRsvp[terminId]||{})[spielerId]||null;
@@ -3485,12 +3554,16 @@ function elternTerminKarussell(erste,rows,kids,rsvpAll,termin){
   if(!termin)return erste;
   const heute=isoLokal();
   const weitere=(rows||[]).filter(t=>Number(t.id)!==Number(termin.id)&&String(t.datum)>=heute&&!(typeof terminVorbei==="function"&&terminVorbei(t)))
-    .sort((a,b)=>String(a.datum).localeCompare(String(b.datum))||String(a.uhrzeit||"").localeCompare(String(b.uhrzeit||""))).slice(0,4);
+    .sort((a,b)=>String(a.datum).localeCompare(String(b.datum))||String(a.uhrzeit||"").localeCompare(String(b.uhrzeit||"")))
+    /* v995 (Charles 28.11.): nicht nur vier – alles aus den nächsten 14 Tagen, mindestens vier, höchstens acht.
+       Vorher fehlte die Weihnachtsfeier, weil vier Trainings davor lagen. */
+    .filter((t,i)=>i<4||(i<8&&String(t.datum)<=elternPlusTage(heute,14)));
   return `<section id="termine-karussell" class="tk-sek" aria-label="Nächste Termine">
     <div class="fe-kopf"><span class="fe-titel">📅 Nächste Termine</span><span id="tk-zahl" class="fe-zahl" aria-live="polite"></span></div>
     <div id="tk-bahn" class="tk-bahn" tabindex="-1" data-scrollkeep="tk">${erste}${weitere.map(t=>elternTerminKarteKlein(t,kids,rsvpAll)).join("")}</div>
     <div id="tk-punkte" class="fe-punkte" aria-hidden="true"></div></section>`;
 }
+function elternPlusTage(iso,n){ const d=new Date(iso+"T12:00:00"); d.setDate(d.getDate()+n); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function elternTerminKarteKlein(t,kids,rsvpAll){
   kids=kids||[];
   const m=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ};
