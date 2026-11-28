@@ -1334,31 +1334,34 @@ const RUFE_AUFGABEN={
   steckbrief:{emo:"📝",titel:"Steckbrief ausfüllen",farbe:"#7c3aed",text:"Bitte ergänzt den Steckbrief eures Kindes – zwei Minuten reichen."},
   portraet:{emo:"🪺",titel:"Porträtfragen Adler Nest",farbe:"#0f766e",text:"Porträtfragen fürs nächste Adler Nest – bitte bis zur Frist beantworten."},
   mitbringen:{emo:"🧺",titel:"Mitbringliste",farbe:"#b45309",text:"Wer bringt was mit? Bitte tragt euch in die Mitbringliste ein."},
-  todo:{emo:"📌",titel:"Eure offenen To-dos",farbe:"#475569",text:"Kurze Erinnerung: Schaut bitte in eure offenen To-dos."}
+  todo:{emo:"📌",titel:"Eure offenen To-dos",farbe:"#475569",text:"Kurze Erinnerung: Schaut bitte in eure offenen To-dos."},
+  /* v995 (Charles 28.11.): Kinder-Eltern-Turnier – wer aus der Familie mitspielt, mit Verhältnis */
+  mitspielen:{emo:"⚽",titel:"Mitspielen eintragen",farbe:"#15803d",text:"Kinder-Eltern-Turnier: Wer aus eurer Familie spielt mit? Bitte tragt euch ein – Oma, Opa und Geschwister sind willkommen."}
 };
+const _RF_MIT_TERMIN={mitbringen:1,mitspielen:1};
 function rufeAufgabeMenue(){
   if(!_rf||!_rf.trainer)return;
-  const z=(art)=>{ const a=RUFE_AUFGABEN[art]; return `<button type="button" class="btn btn-zeile" style="margin-top:6px" onclick="rufeAufgabeSetzen('${art}')"><span aria-hidden="true">${a.emo}</span>${a.titel}${art==="mitbringen"?" …":""}</button>`; };
+  const z=(art)=>{ const a=RUFE_AUFGABEN[art]; return `<button type="button" class="btn btn-zeile" style="margin-top:6px" onclick="rufeAufgabeSetzen('${art}')"><span aria-hidden="true">${a.emo}</span>${a.titel}${_RF_MIT_TERMIN[art]?" …":""}</button>`; };
   _rfBlatt("rufe-menue","📝 Aufgabe für die Eltern",
     `<div style="font-size:var(--s-text);color:var(--text2)">Die Eltern sehen einen Knopf, der direkt an die richtige Stelle führt. Du siehst auf der Karte, wie weit alle sind.</div>`
-    +["steckbrief","portraet","mitbringen","todo"].map(z).join("")
+    +["steckbrief","portraet","mitbringen","mitspielen","todo"].map(z).join("")
     +`<button type="button" onclick="document.getElementById('rufe-menue')?.remove()" class="btn" style="width:100%;justify-content:center;margin-top:6px">Abbrechen</button>`);
 }
 async function rufeAufgabeSetzen(art,tid){
   if(!_rf||!RUFE_AUFGABEN[art])return;
   document.getElementById("rufe-menue")?.remove();
-  if(art==="mitbringen"&&!tid){
-    const heute=_rfIsoHeute();
-    const ter=await _rfGet(`termine?datum=gte.${heute}&typ=neq.trainermeeting&select=id,typ,titel,gegner,datum,uhrzeit,treffzeit,ort,heim&order=datum.asc,uhrzeit.asc&limit=10`);
+  if(_RF_MIT_TERMIN[art]&&!tid){
+    const heute=_rfIsoHeute(), ms=art==="mitspielen";
+    const ter=await _rfGet(`termine?datum=gte.${heute}&${ms?"eltern_turnier=is.true":"typ=neq.trainermeeting"}&select=id,typ,titel,gegner,datum,uhrzeit,treffzeit,ort,heim&order=datum.asc,uhrzeit.asc&limit=10`);
     const liste=Array.isArray(ter)?ter:[]; window._rfTerminListe=liste;
-    _rfBlatt("rufe-menue","🧺 Mitbringliste – zu welchem Termin?",
-      (liste.length?liste.map(t=>`<button type="button" class="btn btn-zeile" style="margin-top:6px" onclick="rufeAufgabeSetzen('mitbringen',${Number(t.id)})"><span aria-hidden="true">📅</span><span style="display:flex;flex-direction:column;text-align:left"><b>${esc(_rfTerminTitel(t))}</b><small>${esc(_rfTerminWann(t))}</small></span></button>`).join("")
-        :`<div style="color:var(--text2);font-size:var(--s-text)">Kein kommender Termin.</div>`)
+    _rfBlatt("rufe-menue",`${RUFE_AUFGABEN[art].emo} ${RUFE_AUFGABEN[art].titel} – zu welchem Termin?`,
+      (liste.length?liste.map(t=>`<button type="button" class="btn btn-zeile" style="margin-top:6px" onclick="rufeAufgabeSetzen('${art}',${Number(t.id)})"><span aria-hidden="true">📅</span><span style="display:flex;flex-direction:column;text-align:left"><b>${esc(_rfTerminTitel(t))}</b><small>${esc(_rfTerminWann(t))}</small></span></button>`).join("")
+        :`<div style="color:var(--text2);font-size:var(--s-text)">${ms?"Kein kommendes Kinder-Eltern-Turnier – den Haken setzt du im Termin.":"Kein kommender Termin."}</div>`)
       +`<button type="button" onclick="document.getElementById('rufe-menue')?.remove()" class="btn" style="width:100%;justify-content:center;margin-top:6px">Abbrechen</button>`);
     return;
   }
   const t=tid?(window._rfTerminListe||[]).find(x=>Number(x.id)===Number(tid))||null:null;
-  if(art==="mitbringen"&&!t)return;
+  if(_RF_MIT_TERMIN[art]&&!t)return;
   _rf.aufgabe={art,termin:t}; _rf.termin=null; rufeOptionenRender();
   const f=document.getElementById("rufe-text"); if(f&&!f.value.trim()){ f.value=RUFE_AUFGABEN[art].text; rufeTextWachsen(f); }
   f&&f.focus();
@@ -1385,6 +1388,15 @@ async function rufeAufgabenLaden(liste){
     const rows=await holen(`portraet_einreichung?status=neq.uebernommen${_rf.trainer?"":kids.length?`&spieler_id=in.(${kids.join(",")})`:"&id=eq.0"}&select=id,spieler_id,status,frist_eltern,privatfotos,einverstanden_am`);
     st.portraet={rows,fertig:rows.filter(e=>e.status==="eingereicht").length,offen:rows.filter(e=>e.status!=="eingereicht").length};
   }
+  if(arten.has("mitspielen")){
+    const tids=[...new Set((liste||[]).filter(n=>n.aufgabe==="mitspielen"&&n.termin_id).map(n=>Number(n.termin_id)))];
+    const uid=_rf.uid||"";
+    const [rows,kader]=tids.length?await Promise.all([holen(`event_mitspieler?termin_id=in.(${tids.join(",")})&select=termin_id,created_by,kind_id`),_rf.trainer?holen("kader?select=id,aktiv"):[]]):[[],[]];
+    const aktiv=kader.filter(k=>k.aktiv!==false).map(k=>Number(k.id));
+    st.mitspielen={};
+    tids.forEach(tid=>{ const r=rows.filter(x=>Number(x.termin_id)===tid), mitKind=new Set(r.map(x=>Number(x.kind_id)).filter(Boolean));
+      st.mitspielen[tid]={erw:r.length,fam:new Set(r.map(x=>x.created_by)).size,offen:aktiv.filter(id=>!mitKind.has(id)).length,eigene:r.filter(x=>uid&&x.created_by===uid).length}; });
+  }
   if(arten.has("todo")&&!_rf.trainer){ const b=document.getElementById("eltern-todo-badge"); st.todo={offen:Number(((b&&b.textContent)||"").replace(/\D/g,""))||0}; }
   return st;
 }
@@ -1394,7 +1406,7 @@ function rufeAufgabeKarteHtml(n){
   const vn=sid=>{ const k=kids.find(x=>Number(x.spieler_id)===Number(sid)); return ((k&&k.kader&&k.kader.name)||"Euer Kind").split(" ")[0]; };
   const knopf=(txt,on)=>`<div class="rf-t-knoepfe"><button type="button" class="btn btn-p" onclick="${on}">${txt} ›</button></div>`;
   const t=n.termin_id&&_rf&&_rf.termine?_rf.termine[n.termin_id]:null;
-  const unter=n.aufgabe==="mitbringen"?(t?_rfTerminTitel(t)+" · "+_rfTerminWann(t):"Termin"):(_rf&&_rf.trainer?(n.aufgabe==="portraet"?"Aufgabe an die Familien, deren Kind dran ist":"Aufgabe an alle Familien"):"Aufgabe vom Trainerteam");
+  const unter=_RF_MIT_TERMIN[n.aufgabe]?(t?_rfTerminTitel(t)+" · "+_rfTerminWann(t):"Termin"):(_rf&&_rf.trainer?(n.aufgabe==="portraet"?"Aufgabe an die Familien, deren Kind dran ist":"Aufgabe an alle Familien"):"Aufgabe vom Trainerteam");
   let rumpf="";
   if(_rf&&_rf.trainer){
     if(st&&(n.aufgabe==="steckbrief"||n.aufgabe==="portraet")){
@@ -1402,6 +1414,8 @@ function rufeAufgabeKarteHtml(n){
       rumpf=`<div class="rf-t-zeile rf-t-zahl">✓ ${st.fertig} ${n.aufgabe==="steckbrief"?"vollständig":"beantwortet"} · ${st.offen} offen
         <div role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p}" aria-label="${p} Prozent erledigt" style="height:8px;border-radius:4px;background:var(--surface2);overflow:hidden;margin-top:6px"><i style="display:block;height:100%;width:${p}%;background:#16a34a"></i></div></div>`;
     }else if(n.aufgabe==="mitbringen")rumpf=`<div class="rf-t-zeile">${knopf("Zur Mitbringliste",`rufeTerminOeffnen(${Number(n.termin_id)})`)}</div>`;
+    else if(n.aufgabe==="mitspielen"){ const m=((st||{})[n.termin_id])||null;
+      rumpf=`<div class="rf-t-zeile rf-t-zahl">${m?`⚽ ${m.erw} ${m.erw===1?"Erwachsener":"Erwachsene"} aus ${m.fam} ${m.fam===1?"Familie":"Familien"} · ${m.offen} ${m.offen===1?"Familie":"Familien"} noch ohne Eintrag`:"Stand lädt …"}${knopf("Zur Liste",`rufeTerminOeffnen(${Number(n.termin_id)})`)}</div>`; }
     else rumpf=`<div class="rf-t-zeile rf-t-zahl">Jede Familie sieht ihre eigenen offenen Punkte.</div>`;
   }else if(n.aufgabe==="steckbrief"){
     const l=(st&&st.kinder)||[];
@@ -1414,6 +1428,9 @@ function rufeAufgabeKarteHtml(n){
       :`<div class="rf-t-zeile rf-t-zahl">Bei euch ist gerade nichts offen – euer Kind ist diesmal nicht dran.</div>`;
   }else if(n.aufgabe==="mitbringen"){
     rumpf=`<div class="rf-t-zeile">${knopf("Zur Mitbringliste",`rufeTerminOeffnen(${Number(n.termin_id)})`)}</div>`;
+  }else if(n.aufgabe==="mitspielen"){
+    const e=(((st||{})[n.termin_id])||{}).eigene||0;
+    rumpf=`<div class="rf-t-zeile">${e?`✓ Von euch ${e===1?"ist 1 Person":"sind "+e+" Personen"} eingetragen – danke!`:"Von euch ist noch niemand eingetragen."}${knopf(e?"Liste ansehen":"Jetzt eintragen",`rufeTerminOeffnen(${Number(n.termin_id)})`)}</div>`;
   }else{
     const o=st?st.offen:0;
     rumpf=`<div class="rf-t-zeile">${o?`Bei euch ${o===1?"ist 1 Punkt":"sind "+o+" Punkte"} offen`:"Schaut kurz nach, ob bei euch etwas offen ist."}${knopf("Zu erledigen","rufeAufgabeLos('todo')")}</div>`;

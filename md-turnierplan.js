@@ -1587,10 +1587,12 @@ function blzCycle(name){
    in ihrer App ein, wer von den Erwachsenen mitspielt (Tabelle event_mitspieler: sich selbst per Tipp, weitere per Namen).
    Hier sieht der Trainer die Liste und übernimmt sie ins Trainingsturnier „Kinder gegen Eltern“: die Erwachsenen werden
    reihum auf die Eltern-Teams verteilt (👤 vor dem Namen); ein Tipp schiebt sie ins nächste Eltern-Team. */
-async function elternTurnierMitspieler(terminId){
-  try{ const r=await fetch(`${SB_URL}/rest/v1/event_mitspieler?termin_id=eq.${Number(terminId)}&select=id,name,selbst,created_by&order=id.asc`,{headers:sbAuthHeaders()});
-    if(r.ok)return (await r.json())||[]; }catch(e){}
-  return null;   // null = nicht lesbar (offline oder Tabelle fehlt noch)
+// v995: Verhältnis, Familie
+async function elternTurnierMitspieler(terminId,alt){
+  try{ const r=await fetch(`${SB_URL}/rest/v1/event_mitspieler?termin_id=eq.${Number(terminId)}&select=id,name,selbst,created_by${alt?"":",verhaeltnis,kader(name)"}&order=id.asc`,{headers:sbAuthHeaders()});
+    if(r.ok)return (await r.json())||[];
+    if(!alt&&r.status===400)return elternTurnierMitspieler(terminId,1); }catch(e){}
+  return null;   // nicht lesbar
 }
 async function elternTurnierOpen(terminId,datum){
   document.getElementById("et-modal")?.remove();
@@ -1612,7 +1614,7 @@ async function elternTurnierRender(terminId,datum){
   if(liste===null){ box.innerHTML=`<div style="font-size:var(--s-text);color:var(--text2);padding:8px 0">Die Liste lässt sich gerade nicht laden.</div>`; return; }
   const zeilen=liste.length
     ? liste.map(x=>`<div class="et-zeile" style="display:flex;align-items:center;gap:8px;min-height:44px;border-top:1px solid var(--rand-bedien);font-size:var(--s-text)">
-        <span style="flex:1;min-width:0;overflow-wrap:anywhere"><b>${esc(x.name)}</b>${x.selbst?"":` <span style="color:var(--text2);font-size:var(--s-klein)">· von einer Familie eingetragen</span>`}</span>
+        <span style="flex:1;min-width:0;overflow-wrap:anywhere"><b>${esc(x.name)}</b> <span style="color:var(--text2);font-size:var(--s-klein)">· ${esc(x.verhaeltnis||(x.selbst?"Elternteil":"von einer Familie eingetragen"))}${x.kader&&x.kader.name?" · Familie "+esc(String(x.kader.name).split(" ")[0]):""}</span></span>
         <button class="btn btn-sm" type="button" onclick="elternTurnierEntfernen(${Number(x.id)},${Number(terminId)},'${datum}')" aria-label="${esc(x.name)} aus der Liste nehmen" style="flex:none;min-width:44px;justify-content:center"><i class="ti ti-x" aria-hidden="true"></i></button>
       </div>`).join("")
     : `<div style="font-size:var(--s-text);color:var(--text2);padding:8px 0">Noch niemand eingetragen. Die Eltern sehen den Termin mit dem Knopf „Ich spiele mit“.</div>`;

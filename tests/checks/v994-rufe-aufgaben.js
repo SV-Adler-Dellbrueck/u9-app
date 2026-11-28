@@ -82,7 +82,7 @@ module.exports = async function (h) {
   if (tr.r.fehler || el.r.fehler) return h.ergebnis(titel, false, ["Ablauf: " + (tr.r.fehler || el.r.fehler)]);
   const posts = tr.g.filter(x => /rufe_nachricht$/.test(x.pfad) && x.methode === "POST").map(x => x.body);
   const t = tr.r;
-  if (!t.menue.some(x => /Aufgabe für die Eltern/.test(x)) || t.aufgaben.length !== 4 || !/Steckbrief ausfüllen/.test(t.chip) || !/Steckbrief/.test(t.text)
+  if (!t.menue.some(x => /Aufgabe für die Eltern/.test(x)) || t.aufgaben.length < 4 || !/Steckbrief ausfüllen/.test(t.chip) || !/Steckbrief/.test(t.text)
       || !posts.some(p => p.aufgabe === "steckbrief" && !p.termin_id) || !t.terminwahl.some(x => /Weihnachtsfeier/.test(x)) || !posts.some(p => p.aufgabe === "mitbringen" && p.termin_id === 112))
     probleme.push("a) " + JSON.stringify({ menue: t.menue, aufgaben: t.aufgaben, chip: t.chip, terminwahl: t.terminwahl, posts }));
   else zeilen.push(`a) Trainer: 📎 „Aufgabe für die Eltern …“ mit 4 Aufgaben; gesendet aufgabe steckbrief und mitbringen (Termin 112)`);
