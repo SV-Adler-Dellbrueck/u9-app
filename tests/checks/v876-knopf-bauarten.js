@@ -31,7 +31,8 @@ const AUSNAHMEN = [
   [/class="rf-reakt"/, "Emoji-Reaktionen (aria-pressed)"],
   [/class="rf-emo"/, "Emoji-Auswahl im Aktionsmenü"],
   [/class="rf-option"/, "Abstimmungsoption mit Balken (aria-pressed)"],
-  [/class="rf-bild"/, "Vorschaubild als Knopf – keine Fläche, das Bild ist der Inhalt"]
+  [/class="rf-bild"/, "Vorschaubild als Knopf – keine Fläche, das Bild ist der Inhalt"],
+  [/class="rf-t-kopf/, "Kopf der Termin-Karte im Chat als Knopf (v993): Fläche aus .rf-t-kopf, im style nur der Rahmen zurückgesetzt"]
 ];
 const VERBOTEN = /(^|;)\s*(background(-color)?|color|border(-[a-z]+)*|padding(-[a-z]+)*|font-weight)\s*:/;
 

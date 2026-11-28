@@ -29,6 +29,9 @@ function kaderZeilen(opt = {}) {
 }
 const heute = () => new Date().toISOString().slice(0, 10);
 const tagePlus = d => new Date(Date.now() + d * 864e5).toISOString().slice(0, 10);
+/* v995: Montags hängt die App seit v959 den Torwart-Block an. Prüfungen, die einen Plan ohne ihn erwarten, nehmen deshalb
+   den Tag danach, wenn „in d Tagen“ ein Montag ist – sonst sind sie an jedem Samstag rot. */
+const tagePlusOhneMontag = d => { const t = tagePlus(d); return new Date(t + "T12:00:00Z").getUTCDay() === 1 ? tagePlus(d + 1) : t; };
 
 /* Attrappe: {tabelle: zeilen | (url, request) => zeilen} - alles andere antwortet []. */
 /* tabellen: { <tabelle>: Zeilen|Funktion, rpc: { <name>: Antwort|Funktion },
@@ -200,4 +203,4 @@ function ergebnis(name, ok, zeilen = []) { return { name, ok: !!ok, zeilen: [].c
 
 const chromium = () => playwright().chromium;
 
-module.exports = { REPO, KINDER, kaderZeilen, heute, tagePlus, supabaseAttrappe, starten, sichtbarMachen, terminSetzen, kontrastHelfer, ergebnis, chromium };
+module.exports = { REPO, KINDER, kaderZeilen, heute, tagePlus, tagePlusOhneMontag, supabaseAttrappe, starten, sichtbarMachen, terminSetzen, kontrastHelfer, ergebnis, chromium };

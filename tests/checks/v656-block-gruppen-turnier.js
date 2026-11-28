@@ -28,7 +28,7 @@ module.exports = async function (h) {
   const vor = JSON.parse(fs.readFileSync(path.join(h.REPO, "uebungen/vorlagen.json"), "utf8"));
   const bib = JSON.parse(fs.readFileSync(path.join(h.REPO, "uebungen/bibliothek.json"), "utf8"));
   const inaktiv = h.KINDER.slice(14);
-  const datum = h.tagePlus(2);
+  const datum = h.tagePlusOhneMontag(2);   // v995: kein Montag (Torwart-Block)
   const custom = (bib.uebungen || []).map((u, i) => ({ ...u, id: 6000 + i, custom: true }));
   const rows = (vor.vorlagen || []).map((v, i) => ({ ...v, id: 500 + i }));
   const plaene = {};
