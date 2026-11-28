@@ -1268,7 +1268,7 @@ async function rufeKartenLaden(liste,umf){
   const offen=(umf||[]).filter(u=>!_rfUmfrageZu(u)&&(u.von===_rf.uid||_rf.trainer));
   const kids=(window._elternKids||[]).map(k=>Number(k.spieler_id)).filter(Boolean);
   const [ter,st,mein,fe]=await Promise.all([
-    tids.length?_rfGet(`termine?id=in.(${tids.join(",")})&select=id,typ,titel,gegner,datum,uhrzeit,treffzeit,ort,heim`):Promise.resolve([]),
+    tids.length?_rfGet(`termine?id=in.(${tids.join(",")})&select=id,typ,titel,gegner,datum,uhrzeit,treffzeit,ort,heim,eltern_turnier`):Promise.resolve([]),
     tids.length?_rfGet(`rpc/rufe_termin_stand?p_ids=${encodeURIComponent("{"+tids.join(",")+"}")}`):Promise.resolve([]),
     tids.length&&kids.length?_rfGet(`rueckmeldungen?termin_id=in.(${tids.join(",")})&spieler_id=in.(${kids.join(",")})&select=termin_id,spieler_id,status,carpool_status`):Promise.resolve([]),
     Promise.all(offen.map(u=>_rfGet(`rpc/rufe_umfrage_fehlende?p_umfrage=${Number(u.id)}`).then(r=>[u.id,(Array.isArray(r)?r[0]:r)||null]).catch(()=>[u.id,null])))
@@ -1277,6 +1277,11 @@ async function rufeKartenLaden(liste,umf){
   _rf.termine={}; (Array.isArray(ter)?ter:[]).forEach(t=>_rf.termine[t.id]=t);
   _rf.tstand={}; (Array.isArray(st)?st:[]).forEach(x=>_rf.tstand[x.termin_id]=x);
   _rf.tmein=Array.isArray(mein)?mein:[];
+  /* v996 (Charles 28.11.): beim Kinder-Eltern-Turnier zählt auch, wer von den Erwachsenen mitspielt */
+  const etids=Object.values(_rf.termine).filter(t=>t.eltern_turnier).map(t=>Number(t.id));
+  _rf.tmit={};
+  if(etids.length){ const ms=await _rfGet(`event_mitspieler?termin_id=in.(${etids.join(",")})&select=termin_id,created_by,selbst`);
+    if(Array.isArray(ms))etids.forEach(id=>{ const r=ms.filter(x=>Number(x.termin_id)===id); _rf.tmit[id]={erw:r.length,ich:r.some(x=>x.selbst&&x.created_by===_rf.uid)}; }); }
   _rf.fehlend={}; fe.forEach(([id,x])=>{ if(x)_rf.fehlend[id]=x; });
   const auf=await rufeAufgabenLaden(liste);   // v994
   _rf.kartenKennung=JSON.stringify([ter,st,mein,fe,auf]);
@@ -1306,6 +1311,13 @@ function rufeTerminKarteHtml(tid){
         <button type="button" class="btn${s==="zugesagt"?" btn-p":""}" aria-pressed="${s==="zugesagt"}" onclick="rufeTerminZusage(${Number(tid)},${sid},'zugesagt')">✓ Dabei</button>
         <button type="button" class="btn" aria-pressed="${s==="abgesagt"||s==="krank"}" onclick="rufeTerminZusage(${Number(tid)},${sid},'abgesagt')">✗ Absagen</button></div></div>`; }).join("")
     :(training?`<div class="rf-t-zeile">Training – gilt als zugesagt.</div>`:"");
+  /* v996 (Charles 28.11.): „Bei der Zusage geht es ja nicht um das Kind, sondern um das Elternteil“ – beim Kinder-Eltern-Turnier
+     bleibt die Zeile je Kind (das Kind spielt mit), darunter sagt das Elternteil selbst zu; weitere Mitspieler im Termin. */
+  const mit=t.eltern_turnier?(_rf.tmit||{})[tid]||null:null;
+  const eltern=mit&&!_rf.trainer&&!vorbei&&typeof mitspielerIch==="function"
+    ?`<div class="rf-t-zeile rf-t-ich"><b>Du</b> · ${mit.ich?"⚽ spielst mit":"spielst du mit?"}<div class="rf-t-knoepfe">
+        <button type="button" class="btn${mit.ich?" btn-p":""}" aria-pressed="${mit.ich}" onclick="rufeTerminMitspielen(${Number(tid)})">⚽ Ich spiele mit</button>
+        <button type="button" class="btn" onclick="rufeTerminOeffnen(${Number(tid)})">Weitere eintragen ›</button></div></div>`:"";
   /* v993 (Charles 28.11.): Nicht jeder Termin ist eine Fahrfrage – die Autos stehen nur bei Auswärtsterminen da,
      oder wenn schon jemand ein Auto angeboten hat. */
   const k0=kids[0], mitfahrt=!vorbei&&(st.autos>0||(!training&&t.heim===false))
@@ -1314,8 +1326,8 @@ function rufeTerminKarteHtml(tid){
         <button type="button" class="btn" onclick="rufeTerminMitfahrt(${Number(tid)},${Number(k0.spieler_id)},'mit')">🙋 Mitfahren</button></div>`:""}</div>`:"";
   return `<div class="rf-termin" role="group" aria-label="Termin: ${esc(_rfTerminTitel(t))}">
     <button type="button" class="rf-t-kopf${training?" rf-t-training":""}" onclick="rufeTerminOeffnen(${Number(tid)})" aria-label="Termin öffnen: ${esc(_rfTerminTitel(t))}" style="width:100%;border:0;text-align:left;cursor:pointer;font:inherit"><b>${esc(_rfTerminTitel(t))}</b><span>${esc(_rfTerminWann(t))}${t.ort?" · "+esc(t.ort):""}</span><span style="font-weight:700">Zum Termin ›</span></button>
-    ${zusage}
-    ${training?"":`<div class="rf-t-zeile rf-t-zahl">✓ ${st.dabei} dabei · ✗ ${st.abgesagt} abgesagt · ${st.offen} offen</div>`}
+    ${zusage}${eltern}
+    ${training?"":`<div class="rf-t-zeile rf-t-zahl">✓ ${st.dabei} ${mit?"Kinder ":""}dabei · ✗ ${st.abgesagt} abgesagt · ${st.offen} offen${mit?` · ⚽&nbsp;${mit.erw}&nbsp;${mit.erw===1?"Erwachsener":"Erwachsene"}`:""}</div>`}
     ${mitfahrt}</div>`;
 }
 /* v993 (Charles 28.11.): Ein Tipp auf den Kopf der Termin-Karte öffnet den Termin ÜBER dem Chat – Trainer „Termin verwalten“,
@@ -1454,6 +1466,11 @@ function rufeAufgabeLos(art,id){
   }
 }
 function _rfIsoHeute(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+async function rufeTerminMitspielen(tid){
+  if(typeof mitspielerIch!=="function")return;
+  await mitspielerIch(tid);
+  if(_rf){ _rf.kennung=null; await rufeLaden(); }
+}
 async function rufeTerminZusage(tid,sid,status){
   if(typeof elternRsvp!=="function")return;
   await elternRsvp(tid,sid,status);
