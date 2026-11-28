@@ -537,6 +537,7 @@ function _tmdKarte(t){
         ${abgesagt?"":`${sec("Was du hier tust")}<div style="display:flex;flex-direction:column;gap:6px">${gross.filter(Boolean).map(grossBtn).join("")}</div>`}
         ${trainerBlock}`:""}
       ${ampelBlock}
+      ${sportTyp?trainerBlock:""}${/* v993: Charles 28.11. – „Welche Trainer sind dabei?“ auch hier, nicht nur in „Fürs Training/Für den Spieltag“ (Bild freigegeben) */""}
       ${sec("Termin verwalten")}
       ${kacheln(verwalten)}
       ${tmKabineHtml(t)}

@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v993 (v993: Fehlerbehebung – ein langer Absagegrund machte die Seite breiter als den Bildschirm; das Schild „Fällt aus“ bricht jetzt um) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v993 (v993: ein langer Absagegrund machte die Seite breiter als den Bildschirm – das Schild „Fällt aus“ bricht jetzt um; „Welche Trainer sind dabei?“ auch unter „Termin verwalten“) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite). Das Adler Nest ist seit v733 nur noch nach der Anmeldung lesbar.
 
