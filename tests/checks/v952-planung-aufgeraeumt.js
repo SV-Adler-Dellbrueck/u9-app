@@ -19,7 +19,7 @@ module.exports = async function (h) {
   const probleme = [], zeilen = [];
   const F5 = "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?";
   const bl = [{ typ: "warmup", label: "Aufwärmen", dauer: 5 }, { typ: "main", label: "Hauptteil", dauer: 60, uebung_name: "Korridor-Funino" }, { typ: "abschluss", label: "Abschlussspiel", dauer: 10 }];
-  const datum = h.tagePlusOhneMontag(2);   // v995: kein Montag (Torwart-Block) let plan = null;
+  const datum = h.tagePlusOhneMontag(2); let plan = null;   // v995: kein Montag (Torwart-Block)
   const s = await h.starten({ breite: 360, hoehe: 1600, bibliothek: true, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), termine: [{ id: 70, datum, typ: "training", uhrzeit: "16:45" }],
     trainingsvorlagen: [{ id: 12, name: "L5-2 Freilaufen", leitfrage: F5, folge_nr: 2, ordnung: "4+1", tags: [], bloecke: bl }], trainingsblock: [],
     trainingsplan: (u, req) => { if (req.method() === "POST") { plan = JSON.parse(req.postData() || "null"); return { status: 201, body: "[]" }; }
